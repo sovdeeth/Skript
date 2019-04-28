@@ -75,19 +75,30 @@ public class VariableString implements Expression<String> {
 		boolean toChatStyle = false;
 	}
 	
+	/**
+	 * String this was parsed from.
+	 */
 	private final String orig;
 	
+	/**
+	 * Variable string parts.
+	 */
 	@Nullable
 	private final Object[] string;
 	@Nullable
 	private Object[] stringUnformatted;
+	
+	/**
+	 * If this string is simple, {@link #simple} is set and {@link #string}
+	 * is null. There are no variable parts.
+	 */
 	private final boolean isSimple;
 	@Nullable
 	private final String simple;
 	@Nullable
 	private final String simpleUnformatted;
 	private final StringMode mode;
-
+	
 	public static boolean disableVariableStartingWithExpressionWarnings = false;
 	
 	/**
