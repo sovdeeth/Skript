@@ -1,5 +1,9 @@
 package ch.njol.skript.variables;
 
+import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
+
+import ch.njol.skript.lang.Expression;
 
 /**
  * A parsed path to a variable.
@@ -7,9 +11,20 @@ package ch.njol.skript.variables;
 public class VariablePath {
 	
 	/**
-	 * Path to variable.
+	 * Name of variable split by list token ('::'). Elements are constant
+	 * Strings or expressions. Note: expression elements must NOT return
+	 * strings that may contain list token.
 	 */
-	private String[] path;
+	final Object[] path;
 	
+	/**
+	 * List containing this variable. Cached when possible.
+	 */
+	@Nullable
+	ListVariable cachedParent;
 	
+	public VariablePath(Object... path) {
+		this.path = path;
+	}
+
 }

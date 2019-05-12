@@ -14,6 +14,11 @@ import org.eclipse.jdt.annotation.Nullable;
 public class ListVariable {
 	
 	/**
+	 * This list variable is not to be used anymore.
+	 */
+	static final int INVALID_LIST = -1;
+	
+	/**
 	 * Initial size of {@link #values}.
 	 */
 	private static final int INITIAL_ARRAY_SIZE = 4;
@@ -25,7 +30,8 @@ public class ListVariable {
 	private static final int MIN_MAP_SIZE = 4;
 	
 	/**
-	 * Size of this list variable.
+	 * Size of this list variable. When this is {@link #INVALID_LIST}, this
+	 * list variable should not be used anymore.
 	 */
 	int size;
 	
@@ -60,11 +66,24 @@ public class ListVariable {
 	}
 	
 	/**
+	 * Checks whether this list variable is valid. It is only necessary to call
+	 * this when this has been cached and could've been deleted.
+	 * @return Whether this list is valid.
+	 */
+	public boolean isValid() {
+		return size != INVALID_LIST;
+	}
+	
+	/**
 	 * Gets how many elements this list has.
 	 * @return List size.
 	 */
 	public int getSize() {
 		return size;
+	}
+	
+	void assertValid() {
+		assert size != INVALID_LIST : "invalid list, caching is not working";
 	}
 	
 	void assertPlainArray() {
@@ -110,6 +129,7 @@ public class ListVariable {
 	 * @param value Value to add.
 	 */
 	public void add(Object value) {
+		assertValid();
 		enlargeArray();
 		if (isArray) { // Fast path: append to array end
 			assertPlainArray();
@@ -132,6 +152,7 @@ public class ListVariable {
 	 */
 	@Nullable
 	public Object get(int index) {
+		assertValid();
 		if (index > size) { // Value might be in map even if it is not in array
 			// Bail out of fast path
 		} else if (isArray) { // Fast path: read from array
@@ -162,6 +183,7 @@ public class ListVariable {
 	 */
 	@Nullable
 	public Object get(String name) {
+		assertValid();
 		if (isArray) { // All names are numeric indices
 			assertPlainArray();
 			try {
@@ -235,6 +257,7 @@ public class ListVariable {
 	 * @param value The value.
 	 */
 	public void put(int index, Object value) {
+		assertValid();
 		if (isArray && index > 0) { // Fast paths
 			if (!putArray(index, value)) { // Use generic put; we have a sparse array
 				put("" + index, value);
@@ -251,6 +274,7 @@ public class ListVariable {
 	 * @param value Value to put.
 	 */
 	private void putMap(String name, Object value) {
+		assertValid();
 		assertMap();
 		assert map != null;
 		if (map.put(name, value) == null) { // Not overwriting old value
@@ -271,6 +295,7 @@ public class ListVariable {
 	 * @param value Value to put.
 	 */
 	public void put(String name, Object value) {
+		assertValid();
 		if (map != null) { // Map exists; add only to it
 			putMap(name, value);
 		} else { // No map; consider making one now
@@ -322,6 +347,7 @@ public class ListVariable {
 	}
 	
 	public Iterator<Object> unorderedIterator() {
+		assertValid();
 		if (!isArray) {
 			return new Iterator<Object>() {
 				private int index = 0;
@@ -365,6 +391,7 @@ public class ListVariable {
 	 * to this list between call to this and it.
 	 */
 	public void ensureSorted() {
+		assertValid();
 		if (isSorted) {
 			return; // No action needed
 		}
@@ -374,6 +401,7 @@ public class ListVariable {
 	}
 	
 	public Iterator<VariableEntry> orderedIterator() {
+		assertValid();
 		ensureSorted(); // We need to return elements in order
 		if (!isArray) {
 			return new Iterator<VariableEntry>() {
