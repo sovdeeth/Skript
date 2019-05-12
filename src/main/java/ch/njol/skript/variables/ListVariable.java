@@ -1,6 +1,8 @@
 package ch.njol.skript.variables;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import org.eclipse.jdt.annotation.Nullable;
@@ -25,12 +27,12 @@ public class ListVariable {
 	/**
 	 * Size of this list variable.
 	 */
-	private int size;
+	int size;
 	
 	/**
 	 * Resizable array with contents of the list variable.
 	 */
-	private Object[] values;
+	Object[] values;
 	
 	/**
 	 * This list is basically a plain Java array. Implies {@link #isSorted}.
@@ -57,23 +59,36 @@ public class ListVariable {
 		this.isSorted = true; // No content, so in order
 	}
 	
-	private void assertPlainArray() {
+	/**
+	 * Gets how many elements this list has.
+	 * @return List size.
+	 */
+	public int getSize() {
+		return size;
+	}
+	
+	void assertPlainArray() {
 		assert isArray : "not a plain array";
 		assert isSorted : "arrays are always sorted";
 		assert map == null : "map is unnecessary with plain array";
 	}
 	
-	private void assertSmallList() {
+	void assertSortable() {
+		assert !isArray : "plain array does not need sorting";
+		assert !isSorted : "already sorted";
+	}
+	
+	void assertSmallList() {
 		assert size < MIN_MAP_SIZE : "list too large, should have map";
 		assert map == null : "map is unnecessary with small list";
 	}
 	
-	private void assertMap() {
+	void assertMap() {
 		assert map != null : "not a map";
 		assert !isArray : "plain array is impossible with map";
 	}
 	
-	private void assertSorted() {
+	void assertSorted() {
 		assert isSorted : "array not sorted";
 	}
 	
@@ -285,7 +300,7 @@ public class ListVariable {
 			// Search array for duplicates, overwriting them if found
 			if (size < MIN_MAP_SIZE) {
 				assertSmallList();
-				for (int i = 0; i < values.length; i++) {
+				for (int i = 0; i < size; i++) {
 					if (((VariableEntry) values[i]).compareTo(entry) == 0) {
 						values[i] = entry; // Overwrite this entry
 						return;
@@ -295,7 +310,7 @@ public class ListVariable {
 			
 			// Add to end of array
 			values[size] = entry;
-			if (((VariableEntry) values[size - 1]).compareTo(((VariableEntry) values[size])) > 0) {
+			if (size > 1 && ((VariableEntry) values[size - 1]).compareTo(((VariableEntry) values[size])) > 0) {
 				isSorted = false; // Array is no longer in order
 			}
 			size++;
@@ -303,6 +318,101 @@ public class ListVariable {
 			if (size >= MIN_MAP_SIZE) { // Time to create map
 				createMap(); // This will also put our new value
 			}
+		}
+	}
+	
+	public Iterator<Object> unorderedIterator() {
+		if (!isArray) {
+			return new Iterator<Object>() {
+				private int index = 0;
+				
+				@Override
+				public Object next() {
+					VariableEntry entry = (VariableEntry) values[index];
+					index++;
+					assert entry != null : "forgot to call hasNext()";
+					return entry.getValue();
+				}
+				
+				@Override
+				public boolean hasNext() {
+					return index < size;
+				}
+			};
+		} else {
+			return new Iterator<Object>() {
+				private int index = 0;
+				
+				@Override
+				public Object next() {
+					Object value = values[index];
+					index++;
+					assert value != null : "forgot to call hasNext()";
+					return value;
+				}
+				
+				@Override
+				public boolean hasNext() {
+					return index < size;
+				}
+			};
+		}
+	}
+	
+	/**
+	 * Ensures that this list is sorted. This will guarantee that next call to
+	 * {@link #orderedIterator()} will be fast, provided that nothing is added
+	 * to this list between call to this and it.
+	 */
+	public void ensureSorted() {
+		if (isSorted) {
+			return; // No action needed
+		}
+		assertSortable();
+		Arrays.sort(values);
+		isSorted = true;
+	}
+	
+	public Iterator<VariableEntry> orderedIterator() {
+		ensureSorted(); // We need to return elements in order
+		if (!isArray) {
+			return new Iterator<VariableEntry>() {
+				private int index = 0;
+				
+				@Override
+				public VariableEntry next() {
+					VariableEntry entry = (VariableEntry) values[index];
+					index++;
+					assert entry != null : "forgot to call hasNext()";
+					return entry;
+				}
+				
+				@Override
+				public boolean hasNext() {
+					return index < size;
+				}
+			};
+		} else {
+			return new Iterator<VariableEntry>() {
+				
+				/**
+				 * Next index.
+				 */
+				private int index = 0;
+				
+				@Override
+				public VariableEntry next() {
+					Object value = values[index];
+					index++;
+					assert value != null : "forgot to call hasNext()";
+					return new VariableEntry("" + index, value);
+				}
+				
+				@Override
+				public boolean hasNext() {
+					return index < size;
+				}
+			};
 		}
 	}
 }
