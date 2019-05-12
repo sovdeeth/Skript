@@ -33,7 +33,7 @@ public class ListVariable {
 	private Object[] values;
 	
 	/**
-	 * This list is basically an array. Implies {@link #isSorted}.
+	 * This list is basically a plain Java array. Implies {@link #isSorted}.
 	 */
 	private boolean isArray;
 	
@@ -43,8 +43,9 @@ public class ListVariable {
 	private boolean isSorted;
 	
 	/**
-	 * Variable names mapped to their values. This does not exit until a random
-	 * access read is performed AND {@link #MIN_MAP_SIZE} is exceeded.
+	 * Variable names mapped to their values. This does not exit until
+	 * {@link #isArray} is false and {@link #size} is at least
+	 * {@link #MIN_MAP_SIZE}.
 	 */
 	@Nullable
 	private Map<String, Object> map;
@@ -56,6 +57,30 @@ public class ListVariable {
 		this.isSorted = true; // No content, so in order
 	}
 	
+	private void assertPlainArray() {
+		assert isArray : "not a plain array";
+		assert isSorted : "arrays are always sorted";
+		assert map == null : "map is unnecessary with plain array";
+	}
+	
+	private void assertSmallList() {
+		assert size < MIN_MAP_SIZE : "list too large, should have map";
+		assert map == null : "map is unnecessary with small list";
+	}
+	
+	private void assertMap() {
+		assert map != null : "not a map";
+		assert !isArray : "plain array is impossible with map";
+	}
+	
+	private void assertSorted() {
+		assert isSorted : "array not sorted";
+	}
+	
+	/**
+	 * If current {@link #size} is less than length of {@link #values},
+	 * enlarge {@link #values} and pad the end with nulls.
+	 */
 	private void enlargeArray() {
 		if (size < values.length) {
 			return; // No need to enlarge
@@ -65,23 +90,40 @@ public class ListVariable {
 		values = newValues;
 	}
 	
+	/**
+	 * Adds a value at end of this list.
+	 * @param value Value to add.
+	 */
 	public void add(Object value) {
 		enlargeArray();
 		if (isArray) { // Fast path: append to array end
+			assertPlainArray();
 			values[size] = value;
 		} else { // Array may be out of order, need to explicitly save name
-			values[size] = new VariableEntry("" + size, value);
+			assertMap();
+			String name = "" + size;
+			values[size] = new VariableEntry(name, value);
+			if (map != null) { // Additionally, we have a map
+				map.put(name, value);
+			}
 		}
 		size++;
 	}
 	
+	/**
+	 * Gets a value with given index.
+	 * @param index Numeric index.
+	 * @return Value, or null if the index does not have a value.
+	 */
 	@Nullable
 	public Object get(int index) {
 		if (index > size) { // Value might be in map even if it is not in array
 			// Bail out of fast path
 		} else if (isArray) { // Fast path: read from array
+			assertPlainArray();
 			return values[index];
 		} else if (size < MIN_MAP_SIZE) { // Try to find by iterating
+			assertSmallList();
 			for (Object o : values) {
 				assert o instanceof VariableEntry;
 				VariableEntry entry = (VariableEntry) o;
@@ -93,13 +135,20 @@ public class ListVariable {
 		}
 		
 		// Do a map read
+		assertMap();
 		assert map != null;
 		return map.get("" + index);
 	}
 	
+	/**
+	 * Gets a value with given name.
+	 * @param name Name of list member.
+	 * @return Value, or null if there is no value set for given name.
+	 */
 	@Nullable
 	public Object get(String name) {
 		if (isArray) { // All names are numeric indices
+			assertPlainArray();
 			try {
 				int index = Integer.parseInt(name);
 				return get(index);
@@ -107,6 +156,7 @@ public class ListVariable {
 				return null; // Everything in this list has numeric index
 			}
 		} else if (size < MIN_MAP_SIZE) { // Try to find the name by iterating
+			assertSmallList();
 			for (Object o : values) {
 				assert o instanceof VariableEntry;
 				VariableEntry entry = (VariableEntry) o;
@@ -117,11 +167,15 @@ public class ListVariable {
 			return null;
 		} else { // Look up the name from map
 			createMap();
+			assertMap();
 			assert map != null;
 			return map.get(name);
 		}
 	}
 	
+	/**
+	 * Ensures that map exists.
+	 */
 	private void createMap() {
 		if (map != null) {
 			return;
@@ -139,54 +193,116 @@ public class ListVariable {
 		}
 	}
 	
+	/**
+	 * Tries to put a value to array.
+	 * @param index Index to write to.
+	 * @param value Value.
+	 * @return Whether writing to array succeeded or not.
+	 */
+	private boolean putArray(int index, Object value) {
+		assertPlainArray();
+		if (index < size) { // Overwrite
+			values[index] = value;
+			return true;
+		} else if (index == size) { // Append
+			enlargeArray();
+			values[index] = value;
+			size++;
+			return true;
+		} else { // Can't write this to array
+			return false;
+		}
+	}
+	
+	/**
+	 * Puts a value to given index in this list.
+	 * @param index Index.
+	 * @param value The value.
+	 */
 	public void put(int index, Object value) {
 		if (isArray && index > 0) { // Fast paths
-			if (index < size) { // Overwrite
-				values[index] = value;
-			} else { // Append
-				enlargeArray();
-				values[index] = value;
-				size++;
+			if (!putArray(index, value)) { // Use generic put; we have a sparse array
+				put("" + index, value);
 			}
-		} else { // Use generic put
+		} else { // Use generic put; we don't have plain array
 			put("" + index, value);
 		}
 	}
 	
+	/**
+	 * Puts a value to map with given name. If it does not overwrite something,
+	 * the value will also be added to list.
+	 * @param name Name.
+	 * @param value Value to put.
+	 */
+	private void putMap(String name, Object value) {
+		assertMap();
+		assert map != null;
+		if (map.put(name, value) == null) { // Not overwriting old value
+			enlargeArray();
+			// Also add it to end of array
+			values[size] = new VariableEntry(name, value);
+			isArray = false; // Not just numeric indices any more
+			if (((VariableEntry) values[size - 1]).compareTo(((VariableEntry) values[size])) > 0) {
+				isSorted = false; // Array is no longer in order
+			}
+			size++;
+		}
+	}
+	
+	/**
+	 * Puts a value to this list with given name.
+	 * @param name Name for the value.
+	 * @param value Value to put.
+	 */
 	public void put(String name, Object value) {
 		if (map != null) { // Map exists; add only to it
-			if (map.put(name, value) == null) { // Not overwriting old value
-				enlargeArray();
-				// Also add it to end of array
-				values[size] = new VariableEntry(name, value);
-				isArray = false; // Not just numeric indices any more
-				if (((VariableEntry) values[size - 1]).compareTo(((VariableEntry) values[size])) > 0) {
-					isSorted = false; // Array is no longer in order
+			putMap(name, value);
+		} else { // No map; consider making one now
+			if (isArray) { // Try to preserve plain array we have
+				try { // Maybe the name is actually a numeric index
+					int index = Integer.parseInt(name);
+					if (index > 0) {
+						if (putArray(index, value)) {
+							return; // Managed to make this put just an array write
+						}
+					}
+				} catch (NumberFormatException e) {
+					// Name isn't a number, and we need a map
 				}
-				size++;
-			}
-		} else { // No map; add to array
-			if (isArray) { // Must wrap values so they remember their indices
+				
+				// Convert all plain values to variable entries
 				for (int i = 0; i < size; i++) {
 					Object val = values[i];
 					assert val != null;
 					values[i] = new VariableEntry("" + i, val);
 				}
+				isArray = false; // Definitely not a plain array, we have non-number name
 			}
 			
-			// Add value to end of array
 			VariableEntry entry = new VariableEntry(name, value);
-			int comp = ((VariableEntry) values[size - 1]).compareTo(entry);
-			if (comp == 0) { // Found a duplicate name
-				values[size - 1] = entry; // Overwrite its value
-				return;
-			} else if (comp > 0) { // No obvious duplicate
+			
+			// Search array for duplicates, overwriting them if found
+			if (size < MIN_MAP_SIZE) {
+				assertSmallList();
+				for (int i = 0; i < values.length; i++) {
+					if (((VariableEntry) values[i]).compareTo(entry) == 0) {
+						values[i] = entry; // Overwrite this entry
+						return;
+					}
+				}
+			}
+			
+			// Add to end of array
+			values[size] = entry;
+			if (((VariableEntry) values[size - 1]).compareTo(((VariableEntry) values[size])) > 0) {
 				isSorted = false; // Array is no longer in order
 			}
-			values[size] = entry;
 			size++;
 			
-			// TODO deduplication?
+			if (size >= MIN_MAP_SIZE) { // Time to create map
+				createMap(); // This will also put our new value
+			}
 		}
 	}
 }
