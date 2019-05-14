@@ -4,12 +4,22 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.TreeMap;
 
 import org.eclipse.jdt.annotation.Nullable;
 
 /**
  * Represents Skript's list variable. For Java code, it is basically a sorted
  * map.
+ * 
+ * <p>This class operates in one of three modes, based on data it contains.
+ * 
+ * <ul>
+ * <li>Array mode: continuous range of numeric keys
+ * <li>Small list mode: a small amount of variables in list
+ * <li>Map mode: fallback
+ * </ul>
  */
 public class ListVariable {
 	
@@ -29,6 +39,16 @@ public class ListVariable {
 	 */
 	private static final int MIN_MAP_SIZE = 4;
 	
+	@SuppressWarnings("unused")
+	private static void staticAssert() {
+		assert INVALID_LIST < 0 : "invalid overlaps with valid";
+		assert INITIAL_ARRAY_SIZE >= MIN_MAP_SIZE : "small list must fit to initial array";
+
+	}
+	static {
+		staticAssert();
+	}
+	
 	/**
 	 * Size of this list variable. When this is {@link #INVALID_LIST}, this
 	 * list variable should not be used anymore.
@@ -36,18 +56,22 @@ public class ListVariable {
 	int size;
 	
 	/**
-	 * Resizable array with contents of the list variable.
+	 * Resizable array with contents of the list variable. Null when
+	 * {@link #map} is not present.
 	 */
+	@Nullable
 	Object[] values;
 	
 	/**
 	 * This list is basically a plain Java array. Implies {@link #isSorted},
-	 * unless the array is sparse.
+	 * unless this is sparse array. When this is not set, but {@link #values}
+	 * is present, this is small list.
 	 */
 	private boolean isArray;
 	
 	/**
-	 * Whether {@link #values} is currently in order or not.
+	 * Whether {@link #values} is in order or not.
+	 * TODO sparse random access
 	 */
 	private boolean isSorted;
 	
@@ -89,26 +113,20 @@ public class ListVariable {
 	
 	void assertPlainArray() {
 		assert isArray : "not a plain array";
+		assert values != null : "plain array without array";
 		assert map == null : "map is unnecessary with plain array";
-	}
-	
-	void assertSortable() {
-		assert !isArray : "plain array does not need sorting";
-		assert !isSorted : "already sorted";
 	}
 	
 	void assertSmallList() {
 		assert size < MIN_MAP_SIZE : "list too large, should have map";
+		assert values != null : "list without array";
 		assert map == null : "map is unnecessary with small list";
 	}
 	
 	void assertMap() {
 		assert map != null : "not a map";
+		assert values == null : "array is unnecessary with map";
 		assert !isArray : "plain array is impossible with map";
-	}
-	
-	void assertSorted() {
-		assert isSorted : "array not sorted";
 	}
 	
 	/**
@@ -116,11 +134,13 @@ public class ListVariable {
 	 * enlarge {@link #values} and pad the end with nulls.
 	 */
 	private void enlargeArray() {
-		if (size < values.length) {
+		Object[] vals = values;
+		assert vals != null;
+		if (size < vals.length) {
 			return; // No need to enlarge
 		}
-		Object[] newValues = new Object[values.length * 2];
-		System.arraycopy(values, 0, newValues, 0, size);
+		Object[] newValues = new Object[vals.length * 2];
+		System.arraycopy(vals, 0, newValues, 0, size);
 		values = newValues;
 	}
 	
@@ -130,19 +150,31 @@ public class ListVariable {
 	 */
 	public void add(Object value) {
 		assertValid();
-		enlargeArray();
 		if (isArray) { // Fast path: append to array end
 			assertPlainArray();
+			enlargeArray();
+			assert values != null;
 			values[size] = value;
+			size++;
 		} else { // Array may be out of order, need to explicitly save name
-			assertMap();
 			String name = "" + size;
-			values[size] = new VariableEntry(name, value);
 			if (map != null) { // Additionally, we have a map
+				assertMap();
+				assert map != null;
 				map.put(name, value);
+			} else {
+				assertSmallList();
+				if (size + 1 == MIN_MAP_SIZE ) { // Hit minimum map size, create map
+					createMap();
+					assert map != null;
+					map.put(name, value);
+				} else { // Add to small list
+					assert values != null;
+					values[size] = new VariableEntry(name, value);
+					size++;
+				}
 			}
 		}
-		size++;
 	}
 	
 	/**
@@ -158,9 +190,11 @@ public class ListVariable {
 			if (index < 0 || index >= size) {
 				return null; // Out of range, doesn't exist
 			}
+			assert values != null;
 			return values[index];
 		} else if (size < MIN_MAP_SIZE) { // Try to find by iterating
 			assertSmallList();
+			assert values != null;
 			for (Object o : values) {
 				assert o instanceof VariableEntry;
 				VariableEntry entry = (VariableEntry) o;
@@ -195,6 +229,7 @@ public class ListVariable {
 			}
 		} else if (size < MIN_MAP_SIZE) { // Try to find the name by iterating
 			assertSmallList();
+			assert values != null;
 			for (Object o : values) {
 				assert o instanceof VariableEntry;
 				VariableEntry entry = (VariableEntry) o;
@@ -220,6 +255,7 @@ public class ListVariable {
 		}
 		map = new HashMap<>();
 		for (int i = 0; i < size; i++) {
+			assert values != null;
 			Object value = values[i];
 			if (value instanceof VariableEntry) {
 				assert map != null;
@@ -229,6 +265,10 @@ public class ListVariable {
 				map.put("" + i, value);
 			}
 		}
+		
+		// Clear the array; it won't be needed anymore
+		values = null;
+		assertMap();
 	}
 	
 	/**
@@ -240,10 +280,12 @@ public class ListVariable {
 	private boolean putArray(int index, Object value) {
 		assertPlainArray();
 		if (index < size) { // Overwrite
+			assert values != null;
 			values[index] = value;
 			return true;
 		} else if (index == size) { // Append
 			enlargeArray();
+			assert values != null;
 			values[index] = value;
 			size++;
 			return true;
@@ -269,28 +311,6 @@ public class ListVariable {
 	}
 	
 	/**
-	 * Puts a value to map with given name. If it does not overwrite something,
-	 * the value will also be added to list.
-	 * @param name Name.
-	 * @param value Value to put.
-	 */
-	private void putMap(String name, Object value) {
-		assertValid();
-		assertMap();
-		assert map != null;
-		if (map.put(name, value) == null) { // Not overwriting old value
-			enlargeArray();
-			// Also add it to end of array
-			values[size] = new VariableEntry(name, value);
-			isArray = false; // Not just numeric indices any more
-			if (((VariableEntry) values[size - 1]).compareTo(((VariableEntry) values[size])) > 0) {
-				isSorted = false; // Array is no longer in order
-			}
-			size++;
-		}
-	}
-	
-	/**
 	 * Puts a value to this list with given name.
 	 * @param name Name for the value.
 	 * @param value Value to put.
@@ -298,8 +318,10 @@ public class ListVariable {
 	public void put(String name, Object value) {
 		assertValid();
 		if (map != null) { // Map exists; add only to it
-			putMap(name, value);
+			map.put(name, value);
 		} else { // No map; consider making one now
+			Object[] vals = values;
+			assert vals != null;
 			if (isArray) { // Try to preserve plain array we have
 				try { // Maybe the name is actually a numeric index
 					int index = Integer.parseInt(name);
@@ -312,13 +334,24 @@ public class ListVariable {
 					// Name isn't a number, and we need a map
 				}
 				
-				// Convert all plain values to variable entries
-				for (int i = 0; i < size; i++) {
-					Object val = values[i];
-					assert val != null;
-					values[i] = new VariableEntry("" + i, val);
+				// See if we can append and still keep small list
+				if (size + 1 < MIN_MAP_SIZE) {
+					// Convert all plain values to variable entries
+					for (int i = 0; i < size; i++) {
+						Object val = vals[i];
+						assert val != null;
+						vals[i] = new VariableEntry("" + i, val);
+					}
+					isArray = false; // Definitely not a plain array, we have non-number name
+					
+					// Given name was not array index, so it can't be duplicate here
+					
+					// Append to list
+					vals[size] = new VariableEntry(name, value);
+					size++;
+					assertSmallList();
+					return; // Fast path ok: didn't check for duplicates
 				}
-				isArray = false; // Definitely not a plain array, we have non-number name
 			}
 			
 			VariableEntry entry = new VariableEntry(name, value);
@@ -327,29 +360,35 @@ public class ListVariable {
 			if (size < MIN_MAP_SIZE) {
 				assertSmallList();
 				for (int i = 0; i < size; i++) {
-					if (((VariableEntry) values[i]).compareTo(entry) == 0) {
-						values[i] = entry; // Overwrite this entry
+					if (((VariableEntry) vals[i]).compareTo(entry) == 0) {
+						vals[i] = entry; // Overwrite this entry
 						return;
 					}
 				}
+				
+				// New name to add
+				if (size + 1 < MIN_MAP_SIZE) { // Check if this is still small list
+					// Add to end of array
+					vals[size] = entry;
+					if (size > 1 && ((VariableEntry) vals[size - 1]).compareTo(((VariableEntry) vals[size])) > 0) {
+						isSorted = false; // Array is no longer in order
+					}
+					size++;
+					return;
+				}
 			}
 			
-			// Add to end of array
-			values[size] = entry;
-			if (size > 1 && ((VariableEntry) values[size - 1]).compareTo(((VariableEntry) values[size])) > 0) {
-				isSorted = false; // Array is no longer in order
-			}
-			size++;
-			
-			if (size >= MIN_MAP_SIZE) { // Time to create map
-				createMap(); // This will also put our new value
-			}
+			createMap();
+			assertMap();
+			assert map != null;
+			map.put(name, value);
 		}
 	}
 	
 	public void remove(int index) {
 		if (isArray && index >= 0 && index < size) { // Fast path: array
 			assertPlainArray();
+			assert values != null;
 			values[index] = null;
 			if (index == size - 1) { // Removed last
 				index--;
@@ -370,6 +409,7 @@ public class ListVariable {
 			} catch (NumberFormatException e) {
 				return; // Nothing to remove
 			}
+			assert values != null;
 			values[index] = null;
 			if (index == size - 1) { // Removed last
 				index--;
@@ -378,55 +418,49 @@ public class ListVariable {
 			}
 		} else if (size < MIN_MAP_SIZE) { // Small list; iterate, remove and don't leave sparse
 			assertSmallList();
+			Object[] vals = values;
+			assert vals != null;
 			for (int i = 0; i < size; i++) {
-				VariableEntry entry = (VariableEntry) values[i];
+				VariableEntry entry = (VariableEntry) vals[i];
 				if (name.equals(entry.getName())) {
 					// Remove everything but last by overwriting with next
 					for (int j = i + 1; j < size; j++) {
-						values[i] = values[j];
+						vals[i] = vals[j];
 						i++;
 					}
 					size--;
-					values[size] = null; // Remove last
+					vals[size] = null; // Remove last
 					break;
 				}
 			}
-		} else { // Remove from map and array
+		} else { // Remove from map
 			assertMap();
 			assert map != null;
 			map.remove(name);
 		}
 	}
 	
-	public Iterator<Object> unorderedIterator() {
+	public Iterator<Object> unorderedValues() {
 		assertValid();
-		if (!isArray) {
-			return new Iterator<Object>() {
-				private int index = 0;
-				
-				@Override
-				public Object next() {
-					VariableEntry entry = (VariableEntry) values[index];
-					index++;
-					assert entry != null : "forgot to call hasNext()";
-					return entry.getValue();
-				}
-				
-				@Override
-				public boolean hasNext() {
-					return index < size;
-				}
-			};
+		if (map != null) { // Map iterator
+			Iterator<Object> it = map.values().iterator();
+			assert it != null;
+			return it;
 		} else {
 			return new Iterator<Object>() {
 				private int index = 0;
 				
 				@Override
 				public Object next() {
-					Object value = values[index];
-					index++;
-					assert value != null : "forgot to call hasNext()";
-					return value;
+					Object[] vals = values;
+					assert vals != null : "mutation in list";
+					// Skip nulls in sparse array
+					for (Object value = vals[index]; index < size; index++, value = vals[index]) {
+						if (value != null) {
+							return value;
+						}
+					}
+					throw new NoSuchElementException(); // User forgot to call hasNext
 				}
 				
 				@Override
@@ -437,62 +471,22 @@ public class ListVariable {
 		}
 	}
 	
+	public Iterator<Object> orderedValues() {
+		ensureSorted();
+		return unorderedValues();
+	}
+	
 	/**
 	 * Ensures that this list is sorted. This will guarantee that next call to
-	 * {@link #orderedIterator()} will be fast, provided that nothing is added
-	 * to this list between call to this and it.
+	 * {@link #orderedIterator()} will be fast, but may reduce performance of
+	 * future random access operations.
 	 */
 	public void ensureSorted() {
 		assertValid();
 		if (isSorted) {
 			return; // No action needed
 		}
-		assertSortable();
-		Arrays.sort(values);
+		map = new TreeMap<>(map);
 		isSorted = true;
-	}
-	
-	public Iterator<VariableEntry> orderedIterator() {
-		assertValid();
-		ensureSorted(); // We need to return elements in order
-		if (!isArray) {
-			return new Iterator<VariableEntry>() {
-				private int index = 0;
-				
-				@Override
-				public VariableEntry next() {
-					VariableEntry entry = (VariableEntry) values[index];
-					index++;
-					assert entry != null : "forgot to call hasNext()";
-					return entry;
-				}
-				
-				@Override
-				public boolean hasNext() {
-					return index < size;
-				}
-			};
-		} else {
-			return new Iterator<VariableEntry>() {
-				
-				/**
-				 * Next index.
-				 */
-				private int index = 0;
-				
-				@Override
-				public VariableEntry next() {
-					Object value = values[index];
-					index++;
-					assert value != null : "forgot to call hasNext()";
-					return new VariableEntry("" + index, value);
-				}
-				
-				@Override
-				public boolean hasNext() {
-					return index < size;
-				}
-			};
-		}
 	}
 }
