@@ -41,7 +41,8 @@ public class ListVariable {
 	Object[] values;
 	
 	/**
-	 * This list is basically a plain Java array. Implies {@link #isSorted}.
+	 * This list is basically a plain Java array. Implies {@link #isSorted},
+	 * unless the array is sparse.
 	 */
 	private boolean isArray;
 	
@@ -88,7 +89,6 @@ public class ListVariable {
 	
 	void assertPlainArray() {
 		assert isArray : "not a plain array";
-		assert isSorted : "arrays are always sorted";
 		assert map == null : "map is unnecessary with plain array";
 	}
 	
@@ -153,10 +153,11 @@ public class ListVariable {
 	@Nullable
 	public Object get(int index) {
 		assertValid();
-		if (index > size) { // Value might be in map even if it is not in array
-			// Bail out of fast path
-		} else if (isArray) { // Fast path: read from array
+		if (isArray) { // Fast path: read from array
 			assertPlainArray();
+			if (index < 0 || index >= size) {
+				return null; // Out of range, doesn't exist
+			}
 			return values[index];
 		} else if (size < MIN_MAP_SIZE) { // Try to find by iterating
 			assertSmallList();
@@ -258,7 +259,7 @@ public class ListVariable {
 	 */
 	public void put(int index, Object value) {
 		assertValid();
-		if (isArray && index > 0) { // Fast paths
+		if (isArray && index >= 0) { // Fast paths
 			if (!putArray(index, value)) { // Use generic put; we have a sparse array
 				put("" + index, value);
 			}
@@ -343,6 +344,57 @@ public class ListVariable {
 			if (size >= MIN_MAP_SIZE) { // Time to create map
 				createMap(); // This will also put our new value
 			}
+		}
+	}
+	
+	public void remove(int index) {
+		if (isArray && index >= 0 && index < size) { // Fast path: array
+			assertPlainArray();
+			values[index] = null;
+			if (index == size - 1) { // Removed last
+				index--;
+			} else { // Sparse array
+				isSorted = false;
+			}
+		} else { // Delegate to generic remove
+			remove("" + index);
+		}
+	}
+	
+	public void remove(String name) {
+		if (isArray) { // Fast path: remove from array
+			assertPlainArray();
+			int index;
+			try {
+				index = Integer.parseInt(name);
+			} catch (NumberFormatException e) {
+				return; // Nothing to remove
+			}
+			values[index] = null;
+			if (index == size - 1) { // Removed last
+				index--;
+			} else { // Sparse array
+				isSorted = false;
+			}
+		} else if (size < MIN_MAP_SIZE) { // Small list; iterate, remove and don't leave sparse
+			assertSmallList();
+			for (int i = 0; i < size; i++) {
+				VariableEntry entry = (VariableEntry) values[i];
+				if (name.equals(entry.getName())) {
+					// Remove everything but last by overwriting with next
+					for (int j = i + 1; j < size; j++) {
+						values[i] = values[j];
+						i++;
+					}
+					size--;
+					values[size] = null; // Remove last
+					break;
+				}
+			}
+		} else { // Remove from map and array
+			assertMap();
+			assert map != null;
+			map.remove(name);
 		}
 	}
 	
