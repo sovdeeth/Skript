@@ -32,5 +32,8 @@ public class VariableScopeTest {
 		assertEquals("foo", scope.get(path, null));
 		scope.set(path, null, "bar");
 		assertEquals("bar", scope.get(path, null));
+		
+		scope.delete(path, null);
+		assertEquals(null, scope.get(path, null));
 	}
 }

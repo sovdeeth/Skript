@@ -132,4 +132,47 @@ public class VariableScope {
 		}
 		path.cachedParent = var; // Cache parent to make access faster next time
 	}
+	
+	public void delete(VariablePath path, @Nullable Event event) {
+		ListVariable parent = path.cachedParent;
+		if (parent != null) {
+			if (parent.isValid()) {
+				Object part = executePart(path.path[path.path.length - 1], event);
+				if (part instanceof Integer) {
+					parent.remove((int) part);
+				} else {
+					parent.remove((String) part);
+				}
+			} else { // Discard invalid cached list
+				path.cachedParent = null;
+			}
+		}
+		
+		// Look up the global variable in this scope
+		Object var = variables.get("" + executePart(path.path[0], event));
+		
+		// Variable inside at least one list
+		for (int i = 1; i < path.path.length - 1; i++) {
+			if (!(var instanceof ListVariable)) { // No list variable here
+				return; // Requested variable can't possibly exist
+			}
+			
+			Object part = executePart(path.path[i], event);
+			if (part instanceof Integer) {
+				var = ((ListVariable) var).get((int) part);
+			} else {
+				var = ((ListVariable) var).get((String) part);
+			}
+			if (i == path.path.length - 2) { // Cache list
+				assert var != null;
+				part = executePart(path.path[path.path.length - 1], event);
+				if (part instanceof Integer) {
+					((ListVariable) var).remove((int) part);
+				} else {
+					((ListVariable) var).remove((String) part);
+				}
+				break;
+			}
+		}
+	}
 }

@@ -233,10 +233,9 @@ public class ListVariable {
 			}
 		} else if (size < MIN_MAP_SIZE) { // Try to find the name by iterating
 			assertSmallList();
-			assert values != null;
-			for (Object o : values) {
-				assert o instanceof VariableEntry;
-				VariableEntry entry = (VariableEntry) o;
+			for (int i = 0; i < size; i++) {
+				assert values != null;
+				VariableEntry entry = (VariableEntry) values[i];
 				if (entry.getName().equals(name)) {
 					return entry.getValue();
 				}
