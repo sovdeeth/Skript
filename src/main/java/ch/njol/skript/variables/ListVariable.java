@@ -63,15 +63,14 @@ public class ListVariable {
 	Object[] values;
 	
 	/**
-	 * This list is basically a plain Java array. Implies {@link #isSorted},
-	 * unless this is sparse array. When this is not set, but {@link #values}
+	 * This list is basically a plain Java array. Implies {@link #isSorted}.
+	 * When this is not set, but {@link #values}
 	 * is present, this is small list.
 	 */
 	private boolean isArray;
 	
 	/**
 	 * Whether {@link #values} is in order or not.
-	 * TODO sparse random access
 	 */
 	private boolean isSorted;
 	
@@ -115,6 +114,11 @@ public class ListVariable {
 		assert isArray : "not a plain array";
 		assert values != null : "plain array without array";
 		assert map == null : "map is unnecessary with plain array";
+	}
+	
+	void assertSparseArray() {
+		assertPlainArray();
+		assert !isSorted : "not sparse array";
 	}
 	
 	void assertSmallList() {
@@ -401,6 +405,7 @@ public class ListVariable {
 	}
 	
 	public void remove(String name) {
+		assertValid();
 		if (isArray) { // Fast path: remove from array
 			assertPlainArray();
 			int index;
@@ -455,8 +460,12 @@ public class ListVariable {
 					Object[] vals = values;
 					assert vals != null : "mutation in list";
 					// Skip nulls in sparse array
-					for (Object value = vals[index]; index < size; index++, value = vals[index]) {
+					for (Object value = vals[index]; index < size; value = vals[index]) {
+						index++;
 						if (value != null) {
+							if (value instanceof VariableEntry) {
+								return ((VariableEntry) value).getValue();
+							}
 							return value;
 						}
 					}
@@ -483,10 +492,32 @@ public class ListVariable {
 	 */
 	public void ensureSorted() {
 		assertValid();
-		if (isSorted) {
+		if (isSorted) { // Ignore sparse plain arrays
 			return; // No action needed
 		}
 		map = new TreeMap<>(map);
+		isSorted = true;
+	}
+	
+	/**
+	 * Compacts this list, if possible. This may reduce memory usage if
+	 * compaction can be performed.
+	 */
+	public void compact() {
+		if (isSorted) {
+			return;
+		}
+		assertSparseArray();
+		Object[] vals = values;
+		assert vals != null;
+		int nullCount = 0;
+		for (int i = 0; i < size; i++) {
+			if (vals[i] == null) {
+				nullCount++;
+			} else {
+				vals[i - nullCount] = vals[i];
+			}
+		}
 		isSorted = true;
 	}
 }

@@ -1,6 +1,7 @@
 package ch.njol.skript.variables;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 import java.util.Iterator;
 
@@ -28,9 +29,9 @@ public class ListVariableTest {
 		for (int i = 0; i < 1000; i++) {
 			assertEquals(i, list.get(i));
 		}
-		Iterator<VariableEntry> it = list.orderedIterator();
+		Iterator<Object> it = list.orderedValues();
 		for (int i = 0; i < 1000; i++) {
-			assertEquals(i, it.next().getValue());
+			assertEquals(i, it.next());
 		}
 	}
 	
@@ -38,8 +39,15 @@ public class ListVariableTest {
 	public void smallListTest() {
 		ListVariable list = new ListVariable();
 		list.put("a", "a");
+		Iterator<Object> it = list.unorderedValues();
+		assertEquals("a", it.next());
+		assertFalse(it.hasNext());
+		list.put("b", "b");
 		list.assertSmallList();
 		assertEquals("a", list.get("a"));
+		assertEquals("b", list.get("b"));
+		list.remove("a");
+		assertEquals("b", list.get("b"));
 	}
 	
 	@Test
@@ -48,9 +56,11 @@ public class ListVariableTest {
 		for (char c = 0; c < 1000; c++) {
 			list.put("" + c, c);
 		}
-		Iterator<VariableEntry> it = list.orderedIterator();
+		Iterator<Object> it = list.orderedValues();
 		for (char c = 0; c < 1000; c++) {
-			assertEquals(c, it.next().getValue());
+			assertEquals(c, it.next());
 		}
+		assertFalse(it.hasNext());
+		list.assertMap();
 	}
 }
