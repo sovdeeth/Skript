@@ -19,8 +19,12 @@
  */
 package ch.njol.skript.expressions;
 
+import java.util.stream.Stream;
+
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.block.BlockState;
+import org.bukkit.block.Container;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
@@ -65,6 +69,8 @@ import ch.njol.util.coll.CollectionUtils;
 @Since("1.4.6 (players' name & display name), <i>unknown</i> (player list name), 2.0 (item name), 2.2-dev20 (inventory name)")
 public class ExprName extends SimplePropertyExpression<Object, String> {
 	
+	private static final boolean inventoryTitles = Skript.methodExists(Inventory.class, "getTitle");
+	
 	final static int ITEMSTACK = 1, ENTITY = 2, PLAYER = 4, INVENTORY = 8;
 	final static String[] types = {"itemstacks/slots", "livingentities", "players", "inventories"};
 	
@@ -91,9 +97,15 @@ public class ExprName extends SimplePropertyExpression<Object, String> {
 					Inventory inventory = ((Inventory) o);
 					Inventory copy;
 					if (inventory.getType() == InventoryType.CHEST) {
-						copy = Bukkit.createInventory(inventory.getHolder(), inventory.getSize(), name);
+						if (name != null)
+							copy = Bukkit.createInventory(inventory.getHolder(), inventory.getSize(), name);
+						else
+							copy = Bukkit.createInventory(inventory.getHolder(), inventory.getSize());
 					} else {
-						copy = Bukkit.createInventory(inventory.getHolder(), inventory.getType(), name);
+						if (name != null)
+							copy = Bukkit.createInventory(inventory.getHolder(), inventory.getType(), name);
+						else
+							copy = Bukkit.createInventory(inventory.getHolder(), inventory.getType());
 					}
 					copy.setContents(inventory.getContents());
 					inventory.getViewers().forEach(human -> human.openInventory(copy));
@@ -119,8 +131,9 @@ public class ExprName extends SimplePropertyExpression<Object, String> {
 						return null;
 					final ItemMeta m = ((ItemStack) o).getItemMeta();
 					return m == null || !m.hasDisplayName() ? null : m.getDisplayName();
-				} else if (o instanceof Inventory) {
-					return ((Inventory) o).getName();
+				// We must implement this differently in 1.14
+				//} else if (o instanceof Inventory) {
+				//	return ((Inventory) o).getName();
 				} else {
 					assert false;
 					return null;
@@ -173,8 +186,8 @@ public class ExprName extends SimplePropertyExpression<Object, String> {
 						return null;
 					final ItemMeta m = ((ItemStack) o).getItemMeta();
 					return m == null || !m.hasDisplayName() ? null : m.getDisplayName();
-				} else if (o instanceof Inventory) {
-					return ((Inventory) o).getTitle(); // Title is closest to display name... I guess
+				//} else if (o instanceof Inventory) {
+				//	return ((Inventory) o).getTitle(); // Title is closest to display name... I guess
 				} else {
 					assert false;
 					return null;

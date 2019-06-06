@@ -56,6 +56,7 @@ import org.bukkit.entity.Fireball;
 import org.bukkit.entity.Firework;
 import org.bukkit.entity.Fish;
 import org.bukkit.entity.FishHook;
+import org.bukkit.entity.Fox;
 import org.bukkit.entity.Ghast;
 import org.bukkit.entity.Giant;
 import org.bukkit.entity.Golem;
@@ -72,15 +73,19 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Llama;
 import org.bukkit.entity.LlamaSpit;
 import org.bukkit.entity.MagmaCube;
+import org.bukkit.entity.Mob;
 import org.bukkit.entity.Monster;
 import org.bukkit.entity.Mule;
 import org.bukkit.entity.MushroomCow;
 import org.bukkit.entity.Painting;
 import org.bukkit.entity.Phantom;
 import org.bukkit.entity.PigZombie;
+import org.bukkit.entity.Pillager;
 import org.bukkit.entity.PolarBear;
 import org.bukkit.entity.Projectile;
 import org.bukkit.entity.PufferFish;
+import org.bukkit.entity.Raider;
+import org.bukkit.entity.Ravager;
 import org.bukkit.entity.Salmon;
 import org.bukkit.entity.Shulker;
 import org.bukkit.entity.ShulkerBullet;
@@ -103,6 +108,7 @@ import org.bukkit.entity.TropicalFish;
 import org.bukkit.entity.Turtle;
 import org.bukkit.entity.Vex;
 import org.bukkit.entity.Vindicator;
+import org.bukkit.entity.WanderingTrader;
 import org.bukkit.entity.WaterMob;
 import org.bukkit.entity.Witch;
 import org.bukkit.entity.Wither;
@@ -198,11 +204,6 @@ public class SimpleEntityData extends EntityData<Entity> {
 		types.add(new SimpleEntityDataInfo("bottle of enchanting", ThrownExpBottle.class));
 		types.add(new SimpleEntityDataInfo("tnt", TNTPrimed.class));
 		types.add(new SimpleEntityDataInfo("leash hitch", LeashHitch.class));
-		if (Skript.classExists("org.bukkit.entity.Husk")) {
-			// Husk must be registered before zombie to work correctly
-			types.add(new SimpleEntityDataInfo("husk", Husk.class));
-		}
-		types.add(new SimpleEntityDataInfo("zombie", Zombie.class));
 		
 		if (Skript.classExists("org.bukkit.entity.ItemFrame")) {
 			types.add(new SimpleEntityDataInfo("item frame", ItemFrame.class));
@@ -230,6 +231,7 @@ public class SimpleEntityData extends EntityData<Entity> {
 		if (Skript.isRunningMinecraft(1, 11)) { // More subtypes, more supertypes - changes needed
 			types.add(new SimpleEntityDataInfo("wither skeleton", WitherSkeleton.class));
 			types.add(new SimpleEntityDataInfo("stray", Stray.class));
+			types.add(new SimpleEntityDataInfo("husk", Husk.class));
 			types.add(new SimpleEntityDataInfo("skeleton", Skeleton.class, true));
 
 			// Guardians
@@ -256,9 +258,8 @@ public class SimpleEntityData extends EntityData<Entity> {
 			types.add(new SimpleEntityDataInfo("evoker fangs", EvokerFangs.class));
 			types.add(new SimpleEntityDataInfo("vex", Vex.class));
 			types.add(new SimpleEntityDataInfo("vindicator", Vindicator.class));
-
-
 		}
+		
 		if (Skript.isRunningMinecraft(1, 13)) { // More subtypes, more supertypes - changes needed
 			types.add(new SimpleEntityDataInfo("dolphin", Dolphin.class));
 			types.add(new SimpleEntityDataInfo("phantom", Phantom.class));
@@ -269,18 +270,31 @@ public class SimpleEntityData extends EntityData<Entity> {
 			types.add(new SimpleEntityDataInfo("salmon", Salmon.class));
 			types.add(new SimpleEntityDataInfo("tropical fish", TropicalFish.class));
 			types.add(new SimpleEntityDataInfo("trident", Trident.class));
-
-
+		}
+		
+		if (Skript.isRunningMinecraft(1, 14)) {
+			types.add(new SimpleEntityDataInfo("fox", Fox.class));
+			types.add(new SimpleEntityDataInfo("pillager", Pillager.class));
+			types.add(new SimpleEntityDataInfo("ravager", Ravager.class));
+			
+			types.add(new SimpleEntityDataInfo("wandering trader", WanderingTrader.class));
+			types.add(new SimpleEntityDataInfo("raider", Raider.class, true));
 		}
 		if (Skript.classExists("org.bukkit.entity.Illusioner")) {
 			types.add(new SimpleEntityDataInfo("illusioner", Illusioner.class));
 		}
+		// Register zombie after Husk and Drowned to make sure both work
+		types.add(new SimpleEntityDataInfo("zombie", Zombie.class));
+		
 		// TODO !Update with every version [entities]
 		
 		// supertypes
 		types.add(new SimpleEntityDataInfo("human", HumanEntity.class, true));
 		types.add(new SimpleEntityDataInfo("damageable", Damageable.class, true));
-		types.add(new SimpleEntityDataInfo("monster", Monster.class, true)); //I don't know why Njol never included that. I did now ^^
+		types.add(new SimpleEntityDataInfo("monster", Monster.class, true));
+		if (Skript.classExists("org.bukkit.entity.Mob")) { // Introduced by Spigot 1.13
+			types.add(new SimpleEntityDataInfo("mob", Mob.class, true));
+		}
 		types.add(new SimpleEntityDataInfo("creature", Creature.class, true));
 		types.add(new SimpleEntityDataInfo("animal", Animals.class, true));
 		types.add(new SimpleEntityDataInfo("golem", Golem.class, true));

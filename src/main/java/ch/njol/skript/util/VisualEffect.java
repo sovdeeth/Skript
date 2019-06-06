@@ -81,10 +81,34 @@ public final class VisualEffect implements SyntaxElement, YggdrasilSerializable 
 			}
 		},
 		HURT(EntityEffect.HURT),
-		SHEEP_EAT("SHEEP_EAT", true), // Seriously, Spigot?
+		// Omit DEATH, because it causes client glitches
+		WOLF_SMOKE(EntityEffect.WOLF_SMOKE),
 		WOLF_HEARTS(EntityEffect.WOLF_HEARTS),
 		WOLF_SHAKE(EntityEffect.WOLF_SHAKE),
-		WOLF_SMOKE(EntityEffect.WOLF_SMOKE),
+		SHEEP_EAT("SHEEP_EAT", true), // Was once mistakenly removed from Spigot
+		IRON_GOLEM_ROSE(EntityEffect.IRON_GOLEM_ROSE),
+		VILLAGER_HEARTS(EntityEffect.VILLAGER_HEART),
+		VILLAGER_ENTITY_ANGRY(EntityEffect.VILLAGER_ANGRY),
+		VILLAGER_ENTITY_HAPPY(EntityEffect.VILLAGER_HAPPY),
+		WITCH_MAGIC(EntityEffect.WITCH_MAGIC),
+		ZOMBIE_TRANSFORM(EntityEffect.ZOMBIE_TRANSFORM),
+		FIREWORK_EXPLODE(EntityEffect.FIREWORK_EXPLODE),
+		
+		// Spigot 2017 entity effects update (1.10+)
+		ARROW_PARTICLES("ARROW_PARTICLES", true),
+		RABBIT_JUMP("RABBIT_JUMP", true),
+		LOVE_HEARTS("LOVE_HEARTS", true),
+		SQUID_ROTATE("SQUID_ROTATE", true),
+		ENTITY_POOF("ENTITY_POOF", true),
+		GUARDIAN_TARGET("GUARDIAN_TARGET", true),
+		SHIELD_BLOCK("SHIELD_BLOCK", true),
+		SHIELD_BREAK("SHIELD_BREAK", true),
+		ARMOR_STAND_HIT("ARMOR_STAND_HIT", true),
+		THORNS_HURT("THORNS_HURT", true),
+		IRON_GOLEM_SHEATH("IRON_GOLEM_SHEATH", true),
+		TOTEM_RESURRECT("TOTEM_RESURRECT", true),
+		HURT_DROWN("HURT_DROWN", true),
+		HURT_EXPLOSIION("HURT_EXPLOSION", true),
 		
 		// Particles
 		FIREWORKS_SPARK(Particle.FIREWORKS_SPARK),
@@ -151,7 +175,6 @@ public final class VisualEffect implements SyntaxElement, YggdrasilSerializable 
 			}
 		},
 		BLOCK_BREAK(Particle.BLOCK_CRACK) {
-			@SuppressWarnings("null")
 			@Override
 			public Object getData(final @Nullable Object raw, final Location l) {
 				if (raw == null)
@@ -177,7 +200,6 @@ public final class VisualEffect implements SyntaxElement, YggdrasilSerializable 
 			}
 		},
 		BLOCK_DUST(Particle.BLOCK_DUST) {
-			@SuppressWarnings("null")
 			@Override
 			public Object getData(final @Nullable Object raw, final Location l) {
 				if (raw == null)
@@ -213,7 +235,17 @@ public final class VisualEffect implements SyntaxElement, YggdrasilSerializable 
 		CURRENT_DOWN("CURRENT_DOWN"),
 		BUBBLE_COLUMN_UP("BUBBLE_COLUMN_UP"),
 		NAUTILUS("NAUTILUS"),
-		DOLPHIN("DOLPHIN");
+		DOLPHIN("DOLPHIN"),
+		
+		// 1.14 particles
+		SNEEZE("SNEEZE"),
+		CAMPFIRE_COSY_SMOKE("CAMPFIRE_COSY_SMOKE"),
+		CAMPFIRE_SIGNAL_SMOKE("CAMPFIRE_SIGNAL_SMOKE"),
+		COMPOSTER("COMPOSTER"),
+		FLASH("FLASH"),
+		FALLING_LAVA("FALLING_LAVA"),
+		LANDING_LAVA("LANDING_LAVA"),
+		FALLING_WATER("FALLING_WATER");
 		
 		
 		@Nullable
@@ -413,8 +445,21 @@ public final class VisualEffect implements SyntaxElement, YggdrasilSerializable 
 		return true;
 	}
 	
+	/**
+	 * Entity effects are always played on entities.
+	 * @return If this is an entity effect.
+	 */
 	public boolean isEntityEffect() {
 		return type.effect instanceof EntityEffect;
+	}
+	
+	/**
+	 * Particles are implemented differently from traditional effects in
+	 * Minecraft. Most new visual effects are particles.
+	 * @return If this is a particle effect.
+	 */
+	public boolean isParticle() {
+		return type.effect instanceof Particle;
 	}
 	
 	@Nullable
@@ -432,11 +477,15 @@ public final class VisualEffect implements SyntaxElement, YggdrasilSerializable 
 	public void play(final @Nullable Player[] ps, final Location l, final @Nullable Entity e, final int count, final int radius) {
 		assert e == null || l.equals(e.getLocation());
 		if (isEntityEffect()) {
-			if (e != null)
+			if (e != null) {
+				assert type.effect != null;
 				e.playEffect((EntityEffect) type.effect);
+			}
 		} else {
 			if (type.effect instanceof Particle) {
 				// Particle effect...
+				Particle particle = (Particle) type.effect;
+				assert particle != null;
 				Object pData = type.getData(data, l);
 				
 				assert type.effect != null;
@@ -451,30 +500,32 @@ public final class VisualEffect implements SyntaxElement, YggdrasilSerializable 
 					// Colored particles must be played one at time; otherwise, colors are broken
 					if (type.isColorable()) {
 						for (int i = 0; i < count; i++) {
-							l.getWorld().spawnParticle((Particle) type.effect, l, 0, dX, dY, dZ, speed, pData);
+							l.getWorld().spawnParticle(particle, l, 0, dX, dY, dZ, speed, pData);
 						}
 					} else {
-						l.getWorld().spawnParticle((Particle) type.effect, l, count, dX, dY, dZ, speed, pData);
+						l.getWorld().spawnParticle(particle, l, count, dX, dY, dZ, speed, pData);
 					}
 				} else {
 					for (final Player p : ps) {
 						if (type.isColorable()) {
 							for (int i = 0; i < count; i++) {
-								p.spawnParticle((Particle) type.effect, l, 0, dX, dY, dZ, speed, pData);
+								p.spawnParticle(particle, l, 0, dX, dY, dZ, speed, pData);
 							}
 						} else {
-							p.spawnParticle((Particle) type.effect, l, count, dX, dY, dZ, speed, pData);
+							p.spawnParticle(particle, l, count, dX, dY, dZ, speed, pData);
 						}
 					}
 				}
 			} else {
 				// Non-particle effect (whatever Spigot API says, there are a few)
+				Effect effect = (Effect) type.effect;
+				assert effect != null;
 				if (ps == null) {
 					//l.getWorld().spigot().playEffect(l, (Effect) type.effect, 0, 0, dX, dY, dZ, speed, count, radius);
-					l.getWorld().playEffect(l, (Effect) type.effect, 0, radius);
+					l.getWorld().playEffect(l, effect, 0, radius);
 				} else {
 					for (final Player p : ps)
-						p.playEffect(l, (Effect) type.effect, type.getData(data, l));
+						p.playEffect(l, effect, type.getData(data, l));
 				}
 			}
 		}
@@ -491,6 +542,23 @@ public final class VisualEffect implements SyntaxElement, YggdrasilSerializable 
 	
 	public static String getAllNames() {
 		return StringUtils.join(names, ", ");
+	}
+	
+	/**
+	 * Gets Bukkit effect backing this visual effect. It may be either
+	 * {@link Effect}, {@link EntityEffect} or {@link Particle}.
+	 * @return Backing effect.
+	 * @throws IllegalStateException When this is called before the effect
+	 * is initialized. Note that
+	 * {@link #init(Expression[], int, Kleenean, ParseResult)} may fail when
+	 * the used Minecraft version lacks support for effect used.
+	 */
+	public Object getEffect() {
+		Object effect = type.effect;
+		if (effect == null) { // init() not called or returned false
+			throw new IllegalStateException("effect not initialized");
+		}
+		return effect;
 	}
 	
 	@Override
