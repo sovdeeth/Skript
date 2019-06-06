@@ -82,6 +82,14 @@ public class ListVariable {
 	@Nullable
 	private Map<String, Object> map;
 	
+	/**
+	 * In Skript, singular variables may share names with list variables.
+	 * I.e. a::b::c and a::b::* access list contents, but a::b accesses this
+	 * "shadow" value.
+	 */
+	@Nullable
+	private Object shadowValue;
+	
 	public ListVariable() {
 		this.size = 0;
 		this.values = new Object[INITIAL_ARRAY_SIZE];
@@ -283,6 +291,7 @@ public class ListVariable {
 	private boolean putArray(int index, Object value) {
 		assertPlainArray();
 		if (index < size) { // Overwrite
+			// TODO handle shadow value
 			assert values != null;
 			values[index] = value;
 			return true;
@@ -321,7 +330,7 @@ public class ListVariable {
 	public void put(String name, Object value) {
 		assertValid();
 		if (map != null) { // Map exists; add only to it
-			map.put(name, value);
+			map.put(name, value); // TODO handle shadow value
 		} else { // No map; consider making one now
 			Object[] vals = values;
 			assert vals != null;
@@ -364,6 +373,7 @@ public class ListVariable {
 				assertSmallList();
 				for (int i = 0; i < size; i++) {
 					if (((VariableEntry) vals[i]).compareTo(entry) == 0) {
+						// TODO handle shadow value
 						vals[i] = entry; // Overwrite this entry
 						return;
 					}
@@ -384,6 +394,7 @@ public class ListVariable {
 			createMap();
 			assertMap();
 			assert map != null;
+			// TODO handle shadow value
 			map.put(name, value);
 		}
 	}
@@ -519,4 +530,14 @@ public class ListVariable {
 		}
 		isSorted = true;
 	}
+
+	@Nullable
+	public Object getShadowValue() {
+		return shadowValue;
+	}
+	
+	public void setShadowValue(@Nullable Object shadowValue) {
+		this.shadowValue = shadowValue;
+	}
+	
 }

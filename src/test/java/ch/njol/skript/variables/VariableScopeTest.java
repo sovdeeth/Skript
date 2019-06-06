@@ -25,7 +25,7 @@ public class VariableScopeTest {
 		VariablePath path = new VariablePath("test", "foo");
 		VariableScope scope = new VariableScope();
 		scope.set(path, null, "foo");
-		ListVariable list = (ListVariable) scope.get(new VariablePath("test"), null);
+		ListVariable list = (ListVariable) scope.get(new VariablePath("test", "*"), null);
 		assertNotNull(list);
 		assertEquals(1, list.getSize());
 		assertEquals(list, path.cachedParent);

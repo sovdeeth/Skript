@@ -15,6 +15,11 @@ import ch.njol.skript.lang.Expression;
 public class VariableScope {
 	
 	/**
+	 * Token signifying that a {@link ListVariable} can be returned.
+	 */
+	private static final String LIST_VALUES_TOKEN = "*";
+	
+	/**
 	 * All variables by their names. Unlike list variables, this map contains
 	 * only string keys.
 	 */
@@ -40,7 +45,7 @@ public class VariableScope {
 	@Nullable
 	public Object get(VariablePath path, @Nullable Event event) {
 		ListVariable parent = path.cachedParent;
-		if (parent != null) {
+		if (parent != null) { // TODO shadow values
 			if (parent.isValid()) {
 				Object part = executePart(path.path[path.path.length - 1], event);
 				if (part instanceof Integer) {
@@ -66,18 +71,23 @@ public class VariableScope {
 			if (part instanceof Integer) {
 				var = ((ListVariable) var).get((int) part);
 			} else {
-				var = ((ListVariable) var).get((String) part);
+				if (LIST_VALUES_TOKEN.equals(part)) {
+					assert i == path.path.length - 1;
+					return var;
+				} else {
+					var = ((ListVariable) var).get((String) part);
+				}
 			}
-			if (i == path.path.length - 1) { // Cache list
+			if (i == path.path.length - 2) { // Cache list to second-last
 				path.cachedParent = (ListVariable) var; // If we're writing null, there is already null there
 			}
 		}
-		return var;
+		return var instanceof ListVariable ? ((ListVariable) var).getShadowValue() : var;
 	}
 	
 	public void set(VariablePath path, @Nullable Event event, Object value) {
 		ListVariable parent = path.cachedParent;
-		if (parent != null) {
+		if (parent != null) { // TODO shadow values!
 			if (parent.isValid()) {
 				Object part = executePart(path.path[path.path.length - 1], event);
 				if (part instanceof Integer) {
@@ -104,38 +114,53 @@ public class VariableScope {
 		}
 		
 		// Variable inside at least one list; create lists as needed
-		for (int i = 1; i < path.path.length - 1; i++) {
+		for (int i = 1; i < path.path.length - 2; i++) {
 			Object part = executePart(path.path[i], event);
 			if (part instanceof Integer) {
 				int index = (int) part;
 				Object child = var.get(index);
-				if (child == null) {
-					child = new ListVariable();
+				if (!(child instanceof ListVariable)) {
+					ListVariable list = new ListVariable();
+					list.setShadowValue(child);
+					var.put(index, list);
+					child = list;
 				}
-				var.put(index, new ListVariable());
+				var = (ListVariable) child;
 			} else {
 				String name = (String) part;
 				Object child = var.get(name);
-				if (child == null) {
-					child = new ListVariable();
+				if (!(child instanceof ListVariable)) {
+					ListVariable list = new ListVariable();
+					list.setShadowValue(child);
+					var.put(name, list);
+					child = list;
 				}
-				var.put(name, new ListVariable());
+				var = (ListVariable) child;
 			}
 		}
 		
-		// Put to list variable with last path part as name
+		// If last is list token, second-last (ListVariable) in third-last (var)
 		Object last = executePart(path.path[path.path.length - 1], event);
 		if (last instanceof Integer) {
-			var.put((int) last, value);
+			assert !(value instanceof ListVariable); // List to singular value is error
+			// TODO handle this case
+			//var.put((int) last, value);
 		} else {
-			var.put((String) last, value);
+			if (LIST_VALUES_TOKEN.equals(last)) { // Replace whole list
+				assert value instanceof ListVariable; // Must not replace list with singular!
+				var.put((String) last, value); // Just replace whole list
+				path.cachedParent = var;
+			} else { // Replace shadow value in second-last
+				assert !(value instanceof ListVariable); // List to singular value is error
+				Object secondLast = executePart(path.path[path.path.length - 2], event);
+				// TODO handle this case
+			}
 		}
-		path.cachedParent = var; // Cache parent to make access faster next time
 	}
 	
 	public void delete(VariablePath path, @Nullable Event event) {
 		ListVariable parent = path.cachedParent;
-		if (parent != null) {
+		if (parent != null) { // TODO shadow values
 			if (parent.isValid()) {
 				Object part = executePart(path.path[path.path.length - 1], event);
 				if (part instanceof Integer) {
@@ -163,13 +188,18 @@ public class VariableScope {
 			} else {
 				var = ((ListVariable) var).get((String) part);
 			}
-			if (i == path.path.length - 2) { // Cache list
+			if (i == path.path.length - 2) { // Second-last: 
 				assert var != null;
 				part = executePart(path.path[path.path.length - 1], event);
 				if (part instanceof Integer) {
 					((ListVariable) var).remove((int) part);
 				} else {
-					((ListVariable) var).remove((String) part);
+					if (LIST_VALUES_TOKEN.equals(part)) { // Remove whole list
+						// TODO remove this list from third-last
+					} else { // Normal list remove
+						// TODO handle list with shadow
+						((ListVariable) var).remove((String) part);
+					}
 				}
 				break;
 			}
