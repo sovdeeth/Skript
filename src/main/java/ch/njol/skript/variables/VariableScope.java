@@ -33,10 +33,17 @@ public class VariableScope {
 			p = part;
 		}
 		assert p != null : "null variable path element";
-		assert p instanceof String || p instanceof Integer : "unknown variable path element";
+		assert p instanceof String || p instanceof Integer : "unknown variable path element " + p;
 		return p;
 	}
 	
+	/**
+	 * Gets a variable at given path.
+	 * @param path Path to variable.
+	 * @param event Currently executing event.
+	 * @return A variable value, or null if given path does not contain
+	 * a variable.
+	 */
 	@Nullable
 	public Object get(VariablePath path, @Nullable Event event) {
 		ListVariable parent = path.cachedParent;
@@ -75,6 +82,13 @@ public class VariableScope {
 		return var;
 	}
 	
+	/**
+	 * Sets a variable at given path. Parent list variables will be created
+	 * as needed.
+	 * @param path Path to variable.
+	 * @param event Currently executing event.
+	 * @param value A new value for the variable.
+	 */
 	public void set(VariablePath path, @Nullable Event event, Object value) {
 		ListVariable parent = path.cachedParent;
 		if (parent != null) {
@@ -133,6 +147,12 @@ public class VariableScope {
 		path.cachedParent = var; // Cache parent to make access faster next time
 	}
 	
+	/**
+	 * Deletes a variable at given path. If there is no such variable, nothing
+	 * will be done.
+	 * @param path Path to variable to be deleted.
+	 * @param event Currently executing event.
+	 */
 	public void delete(VariablePath path, @Nullable Event event) {
 		ListVariable parent = path.cachedParent;
 		if (parent != null) {

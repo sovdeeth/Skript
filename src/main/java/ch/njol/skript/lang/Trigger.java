@@ -25,8 +25,6 @@ import java.util.List;
 import org.bukkit.event.Event;
 import org.eclipse.jdt.annotation.Nullable;
 
-import ch.njol.skript.variables.Variables;
-
 /**
  * @author Peter Güttinger
  */
