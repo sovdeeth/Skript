@@ -14,6 +14,9 @@ public class VariablePath {
 	 * Name of variable split by list token ('::'). Elements are constant
 	 * Strings or expressions. Note: expression elements must NOT return
 	 * strings that may contain list token.
+	 * 
+	 * <p>Contents of this array should be considered stable; do not write to
+	 * it.
 	 */
 	final Object[] path;
 	

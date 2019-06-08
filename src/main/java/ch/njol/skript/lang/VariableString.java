@@ -52,6 +52,7 @@ import ch.njol.skript.util.StringMode;
 import ch.njol.skript.util.Utils;
 import ch.njol.skript.util.chat.ChatMessages;
 import ch.njol.skript.util.chat.MessageComponent;
+import ch.njol.skript.variables.TypeHints;
 import ch.njol.util.Checker;
 import ch.njol.util.Kleenean;
 import ch.njol.util.StringUtils;
@@ -59,12 +60,12 @@ import ch.njol.util.coll.CollectionUtils;
 import ch.njol.util.coll.iterator.SingleItemIterator;
 
 /**
- * Represents a string that may contain expressions, and is thus "variable".
- * 
- * @author Peter Güttinger
+ * VariableString is an expression that allows embedding expressions, such as
+ * variables, in text it produces. Additionally, it supports Minecraft's JSON
+ * chat formatting.
  */
 public class VariableString implements Expression<String> {
-	
+
 	private final static class ExpressionInfo {
 		ExpressionInfo(final Expression<?> expr) {
 			this.expr = expr;
@@ -81,7 +82,7 @@ public class VariableString implements Expression<String> {
 	private final String orig;
 	
 	/**
-	 * Variable string parts.
+	 * Variable string parts, i.e. expressions.
 	 */
 	@Nullable
 	private final Object[] string;
@@ -577,6 +578,10 @@ public class VariableString implements Expression<String> {
 		return "" + b.toString();
 	}
 	
+	/**
+	 * Constructs a variable name from this text.
+	 * @return A string that can be used as a variable name.
+	 */
 	public String getDefaultVariableName() {
 		if (isSimple) {
 			assert simple != null;
@@ -593,6 +598,54 @@ public class VariableString implements Expression<String> {
 			}
 		}
 		return "" + b.toString();
+	}
+	
+	/**
+	 * Checks if this string could form a static variable name. In such a name,
+	 * no variable parts ever produce the list separator '::'. This may allow
+	 * the variable system to do less (relatively expensive) string split
+	 * operations runtime.
+	 * 
+	 * <p>This method uses local variable type hints. Ensure that they're
+	 * either correct or nonexistent when calling this.
+	 * @return Whether this makes a static variable name or not.
+	 */
+	public boolean isStaticVariableName() {
+		if (isSimple) {
+			return true; // No variable parts -> no variable parts containing '::'
+		}
+		final Object[] string = this.string;
+		assert string != null;
+		for (Object o : string) {
+			if (o instanceof Variable) {
+				Variable<?> var = (Variable<?>) o;
+				if (var.isLocal() && var.getName().isSimple) { // Check type hints
+					String simple = var.getName().simple;
+					assert simple != null;
+					Class<?> hint = TypeHints.get(simple);
+					if (Object.class.equals(hint) || String.class.equals(hint)) {
+						return false; // Object: unknown type, String: user might've typed '::'
+					}
+				} else { // Probably a global variable; unknown return type
+					return false;
+				}
+			}
+		}
+		return true; // No issues found
+	}
+	
+	/**
+	 * Gets parts of this variable string. They may be either
+	 * {@link String}s or {@link Expression}s.
+	 * @return Parts.
+	 */
+	public Object[] getParts() {
+		if (isSimple) {
+			return new Object[] {simple};
+		} else {
+			assert string != null;
+			return string;
+		}
 	}
 	
 	public boolean isSimple() {
