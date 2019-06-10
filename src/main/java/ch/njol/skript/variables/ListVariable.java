@@ -72,7 +72,7 @@ public class ListVariable {
 	/**
 	 * Whether {@link #values} is in order or not.
 	 */
-	private boolean isSorted;
+	boolean isSorted;
 	
 	/**
 	 * Variable names mapped to their values. This does not exit until
@@ -394,7 +394,7 @@ public class ListVariable {
 			assert values != null;
 			values[index] = null;
 			if (index == size - 1) { // Removed last
-				index--;
+				size--;
 			} else { // Sparse array
 				isSorted = false;
 			}
@@ -453,11 +453,13 @@ public class ListVariable {
 		} else {
 			return new Iterator<Object>() {
 				private int index = 0;
+				private int removeIndex;
 				
 				@Override
 				public Object next() {
+					removeIndex = index; // Back up for remove()
 					Object[] vals = values;
-					assert vals != null : "mutation in list";
+					assert vals != null : "mutation in list variable (next)";
 					// Skip nulls in sparse array
 					for (Object value = vals[index]; index < size; value = vals[index]) {
 						index++;
@@ -474,6 +476,17 @@ public class ListVariable {
 				@Override
 				public boolean hasNext() {
 					return index < size;
+				}
+				
+				@Override
+				public void remove() {
+					assert values != null : "mutation in list variable (remove)";
+					values[removeIndex] = null; // Remove from array
+					if (removeIndex == size - 1) { // Removed last
+						size--;
+					} else { // Sparse array
+						isSorted = false;
+					}
 				}
 			};
 		}

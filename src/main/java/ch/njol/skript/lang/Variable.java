@@ -182,10 +182,6 @@ public class Variable<T> implements Expression<T> {
 	 */
 	@Nullable
 	public static <T> Variable<T> newInstance(VariableScope scope, String name, final Class<? extends T>[] types) {
-//		if (name.startsWith(LOCAL_VARIABLE_TOKEN) && name.contains(SEPARATOR)) {
-//			Skript.error("Local variables cannot be lists, i.e. must not contain the separator '" + SEPARATOR + "' (error in variable {" + name + "})");
-//			return null;
-//		} else
 		name = "" + name.trim();
 		if (!isValidVariableName(name, true, true))
 			return null;
@@ -331,27 +327,7 @@ public class Variable<T> implements Expression<T> {
 			scope.set(getPath(e), e, value);
 		}
 	}
-	
-	private final static boolean uuidSupported = Skript.methodExists(OfflinePlayer.class, "getUniqueId");
-	
-	/*
-	 * Workaround for player variables when a player has left and rejoined 
-	 * because the player object inside the variable will be a (kinda) dead variable
-	 * as a new player object has been created by the server.
-	 */
-	@SuppressWarnings({"deprecation"})
-	@Nullable Object convertIfOldPlayer(String key, Event event, @Nullable Object t){
-		if(SkriptConfig.enablePlayerVariableFix.value() && t != null && t instanceof Player){
-			Player p = (Player) t;
-			if(!p.isValid() && p.isOnline()){
-				Player player = uuidSupported ? Bukkit.getPlayer(p.getUniqueId()) : Bukkit.getPlayerExact(p.getName());
-				Variables.setVariable(key, player, event, local);
-				return player;
-			}
-		}
-		return t;
-	}
-	
+		
 	public Iterator<Pair<String, Object>> variablesIterator(Event e) {
 		// TODO list variable name,value iterator support
 		throw new UnsupportedOperationException();
@@ -438,51 +414,35 @@ public class Variable<T> implements Expression<T> {
 			case REMOVE_ALL:
 				assert delta != null;
 				if (list) {
-					final Map<String, Object> o = (Map<String, Object>) getRaw(e);
+					Object var = get(e);
+					if (!(var instanceof ListVariable)) {
+						break; // Nonexistent/empty list
+					}
+					ListVariable list = (ListVariable) var;
 					if (mode == ChangeMode.REMOVE) {
-						if (o == null)
-							return;
-						final ArrayList<String> rem = new ArrayList<>(); // prevents CMEs
-						for (final Object d : delta) {
-							for (final Entry<String, Object> i : o.entrySet()) {
-								if (Relation.EQUAL.is(Comparators.compare(i.getValue(), d))) {
-									String key = i.getKey();
-									if (key == null)
-										continue; // This is NOT a part of list variable
-									
-									// Otherwise, we'll mark that key to be set to null
-									rem.add(key);
+						// Remove one (random) occurrence of all values
+						for (Object d : delta) {
+							Iterator<Object> it = list.unorderedValues();
+							while (it.hasNext()) {
+								if (Relation.EQUAL.is(Comparators.compare(d, it.next()))) {
+									it.remove();
 									break;
 								}
 							}
 						}
-						for (final String r : rem) {
-							assert r != null;
-							setIndex(e, r, null);
-						}
 					} else if (mode == ChangeMode.REMOVE_ALL) {
-						if (o == null)
-							return;
-						final ArrayList<String> rem = new ArrayList<>(); // prevents CMEs
-						for (final Entry<String, Object> i : o.entrySet()) {
-							for (final Object d : delta) {
-								if (Relation.EQUAL.is(Comparators.compare(i.getValue(), d)))
-									rem.add(i.getKey());
+						Iterator<Object> it = list.unorderedValues();
+						while (it.hasNext()) {
+							for (Object d : delta) {
+								if (Relation.EQUAL.is(Comparators.compare(d, it.next()))) {
+									it.remove();
+								}
 							}
-						}
-						for (final String r : rem) {
-							assert r != null;
-							setIndex(e, r, null);
 						}
 					} else {
 						assert mode == ChangeMode.ADD;
-						int i = 1;
 						for (final Object d : delta) {
-							if (o != null)
-								while (o.containsKey("" + i))
-									i++;
-							setIndex(e, "" + i, d);
-							i++;
+							list.add(delta);
 						}
 					}
 				} else {
