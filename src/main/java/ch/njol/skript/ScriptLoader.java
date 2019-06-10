@@ -90,8 +90,9 @@ import ch.njol.skript.registrations.Converters;
 import ch.njol.skript.util.Date;
 import ch.njol.skript.util.ExceptionUtils;
 import ch.njol.skript.util.Task;
+import ch.njol.skript.variables.LocalVariableScope;
 import ch.njol.skript.variables.TypeHints;
-import ch.njol.skript.variables.Variables;
+import ch.njol.skript.variables.VariableScope;
 import ch.njol.util.Callback;
 import ch.njol.util.Kleenean;
 import ch.njol.util.NonNullPair;
@@ -191,6 +192,14 @@ final public class ScriptLoader {
 		currentEventName = null;
 		currentEvents = null;
 		hasDelayBefore = Kleenean.FALSE;
+	}
+	
+	/**
+	 * Gets local variable scope associated with current event.
+	 * @return Local variable scope.
+	 */
+	public static LocalVariableScope getLocalVariables() {
+		
 	}
 	
 	public static List<TriggerSection> currentSections = new ArrayList<>();

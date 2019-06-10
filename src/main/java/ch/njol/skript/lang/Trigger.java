@@ -25,25 +25,59 @@ import java.util.List;
 import org.bukkit.event.Event;
 import org.eclipse.jdt.annotation.Nullable;
 
-/**
- * @author Peter Güttinger
- */
+import ch.njol.skript.variables.LocalVariableScope;
+import ch.njol.skript.variables.VariableScope;
+
 public class Trigger extends TriggerSection {
 	
+	/**
+	 * Name of the trigger.
+	 */
 	private final String name;
+	
+	/**
+	 * Event filter associated with this trigger.
+	 */
 	private final SkriptEvent event;
 	
+	/**
+	 * Script file this trigger was loaded from.
+	 */
 	@Nullable
 	private final File script;
+	
+	/**
+	 * Line in script this trigger starts on. -1 means that no line number is
+	 * available.
+	 */
 	private int line = -1; // -1 is default: it means there is no line number available
+	
+	/**
+	 * Debug information associated with this trigger parse-time.
+	 */
 	private String debugLabel;
 	
-	public Trigger(final @Nullable File script, final String name, final SkriptEvent event, final List<TriggerItem> items) {
+	public Trigger(@Nullable File script, String name, SkriptEvent event, List<TriggerItem> items, LocalVariableScope scope) {
 		super(items);
 		this.script = script;
 		this.name = name;
 		this.event = event;
 		this.debugLabel = "unknown trigger";
+		
+		// Add last item to clean up local variables
+		items.add(new TriggerItem() {
+			
+			@Override
+			protected boolean run(Event e) {
+				scope.finishedEvent(e);
+				return true;
+			}
+			
+			@Override
+			public String toString(@Nullable Event e, boolean debug) {
+				return "clean local variables";
+			}
+		});
 	}
 	
 	/**
@@ -52,23 +86,7 @@ public class Trigger extends TriggerSection {
 	 * @return false if an exception occurred
 	 */
 	public boolean execute(final Event e) {
-		boolean success = TriggerItem.walk(this, e);
-		// Clear local variables
-		Variables.removeLocals(e);
-		/*
-		 * Local variables can be used in delayed effects by backing reference
-		 * of VariablesMap up. Basically:
-		 * 
-		 * Object localVars = Variables.removeLocals(e);
-		 * 
-		 * ... and when you want to continue execution:
-		 * 
-		 * Variables.setLocalVariables(e, localVars);
-		 * 
-		 * See Delay effect for reference.
-		 */
-		
-		return success;
+		return TriggerItem.walk(this, e);
 	}
 	
 	@Override
@@ -124,5 +142,4 @@ public class Trigger extends TriggerSection {
 	public String getDebugLabel() {
 		return debugLabel;
 	}
-	
 }

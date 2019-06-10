@@ -37,6 +37,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.eclipse.jdt.annotation.Nullable;
 
+import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptAPIException;
 import ch.njol.skript.SkriptConfig;
@@ -178,10 +179,14 @@ public class Variable<T> implements Expression<T> {
 	}
 	
 	/**
-	 * Prints errors
+	 * Creates a new reference to a variable. This is commonly called by parser
+	 * and prints errors when they're encountered
+	 * @param name Name of the variable. Parsed as a variable string.
+	 * @param types Types which this reference should supply, in order of
+	 * preference.
 	 */
 	@Nullable
-	public static <T> Variable<T> newInstance(VariableScope scope, String name, final Class<? extends T>[] types) {
+	public static <T> Variable<T> newInstance(String name, final Class<? extends T>[] types) {
 		name = "" + name.trim();
 		if (!isValidVariableName(name, true, true))
 			return null;
@@ -195,6 +200,14 @@ public class Variable<T> implements Expression<T> {
 		
 		boolean isLocal = name.startsWith(LOCAL_VARIABLE_TOKEN);
 		boolean isPlural = name.endsWith(SEPARATOR + "*");
+		
+		// Figure out scope 
+		VariableScope scope;
+		if (isLocal) {
+			 scope = ScriptLoader.getLocalVariables();
+		} else {
+			
+		}
 		
 		// Check for local variable type hints
 		if (isLocal && vs.isSimple()) { // Only variable names we fully know already
