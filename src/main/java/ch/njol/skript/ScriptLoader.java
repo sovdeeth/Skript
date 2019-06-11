@@ -176,6 +176,12 @@ final public class ScriptLoader {
 	private static Class<? extends Event>[] currentEvents = null;
 	
 	/**
+	 * Local variable scope for current event.
+	 */
+	@Nullable
+	private static LocalVariableScope localVariables;
+	
+	/**
 	 * Call {@link #deleteCurrentEvent()} after parsing
 	 * 
 	 * @param name
@@ -186,12 +192,14 @@ final public class ScriptLoader {
 		currentEventName = name;
 		currentEvents = events;
 		hasDelayBefore = Kleenean.FALSE;
+		localVariables = new LocalVariableScope();
 	}
 	
 	public static void deleteCurrentEvent() {
 		currentEventName = null;
 		currentEvents = null;
 		hasDelayBefore = Kleenean.FALSE;
+		localVariables = null;
 	}
 	
 	/**
@@ -199,7 +207,11 @@ final public class ScriptLoader {
 	 * @return Local variable scope.
 	 */
 	public static LocalVariableScope getLocalVariables() {
-		
+		LocalVariableScope scope = localVariables;
+		if (scope == null) {
+			throw new IllegalStateException("local variables unavailable");
+		}
+		return scope;
 	}
 	
 	public static List<TriggerSection> currentSections = new ArrayList<>();
@@ -992,8 +1004,12 @@ final public class ScriptLoader {
 		return r;
 	}
 	
+	public static ArrayList<TriggerItem> loadItems(SectionNode node) {
+		return loadItems(node, true);
+	}
+	
 	@SuppressWarnings("unchecked")
-	public static ArrayList<TriggerItem> loadItems(final SectionNode node) {
+	public static ArrayList<TriggerItem> loadItems(SectionNode node, boolean ownVariables) {
 		
 		if (Skript.debug())
 			indentation += "    ";
@@ -1103,6 +1119,28 @@ final public class ScriptLoader {
 				// Destroy these conditional type hints
 				TypeHints.exitScope();
 			}
+		}
+		
+		if (ownVariables) {
+			// Clean up local variables when exiting this
+			items.add(new TriggerItem() {
+				
+				/**
+				 * Current local variables.
+				 */
+				private LocalVariableScope locals = getLocalVariables();
+				
+				@Override
+				protected boolean run(Event e) {
+					locals.finishedEvent(e);
+					return true;
+				}
+				
+				@Override
+				public String toString(@Nullable Event e, boolean debug) {
+					return "clean local variables";
+				}
+			});
 		}
 		
 		for (int i = 0; i < items.size() - 1; i++)

@@ -57,27 +57,12 @@ public class Trigger extends TriggerSection {
 	 */
 	private String debugLabel;
 	
-	public Trigger(@Nullable File script, String name, SkriptEvent event, List<TriggerItem> items, LocalVariableScope scope) {
+	public Trigger(@Nullable File script, String name, SkriptEvent event, List<TriggerItem> items) {
 		super(items);
 		this.script = script;
 		this.name = name;
 		this.event = event;
 		this.debugLabel = "unknown trigger";
-		
-		// Add last item to clean up local variables
-		items.add(new TriggerItem() {
-			
-			@Override
-			protected boolean run(Event e) {
-				scope.finishedEvent(e);
-				return true;
-			}
-			
-			@Override
-			public String toString(@Nullable Event e, boolean debug) {
-				return "clean local variables";
-			}
-		});
 	}
 	
 	/**

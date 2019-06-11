@@ -63,7 +63,7 @@ public class Loop extends TriggerSection {
 		ScriptLoader.currentSections.add(this);
 		ScriptLoader.currentLoops.add(this);
 		try {
-			setTriggerItems(ScriptLoader.loadItems(node));
+			setTriggerItems(ScriptLoader.loadItems(node, false));
 		} finally {
 			ScriptLoader.currentLoops.remove(ScriptLoader.currentLoops.size() - 1);
 			ScriptLoader.currentSections.remove(ScriptLoader.currentSections.size() - 1);
