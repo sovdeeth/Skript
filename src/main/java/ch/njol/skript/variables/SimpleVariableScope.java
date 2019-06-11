@@ -23,7 +23,7 @@ public class SimpleVariableScope implements VariableScope {
 		this.variables = new HashMap<>(); // TODO configurable map size
 	}
 	
-	private static Object executePart(@Nullable Object part, @Nullable Event event) {
+	static Object executePart(@Nullable Object part, @Nullable Event event) {
 		Object p;
 		if (part instanceof Expression<?>) { // Execute part if it is expression
 			assert event != null : "expression parts require event";
