@@ -38,12 +38,10 @@ import ch.njol.skript.lang.ExpressionList;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.VariableString;
 import ch.njol.skript.util.chat.BungeeConverter;
+import ch.njol.skript.util.chat.ChatMessages;
 import ch.njol.skript.util.chat.MessageComponent;
 import ch.njol.util.Kleenean;
 
-/**
- * @author Peter Güttinger
- */
 @Name("Message")
 @Description("Sends a message to the given player.")
 @Examples({"message \"A wild %player% appeared!\"",
@@ -82,13 +80,22 @@ public class EffMessage extends Effect {
 	@Override
 	protected void execute(final Event e) {
 		for (Expression<? extends String> message : messages) {
-			for (CommandSender sender : recipients.getArray(e)) {
-				if (message instanceof VariableString && sender instanceof Player) { // This could contain json formatting
-					List<MessageComponent> components = ((VariableString) message).getMessageComponents(e);
-					((Player) sender).spigot().sendMessage(BungeeConverter.convert(components));
-				} else {
+			for (CommandSender receiver : recipients.getArray(e)) {
+				if (receiver instanceof Player) { // Can use JSON formatting
+					if (message instanceof VariableString) { // Avoid processing ANY chat codes
+						((Player) receiver).spigot().sendMessage(BungeeConverter.convert(
+								ChatMessages.parse(((VariableString) message).toUnformattedString(e))));
+					} else { // It is just a string, parse components from it
+						for (String string : message.getArray(e)) {
+							assert string != null;
+							((Player) receiver).spigot().sendMessage(BungeeConverter.convert(
+									ChatMessages.parse(string)));
+						}
+					}
+				} else { // Not a player, send plain text with legacy formatting
 					for (String string : message.getArray(e)) {
-						sender.sendMessage(string);
+						assert string != null;
+						receiver.sendMessage(string);
 					}
 				}
 			}
