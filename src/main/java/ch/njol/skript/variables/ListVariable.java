@@ -100,6 +100,14 @@ public class ListVariable {
 		return size != INVALID_LIST;
 	}
 	
+	void invalidate() {
+		size = INVALID_LIST; // Set invalid marker
+		
+		// Free contents to GC
+		values = null;
+		map = null;
+	}
+	
 	/**
 	 * Gets how many elements this list has.
 	 * @return List size.
@@ -390,22 +398,25 @@ public class ListVariable {
 		}
 	}
 	
-	public void remove(int index) {
+	@Nullable
+	public Object remove(int index) {
 		if (isArray && index >= 0 && index < size) { // Fast path: array
 			assertPlainArray();
 			assert values != null;
-			values[index] = null;
+			Object oldValue = values[index] = null;
 			if (index == size - 1) { // Removed last
 				size--;
 			} else { // Sparse array
 				isSorted = false;
 			}
+			return oldValue;
 		} else { // Delegate to generic remove
-			remove("" + index);
+			return remove("" + index);
 		}
 	}
 	
-	public void remove(String name) {
+	@Nullable
+	public Object remove(String name) {
 		assertValid();
 		if (isArray) { // Fast path: remove from array
 			assertPlainArray();
@@ -413,8 +424,10 @@ public class ListVariable {
 			try {
 				index = Integer.parseInt(name);
 			} catch (NumberFormatException e) {
-				return; // Nothing to remove
+				return null; // Nothing to remove
 			}
+			assert values != null;
+			Object oldValue = values[index];
 			assert values != null;
 			values[index] = null;
 			if (index == size - 1) { // Removed last
@@ -422,6 +435,7 @@ public class ListVariable {
 			} else { // Sparse array
 				isSorted = false;
 			}
+			return oldValue;
 		} else if (size < MIN_MAP_SIZE) { // Small list; iterate, remove and don't leave sparse
 			assertSmallList();
 			Object[] vals = values;
@@ -429,20 +443,22 @@ public class ListVariable {
 			for (int i = 0; i < size; i++) {
 				VariableEntry entry = (VariableEntry) vals[i];
 				if (name.equals(entry.getName())) {
+					Object oldValue = vals[i];
 					// Remove everything but last by overwriting with next
 					for (int j = i + 1; j < size; j++) {
 						vals[i] = vals[j];
 						i++;
 					}
 					size--;
-					vals[size] = null; // Remove last
-					break;
+					vals[size] = null; // Free last for GC
+					return oldValue;
 				}
 			}
+			return null; // Nothing found with that name
 		} else { // Remove from map
 			assertMap();
 			assert map != null;
-			map.remove(name);
+			return map.remove(name);
 		}
 	}
 	

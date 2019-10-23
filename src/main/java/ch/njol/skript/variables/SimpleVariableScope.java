@@ -159,7 +159,15 @@ public class SimpleVariableScope implements VariableScope {
 		}
 		
 		// Look up the global variable in this scope
-		Object var = variables.get("" + executePart(path.path[0], event));
+		String rootKey = "" + executePart(path.path[0], event);
+		if (path.path.length == 1) { // Target variable is not in any list
+			Object removed = variables.remove(rootKey); // Remove it
+			if (removed instanceof ListVariable) {
+				((ListVariable) removed).invalidate();
+			}
+			return;
+		}
+		Object var = variables.get(rootKey);
 		
 		// Variable inside at least one list
 		for (int i = 1; i < path.path.length - 1; i++) {
@@ -176,10 +184,14 @@ public class SimpleVariableScope implements VariableScope {
 			if (i == path.path.length - 2) { // Cache list
 				assert var != null;
 				part = executePart(path.path[path.path.length - 1], event);
+				Object removed;
 				if (part instanceof Integer) {
-					((ListVariable) var).remove((int) part);
+					removed = ((ListVariable) var).remove((int) part);
 				} else {
-					((ListVariable) var).remove((String) part);
+					removed = ((ListVariable) var).remove((String) part);
+				}
+				if (removed instanceof ListVariable) {
+					((ListVariable) removed).invalidate();
 				}
 				break;
 			}
