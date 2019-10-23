@@ -24,6 +24,7 @@ import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -380,7 +381,10 @@ final public class ScriptLoader {
 					
 					// Use internal unload method which does not call validateFunctions()
 					unloadScript_(script);
-					Functions.clearFunctions(script);
+					String name = Skript.getInstance().getDataFolder().toPath().toAbsolutePath()
+							.resolve(Skript.SCRIPTSFOLDER).relativize(script.toPath()).toString();
+					assert name != null;
+					Functions.clearFunctions(name);
 				}
 				Functions.validateFunctions(); // Manually validate functions
 			}
@@ -700,7 +704,7 @@ final public class ScriptLoader {
 					event = replaceOptions(event);
 					
 					final NonNullPair<SkriptEventInfo<?>, SkriptEvent> parsedEvent = SkriptParser.parseEvent(event, "can't understand this event: '" + node.getKey() + "'");
-					if (parsedEvent == null)
+					if (parsedEvent == null || !parsedEvent.getSecond().shouldLoadEvent())
 						continue;
 					
 					if (Skript.debug() || node.debug())
@@ -752,11 +756,6 @@ final public class ScriptLoader {
 				for (ScriptCommand command : commands) {
 					assert command != null;
 					Commands.registerCommand(command);
-				}
-				
-				for (Function<?> func : functions) {
-					assert func != null;
-					Functions.putFunction(func);
 				}
 				
 				for (ParsedEventData event : events) {
@@ -822,7 +821,7 @@ final public class ScriptLoader {
 	 *
 	 * @param directory a directory or a single file
 	 */
-	public static List<Config> loadStructures(final File directory) {
+	public static List<Config> loadStructures(File directory) {
 		if (!directory.isDirectory())
 			return loadStructures(new File[]{directory});
 		
@@ -834,7 +833,9 @@ final public class ScriptLoader {
 			if (f.isDirectory()) {
 				loadedFiles.addAll(loadStructures(f));
 			} else {
-				loadedFiles.add(loadStructure(f));
+				Config cfg = loadStructure(f);
+				if (cfg != null)
+					loadedFiles.add(cfg);
 			}
 		}
 		return loadedFiles;
@@ -853,8 +854,11 @@ final public class ScriptLoader {
 		}
 		
 		try {
-			String name = Skript.getInstance().getDataFolder().toPath().resolve(Skript.SCRIPTSFOLDER).relativize(f.toPath()).toString();
+			String name = Skript.getInstance().getDataFolder().toPath().toAbsolutePath()
+					.resolve(Skript.SCRIPTSFOLDER).relativize(f.toPath().toAbsolutePath()).toString();
 			assert name != null;
+			Functions.clearFunctions(name); // Functions are still callable from other scripts
+			// We're just making it impossible to look them up
 			return loadStructure(new FileInputStream(f), name);
 		} catch (final IOException e) {
 			Skript.error("Could not load " + f.getName() + ": " + ExceptionUtils.toString(e));
@@ -965,7 +969,10 @@ final public class ScriptLoader {
 	 */
 	public static ScriptInfo unloadScript(final File script) {
 		final ScriptInfo r = unloadScript_(script);
-		Functions.clearFunctions(script);
+		String name = Skript.getInstance().getDataFolder().toPath().toAbsolutePath()
+				.resolve(Skript.SCRIPTSFOLDER).relativize(script.toPath()).toString();
+		assert name != null;
+		Functions.clearFunctions(name);
 		Functions.validateFunctions();
 		return r;
 	}

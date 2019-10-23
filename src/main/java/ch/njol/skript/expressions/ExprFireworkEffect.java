@@ -24,6 +24,7 @@ import org.bukkit.event.Event;
 import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.NoDoc;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -32,6 +33,7 @@ import ch.njol.skript.util.Color;
 import ch.njol.util.Kleenean;
 import ch.njol.util.coll.CollectionUtils;
 
+@NoDoc
 public class ExprFireworkEffect extends SimpleExpression<FireworkEffect> {
 
 	static {
@@ -49,7 +51,7 @@ public class ExprFireworkEffect extends SimpleExpression<FireworkEffect> {
 	@SuppressWarnings({"null", "unchecked"})
 	@Override
 	public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
-		flicker = parseResult.mark == 2 && parseResult.mark > 3;
+		flicker = parseResult.mark == 2 || parseResult.mark > 3;
 		trail = parseResult.mark >= 3;
 		hasFade = matchedPattern == 1;
 		type = (Expression<FireworkEffect.Type>) exprs[0];

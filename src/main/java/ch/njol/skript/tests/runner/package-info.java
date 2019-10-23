@@ -17,10 +17,12 @@
  *
  * Copyright 2011-2017 Peter Güttinger and contributors
  */
-package ch.njol.skript.classes;
 
 /**
- * @author Peter Güttinger
+ * Support for script-based testing.
  */
-@Deprecated
-public interface SerializableConverter<F, T> extends Converter<F, T> {}
+@NonNullByDefault
+package ch.njol.skript.tests.runner;
+
+import org.eclipse.jdt.annotation.NonNullByDefault;
+

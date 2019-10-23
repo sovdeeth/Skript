@@ -213,6 +213,7 @@ public class ItemType implements Unit, Iterable<ItemData>, Container<ItemStack>,
 		final ItemType bl = i.block, it = i.item;
 		block = bl == null ? null : bl.clone();
 		item = it == null ? null : it.clone();
+		types.clear();
 		for (final ItemData d : i) {
 			types.add(d.clone());
 		}
@@ -742,7 +743,7 @@ public class ItemType implements Unit, Iterable<ItemData>, Container<ItemStack>,
 	}
 	
 	/**
-	 * @param lists The lists to remove this type from. Each list should implement {@link RandomAccess} or this method will be slow.
+	 * @param lists The lists to remove this type from. Each list should implement {@link RandomAccess}.
 	 * @return Whether this whole item type could be removed (i.e. returns false if the lists didn't contain this item type completely)
 	 */
 	@SafeVarargs
@@ -759,7 +760,17 @@ public class ItemType implements Unit, Iterable<ItemData>, Container<ItemStack>,
 				assert list instanceof RandomAccess;
 				for (int i = 0; i < list.size(); i++) {
 					final ItemStack is = list.get(i);
-					if (is != null && d.isOfType(is)) {
+					/*
+					 * Do NOT use equals()! It doesn't exactly match items
+					 * for historical reasons. This will change in future.
+					 * 
+					 * In Skript 2.3, equals() was used for getting closest
+					 * possible aliases for items. It was horribly hacky, and
+					 * is not done anymore. Still, some uses of equals() expect
+					 * it to return true for two "same items", even if their
+					 * item meta is completely different.
+					 */
+					if (is != null && d.matchAlias(new ItemData(is)).isAtLeast(MatchQuality.EXACT)) {
 						if (all && amount == -1) {
 							list.set(i, null);
 							removed = 1;
@@ -840,7 +851,7 @@ public class ItemType implements Unit, Iterable<ItemData>, Container<ItemStack>,
 			return true;
 		int added = 0;
 		for (int i = 0; i < buf.length; i++) {
-			if (Utils.itemStacksEqual(is, buf[i])) {
+			if (ItemUtils.itemStacksEqual(is, buf[i])) {
 				final int toAdd = Math.min(buf[i].getMaxStackSize() - buf[i].getAmount(), is.getAmount() - added);
 				added += toAdd;
 				buf[i].setAmount(buf[i].getAmount() + toAdd);
@@ -1248,7 +1259,7 @@ public class ItemType implements Unit, Iterable<ItemData>, Container<ItemStack>,
 	 * containing the results.
 	 * @return Base item type.
 	 */
-	public Object getBaseType() {
+	public ItemType getBaseType() {
 		ItemType copy = new ItemType();
 		for (ItemData data : types) {
 			copy.add(data.aliasCopy());

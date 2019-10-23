@@ -30,7 +30,7 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 public class FoxData extends EntityData<Fox> {
 	
 	static {
-		if (Skript.isRunningMinecraft(1, 14))
+		if (Skript.classExists("org.bukkit.entity.Fox"))
 			EntityData.register(FoxData.class, "fox", Fox.class, 1,
 					"fox", "red fox", "snow fox");
 	}
@@ -60,7 +60,7 @@ public class FoxData extends EntityData<Fox> {
 	
 	@Override
 	protected boolean match(Fox entity) {
-		return type == entity.getFoxType();
+		return type == null || type == entity.getFoxType();
 	}
 	
 	@Override

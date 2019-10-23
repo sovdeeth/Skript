@@ -42,6 +42,7 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.command.CommandSender;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Cat;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.LivingEntity;
@@ -101,6 +102,7 @@ public class BukkitClasses {
 	public BukkitClasses() {}
 
 	static {
+		final boolean GET_ENTITY_METHOD_EXISTS = Skript.methodExists(Bukkit.class, "getEntity", UUID.class);
 		Classes.registerClass(new ClassInfo<>(Entity.class, "entity")
 				.user("entit(y|ies)")
 				.name("Entity")
@@ -119,12 +121,29 @@ public class BukkitClasses {
 					@Override
 					@Nullable
 					public Entity parse(final String s, final ParseContext context) {
+						UUID uuid;
+						try {
+							uuid = UUID.fromString(s);
+						} catch (IllegalArgumentException iae) {
+							return null;
+						}
+						if (GET_ENTITY_METHOD_EXISTS) {
+							return Bukkit.getEntity(uuid);
+						} else {
+							for (World world : Bukkit.getWorlds()) {
+								for (Entity entity : world.getEntities()) {
+									if (entity.getUniqueId().equals(uuid)) {
+										return entity;
+									}
+								}
+							}
+						}
 						return null;
 					}
 					
 					@Override
 					public boolean canParse(final ParseContext context) {
-						return false;
+						return context == ParseContext.COMMAND;
 					}
 					
 					@Override
@@ -662,7 +681,7 @@ public class BukkitClasses {
 				.user("players?")
 				.name("Player")
 				.description("A player. Depending on whether a player is online or offline several actions can be performed with them, " +
-								"though you won't get any errors when using effects that only work if the player is online (e.g. changing his inventory) on an offline player.",
+								"though you won't get any errors when using effects that only work if the player is online (e.g. changing their inventory) on an offline player.",
 						"You have two possibilities to use players as command arguments: &lt;player&gt; and &lt;offline player&gt;. " +
 								"The first requires that the player is online and also accepts only part of the name, " +
 								"while the latter doesn't require that the player is online, but the player's name has to be entered exactly.")
@@ -916,8 +935,8 @@ public class BukkitClasses {
 		Classes.registerClass(new ClassInfo<>(GameMode.class, "gamemode")
 				.user("game ?modes?")
 				.name("Game Mode")
-				.description("The game modes survival, creative and adventure.")
-				.usage("creative/survival/adventure")
+				.description("The game modes survival, creative, adventure and spectator.")
+				.usage("creative/survival/adventure/spectator")
 				.examples("player's gamemode is survival",
 						"set the player argument's game mode to creative")
 				.since("1.0")
@@ -1254,7 +1273,7 @@ public class BukkitClasses {
 		Classes.registerClass(new ClassInfo<>(Enchantment.class, "enchantment")
 				.user("enchantments?")
 				.name("Enchantment")
-				.description("An enchantment, e.g. 'sharpness' or 'furtune'. Unlike <a href='#enchantmenttype'>enchantment type</a> " +
+				.description("An enchantment, e.g. 'sharpness' or 'fortune'. Unlike <a href='#enchantmenttype'>enchantment type</a> " +
 						"this type has no level, but you usually don't need to use this type anyway.")
 				.usage(StringUtils.join(EnchantmentType.getNames(), ", "))
 				.examples("")
@@ -1635,7 +1654,7 @@ public class BukkitClasses {
 					.user("(panda )?genes?")
 					.name("Gene")
 					.description("Represents a Panda's main or hidden gene. " +
-							"Look at Panda's minecraft wiki on <a href='https://minecraft.gamepedia.com/Panda#Genetics'>genetics</a> for more info.")
+							"See <a href='https://minecraft.gamepedia.com/Panda#Genetics'>genetics</a> for more info.")
 					.examples(genes.getAllNames())
 					.since("2.4")
 					.requiredPlugins("Minecraft 1.14 or newer")
@@ -1662,6 +1681,39 @@ public class BukkitClasses {
 						}
 					})
 					.serializer(new EnumSerializer<>(Gene.class)));
+		}
+		if (Skript.classExists("org.bukkit.entity.Cat$Type")) {
+			EnumUtils<Cat.Type> races = new EnumUtils<>(Cat.Type.class, "cat types");
+			Classes.registerClass(new ClassInfo<>(Cat.Type.class, "cattype")
+					.user("cat ?(type|race)s?")
+					.name("Cat Type")
+					.description("Represents the race/type of a cat entity.")
+					.examples(races.getAllNames())
+					.since("2.4")
+					.requiredPlugins("Minecraft 1.14 or newer")
+					.parser(new Parser<Cat.Type>() {
+						@Nullable
+						@Override
+						public Cat.Type parse(String expr, ParseContext context) {
+							return races.parse(expr);
+						}
+						
+						@Override
+						public String toString(Cat.Type race, int flags) {
+							return races.toString(race, flags);
+						}
+						
+						@Override
+						public String toVariableNameString(Cat.Type race) {
+							return race.name();
+						}
+						
+						@Override
+						public String getVariableNamePattern() {
+							return "\\S+";
+						}
+					})
+					.serializer(new EnumSerializer<>(Cat.Type.class)));
 		}
 	}
 
