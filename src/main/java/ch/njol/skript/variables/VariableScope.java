@@ -31,7 +31,7 @@ public interface VariableScope {
 	 * @param event Currently executing event.
 	 * @param value A new value for the variable.
 	 */
-	public void set(VariablePath path, @Nullable Event event, Object value);
+	void set(VariablePath path, @Nullable Event event, Object value);
 	
 	/**
 	 * Deletes a variable at given path. If there is no such variable, nothing
@@ -39,6 +39,6 @@ public interface VariableScope {
 	 * @param path Path to variable to be deleted.
 	 * @param event Currently executing event.
 	 */
-	public void delete(VariablePath path, @Nullable Event event);
+	void delete(VariablePath path, @Nullable Event event);
 
 }

@@ -9,7 +9,9 @@ import org.eclipse.jdt.annotation.Nullable;
 import ch.njol.skript.lang.Expression;
 
 /**
- * A simple variable scope.
+ * A simple variable scope that can be used for implementing more complex
+ * scopes. This scope is backed by a hash table, and supports caching
+ * in variable paths.
  */
 public class SimpleVariableScope implements VariableScope {
 	
@@ -23,12 +25,18 @@ public class SimpleVariableScope implements VariableScope {
 		this.variables = new HashMap<>(); // TODO configurable map size
 	}
 	
-	static Object executePart(@Nullable Object part, @Nullable Event event) {
+	/**
+	 * Executes a part of variable path.
+	 * @param part Part. If it is null, assertion failure is triggered.
+	 * @param event Event to use for execution. May be null.
+	 * @return String or Integer variable path element.
+	 */
+	private static Object executePart(@Nullable Object part, @Nullable Event event) {
 		Object p;
 		if (part instanceof Expression<?>) { // Execute part if it is expression
 			assert event != null : "expression parts require event";
 			p = ((Expression<?>) part).getSingle(event);
-		} else {
+		} else { // Return string as-is
 			p = part;
 		}
 		assert p != null : "null variable path element";

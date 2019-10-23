@@ -87,6 +87,8 @@ public class ListVariable {
 		this.values = new Object[INITIAL_ARRAY_SIZE];
 		this.isArray = true; // Map not initially created
 		this.isSorted = true; // No content, so in order
+		assertValid();
+		assertPlainArray();
 	}
 	
 	/**

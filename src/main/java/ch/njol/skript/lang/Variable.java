@@ -58,6 +58,7 @@ import ch.njol.skript.variables.ListVariable;
 import ch.njol.skript.variables.TypeHints;
 import ch.njol.skript.variables.VariablePath;
 import ch.njol.skript.variables.VariableScope;
+import ch.njol.skript.variables.Variables;
 import ch.njol.util.Checker;
 import ch.njol.util.Kleenean;
 import ch.njol.util.Pair;
@@ -226,10 +227,10 @@ public class Variable<T> implements Expression<T> {
 		
 		// Figure out scope 
 		VariableScope scope;
-		if (isLocal) {
+		if (isLocal) { // Get current local variable scope
 			 scope = ScriptLoader.getLocalVariables();
-		} else {
-			
+		} else { // Use global scope prefix
+			scope = Variables.getGlobalVariables();
 		}
 		
 		// Check for local variable type hints
