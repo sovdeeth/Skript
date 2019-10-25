@@ -7,6 +7,7 @@ import org.bukkit.event.Event;
 import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.variables.storage.VariableStorage;
 
 /**
  * A simple variable scope that can be used for implementing more complex
@@ -16,13 +17,43 @@ import ch.njol.skript.lang.Expression;
 public class SimpleVariableScope implements VariableScope {
 	
 	/**
+	 * Creates a variable scope without associated {@link VariableStorage},
+	 * suitable for e.g. local variables.
+	 * @return Variable scope.
+	 */
+	public static SimpleVariableScope createLocal() {
+		// TODO estimate how many local variables there really are
+		return new SimpleVariableScope(10, null);
+	}
+	
+	/**
+	 * Creates with variables from given storage. Changes to variables are
+	 * saved to the storage.
+	 * @param storage Variable storage.
+	 * @return Variable scope.
+	 */
+	public static SimpleVariableScope createPersistent(VariableStorage storage) {
+		SimpleVariableScope scope = new SimpleVariableScope(storage.estimatedSize(), storage);
+		storage.loadVariables(scope);
+		return scope;
+	}
+	
+	/**
 	 * All variables by their names. Unlike list variables, this map contains
 	 * only string keys.
 	 */
 	private final Map<String, Object> variables;
 	
-	public SimpleVariableScope() {
-		this.variables = new HashMap<>(); // TODO configurable map size
+	/**
+	 * Storage backing this scope. Null when there is not storage.
+	 * TODO implement sending changes back to storage
+	 */
+	@Nullable
+	private final VariableStorage storage;
+	
+	private SimpleVariableScope(int expectedVars, @Nullable VariableStorage storage) {
+		this.variables = new HashMap<>();
+		this.storage = storage;
 	}
 	
 	/**
@@ -94,6 +125,7 @@ public class SimpleVariableScope implements VariableScope {
 				} else {
 					parent.put((String) part, value);
 				}
+				return;
 			} else { // Discard invalid cached list
 				path.cachedParent = null;
 			}

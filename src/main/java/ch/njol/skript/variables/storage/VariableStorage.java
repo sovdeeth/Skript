@@ -16,20 +16,17 @@ public interface VariableStorage {
 	 * @param newValue New value of the variable. Null here signifies a deleted
 	 * variable.
 	 */
-	void variableChanged(VariablePath path, Object newValue);
+	void variableChanged(VariablePath path, @Nullable Object newValue);
 	
 	/**
-	 * Called when a variable is unloaded from memory.
-	 * @param path Path to the variable.
+	 * Estimates how many top-level variables this storage contains.
+	 * @return Estimated size.
 	 */
-	void variableUnloaded(VariablePath path);
+	int estimatedSize();
 	
 	/**
-	 * Ensures that variables under given path are loaded. If null is given,
-	 * or this variable storage implementation does not support streaming from
-	 * disk, ALL variables will be loaded.
+	 * Loads variables from this storage to given scope.
 	 * @param scope Scope where to load the variables.
-	 * @param path Path under which all variables are loaded.
 	 */
-	void loadVariables(VariableScope scope, @Nullable VariablePath path);
+	void loadVariables(VariableScope scope);
 }

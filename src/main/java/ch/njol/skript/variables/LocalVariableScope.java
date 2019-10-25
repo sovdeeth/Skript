@@ -18,7 +18,7 @@ public class LocalVariableScope implements VariableScope {
 	}
 	
 	private VariableScope getEventScope(@Nullable Event event) {
-		VariableScope scope = scopes.computeIfAbsent(event, e -> new SimpleVariableScope());
+		VariableScope scope = scopes.computeIfAbsent(event, e -> SimpleVariableScope.createLocal());
 		assert scope != null;
 		return scope;
 	}
