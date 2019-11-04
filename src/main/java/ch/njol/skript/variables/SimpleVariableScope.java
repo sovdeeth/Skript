@@ -110,6 +110,12 @@ public class SimpleVariableScope implements VariableScope {
 				} else {
 					parent.put((String) part, value);
 				}
+				
+				if (storage != null) { // Notify storage before returning
+					// We execute before this, because doing it beyond last part
+					// may be unnecessary for local variables
+					storage.variableChanged(path.execute(event), value);
+				}
 				return;
 			} else { // Discard invalid cached list
 				path.cachedParent = null;
@@ -118,6 +124,9 @@ public class SimpleVariableScope implements VariableScope {
 		
 		VariablePath original = path;
 		path = path.execute(event);
+		if (storage != null) {
+			storage.variableChanged(path, value); // Notify the storage
+		}
 		String rootKey = "" + path.path[0];
 		if (path.path.length == 1) { // Variable not in list
 			variables.put(rootKey, value);
@@ -163,17 +172,36 @@ public class SimpleVariableScope implements VariableScope {
 		original.cachedParent = var; // Cache parent to make access faster next time
 	}
 	
+	/**
+	 * Deletes a variable from list. If it is a list, invalidates it.
+	 * @param parent Parent list.
+	 * @param part Name of variable in list.
+	 */
+	private static void deleteFromList(ListVariable parent, Object part) {
+		Object removed;
+		if (part instanceof Integer) {
+			removed = parent.remove((int) part);
+		} else {
+			removed = parent.remove((String) part);
+		}
+		if (removed instanceof ListVariable) {
+			((ListVariable) removed).invalidate();
+		}
+	}
+	
 	@Override
 	public void delete(VariablePath path, @Nullable Event event) {
 		ListVariable parent = path.cachedParent;
 		if (parent != null) {
 			if (parent.isValid()) {
 				Object part = VariablePath.executePart(path.path[path.path.length - 1], event);
-				if (part instanceof Integer) {
-					parent.remove((int) part);
-				} else {
-					parent.remove((String) part);
+				deleteFromList(parent, part);
+				if (storage != null) { // Notify storage before returning
+					// We execute before this, because doing it beyond last part
+					// may be unnecessary for local variables
+					storage.variableChanged(path.execute(event), null);
 				}
+				return;
 			} else { // Discard invalid cached list
 				path.cachedParent = null;
 			}
@@ -181,6 +209,9 @@ public class SimpleVariableScope implements VariableScope {
 		
 		// Look up the global variable in this scope
 		path = path.execute(event);
+		if (storage != null) {
+			storage.variableChanged(path, null); // Notify the storage
+		}
 		String rootKey = "" + path.path[0];
 		if (path.path.length == 1) { // Target variable is not in any list
 			Object removed = variables.remove(rootKey); // Remove it
@@ -208,15 +239,7 @@ public class SimpleVariableScope implements VariableScope {
 				assert var != null;
 				part = path.path[path.path.length - 1];
 				assert part != null;
-				Object removed;
-				if (part instanceof Integer) {
-					removed = ((ListVariable) var).remove((int) part);
-				} else {
-					removed = ((ListVariable) var).remove((String) part);
-				}
-				if (removed instanceof ListVariable) {
-					((ListVariable) removed).invalidate();
-				}
+				deleteFromList((ListVariable) var, part);
 				break;
 			}
 		}
