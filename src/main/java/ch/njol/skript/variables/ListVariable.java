@@ -18,13 +18,14 @@ import org.eclipse.jdt.annotation.Nullable;
  * <ul>
  * <li>Array mode: continuous range of numeric keys
  * <li>Small list mode: a small amount of variables in list
- * <li>Map mode: fallback
+ * <li>Map mode: fallback; uses HashMap when possible,
+ * TreeMap after call to {@link #ensureSorted()}
  * </ul>
  */
 public class ListVariable {
 	
 	/**
-	 * This list variable is not to be used anymore.
+	 * Set to {@link #size} when this list variable is not to be used anymore.
 	 */
 	static final int INVALID_LIST = -1;
 	
@@ -34,8 +35,8 @@ public class ListVariable {
 	private static final int INITIAL_ARRAY_SIZE = 4;
 	
 	/**
-	 * When {@link #size} grows larger than this, {@link #map} is created
-	 * and filled.
+	 * When {@link #size} grows larger than this, and this is not
+	 * {@link #isArray}, the {@link #map} is created and filled.
 	 */
 	private static final int MIN_MAP_SIZE = 4;
 	
@@ -517,7 +518,7 @@ public class ListVariable {
 	
 	/**
 	 * Ensures that this list is sorted. This will guarantee that next call to
-	 * {@link #orderedIterator()} will be fast, but may reduce performance of
+	 * {@link #orderedValues()} will be fast, but may reduce performance of
 	 * future random access operations.
 	 */
 	public void ensureSorted() {
