@@ -1490,6 +1490,7 @@ public class BukkitClasses {
 				.defaultExpression(new EventValueExpression<>(FireworkEffect.Type.class))
 				.examples(fireworktypes.getAllNames())
 				.since("2.4")
+				.documentationId("FireworkType")
 				.parser(new Parser<FireworkEffect.Type>() {
 					@Override
 					@Nullable
@@ -1691,6 +1692,7 @@ public class BukkitClasses {
 					.examples(races.getAllNames())
 					.since("2.4")
 					.requiredPlugins("Minecraft 1.14 or newer")
+					.documentationId("CatType")
 					.parser(new Parser<Cat.Type>() {
 						@Nullable
 						@Override
