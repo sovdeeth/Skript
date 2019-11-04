@@ -9,6 +9,31 @@ import ch.njol.skript.lang.Expression;
  * A parsed path to a variable.
  */
 public class VariablePath {
+	
+	/**
+	 * Creates a new variable path. Only elements that are strings, integers
+	 * or expressions that produce either of these are allowed.
+	 * @param path Path elements.
+	 */
+	public static VariablePath create(Object... path) {
+		assert checkPath(path);
+		return new VariablePath(path);
+	}
+	
+	/**
+	 * Checks that path meets criteria.
+	 * @param path Path to check.
+	 * @return True if check passed, otherwise false.
+	 */
+	private static boolean checkPath(Object... path) {
+		for (int i = 0; i < path.length; i++) {
+			Object o = path[i];
+			if (!(o instanceof Expression<?>) && !(o instanceof String) && !(o instanceof Integer)) {
+				assert false : "path[" + i + "] = " + o + "(not expression, string or number)";
+			}
+		}
+		return true;
+	}
 
 	/**
 	 * Name of variable split by list token ('::'). Elements are constant
@@ -33,27 +58,16 @@ public class VariablePath {
 	VariableScope cachedGlobalScope;
 	
 	/**
-	 * Creates a new variable path. Only elements that are strings, integers
-	 * or expressions that produce either of these are allowed.
+	 * Creates a new variable path. Before this path is exposed,
+	 * {@link #assertValid()} should be called on it.
 	 * @param path Path elements.
 	 */
-	public VariablePath(Object... path) {
-		assert checkPath(path);
+	VariablePath(Object... path) {
 		this.path = path;
 	}
 	
-	/**
-	 * Checks that path meets criteria.
-	 * @param path Path to check.
-	 * @return True if check passed, otherwise false.
-	 */
-	private static boolean checkPath(Object... path) {
-		for (Object o : path) {
-			if (!(o instanceof Expression<?>) && !(o instanceof String) && !(o instanceof Integer)) {
-				return false;
-			}
-		}
-		return true;
+	void assertValid() {
+		assert checkPath(path);
 	}
 
 	/**
@@ -82,7 +96,36 @@ public class VariablePath {
 		return ((String) path[last]).startsWith((String) prefix.path[last]);
 	}
 	
+	/**
+	 * Executes a part of variable path.
+	 * @param part Part. If it is null, assertion failure is triggered.
+	 * @param event Event to use for execution. May be null.
+	 * @return String or Integer variable path element.
+	 */
+	static Object executePart(@Nullable Object part, @Nullable Event event) {
+		Object p;
+		if (part instanceof Expression<?>) { // Execute part if it is expression
+			assert event != null : "expression parts require event";
+			p = ((Expression<?>) part).getSingle(event);
+		} else { // Return string as-is
+			p = part;
+		}
+		assert p != null : "null variable path element";
+		assert p instanceof String || p instanceof Integer : "unknown variable path element " + p;
+		return p;
+	}
+	
+	/**
+	 * Executes all expression parts in this path.
+	 * @param event Execution context.
+	 * @return Path that can be used without event.
+	 */
 	public VariablePath execute(@Nullable Event event) {
-		throw new UnsupportedOperationException("not yet implemented");
+		VariablePath executed = new VariablePath(new Object[path.length]);
+		for (int i = 0; i < path.length; i++) {
+			executed.path[i] = executePart(path[i], event);
+		}
+		executed.assertValid();
+		return executed;
 	}
 }

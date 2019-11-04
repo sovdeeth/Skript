@@ -6,7 +6,7 @@ package ch.njol.skript.variables;
  */
 public class Variables {
 	
-	public GlobalVariableScope getGlobalVariables() {
+	public static GlobalVariableScope getGlobalVariables() {
 		throw new UnsupportedOperationException("not implemented yet");
 	}
 }

@@ -1,5 +1,6 @@
 package ch.njol.skript.variables;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -56,32 +57,13 @@ public class SimpleVariableScope implements VariableScope {
 		this.storage = storage;
 	}
 	
-	/**
-	 * Executes a part of variable path.
-	 * @param part Part. If it is null, assertion failure is triggered.
-	 * @param event Event to use for execution. May be null.
-	 * @return String or Integer variable path element.
-	 */
-	private static Object executePart(@Nullable Object part, @Nullable Event event) {
-		Object p;
-		if (part instanceof Expression<?>) { // Execute part if it is expression
-			assert event != null : "expression parts require event";
-			p = ((Expression<?>) part).getSingle(event);
-		} else { // Return string as-is
-			p = part;
-		}
-		assert p != null : "null variable path element";
-		assert p instanceof String || p instanceof Integer : "unknown variable path element " + p;
-		return p;
-	}
-	
 	@Override
 	@Nullable
 	public Object get(VariablePath path, @Nullable Event event) {
 		ListVariable parent = path.cachedParent;
 		if (parent != null) {
 			if (parent.isValid()) {
-				Object part = executePart(path.path[path.path.length - 1], event);
+				Object part = VariablePath.executePart(path.path[path.path.length - 1], event);
 				if (part instanceof Integer) {
 					return parent.get((int) part);
 				} else {
@@ -93,7 +75,9 @@ public class SimpleVariableScope implements VariableScope {
 		}
 		
 		// Look up the global variable in this scope
-		Object var = variables.get("" + executePart(path.path[0], event));
+		VariablePath original = path;
+		path = path.execute(event);
+		Object var = variables.get("" + path.path[0]);
 		
 		// Variable inside at least one list
 		for (int i = 1; i < path.path.length; i++) {
@@ -101,14 +85,15 @@ public class SimpleVariableScope implements VariableScope {
 				return null; // Requested variable can't possibly exist
 			}
 			
-			Object part = executePart(path.path[i], event);
+			Object part = path.path[i];
+			assert part != null;
 			if (part instanceof Integer) {
 				var = ((ListVariable) var).get((int) part);
 			} else {
 				var = ((ListVariable) var).get((String) part);
 			}
 			if (i == path.path.length - 1) { // Cache list
-				path.cachedParent = (ListVariable) var; // If we're writing null, there is already null there
+				original.cachedParent = (ListVariable) var; // If we're writing null, there is already null there
 			}
 		}
 		return var;
@@ -119,7 +104,7 @@ public class SimpleVariableScope implements VariableScope {
 		ListVariable parent = path.cachedParent;
 		if (parent != null) {
 			if (parent.isValid()) {
-				Object part = executePart(path.path[path.path.length - 1], event);
+				Object part = VariablePath.executePart(path.path[path.path.length - 1], event);
 				if (part instanceof Integer) {
 					parent.put((int) part, value);
 				} else {
@@ -131,7 +116,9 @@ public class SimpleVariableScope implements VariableScope {
 			}
 		}
 		
-		String rootKey = "" + executePart(path.path[0], event);
+		VariablePath original = path;
+		path = path.execute(event);
+		String rootKey = "" + path.path[0];
 		if (path.path.length == 1) { // Variable not in list
 			variables.put(rootKey, value);
 			return;
@@ -146,7 +133,7 @@ public class SimpleVariableScope implements VariableScope {
 		
 		// Variable inside at least one list; create lists as needed
 		for (int i = 1; i < path.path.length - 1; i++) {
-			Object part = executePart(path.path[i], event);
+			Object part = path.path[i];
 			if (part instanceof Integer) {
 				int index = (int) part;
 				Object child = var.get(index);
@@ -156,6 +143,7 @@ public class SimpleVariableScope implements VariableScope {
 				var.put(index, new ListVariable());
 			} else {
 				String name = (String) part;
+				assert name != null;
 				Object child = var.get(name);
 				if (child == null) {
 					child = new ListVariable();
@@ -165,13 +153,14 @@ public class SimpleVariableScope implements VariableScope {
 		}
 		
 		// Put to list variable with last path part as name
-		Object last = executePart(path.path[path.path.length - 1], event);
+		Object last = path.path[path.path.length - 1];
+		assert last != null;
 		if (last instanceof Integer) {
 			var.put((int) last, value);
 		} else {
 			var.put((String) last, value);
 		}
-		path.cachedParent = var; // Cache parent to make access faster next time
+		original.cachedParent = var; // Cache parent to make access faster next time
 	}
 	
 	@Override
@@ -179,7 +168,7 @@ public class SimpleVariableScope implements VariableScope {
 		ListVariable parent = path.cachedParent;
 		if (parent != null) {
 			if (parent.isValid()) {
-				Object part = executePart(path.path[path.path.length - 1], event);
+				Object part = VariablePath.executePart(path.path[path.path.length - 1], event);
 				if (part instanceof Integer) {
 					parent.remove((int) part);
 				} else {
@@ -191,7 +180,8 @@ public class SimpleVariableScope implements VariableScope {
 		}
 		
 		// Look up the global variable in this scope
-		String rootKey = "" + executePart(path.path[0], event);
+		path = path.execute(event);
+		String rootKey = "" + path.path[0];
 		if (path.path.length == 1) { // Target variable is not in any list
 			Object removed = variables.remove(rootKey); // Remove it
 			if (removed instanceof ListVariable) {
@@ -207,7 +197,8 @@ public class SimpleVariableScope implements VariableScope {
 				return; // Requested variable can't possibly exist
 			}
 			
-			Object part = executePart(path.path[i], event);
+			Object part = path.path[i];
+			assert part != null;
 			if (part instanceof Integer) {
 				var = ((ListVariable) var).get((int) part);
 			} else {
@@ -215,7 +206,8 @@ public class SimpleVariableScope implements VariableScope {
 			}
 			if (i == path.path.length - 2) { // Cache list
 				assert var != null;
-				part = executePart(path.path[path.path.length - 1], event);
+				part = path.path[path.path.length - 1];
+				assert part != null;
 				Object removed;
 				if (part instanceof Integer) {
 					removed = ((ListVariable) var).remove((int) part);

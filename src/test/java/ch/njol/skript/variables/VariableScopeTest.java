@@ -12,8 +12,8 @@ public class VariableScopeTest {
 	
 	@Test
 	public void globalsTest() {
-		VariablePath path = new VariablePath("test");
-		VariableScope scope = new VariableScope();
+		VariablePath path = VariablePath.create("test");
+		VariableScope scope = SimpleVariableScope.createLocal();
 		scope.set(path, null, "foo");
 		assertEquals("foo", scope.get(path, null));
 		scope.set(path, null, "bar");
@@ -22,8 +22,8 @@ public class VariableScopeTest {
 	
 	@Test
 	public void simpleListTest() {
-		VariablePath path = new VariablePath("test", "foo");
-		VariableScope scope = new VariableScope();
+		VariablePath path = VariablePath.create("test", "foo");
+		VariableScope scope = SimpleVariableScope.createLocal();
 		scope.set(path, null, "foo");
 		ListVariable list = (ListVariable) scope.get(new VariablePath("test"), null);
 		assertNotNull(list);

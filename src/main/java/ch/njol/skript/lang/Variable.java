@@ -330,7 +330,7 @@ public class Variable<T> implements Expression<T> {
 			String executed = name.toString(e);
 			Object[] os = executed.split(SEPARATOR);
 			assert os != null;
-			return new VariablePath(os);
+			return VariablePath.create(os);
 		}
 	}
 	
