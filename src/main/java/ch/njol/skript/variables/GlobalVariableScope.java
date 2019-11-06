@@ -99,9 +99,14 @@ public class GlobalVariableScope implements VariableScope {
 	public void set(VariablePath path, @Nullable Event event, Object value) {
 		getScope(path).set(path, event, value);
 	}
+	
+	@Override
+	public void append(VariablePath path, @Nullable Event event, Object value) {
+		getScope(path).set(path, event, value);
+	}
 
 	@Override
-	public void delete(VariablePath path, @Nullable Event event) {
-		getScope(path).delete(path, event);
+	public void delete(VariablePath path, @Nullable Event event, boolean deleteList) {
+		getScope(path).delete(path, event, deleteList);
 	}
 }

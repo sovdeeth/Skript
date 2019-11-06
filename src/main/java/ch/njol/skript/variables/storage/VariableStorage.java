@@ -14,11 +14,13 @@ public interface VariableStorage {
 	
 	/**
 	 * Called when a variable at given path changes.
-	 * @param path Path to the variable.
+	 * @param path Path to parent of the variable. Null for variables at
+	 * root of their scope.
+	 * @param name Name of variable.
 	 * @param newValue New value of the variable. Null here signifies a deleted
 	 * variable.
 	 */
-	void variableChanged(VariablePath path, @Nullable Object newValue);
+	void variableChanged(@Nullable VariablePath path, Object name, @Nullable Object newValue);
 	
 	/**
 	 * Estimates how many top-level variables this storage contains.

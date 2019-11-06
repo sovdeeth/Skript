@@ -34,11 +34,21 @@ public interface VariableScope {
 	void set(VariablePath path, @Nullable Event event, Object value);
 	
 	/**
+	 * Appends a value to a list variable at given path. If there is no list
+	 * variable there, a new one will be created.
+	 * @param path Path to a list variable.
+	 * @param event Currently executing event.
+	 * @param value A value to append to the list.
+	 */
+	void append(VariablePath path, @Nullable Event event, Object value);
+	
+	/**
 	 * Deletes a variable at given path. If there is no such variable, nothing
 	 * will be done.
 	 * @param path Path to variable to be deleted.
 	 * @param event Currently executing event.
+	 * @param deleteList If list variable deletion is desired.
 	 */
-	void delete(VariablePath path, @Nullable Event event);
+	void delete(VariablePath path, @Nullable Event event, boolean deleteList);
 
 }

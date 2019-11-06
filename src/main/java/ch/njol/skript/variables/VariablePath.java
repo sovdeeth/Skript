@@ -54,6 +54,12 @@ public class VariablePath implements Iterable<Object> {
 	ListVariable cachedParent;
 	
 	/**
+	 * If this points to a list variable, this is it. Cached when possible.
+	 */
+	@Nullable
+	ListVariable cachedSelf;
+	
+	/**
 	 * If this variable is global, real scope of it is cached here.
 	 */
 	@Nullable
@@ -118,17 +124,28 @@ public class VariablePath implements Iterable<Object> {
 	}
 	
 	/**
+	 * Executes expression parts in this path before given limit.
+	 * Parts after it are not present in returned path.
+	 * @param event Execution context.
+	 * @param limit How many parts to include in new path
+	 * @return Cut and executed path.
+	 */
+	VariablePath execute(@Nullable Event event, int limit) {
+		VariablePath executed = new VariablePath(new Object[path.length]);
+		for (int i = 0; i < limit; i++) {
+			executed.path[i] = executePart(path[i], event);
+		}
+		executed.assertValid();
+		return executed;
+	}
+	
+	/**
 	 * Executes all expression parts in this path.
 	 * @param event Execution context.
 	 * @return Path that can be used without event.
 	 */
 	public VariablePath execute(@Nullable Event event) {
-		VariablePath executed = new VariablePath(new Object[path.length]);
-		for (int i = 0; i < path.length; i++) {
-			executed.path[i] = executePart(path[i], event);
-		}
-		executed.assertValid();
-		return executed;
+		return execute(event, path.length);
 	}
 	
 	public int length() {

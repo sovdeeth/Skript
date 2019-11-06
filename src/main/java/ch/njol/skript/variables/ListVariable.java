@@ -83,6 +83,14 @@ public class ListVariable {
 	@Nullable
 	private Map<String, Object> map;
 	
+	/**
+	 * If present, the {@link VariablePath} that refers to this list also
+	 * refers to a singular value. This must be possible to preserve
+	 * compatibility with previous variable system Skript had.
+	 */
+	@Nullable
+	Object shadowValue;
+	
 	public ListVariable() {
 		this.size = 0;
 		this.values = new Object[INITIAL_ARRAY_SIZE];

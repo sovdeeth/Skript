@@ -33,10 +33,15 @@ public class LocalVariableScope implements VariableScope {
 	public void set(VariablePath path, @Nullable Event event, Object value) {
 		getEventScope(event).set(path, event, value);
 	}
+	
+	@Override
+	public void append(VariablePath path, @Nullable Event event, Object value) {
+		getEventScope(event).append(path, event, value);
+	}
 
 	@Override
-	public void delete(VariablePath path, @Nullable Event event) {
-		getEventScope(event).delete(path, event);
+	public void delete(VariablePath path, @Nullable Event event, boolean deleteList) {
+		getEventScope(event).delete(path, event, deleteList);
 	}
 	
 	public void finishedEvent(Event event) {

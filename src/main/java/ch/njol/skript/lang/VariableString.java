@@ -733,6 +733,7 @@ public class VariableString implements Expression<String> {
 					return false;
 				}
 			}
+			// No syntaxes except variables may ever produce '::'
 		}
 		return true; // No issues found
 	}
