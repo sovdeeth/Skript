@@ -13,9 +13,18 @@ import org.eclipse.jdt.annotation.Nullable;
 import ch.njol.skript.variables.VariablePath;
 
 /**
- * Change journal of the database.
+ * SkDb's change journal. All changes are immediately written to a
+ * memory-mapped file, and metadata of them is kept in memory to allow
+ * rewriting the database file fast. In-memory metadata can be re-created
+ * from the journal file contents, so a crash or a power loss is not likely
+ * to cause (much) data loss.
  */
 public class Journal {
+	
+	/**
+	 * Serializer we should use.
+	 */
+	private final DatabaseSerializer serializer;
 	
 	/**
 	 * Current journal buffer.
@@ -64,18 +73,26 @@ public class Journal {
 	 */
 	private final VariableTree root;
 	
-	public Journal(Path file, int size) throws IOException {
+	public Journal(DatabaseSerializer serializer, Path file, int size) throws IOException {
+		this.serializer = serializer;
 		this.journalBuf = FileChannel.open(file).map(MapMode.READ_WRITE, 0, size);
+		this.root = new VariableTree();
 	}
 	
 	public void variableChanged(VariablePath path, @Nullable Object newValue) {
+		// Write change to journal as early as possible
+		serializer.writePath(path, journalBuf);
+		int start = journalBuf.position();
+		// TODO variable content
+		int size = journalBuf.position() - start;
+		
 		// Find or create this variable in change tree
 		VariableTree var = root;
 		for (Object name : path) {
 			var = var.contents.computeIfAbsent(name, (k) -> new VariableTree());
 		}
 		
-		// Write our data to variable (not caring if we overwrite)
-		var.value = null; // TODO serialized format
+		// (Over)write in-memory representation of data
+		var.value = new ChangedVariable(start, size);
 	}
 }

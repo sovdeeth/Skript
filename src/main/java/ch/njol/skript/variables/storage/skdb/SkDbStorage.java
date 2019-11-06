@@ -65,7 +65,7 @@ public class SkDbStorage implements VariableStorage {
 	public static SkDbStorage open(Path file) throws IOException {
 		FileChannel ch = FileChannel.open(file);
 		Metadata meta = new Metadata(ch, 0);
-		
+		// TODO
 	}
 	
 	/**

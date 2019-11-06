@@ -130,6 +130,10 @@ public class VariablePath implements Iterable<Object> {
 		executed.assertValid();
 		return executed;
 	}
+	
+	public int length() {
+		return path.length;
+	}
 
 	@Override
 	public Iterator<Object> iterator() {
