@@ -1,5 +1,7 @@
 package ch.njol.skript.variables;
 
+import java.util.Iterator;
+
 import org.bukkit.event.Event;
 import org.eclipse.jdt.annotation.Nullable;
 
@@ -8,7 +10,7 @@ import ch.njol.skript.lang.Expression;
 /**
  * A parsed path to a variable.
  */
-public class VariablePath {
+public class VariablePath implements Iterable<Object> {
 	
 	/**
 	 * Creates a new variable path. Only elements that are strings, integers
@@ -128,4 +130,25 @@ public class VariablePath {
 		executed.assertValid();
 		return executed;
 	}
+
+	@Override
+	public Iterator<Object> iterator() {
+		return new Iterator<Object>() {
+
+			private int index;
+			
+			@Override
+			public boolean hasNext() {
+				return index < path.length;
+			}
+
+			@SuppressWarnings("null")
+			@Override
+			public Object next() {
+				return path[index++];
+			}
+		};
+	}
+	
+	
 }

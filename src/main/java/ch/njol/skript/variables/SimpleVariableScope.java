@@ -1,5 +1,6 @@
 package ch.njol.skript.variables;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -32,8 +33,9 @@ public class SimpleVariableScope implements VariableScope {
 	 * saved to the storage.
 	 * @param storage Variable storage.
 	 * @return Variable scope.
+	 * @throws IOException When storage given could not load variables.
 	 */
-	public static SimpleVariableScope createPersistent(VariableStorage storage) {
+	public static SimpleVariableScope createPersistent(VariableStorage storage) throws IOException {
 		SimpleVariableScope scope = new SimpleVariableScope(storage.estimatedSize(), storage);
 		storage.loadVariables(scope);
 		return scope;

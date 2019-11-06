@@ -1,5 +1,7 @@
 package ch.njol.skript.variables.storage;
 
+import java.io.IOException;
+
 import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.variables.VariablePath;
@@ -27,6 +29,7 @@ public interface VariableStorage {
 	/**
 	 * Loads variables from this storage to given scope.
 	 * @param scope Scope where to load the variables.
+	 * @throws IOException When implementation can't load variables.
 	 */
-	void loadVariables(VariableScope scope);
+	void loadVariables(VariableScope scope) throws IOException;
 }
