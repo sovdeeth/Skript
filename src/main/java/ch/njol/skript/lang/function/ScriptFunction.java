@@ -28,6 +28,9 @@ import ch.njol.skript.effects.EffReturn;
 import ch.njol.skript.lang.Trigger;
 import ch.njol.skript.lang.function.Functions.FunctionData;
 import ch.njol.skript.lang.util.SimpleEvent;
+import ch.njol.skript.variables.ListVariable;
+import ch.njol.skript.variables.VariablePath;
+import ch.njol.skript.variables.VariableScope;
 import ch.njol.skript.variables.Variables;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 /**
@@ -67,29 +70,38 @@ public class ScriptFunction<T> extends Function<T> {
 		returnValue = value;
 	}
 	
-	// REMIND track possible types of local variables (including undefined variables) (consider functions, commands, and EffChange) - maybe make a general interface for this purpose
-	// REM: use patterns, e.g. {_a%b%} is like "a.*", and thus subsequent {_axyz} may be set and of that type.
 	@Override
 	@Nullable
-	public T[] execute(final FunctionEvent e, final Object[][] params) {
+	public T[] execute(FunctionEvent<?> e, Object[][] params) {
+		throw new UnsupportedOperationException("ScriptFunction API changed"); // TODO map this to our other execute
+	}
+	
+	// REMIND track possible types of local variables (including undefined variables) (consider functions, commands, and EffChange) - maybe make a general interface for this purpose
+	// REM: use patterns, e.g. {_a%b%} is like "a.*", and thus subsequent {_axyz} may be set and of that type.
+	@Nullable
+	public T[] execute(final FunctionEvent<?> e, final Object[] params) {
 		if (trigger == null)
 			throw new IllegalStateException("trigger for function is not available");
 		
 		Parameter<?>[] parameters = sign.getParameters();
+		// Get local variables inside function
+		assert trigger != null;
+		VariableScope localVars = trigger.getLocalVariables().getEventScope(e);
+		
+		// Put parameters to local variables
 		for (int i = 0; i < parameters.length; i++) {
-			final Parameter<?> p = parameters[i];
-			final Object[] val = params[i];
-			if (p.single && val.length > 0) {
-				Variables.setVariable(p.name, val[0], e, true);
-			} else {
-				for (int j = 0; j < val.length; j++) {
-					Variables.setVariable(p.name + "::" + (j + 1), val[j], e, true);
-				}
+			Parameter<?> p = parameters[i];
+			Object val = params[i];
+			assert p.single || val instanceof ListVariable : "incorrect amount of values for arg '" + p.getName() + "'";
+			if (val != null) { // Null values simply need not to be written
+				localVars.set(VariablePath.create(p.getName()), e, val);
 			}
 		}
 		
 		assert trigger != null;
 		trigger.execute(e);
+		assert trigger != null;
+		trigger.getLocalVariables().finishedEvent(e); // Even never reaches SkriptEventHandler, we do this here
 		return returnValue;
 	}
 

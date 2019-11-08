@@ -25,6 +25,7 @@ import java.util.List;
 import org.bukkit.event.Event;
 import org.eclipse.jdt.annotation.Nullable;
 
+import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.variables.LocalVariableScope;
 import ch.njol.skript.variables.VariableScope;
 
@@ -57,12 +58,18 @@ public class Trigger extends TriggerSection {
 	 */
 	private String debugLabel;
 	
+	/**
+	 * Local variables of this trigger.
+	 */
+	private LocalVariableScope localVars;
+	
 	public Trigger(@Nullable File script, String name, SkriptEvent event, List<TriggerItem> items) {
 		super(items);
 		this.script = script;
 		this.name = name;
 		this.event = event;
 		this.debugLabel = "unknown trigger";
+		this.localVars = ScriptLoader.getLocalVariables();
 	}
 	
 	/**
@@ -126,5 +133,14 @@ public class Trigger extends TriggerSection {
 	
 	public String getDebugLabel() {
 		return debugLabel;
+	}
+	
+	/**
+	 * Gets local variables of this trigger. Each even that triggers
+	 * this gets their own variables accessible with it.
+	 * @return Local variable scope.
+	 */
+	public LocalVariableScope getLocalVariables() {
+		return localVars;
 	}
 }
