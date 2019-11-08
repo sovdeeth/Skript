@@ -1,6 +1,7 @@
 package ch.njol.skript.variables.storage.skdb;
 
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
 
 import ch.njol.skript.variables.VariablePath;
@@ -40,11 +41,14 @@ public class DatabaseSerializer {
 			buf.put(PATH_INT);
 			buf.putInt((int) part);
 		} else {
-			byte[] bytes = ((String) part).getBytes(StandardCharsets.UTF_8);
-			
 			buf.put(PATH_STRING);
-			buf.putChar((char) bytes.length); // 2 bytes for length should be enough
-			buf.put(bytes);
+			int lenIndex = buf.position();
+			buf.position(lenIndex + 2); // We'll come back to write length of encoded part
+			
+			StandardCharsets.UTF_8.newEncoder().encode(CharBuffer.wrap((String) part), buf, true);
+			int len = buf.position() - lenIndex; // Length of what we wrote = encoded string length
+			assert len <= Character.MAX_VALUE : "too long variable name part";
+			buf.putChar(lenIndex, (char) len); // Go back and write length
 		}
 	}
 	
@@ -74,9 +78,12 @@ public class DatabaseSerializer {
 		} else {
 			assert type == PATH_STRING;
 			int len = buf.getChar();
-			byte[] bytes = new byte[len];
-			buf.get(bytes);
-			return new String(bytes, StandardCharsets.UTF_8);
+			CharBuffer chars = CharBuffer.allocate(len);
+			
+			StandardCharsets.UTF_8.newDecoder().decode(buf, chars, true);
+			String str = chars.toString();
+			assert str != null;
+			return str;
 		}
 	}
 }
