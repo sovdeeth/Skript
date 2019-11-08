@@ -101,6 +101,23 @@ public class ListVariable {
 	}
 	
 	/**
+	 * Clones the given list variable.
+	 * @param value
+	 */
+	public ListVariable(ListVariable list) {
+		this.size = list.size;
+		this.values = list.values != null ? list.values.clone() : null;
+		this.isArray = list.isArray;
+		this.isSorted = list.isSorted;
+		if (isSorted) { // Other has TreeMap, we want that too
+			this.map = list.map != null ? new TreeMap<>(list.map) : null;
+		} else { // Unsorted, HashMap is good enough
+			this.map = list.map != null ? new HashMap<>(list.map) : null;
+		}
+		this.shadowValue = list.shadowValue;
+	}
+
+	/**
 	 * Checks whether this list variable is valid. It is only necessary to call
 	 * this when this has been cached and could've been deleted.
 	 * @return Whether this list is valid.

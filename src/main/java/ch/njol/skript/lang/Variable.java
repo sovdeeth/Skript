@@ -363,7 +363,13 @@ public class Variable<T> implements Expression<T> {
 		if (value == null) { // Delete instead
 			scope.delete(getPath(e), e, list); // Delete list if this refers to a list
 		} else {
-			scope.set(getPath(e), e, value);
+			if (value instanceof ListVariable) {
+				// Variables are passed by value; for lists, we need to fake it
+				// TODO may need to do for other mutable data types too
+				scope.set(getPath(e), e, new ListVariable((ListVariable) value));
+			} else {
+				scope.set(getPath(e), e, value);
+			}
 		}
 	}
 		

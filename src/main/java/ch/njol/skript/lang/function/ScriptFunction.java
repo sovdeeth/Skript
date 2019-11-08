@@ -94,6 +94,11 @@ public class ScriptFunction<T> extends Function<T> {
 			Object val = params[i];
 			assert p.single || val instanceof ListVariable : "incorrect amount of values for arg '" + p.getName() + "'";
 			if (val != null) { // Null values simply need not to be written
+				if (val instanceof ListVariable) { // Changes inside function need to stay there
+					// TODO go through the trigger, look for EffChanges
+					// If none of them write to this list, we don't need to clone
+					val = new ListVariable((ListVariable) val);
+				}
 				localVars.set(VariablePath.create(p.getName()), e, val);
 			}
 		}
