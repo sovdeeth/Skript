@@ -55,8 +55,6 @@ import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.log.ParseLogHandler;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.util.StringMode;
-import ch.njol.skript.variables.DatabaseStorage;
-import ch.njol.skript.variables.SerializedVariable;
 import ch.njol.skript.variables.Variables;
 import ch.njol.util.Kleenean;
 import ch.njol.util.StringUtils;
@@ -75,10 +73,10 @@ public abstract class Classes {
 	
 	@Nullable
 	private static ClassInfo<?>[] classInfos = null;
-	private final static List<ClassInfo<?>> tempClassInfos = new ArrayList<ClassInfo<?>>();
-	private final static HashMap<Class<?>, ClassInfo<?>> exactClassInfos = new HashMap<Class<?>, ClassInfo<?>>();
-	private final static HashMap<Class<?>, ClassInfo<?>> superClassInfos = new HashMap<Class<?>, ClassInfo<?>>();
-	private final static HashMap<String, ClassInfo<?>> classInfosByCodeName = new HashMap<String, ClassInfo<?>>();
+	private final static List<ClassInfo<?>> tempClassInfos = new ArrayList<>();
+	private final static HashMap<Class<?>, ClassInfo<?>> exactClassInfos = new HashMap<>();
+	private final static HashMap<Class<?>, ClassInfo<?>> superClassInfos = new HashMap<>();
+	private final static HashMap<String, ClassInfo<?>> classInfosByCodeName = new HashMap<>();
 	
 	/**
 	 * @param info info about the class to register
@@ -90,8 +88,6 @@ public abstract class Classes {
 				throw new IllegalArgumentException("Can't register " + info.getC().getName() + " with the code name " + info.getCodeName() + " because that name is already used by " + classInfosByCodeName.get(info.getCodeName()));
 			if (exactClassInfos.containsKey(info.getC()))
 				throw new IllegalArgumentException("Can't register the class info " + info.getCodeName() + " because the class " + info.getC().getName() + " is already registered");
-			if (info.getCodeName().length() > DatabaseStorage.MAX_CLASS_CODENAME_LENGTH)
-				throw new IllegalArgumentException("The codename '" + info.getCodeName() + "' is too long to be saved in a database, the maximum length allowed is " + DatabaseStorage.MAX_CLASS_CODENAME_LENGTH);
 			exactClassInfos.put(info.getC(), info);
 			classInfosByCodeName.put(info.getCodeName(), info);
 			tempClassInfos.add(info);
@@ -162,7 +158,7 @@ public abstract class Classes {
 		
 		// remove unresolvable dependencies (and print a warning if testing)
 		for (final ClassInfo<?> ci : tempClassInfos) {
-			final Set<String> s = new HashSet<String>();
+			final Set<String> s = new HashSet<>();
 			final Set<String> before = ci.before();
 			if (before != null) {
 				for (final String b : before) {
@@ -182,7 +178,7 @@ public abstract class Classes {
 				Skript.warning(s.size() + " dependency/ies could not be resolved for " + ci + ": " + StringUtils.join(s, ", "));
 		}
 		
-		final List<ClassInfo<?>> classInfos = new ArrayList<ClassInfo<?>>(tempClassInfos.size());
+		final List<ClassInfo<?>> classInfos = new ArrayList<>(tempClassInfos.size());
 		
 		boolean changed = true;
 		while (changed) {
@@ -670,77 +666,16 @@ public abstract class Classes {
 		return r;
 	}
 	
-	/**
-	 * Must be called on the appropriate thread for the given value (i.e. the main thread currently)
-	 */
-	@Nullable
-	public static SerializedVariable.Value serialize(@Nullable Object o) {
-		if (o == null)
-			return null;
-		
-		// temporary
-		assert Bukkit.isPrimaryThread();
-		
-		@SuppressWarnings("null")
-		ClassInfo<?> ci = getSuperClassInfo(o.getClass());
-		if (ci.getSerializeAs() != null) {
-			ci = getExactClassInfo(ci.getSerializeAs());
-			if (ci == null) {
-				assert false : o.getClass();
-				return null;
-			}
-			o = Converters.convert(o, ci.getC());
-			if (o == null) {
-				assert false : ci.getCodeName();
-				return null;
-			}
-		}
-		
-		final Serializer<?> s = ci.getSerializer();
-		if (s == null) // value cannot be saved
-			return null;
-		
-		assert s.mustSyncDeserialization() ? Bukkit.isPrimaryThread() : true;
-		
-		try {
-			final ByteArrayOutputStream bout = new ByteArrayOutputStream();
-			final YggdrasilOutputStream yout = Variables.yggdrasil.newOutputStream(bout);
-			yout.writeObject(o);
-			yout.flush();
-			yout.close();
-			final byte[] r = bout.toByteArray();
-			final byte[] start = getYggdrasilStart(ci);
-			for (int i = 0; i < start.length; i++)
-				assert r[i] == start[i] : o + " (" + ci.getC().getName() + "); " + Arrays.toString(start) + ", " + Arrays.toString(r);
-			final byte[] r2 = new byte[r.length - start.length];
-			System.arraycopy(r, start.length, r2, 0, r2.length);
-			
-			Object d;
-			assert equals(o, d = deserialize(ci, new ByteArrayInputStream(r2))) : o + " (" + o.getClass() + ") != " + d + " (" + (d == null ? null : d.getClass()) + "): " + Arrays.toString(r);
-			
-			return new SerializedVariable.Value(ci.getCodeName(), r2);
-		} catch (final IOException e) { // shouldn't happen
-			Skript.exception(e);
-			return null;
-		}
-	}
-	
-	private static boolean equals(final @Nullable Object o, final @Nullable Object d) {
-		if (o instanceof Chunk) { // CraftChunk does neither override equals nor is it a "coordinate-specific singleton" like Block
-			if (!(d instanceof Chunk))
-				return false;
-			final Chunk c1 = (Chunk) o, c2 = (Chunk) d;
-			return c1.getWorld().equals(c2.getWorld()) && c1.getX() == c2.getX() && c1.getZ() == c2.getZ();
-		}
-		return o == null ? d == null : o.equals(d);
-	}
+	// Methods below are kept for migrating pre variables rework databases
 	
 	@Nullable
+	@Deprecated
 	public static Object deserialize(final ClassInfo<?> type, final byte[] value) {
 		return deserialize(type, new ByteArrayInputStream(value));
 	}
 	
 	@Nullable
+	@Deprecated
 	public static Object deserialize(final String type, final byte[] value) {
 		final ClassInfo<?> ci = getClassInfoNoError(type);
 		if (ci == null)
@@ -749,6 +684,7 @@ public abstract class Classes {
 	}
 	
 	@Nullable
+	@Deprecated
 	public static Object deserialize(final ClassInfo<?> type, InputStream value) {
 		Serializer<?> s;
 		assert (s = type.getSerializer()) != null && (s.mustSyncDeserialization() ? Bukkit.isPrimaryThread() : true) : type + "; " + s + "; " + Bukkit.isPrimaryThread();
