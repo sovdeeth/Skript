@@ -559,4 +559,13 @@ public class ListVariable {
 		}
 		isSorted = true;
 	}
+
+	/**
+	 * Returns shadow value of this list, if one exists.
+	 * @return Shadow value or null.
+	 */
+	@Nullable
+	public Object getShadowValue() {
+		return shadowValue;
+	}
 }

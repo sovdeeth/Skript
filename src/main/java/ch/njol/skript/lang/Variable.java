@@ -342,9 +342,11 @@ public class Variable<T> implements Expression<T> {
 	@Nullable
 	public Object get(Event e) {
 		Object value = scope.get(getPath(e), e);
-		if (value instanceof ListVariable) {
+		if (value instanceof ListVariable) { // There is a list available
 			if (!list) { // List found, but single value wanted
-				throw new UnsupportedOperationException("TODO: shadow values");
+				return ((ListVariable) value).getShadowValue();
+			} else {
+				return value;
 			}
 		} else if (list) { // List wanted, but not found
 			return null;
@@ -359,7 +361,7 @@ public class Variable<T> implements Expression<T> {
 	 */
 	public void set(Event e, @Nullable Object value) {
 		if (value == null) { // Delete instead
-			scope.delete(getPath(e), e);
+			scope.delete(getPath(e), e, list); // Delete list if this refers to a list
 		} else {
 			scope.set(getPath(e), e, value);
 		}
