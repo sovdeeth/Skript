@@ -5,7 +5,7 @@ package ch.njol.skript.variables.serializer;
  * Different kinds of fields that can be written.
  */
 public enum FieldType {
-	
+		
 	NULL(0),
 	BOOLEAN(1),
 	BYTE(2),
@@ -17,6 +17,8 @@ public enum FieldType {
 	DOUBLE(8),
 	OBJECT(9),
 	STRING(10);
+	
+	public static final FieldType[] BY_ID = FieldType.values();
 	
 	private byte id;
 	
