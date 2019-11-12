@@ -122,6 +122,7 @@ public class FieldsReader {
 		char len = buf.getChar();
 		CharBuffer chars = CharBuffer.allocate(len);
 		StandardCharsets.ISO_8859_1.newDecoder().decode(buf, chars, true);
+		chars.flip();
 		String str = chars.toString();
 		assert str != null;
 		return str;
@@ -136,6 +137,7 @@ public class FieldsReader {
 		int len = buf.getInt();
 		CharBuffer chars = CharBuffer.allocate(len);
 		StandardCharsets.UTF_8.newDecoder().decode(buf, chars, true);
+		chars.flip();
 		String str = chars.toString();
 		assert str != null;
 		return str;

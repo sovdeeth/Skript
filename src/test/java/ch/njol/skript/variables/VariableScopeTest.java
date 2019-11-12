@@ -33,7 +33,7 @@ public class VariableScopeTest {
 		scope.set(path, null, "bar");
 		assertEquals("bar", scope.get(path, null));
 		
-		scope.delete(path, null);
+		scope.delete(path, null, false);
 		assertEquals(null, scope.get(path, null));
 	}
 }

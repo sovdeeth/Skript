@@ -160,7 +160,7 @@ public class FieldsWriter {
 		buf.position(lenIndex + 4); // Space for int
 		
 		StandardCharsets.UTF_8.newEncoder().encode(CharBuffer.wrap(value), buf, true);
-		int len = buf.position() - lenIndex; // How much did we write?
+		int len = buf.position() - lenIndex - 4; // How much did we write?
 		buf.putInt(lenIndex, len); // That is length of encoded string
 	}
 	

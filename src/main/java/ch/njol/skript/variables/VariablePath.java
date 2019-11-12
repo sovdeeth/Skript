@@ -131,7 +131,7 @@ public class VariablePath implements Iterable<Object> {
 	 * @return Cut and executed path.
 	 */
 	VariablePath execute(@Nullable Event event, int limit) {
-		VariablePath executed = new VariablePath(new Object[path.length]);
+		VariablePath executed = new VariablePath(new Object[limit]);
 		for (int i = 0; i < limit; i++) {
 			executed.path[i] = executePart(path[i], event);
 		}

@@ -81,6 +81,7 @@ public class DatabaseSerializer {
 			CharBuffer chars = CharBuffer.allocate(len);
 			
 			StandardCharsets.UTF_8.newDecoder().decode(buf, chars, true);
+			chars.flip();
 			String str = chars.toString();
 			assert str != null;
 			return str;
