@@ -20,15 +20,36 @@ import ch.njol.yggdrasil.Fields;
 public class FieldsReader {
 	
 	/**
-	 * Reads an object from a byte buffer. Its type must be serializable by
-	 * running Skript instance.
+	 * Reads an object or primitive from a byte buffer.
+	 * @param buf Buffer to read from.
+	 * @return An object, which is potentially null if a null was serialized.
+	 * @throws StreamCorruptedException Thrown by deserializer when it
+	 * encounters corrupted data.
+	 */
+	@Nullable
+	public Object read(ByteBuffer buf) throws StreamCorruptedException {
+		FieldType type = FieldType.BY_ID[buf.get()];
+		if (type == FieldType.NULL) {
+			return null;
+		} else if (type == FieldType.OBJECT) { // Read normal object
+			return readObject(buf);
+		} else if (type == FieldType.STRING) { // String special handling
+			return readString(buf);
+		} else { // Primitive type
+			assert type != null;
+			return readPrimitive(buf, type);
+		}
+	}
+	
+	/**
+	 * Reads an object from a byte buffer.
 	 * @param buf Buffer to read from.
 	 * @return An object, including null if a null was serialized.
 	 * @throws StreamCorruptedException Thrown by deserializer when it
 	 * encounters corrupted data.
 	 */
 	@Nullable
-	private Object read(ByteBuffer buf) throws StreamCorruptedException {
+	private Object readObject(ByteBuffer buf) throws StreamCorruptedException {
 		// Read data for object
 		String codeName = readId(buf);
 		Fields fields = readFields(buf);
@@ -65,21 +86,6 @@ public class FieldsReader {
 	}
 	
 	/**
-	 * Reads an id serialized by {@link FieldsWriter}. No Unicode support,
-	 * don't use for user-provided strings.
-	 * @param buf Buffer.
-	 * @return Id string.
-	 */
-	private String readId(ByteBuffer buf) {
-		char len = buf.getChar();
-		CharBuffer chars = CharBuffer.allocate(len);
-		StandardCharsets.ISO_8859_1.newDecoder().decode(buf, chars, true);
-		String str = chars.toString();
-		assert str != null;
-		return str;
-	}
-	
-	/**
 	 * Reads fields from given byte buffer.
 	 * @param buf Buffer to read from.
 	 * @return Fields.
@@ -96,7 +102,7 @@ public class FieldsReader {
 			if (type == FieldType.NULL) {
 				//fields.putObject(id, null); // Unnecessary - it is before anything happens
 			} else if (type == FieldType.OBJECT) { // Read normal object
-				fields.putObject(id, read(buf));
+				fields.putObject(id, readObject(buf));
 			} else if (type == FieldType.STRING) { // String special handling
 				fields.putObject(id, readString(buf));
 			} else { // Primitive type
@@ -107,11 +113,26 @@ public class FieldsReader {
 	}
 	
 	/**
+	 * Reads an id serialized by {@link FieldsWriter}. No Unicode support,
+	 * don't use for user-provided strings.
+	 * @param buf Buffer.
+	 * @return Id string.
+	 */
+	private static String readId(ByteBuffer buf) {
+		char len = buf.getChar();
+		CharBuffer chars = CharBuffer.allocate(len);
+		StandardCharsets.ISO_8859_1.newDecoder().decode(buf, chars, true);
+		String str = chars.toString();
+		assert str != null;
+		return str;
+	}
+	
+	/**
 	 * Reads a serialized string. Full Unicode support.
 	 * @param buf Source buffer.
 	 * @return A string.
 	 */
-	private String readString(ByteBuffer buf) {
+	private static String readString(ByteBuffer buf) {
 		int len = buf.getInt();
 		CharBuffer chars = CharBuffer.allocate(len);
 		StandardCharsets.UTF_8.newDecoder().decode(buf, chars, true);
@@ -126,7 +147,7 @@ public class FieldsReader {
 	 * @param type Type of primitive.
 	 * @return Boxed primitive type.
 	 */
-	private Object readPrimitive(ByteBuffer buf, FieldType type) {
+	private static Object readPrimitive(ByteBuffer buf, FieldType type) {
 		switch (type) {
 			case BOOLEAN:
 				return buf.get() == 1;
