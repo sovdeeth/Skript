@@ -73,6 +73,8 @@ import ch.njol.skript.util.Timespan;
 import ch.njol.skript.util.Utils;
 import ch.njol.skript.util.chat.BungeeConverter;
 import ch.njol.skript.util.chat.MessageComponent;
+import ch.njol.skript.variables.VariablePath;
+import ch.njol.skript.variables.Variables;
 import ch.njol.util.StringUtils;
 import ch.njol.util.Validate;
 
@@ -447,18 +449,19 @@ public class ScriptCommand implements TabExecutor {
 		if (cooldownStorage == null) {
 			return lastUsageMap.get(uuid);
 		} else {
-			String name = getStorageVariableName(event);
-			assert name != null;
-			return (Date) Variables.getVariable(name, null, false);
+			VariablePath path = VariablePath.create(getStorageVariableName(event));
+			return (Date) Variables.getGlobalVariables().get(path, event);
 		}
 	}
 
 	public void setLastUsage(UUID uuid, Event event, @Nullable Date date) {
 		if (cooldownStorage != null) {
-			// Using a variable
-			String name = getStorageVariableName(event);
-			assert name != null;
-			Variables.setVariable(name, date, null, false);
+			VariablePath path = VariablePath.create(getStorageVariableName(event));
+			if (date == null) {
+				Variables.getGlobalVariables().delete(path, event, false);
+			} else {
+				Variables.getGlobalVariables().set(path, event, date);
+			}
 		} else {
 			// Use the map
 			if (date == null)

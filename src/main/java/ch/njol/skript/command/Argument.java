@@ -24,6 +24,7 @@ import java.util.WeakHashMap;
 import org.bukkit.event.Event;
 import org.eclipse.jdt.annotation.Nullable;
 
+import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.lang.Expression;
@@ -35,6 +36,10 @@ import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.skript.log.RetainingLogHandler;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.util.Utils;
+import ch.njol.skript.variables.ListVariable;
+import ch.njol.skript.variables.LocalVariableScope;
+import ch.njol.skript.variables.VariablePath;
+import ch.njol.skript.variables.VariableScope;
 import ch.njol.skript.variables.Variables;
 
 /**
@@ -57,20 +62,27 @@ public class Argument<T> {
 	
 	private final boolean optional;
 	
-	private transient WeakHashMap<Event, T[]> current = new WeakHashMap<Event, T[]>();
+	/**
+	 * Local variables where this argument is put.
+	 */
+	private final LocalVariableScope localVars;
 	
-	private Argument(@Nullable final String name, final @Nullable Expression<? extends T> def, final ClassInfo<T> type, final boolean single, final int index, final boolean optional) {
+	private transient WeakHashMap<Event, T[]> current = new WeakHashMap<>();
+	
+	private Argument(@Nullable String name, @Nullable Expression<? extends T> def, ClassInfo<T> type,
+			boolean single, int index, boolean optional, LocalVariableScope localVars) {
 		this.name = name;
 		this.def = def;
 		this.type = type;
 		this.single = single;
 		this.index = index;
 		this.optional = optional;
+		this.localVars = localVars;
 	}
 	
 	@SuppressWarnings("unchecked")
 	@Nullable
-	public static <T> Argument<T> newInstance(@Nullable final String name, final ClassInfo<T> type, final @Nullable String def, final int index, final boolean single, final boolean forceOptional) {
+	public static <T> Argument<T> newInstance(@Nullable String name, ClassInfo<T> type, @Nullable String def, int index, boolean single, boolean forceOptional) {
 		if (name != null && !Variable.isValidVariableName(name, false, false)) {
 			Skript.error("An argument's name must be a valid variable name, and cannot be a list variable.");
 			return null;
@@ -96,7 +108,7 @@ public class Argument<T> {
 						if (def.startsWith("\"") && def.endsWith("\""))
 							d = (Expression<? extends T>) VariableString.newInstance("" + def.substring(1, def.length() - 1));
 						else
-							d = (Expression<? extends T>) new SimpleLiteral<String>(def, false);
+							d = (Expression<? extends T>) new SimpleLiteral<>(def, false);
 					} else {
 						d = new SkriptParser(def, SkriptParser.PARSE_LITERALS, ParseContext.DEFAULT).parseExpression(type.getC());
 					}
@@ -110,7 +122,7 @@ public class Argument<T> {
 				}
 			}
 		}
-		return new Argument<T>(name, d, type, single, index, def != null || forceOptional);
+		return new Argument<>(name, d, type, single, index, def != null || forceOptional, ScriptLoader.getLocalVariables());
 	}
 	
 	@Override
@@ -133,14 +145,20 @@ public class Argument<T> {
 		if (!(type.getC().isAssignableFrom(o.getClass().getComponentType())))
 			throw new IllegalArgumentException();
 		current.put(e, (T[]) o);
-		final String name = this.name;
+		
+		// Set argument to local variables
 		if (name != null) {
 			if (single) {
-				if (o.length > 0)
-					Variables.setVariable(name, o[0], e, true);
+				if (o.length > 0) {
+					Object value = o[0];
+					assert value != null;
+					localVars.set(VariablePath.create(name), e, o);
+				}
 			} else {
+				ListVariable list = new ListVariable();
 				for (int i = 0; i < o.length; i++)
-					Variables.setVariable(name + "::" + (i + 1), o[i], e, true);
+					list.add(o[i]);
+				localVars.set(VariablePath.create(name), e, list);
 			}
 		}
 	}
