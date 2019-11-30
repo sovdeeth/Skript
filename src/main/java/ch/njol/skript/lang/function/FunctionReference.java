@@ -34,8 +34,10 @@ import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.config.Node;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
+import ch.njol.skript.lang.Variable;
 import ch.njol.skript.log.RetainingLogHandler;
 import ch.njol.skript.log.SkriptLogger;
+import ch.njol.skript.variables.ListVariable;
 import ch.njol.util.StringUtils;
 import ch.njol.util.coll.CollectionUtils;
 
@@ -65,6 +67,7 @@ public class FunctionReference<T> {
 	
 	/**
 	 * If all function parameters can be condensed to a single list.
+	 * This is similar to Java's varargs notation.
 	 */
 	private boolean singleListParam;
 	
@@ -240,31 +243,61 @@ public class FunctionReference<T> {
 		}
 		
 		// Prepare parameter values for calling
-		final Object[][] params = new Object[singleListParam ? 1 : parameters.length][];
+		final Object[] params = new Object[singleListParam ? 1 : parameters.length][];
 		if (singleListParam && parameters.length > 1) { // All parameters to one list
-			List<Object> l = new ArrayList<>();
-			for (int i = 0; i < parameters.length; i++)
-				l.addAll(Arrays.asList(parameters[i].getArray(e)));
-			params[0] = l.toArray();
-			// Don't allow mutating across function boundary; same hack is applied to variables
-			for (int i = 0; i < params[0].length; i++) {
-				if (params[0][i] instanceof Location)
-					params[0][i] = ((Location) params[0][i]).clone();
+			// Note: we're changing API by not flattening multiple parameter lists
+			// That feature was not commonly used, and has significant performance impact
+			ListVariable l = new ListVariable();
+			
+			// Add all parameters to list passed to function
+			for (int i = 0; i < parameters.length; i++) {
+				l.add(getParameter(e, i));
 			}
+			params[0] = l; // Pass list as first parameter
 		} else { // Use parameters in normal way
 			for (int i = 0; i < params.length; i++) {
-				params[i] = parameters[i].getArray(e);
-				// Don't allow mutating across function boundary; same hack is applied to variables
-				for (int j = 0; j < params[i].length; j++) {
-					if (params[i][j] instanceof Location)
-						params[i][j] = ((Location) params[i][j]).clone();
-				}
+				params[i] = getParameter(e, i);
 			}
 		}
 		
 		// Execute the function
 		assert function != null;
 		return function.execute(params);
+	}
+	
+	/**
+	 * Gets value of a parameter with given index.
+	 * @param e Currently executing event.
+	 * @param i Index of parameter (starts from zero).
+	 * @return A single value or a {@link ListVariable}.
+	 */
+	@Nullable
+	private Object getParameter(Event e, int i) {
+		Expression<?> param = parameters[i];
+		assert param != null;
+		return getParameter(e, param);
+	}
+	
+	/**
+	 * Gets value of a parameter.
+	 * @param e Currently executing event.
+	 * @param param Parameter expression.
+	 * @return A single value or a {@link ListVariable}.
+	 */
+	@Nullable
+	static Object getParameter(Event e, Expression<?> param) {
+		if (param instanceof Variable) {
+			return ((Variable<?>) param).get(e); // Single value or list variable
+		} else {
+			Object[] values = param.getArray(e);
+			if (values.length == 0) {
+				return null; // Parameter not present
+			} else if (values.length == 1) { // Single value
+				return values[0];
+			} else {
+				return new ListVariable(values);
+			}
+		}
 	}
 	
 	public boolean isSingle() {

@@ -1171,6 +1171,13 @@ public final class Skript extends JavaPlugin implements Listener {
 		Classes.onRegistrationsStop();
 	}
 	
+	/**
+	 * TODO remove, for temporary unit test usage.
+	 */
+	public static void endRegistrations() {
+		stopAcceptingRegistrations();
+	}
+	
 	// ================ ADDONS ================
 	
 	private final static HashMap<String, SkriptAddon> addons = new HashMap<>();

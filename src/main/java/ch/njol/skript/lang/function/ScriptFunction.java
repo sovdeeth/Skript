@@ -64,20 +64,13 @@ public class ScriptFunction<T> extends Function<T> {
 	 * @param e
 	 * @param value
 	 */
-	public final void setReturnValue(final FunctionEvent e, final @Nullable T[] value) {
+	public final void setReturnValue(final FunctionEvent<T> e, final @Nullable T[] value) {
 		assert !returnValueSet;
 		returnValueSet = true;
 		returnValue = value;
 	}
 	
 	@Override
-	@Nullable
-	public T[] execute(FunctionEvent<?> e, Object[][] params) {
-		throw new UnsupportedOperationException("ScriptFunction API changed"); // TODO map this to our other execute
-	}
-	
-	// REMIND track possible types of local variables (including undefined variables) (consider functions, commands, and EffChange) - maybe make a general interface for this purpose
-	// REM: use patterns, e.g. {_a%b%} is like "a.*", and thus subsequent {_axyz} may be set and of that type.
 	@Nullable
 	public T[] execute(final FunctionEvent<?> e, final Object[] params) {
 		if (trigger == null)
@@ -94,6 +87,10 @@ public class ScriptFunction<T> extends Function<T> {
 			Object val = params[i];
 			assert p.single || val instanceof ListVariable : "incorrect amount of values for arg '" + p.getName() + "'";
 			if (val != null) { // Null values simply need not to be written
+				// TODO there are a number of types we MUST clone, because they're mutable in Java but not in scripts
+				// At least Location needs this
+				// That logic will be moved here from FunctionReference
+				
 				if (val instanceof ListVariable) { // Changes inside function need to stay there
 					// TODO go through the trigger, look for EffChanges
 					// If none of them write to this list, we don't need to clone

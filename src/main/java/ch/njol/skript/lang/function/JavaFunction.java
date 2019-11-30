@@ -22,6 +22,7 @@ package ch.njol.skript.lang.function;
 import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.classes.ClassInfo;
+import ch.njol.skript.variables.ListVariable;
 
 /**
  * @author Peter Güttinger
@@ -38,7 +39,23 @@ public abstract class JavaFunction<T> extends Function<T> {
 	
 	@Override
 	@Nullable
-	public abstract T[] execute(FunctionEvent e, Object[][] params);
+	public T[] execute(FunctionEvent<?> e, final Object[] params) {
+		// JavaFunctions don't want to deal with ListVariables
+		// For now, we will emulate old calling convention for them
+		Object[][] ps = new Object[params.length][];
+		for (int i = 0; i < ps.length; i++) {
+			Object value = params[i];
+			if (value instanceof ListVariable) {
+				ps[i] = ((ListVariable) value).toArray();
+			} else {
+				ps[i] = new Object[] {value};
+			}
+		}
+		return execute(e, ps);
+	}
+	
+	@Nullable
+	public abstract T[] execute(FunctionEvent<?> e, Object[][] params);
 	
 	@Nullable
 	private String[] description = null;

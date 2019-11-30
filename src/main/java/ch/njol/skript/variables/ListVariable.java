@@ -116,6 +116,20 @@ public class ListVariable {
 		}
 		this.shadowValue = list.shadowValue;
 	}
+	
+	/**
+	 * Creates a list variable with contents of given array.
+	 * Do not modify that array afterwards!
+	 * @param values Values of list. Indices will be used as names.
+	 */
+	public ListVariable(Object[] values) {
+		this.size = values.length;
+		this.values = values;
+		this.isArray = true;
+		this.isSorted = true; // Plain array is always in order
+		assertValid();
+		assertPlainArray();
+	}
 
 	/**
 	 * Checks whether this list variable is valid. It is only necessary to call
@@ -188,7 +202,7 @@ public class ListVariable {
 	 * Adds a value at end of this list.
 	 * @param value Value to add.
 	 */
-	public void add(Object value) {
+	public void add(@Nullable Object value) {
 		assertValid();
 		if (isArray) { // Fast path: append to array end
 			assertPlainArray();
@@ -499,6 +513,7 @@ public class ListVariable {
 				private int index = 0;
 				private int removeIndex;
 				
+				@Nullable
 				@Override
 				public Object next() {
 					removeIndex = index; // Back up for remove()
@@ -584,5 +599,24 @@ public class ListVariable {
 	@Nullable
 	public Object getShadowValue() {
 		return shadowValue;
+	}
+	
+	/**
+	 * Creates an array from contents of this list variable.
+	 * It will be ordered, but provided that this is not a simple,
+	 * sequential array, the keys will be lost.
+	 * @return Array with contents of this list.
+	 */
+	public Object[] toArray() {
+		ensureSorted(); // Returned array must be in order
+		if (map != null) { // Use standard map API
+			Object[] values = map.values().toArray();
+			assert values != null;
+			return values;
+		} else { // Copy part of our backing array and return it
+			Object[] values = new Object[size];
+			System.arraycopy(this.values, 0, values, 0, size);
+			return values;
+		}
 	}
 }

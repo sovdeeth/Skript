@@ -86,11 +86,8 @@ public abstract class Function<T> {
 	 */
 	@SuppressWarnings("null")
 	@Nullable
-	public final T[] execute(final Object[][] params) {
-		if (params.length > 0 && params[0].length == 0) // Parameters exist, but parameters are not of the correct type 
-			return null;
-		
-		final FunctionEvent<? extends T> e = new FunctionEvent<>(this);
+	public final T[] execute(final Object[] params) {
+		FunctionEvent<? extends T> e = new FunctionEvent<>(this);
 		
 		// Call function event only if requested by addon
 		// Functions may be called VERY often, so this might have performance impact
@@ -109,26 +106,18 @@ public abstract class Function<T> {
 		}
 		
 		// If given less that max amount of parameters, pad remaining with nulls
-		final Object[][] ps = params.length < parameters.length ? Arrays.copyOf(params, parameters.length) : params;
+		final Object[] ps = params.length < parameters.length ? Arrays.copyOf(params, parameters.length) : params;
 		assert ps != null;
 		
 		// Execute parameters or default value expressions
 		for (int i = 0; i < parameters.length; i++) {
 			Parameter<?> p = parameters[i];
-			Object[] val = ps[i];
+			Object val = ps[i];
 			if (val == null) { // Go for default value
 				assert p.def != null; // Should've been parse error
-				val = p.def.getArray(e);
+				val = FunctionReference.getParameter(e, p.def);
 			}
 			
-			/*
-			 * Cancel execution of function if one of parameters produces null.
-			 * This used to be the default behavior, but since scripts don't
-			 * really have a concept of nulls, it was changed. The config
-			 * option may be removed in future.
-			 */
-			if (!executeWithNulls && (val == null || val.length == 0))
-				return null;
 			ps[i] = val;
 		}
 		
@@ -156,7 +145,7 @@ public abstract class Function<T> {
 	 * @return Function return value(s).
 	 */
 	@Nullable
-	public abstract T[] execute(FunctionEvent<?> e, final Object[][] params);
+	public abstract T[] execute(FunctionEvent<?> e, final Object[] params);
 
 	/**
 	 * Resets the return value of the {@code Function}.

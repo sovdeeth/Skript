@@ -15,9 +15,10 @@ public class VariableEntry implements Comparable<VariableEntry> {
 	/**
 	 * Variable value.
 	 */
+	@Nullable
 	private final Object value;
 	
-	public VariableEntry(String name, Object value) {
+	public VariableEntry(String name, @Nullable Object value) {
 		this.name = name;
 		this.value = value;
 	}
@@ -26,6 +27,7 @@ public class VariableEntry implements Comparable<VariableEntry> {
 		return name;
 	}
 	
+	@Nullable
 	public Object getValue() {
 		return value;
 	}

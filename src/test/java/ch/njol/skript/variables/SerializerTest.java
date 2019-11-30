@@ -83,4 +83,6 @@ public class SerializerTest {
 		assertEquals("abc", reader.read(buf));
 		buf.clear();
 	}
+	
+	// TODO test complex objects; challenging, becauses Classes is not built for that
 }
