@@ -58,11 +58,8 @@ public class ExprIndices extends SimpleExpression<String> {
 	@Override
 	@SuppressWarnings("unchecked")
 	protected String[] get(Event e) {
-		Map<String, Object> valueMap = (Map<String, Object>) list.getRaw(e);
-		if (valueMap == null) {
-			return null;
-		}
-		return valueMap.keySet().toArray(new String[0]);
+		// TODO update to new variable system
+		throw new UnsupportedOperationException("new variables");
 	}
 	
 	@Override

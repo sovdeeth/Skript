@@ -85,18 +85,11 @@ public class Delay extends Effect {
 			if (d == null)
 				return null;
 			
-			// Back up local variables
-			Object localVars = Variables.removeLocals(e);
-			
 			Bukkit.getScheduler().scheduleSyncDelayedTask(Skript.getInstance(), new Runnable() {
 				@Override
 				public void run() {
 					if (Skript.debug())
 						Skript.info(getIndentation() + "... continuing after " + (System.nanoTime() - start) / 1000000000. + "s");
-					
-					// Re-set local variables
-					if (localVars != null)
-						Variables.setLocalVariables(e, localVars);
 					
 					Object timing = null;
 					if (SkriptTimings.enabled()) { // getTrigger call is not free, do it only if we must
@@ -107,7 +100,6 @@ public class Delay extends Effect {
 					}
 					
 					TriggerItem.walk(next, e);
-					Variables.removeLocals(e); // Clean up local vars, we may be exiting now
 					
 					SkriptTimings.stop(timing); // Stop timing if it was even started
 				}

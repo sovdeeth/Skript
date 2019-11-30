@@ -43,6 +43,8 @@ import java.util.concurrent.Executors;
  */
 public abstract class AsyncEffect extends Effect {
 	
+	// TODO update to new variable system
+	
 	@Override
 	@Nullable
 	protected TriggerItem walk(Event e) {
@@ -51,7 +53,6 @@ public abstract class AsyncEffect extends Effect {
 		
 		if (next != null) {
 			Delay.addDelayedEvent(e); // Mark this event as delayed
-			Object localVars = Variables.removeLocals(e); // Back up local variables
 			
 			Bukkit.getScheduler().runTaskAsynchronously(Skript.getInstance(), new Runnable() {
 				@SuppressWarnings("synthetic-access")
@@ -62,10 +63,6 @@ public abstract class AsyncEffect extends Effect {
 					Bukkit.getScheduler().runTask(Skript.getInstance(), new Runnable() {
 						@Override
 						public void run() { // Walk to next item synchronously
-							// Re-set local variables
-							if (localVars != null)
-								Variables.setLocalVariables(e, localVars);
-							
 							Object timing = null;
 							if (SkriptTimings.enabled()) { // getTrigger call is not free, do it only if we must
 								Trigger trigger = getTrigger();
@@ -75,7 +72,6 @@ public abstract class AsyncEffect extends Effect {
 							}
 							
 							TriggerItem.walk(next, e);
-							Variables.removeLocals(e); // Clean up local vars, we may be exiting now
 							
 							SkriptTimings.stop(timing); // Stop timing if it was even started
 						}

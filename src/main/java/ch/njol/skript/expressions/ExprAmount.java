@@ -108,9 +108,7 @@ public class ExprAmount extends SimpleExpression<Integer> {
 	@Override
 	protected Integer[] get(final Event e) {
 		if (recursive) {
-			Object var = ((Variable<?>) expr).getRaw(e);
-			if (var != null)
-				return new Integer[] {getRecursiveSize((Map<String, ?>) var)}; // Should already be a Map 
+			throw new UnsupportedOperationException("new variables");
 		}
 		return new Integer[] {expr.getArray(e).length};
 	}
