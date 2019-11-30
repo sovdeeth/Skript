@@ -2,6 +2,7 @@ package ch.njol.skript.variables.storage.skdb;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.StreamCorruptedException;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.ByteChannel;
@@ -20,6 +21,18 @@ import ch.njol.skript.variables.storage.VariableStorage;
  * A specialized database built for Skript variables.
  */
 public class SkDbStorage implements VariableStorage {
+	
+	public static SkDbStorage open(Path file) throws IOException {
+		FileChannel ch = FileChannel.open(file);
+		Metadata meta = new Metadata(ch, 0);
+		// TODO
+	}
+	
+	/**
+	 * File channel for reading database content. Not used for writing, as this
+	 * is a journaling database.
+	 */
+	private FileChannel readCh;
 	
 	private static class Metadata {
 		
@@ -62,31 +75,37 @@ public class SkDbStorage implements VariableStorage {
 		}
 	}
 	
-	public static SkDbStorage open(Path file) throws IOException {
-		FileChannel ch = FileChannel.open(file);
-		Metadata meta = new Metadata(ch, 0);
-		// TODO
-	}
-	
-	/**
-	 * File channel for reading database content. Not used for writing, as this
-	 * is a journaling database.
-	 */
-	private FileChannel readCh;
-	
 	/**
 	 * Database metadata.
 	 */
-	private Metadata meta;
+	private final Metadata meta;
 	
-	private SkDbStorage(FileChannel ch, Metadata meta) {
+	/**
+	 * Journal of this database.
+	 */
+	private final Journal journal;
+	
+	/**
+	 * Variables currently in journal, waiting to be written.
+	 */
+	private int journalSize;
+	
+	private SkDbStorage(FileChannel ch, Metadata meta, Journal journal) {
 		this.readCh = ch;
 		this.meta = meta;
+		this.journal = journal;
 	}
 
 	@Override
-	public void variableChanged(VariablePath path, @Nullable Object newValue) {
-		// TODO journal
+	public void variableChanged(@Nullable VariablePath path, Object name, @Nullable Object newValue) {
+		try {
+			journal.variableChanged(path, name, newValue);
+		} catch (StreamCorruptedException e) {
+			// TODO handle this, but how?
+			e.printStackTrace();
+		}
+		journalSize++;
+		// TODO process journal once it grows large enough
 	}
 
 	@Override

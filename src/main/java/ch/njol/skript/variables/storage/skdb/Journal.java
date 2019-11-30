@@ -1,6 +1,7 @@
 package ch.njol.skript.variables.storage.skdb;
 
 import java.io.IOException;
+import java.io.StreamCorruptedException;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
@@ -11,6 +12,7 @@ import java.util.Map;
 import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.variables.VariablePath;
+import ch.njol.skript.variables.serializer.FieldsWriter;
 
 /**
  * SkDb's change journal. All changes are immediately written to a
@@ -22,9 +24,14 @@ import ch.njol.skript.variables.VariablePath;
 public class Journal {
 	
 	/**
-	 * Serializer we should use.
+	 * Serializer for database's internal data types.
 	 */
-	private final DatabaseSerializer serializer;
+	private final DatabaseSerializer dbSerializer;
+	
+	/**
+	 * Serializer for user-provided data.
+	 */
+	private final FieldsWriter userSerializer;
 	
 	/**
 	 * Current journal buffer.
@@ -73,24 +80,33 @@ public class Journal {
 	 */
 	private final VariableTree root;
 	
-	public Journal(DatabaseSerializer serializer, Path file, int size) throws IOException {
-		this.serializer = serializer;
+	public Journal(DatabaseSerializer dbSerializer, FieldsWriter userSerializer, Path file, int size) throws IOException {
+		this.dbSerializer = dbSerializer;
+		this.userSerializer = userSerializer;
 		this.journalBuf = FileChannel.open(file).map(MapMode.READ_WRITE, 0, size);
 		this.root = new VariableTree();
 	}
 	
-	public void variableChanged(VariablePath path, @Nullable Object newValue) {
-		// Write change to journal as early as possible
-		serializer.writePath(path, journalBuf);
+	public void variableChanged(@Nullable VariablePath path, Object name, @Nullable Object newValue) throws StreamCorruptedException {
+		// Write full path to variable (path to list, name)
+		if (path != null) {
+			dbSerializer.writePath(path, journalBuf);
+		}
+		dbSerializer.writePathPart(name, journalBuf);
+		
+		// Write variable content
 		int start = journalBuf.position();
-		// TODO variable content
+		userSerializer.write(journalBuf, newValue);
 		int size = journalBuf.position() - start;
 		
 		// Find or create this variable in change tree
 		VariableTree var = root;
-		for (Object name : path) {
-			var = var.contents.computeIfAbsent(name, (k) -> new VariableTree());
+		if (path != null) {
+			for (Object part : path) {
+				var = var.contents.computeIfAbsent(part, k -> new VariableTree());
+			}
 		}
+		var = var.contents.computeIfAbsent(name, k -> new VariableTree());
 		
 		// (Over)write in-memory representation of data
 		var.value = new ChangedVariable(start, size);

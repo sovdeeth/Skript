@@ -29,7 +29,7 @@ public class FieldsWriter {
 	 * @return How many bytes were written to the buffer.
 	 * @throws StreamCorruptedException Potentially thrown by the serializer.
 	 */
-	public int write(ByteBuffer buf, Object value) throws StreamCorruptedException {
+	public int write(ByteBuffer buf, @Nullable Object value) throws StreamCorruptedException {
 		int startPos = buf.position();
 		writeValue(buf, value);
 		return buf.position() - startPos;
