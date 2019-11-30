@@ -597,69 +597,8 @@ final public class ScriptLoader {
 					} else if (event.equalsIgnoreCase("variables")) {
 						// TODO allow to make these override existing variables
 						node.convertToEntries(0, "=");
-						for (final Node n : node) {
-							if (!(n instanceof EntryNode)) {
-								Skript.error("Invalid line in variables section");
-								continue;
-							}
-							String name = ((EntryNode) n).getKey().toLowerCase(Locale.ENGLISH);
-							if (name.startsWith("{") && name.endsWith("}"))
-								name = "" + name.substring(1, name.length() - 1);
-							final String var = name;
-							name = StringUtils.replaceAll(name, "%(.+)?%", new Callback<String, Matcher>() {
-								@Override
-								@Nullable
-								public String run(final Matcher m) {
-									if (m.group(1).contains("{") || m.group(1).contains("}") || m.group(1).contains("%")) {
-										Skript.error("'" + var + "' is not a valid name for a default variable");
-										return null;
-									}
-									final ClassInfo<?> ci = Classes.getClassInfoFromUserInput("" + m.group(1));
-									if (ci == null) {
-										Skript.error("Can't understand the type '" + m.group(1) + "'");
-										return null;
-									}
-									return "<" + ci.getCodeName() + ">";
-								}
-							});
-							if (name == null) {
-								continue;
-							} else if (name.contains("%")) {
-								Skript.error("Invalid use of percent signs in variable name");
-								continue;
-							}
-							if (Variables.getVariable(name, null, false) != null)
-								continue;
-							Object o;
-							final ParseLogHandler log = SkriptLogger.startParseLogHandler();
-							try {
-								o = Classes.parseSimple(((EntryNode) n).getValue(), Object.class, ParseContext.SCRIPT);
-								if (o == null) {
-									log.printError("Can't understand the value '" + ((EntryNode) n).getValue() + "'");
-									continue;
-								}
-								log.printLog();
-							} finally {
-								log.stop();
-							}
-							final ClassInfo<?> ci = Classes.getSuperClassInfo(o.getClass());
-							if (ci.getSerializer() == null) {
-								Skript.error("Can't save '" + ((EntryNode) n).getValue() + "' in a variable");
-								continue;
-							} else if (ci.getSerializeAs() != null) {
-								final ClassInfo<?> as = Classes.getExactClassInfo(ci.getSerializeAs());
-								if (as == null) {
-									assert false : ci;
-									continue;
-								}
-								o = Converters.convert(o, as.getC());
-								if (o == null) {
-									Skript.error("Can't save '" + ((EntryNode) n).getValue() + "' in a variable");
-									continue;
-								}
-							}
-							Variables.setVariable(name, o, null, false);
-						}
+						// TODO update to new variable system, consider rewriting
+						Skript.warning("New variable system does not yet support 'variables' block");
 						continue;
 					}
 					
