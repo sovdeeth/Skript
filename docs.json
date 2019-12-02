@@ -1,5 +1,5 @@
 {
-  "skriptVersion" : "2.4-beta1",
+  "skriptVersion" : "2.4",
 
   "classes" : [
     {
@@ -370,18 +370,6 @@
   "examples" : "set metadata value \"super cool\" of player to true"
 },
 {
-  "id" : "money",
-  "name" : "Money",
-  "patterns" : [
-    "&lt;code&gt;&amp;lt;number&amp;gt; $&lt;/code&gt; or &lt;code&gt;$ &amp;lt;number&amp;gt;&lt;/code&gt;, where '$' is your server's currency, e.g. '10 rupees' or '£5.00'",
-
-    "pattern_end"
-  ],
-  "since" : "2.0",
-  "description" : "A certain amount of money. Please note that this differs from <a href='#number'>numbers</a> as it includes a currency symbol or name, but usually the two are interchangeable, e.g. you can both <code>add 100$ to the player's balance</code> and <code>add 100 to the player's balance</code>.",
-  "examples" : "add 10£ to the player's account\\nremove Fr. 9.95 from the player's money\\nset the victim's money to 0\\nincrease the attacker's balance by the level of the victim * 100"
-},
-{
   "id" : "number",
   "name" : "Number",
   "patterns" : [
@@ -507,7 +495,7 @@
   ],
   "since" : "2.3",
   "description" : "The spawn reason in a <a href='events.html#spawn'>spawn</a> event.",
-  "examples" : "natural, jockey, chunk generation, mob spawner, egg, spawn egg, lightning, built snowman, built iron golem, built wither, village defense, village invasion, breed, slime split, reinforcements, nether portal, dispense egg, infection, cured, ocelot baby, silverfish reveal, mount, trap, ender pearl, perching, drowned, shear, spawn reasons.explosion, customized, default"
+  "examples" : "natural, jockey, chunk generation, mob spawner, egg, spawn egg, lightning, built snowman, built iron golem, built wither, village defense, village invasion, breed, slime split, reinforcements, nether portal, dispense egg, infection, cured, ocelot baby, silverfish reveal, mount, trap, ender pearl, perching, drowned, shear, spawn reasons.explosion, spawn reasons.raid, spawn reasons.patrol, customized, default"
 },
 {
   "id" : "teleportcause",
@@ -653,6 +641,19 @@
 
   "conditions" : [
     {
+  "id" : "CondAlphanumeric",
+  "name" : "Alphanumeric",
+  "patterns" : [
+    "%<a href='classes.html#string'>texts</a>% (is|are) alphanumeric",
+"%<a href='classes.html#string'>texts</a>% (isn't|is not|aren't|are not) alphanumeric",
+
+    "pattern_end"
+  ],
+  "since" : "2.4",
+  "description" : "Checks if the given string is alphanumeric.",
+  "examples" : "if the argument is not alphanumeric:\\n    send \"Invalid name!\""
+},
+{
   "id" : "CondCanBuild",
   "name" : "Can Build",
   "patterns" : [
@@ -760,16 +761,19 @@ Note: This is the only element where not all patterns are shown. It has actually
   "id" : "CondContains",
   "name" : "Contains",
   "patterns" : [
-    "%<a href='classes.html#inventory'>inventories</a>% ha(s|ve) %<a href='classes.html#itemtype'>item types</a>% [in [(the[ir]|his|her|its)] inventory]",
+    "%<a href='classes.html#inventory'>inventories</a>% (has|have) %<a href='classes.html#itemtype'>item types</a>% [in [(the[ir]|his|her|its)] inventory]",
+"%<a href='classes.html#inventory'>inventories</a>% (doesn't|does not|do not|don't) have %<a href='classes.html#itemtype'>item types</a>% [in [(the[ir]|his|her|its)] inventory]",
 "%<a href='classes.html#inventory'>inventories</a>/<a href='classes.html#string'>texts</a>/<a href='classes.html#object'>objects</a>% contain[s] %<a href='classes.html#itemtype'>item types</a>/<a href='classes.html#string'>texts</a>/<a href='classes.html#object'>objects</a>%",
-"%<a href='classes.html#inventory'>inventories</a>% do[es](n't| not) have %<a href='classes.html#itemtype'>item types</a>% [in [(the[ir]|his|her|its)] inventory]",
-"%<a href='classes.html#inventory'>inventories</a>/<a href='classes.html#string'>texts</a>/<a href='classes.html#object'>objects</a>% do[es](n't| not) contain %<a href='classes.html#itemtype'>item types</a>/<a href='classes.html#string'>texts</a>/<a href='classes.html#object'>objects</a>%",
+"%<a href='classes.html#inventory'>inventories</a>/<a href='classes.html#string'>texts</a>/<a href='classes.html#object'>objects</a>% (doesn't|does not|do not|don't) contain %<a href='classes.html#itemtype'>item types</a>/<a href='classes.html#string'>texts</a>/<a href='classes.html#object'>objects</a>%",
+"[the] list [of] %<a href='classes.html#object'>objects</a>% (doesn't|does not|do not|don't) contain %<a href='classes.html#object'>objects</a>%",
+"[the] list [of] %<a href='classes.html#object'>objects</a>% contain[s] %<a href='classes.html#object'>objects</a>%",
+"(all|any|none) of %<a href='classes.html#string'>texts</a>% contain[s] %<a href='classes.html#string'>texts</a>%",
 
     "pattern_end"
   ],
   "since" : "1.0",
-  "description" : "Checks whether an inventory contains the given item, a text contains another piece of text, or a list of objects (e.g. a {list variable::*}) contains another object.",
-  "examples" : "block contains 20 cobblestone\\nplayer has 4 flint and 2 iron ingots"
+  "description" : "Checks whether an inventory contains an item, a text contains another piece of text, or a list (e.g. {list variable::*} or 'drops') contains another object.",
+  "examples" : "block contains 20 cobblestone\\nplayer has 4 flint and 2 iron ingots\\n{list::*} contains 5"
 },
 {
   "id" : "CondDamageCause",
@@ -1375,7 +1379,8 @@ This condition requires a supported regions plugin to be installed.",
   ],
   "since" : "1.4, 2.1.1 (ban reason)",
   "description" : "Bans/unbans a player or an IP address.
-Starting with Skript 2.1.1 and Bukkit 1.7.2 R0.4, one can also ban players with a reason.",
+Starting with Skript 2.1.1 and Bukkit 1.7.2 R0.4, one can also ban players with a reason.
+Note that banning a player will not kick them from the server. You may use the <a href='effects.html#EffKick'>kick effect</a> if you wish so.",
   "examples" : "unban player\\nban \"127.0.0.1\"\\nIP-ban the player because \"he is an idiot\""
 },
 {
@@ -1421,6 +1426,19 @@ message to all players instead of broadcasting it.",
   "examples" : "command /nick <text>:\\n    executable by: players\\n    cooldown: 10 seconds\\n    trigger:\\n        if length of arg-1 is more than 16:\\n            # Makes it so that invalid arguments don't make you wait for the cooldown again\\n            cancel the cooldown\\n            send \"Your nickname may be at most 16 characters.\"\\n            stop\\n        set the player's display name to arg-1"
 },
 {
+  "id" : "EffCancelDrops",
+  "name" : "Cancel Drops",
+  "patterns" : [
+    "(cancel|clear|delete) [the] drops [of (items|[e]xp[erience][s])]",
+"(cancel|clear|delete) [the] (item|[e]xp[erience]) drops",
+
+    "pattern_end"
+  ],
+  "since" : "2.4",
+  "description" : "Cancels drops of items or experiences in a death or block break event. Please note that this doesn't keep items or experiences of a dead player. If you want to do that, use the <a href='effects.html#EffKeepInventory'>Keep Inventory / Experience</a> effect.",
+  "examples" : "on death of a zombie:\\n    if name of the entity is \"&cSpecial\":\\n        cancel drops of items\\n\\non break of a coal ore:\\n    cancel the experience drops"
+},
+{
   "id" : "EffCancelEvent",
   "name" : "Cancel Event",
   "patterns" : [
@@ -1454,11 +1472,11 @@ message to all players instead of broadcasting it.",
   "examples" : "# set:\\nSet the player's display name to \"<red>%name of player%\"\\nset the block above the victim to lava\\n# add:\\nadd 2 to the player's health # preferably use '<a href='#heal'>heal</a>' for this\\nadd argument to {blacklist::*}\\ngive a diamond pickaxe of efficiency 5 to the player\\nincrease the data value of the clicked block by 1\\n# remove:\\nremove 2 pickaxes from the victim\\nsubtract 2.5 from {points::%uuid of player%}\\n# remove all:\\nremove every iron tool from the player\\nremove all minecarts from {entitylist::*}\\n# delete:\\ndelete the block below the player\\nclear drops\\ndelete {variable}\\n# reset:\\nreset walk speed of player\\nreset chunk at the targeted block"
 },
 {
-  "id" : "EffColorArmor",
+  "id" : "EffColorItems",
   "name" : "Colour Items",
   "patterns" : [
-    "(dye|colo[u]r|paint) %<a href='classes.html#slot'>slots</a>/<a href='classes.html#itemstack'>item stack</a>% %<a href='classes.html#color'>color</a>%",
-"(dye|colo[u]r|paint) %<a href='classes.html#slot'>slots</a>/<a href='classes.html#itemstack'>item stack</a>% \\(%<a href='classes.html#number'>number</a>%, %<a href='classes.html#number'>number</a>%, %<a href='classes.html#number'>number</a>%\\)",
+    "(dye|colo[u]r|paint) %<a href='classes.html#itemtype'>item types</a>% %<a href='classes.html#color'>color</a>%",
+"(dye|colo[u]r|paint) %<a href='classes.html#itemtype'>item types</a>% \\(%<a href='classes.html#number'>number</a>%, %<a href='classes.html#number'>number</a>%, %<a href='classes.html#number'>number</a>%\\)",
 
     "pattern_end"
   ],
@@ -1676,6 +1694,19 @@ Starting with Bukkit 1.4.5 and Skript 2.0 you can use safe explosions which will
   "since" : "1.4",
   "description" : "Lights entities on fire or extinguishes them.",
   "examples" : "ignite the player\\nextinguish the player"
+},
+{
+  "id" : "EffKeepInventory",
+  "name" : "Keep Inventory / Experience",
+  "patterns" : [
+    "keep [the] (inventory|items) [(and [e]xp[erience][s] [point[s]])]",
+"keep [the] [e]xp[erience][s] [point[s]] [(and (inventory|items))]",
+
+    "pattern_end"
+  ],
+  "since" : "2.4",
+  "description" : "Keeps the inventory or/and experiences of the dead player in a death event.",
+  "examples" : "on death of a player:\\n    if the victim is an op:\\n        keep the inventory and experiences"
 },
 {
   "id" : "EffKick",
@@ -2053,8 +2084,8 @@ status of the sent resource pack request.",
   "id" : "EffSpawn",
   "name" : "Spawn",
   "patterns" : [
-    "spawn %<a href='classes.html#entitytype'>entity types</a>% [%<a href='classes.html#direction'>directions</a>% %<a href='classes.html#location'>locations</a>%]",
-"spawn %<a href='classes.html#number'>number</a>% of %<a href='classes.html#entitytype'>entity types</a>% [%<a href='classes.html#direction'>directions</a>% %<a href='classes.html#location'>locations</a>%]",
+    "(spawn|summon) %<a href='classes.html#entitytype'>entity types</a>% [%<a href='classes.html#direction'>directions</a>% %<a href='classes.html#location'>locations</a>%]",
+"(spawn|summon) %<a href='classes.html#number'>number</a>% of %<a href='classes.html#entitytype'>entity types</a>% [%<a href='classes.html#direction'>directions</a>% %<a href='classes.html#location'>locations</a>%]",
 
     "pattern_end"
   ],
@@ -2964,11 +2995,11 @@ This may require that there is enough space above the given location and that th
   "id" : "level_change",
   "name" : "On Level Change",
   "patterns" : [
-    "[player] level [change]",
+    "[player] level (change|up|down)",
 
     "pattern_end"
   ],
-  "since" : "1.0",
+  "since" : "1.0, 2.4 (level up/down)",
   "description" : "Called when a player's <a href='expressions.html#ExprLevel'>level</a> changes, e.g. by gathering experience or by enchanting something.",
   "examples" : "on level change:"
 },
@@ -3162,7 +3193,7 @@ This may require that there is enough space above the given location and that th
 
     "pattern_end"
   ],
-  "since" : "1.0 (simple disconnection), 2.0 (kicked players)",
+  "since" : "1.0 (simple disconnection)",
   "description" : "Called when a player leaves the server.",
   "examples" : "on quit:\\non disconnect:"
 },
@@ -3640,20 +3671,8 @@ This may require that there is enough space above the given location and that th
     "pattern_end"
   ],
   "since" : "2.4",
-  "description" : "The affected entities in the <a href='events.html#aoe_cloud_effect>area cloud effect</a> event.",
-  "examples" : "on area cloud effect:\\n    loop affected entities:\\n        if loop-value is a player:\\n            send \"WARNING: you've step on a area cloud!\""
-},
-{
-  "id" : "ExprAllGroups",
-  "name" : "All Groups",
-  "patterns" : [
-    "all groups",
-
-    "pattern_end"
-  ],
-  "since" : "2.2-dev35",
-  "description" : "All the groups a player can have. This expression requires Vault and a compatible permissions plugin to be installed.",
-  "examples" : "command /group <text>:\\n    trigger:\\n        if argument is \"list\":\\n            send \"%all groups%\""
+  "description" : "The affected entities in the <a href='events.html#aoe_cloud_effect'>area cloud effect</a> event.",
+  "examples" : "on area cloud effect:\\n    loop affected entities:\\n        if loop-value is a player:\\n            send \"WARNING: you've step on an area effect cloud!\" to loop-value"
 },
 {
   "id" : "ExprPermissions",
@@ -4275,9 +4294,9 @@ You usually don't need this expression as you can check and set items with alias
 
     "pattern_end"
   ],
-  "since" : "1.0, 2.4 (block break event drops)",
-  "description" : "Only works in block break and death events. Holds the drops of the dying creature. Drops can be prevented by removing them with \"remove ... from drops\", e.g. \"remove all pickaxes from the drops\", or \"clear drops\" if you don't want any drops at all. In break events, drops can only be cleared, and is only available in 1.12+",
-  "examples" : "clear drops\\nremove 4 planks from the drops\\non break of diamond ore:\\n    clear drops"
+  "since" : "1.0",
+  "description" : "Only works in death events. Holds the drops of the dying creature. Drops can be prevented by removing them with \"remove ... from drops\", e.g. \"remove all pickaxes from the drops\", or \"clear drops\" if you don't want any drops at all.",
+  "examples" : "clear drops\\nremove 4 planks from the drops"
 },
 {
   "id" : "ExprElement",
@@ -4533,19 +4552,6 @@ Remember to use '<a href='#ExprBlock'>block</a>' and not 'furnace', as 'furnace'
   "examples" : "set gravity of player off"
 },
 {
-  "id" : "ExprGroup",
-  "name" : "Group",
-  "patterns" : [
-    "[the] group[(s)] of %<a href='classes.html#offlineplayer'>offline players</a>%",
-"%<a href='classes.html#offlineplayer'>offline players</a>%'[s] group[(s)]",
-
-    "pattern_end"
-  ],
-  "since" : "2.2-dev35",
-  "description" : "The primary group or all groups of a player. This expression requires Vault and a compatible permissions plugin to be installed.",
-  "examples" : "on join:\\n    broadcast \"%group of player%\" # this is the player's primary group\\n    broadcast \"%groups of player%\" # this is all of the player's groups"
-},
-{
   "id" : "ExprHash",
   "name" : "Hash",
   "patterns" : [
@@ -4560,7 +4566,7 @@ SHA-256 is more secure, and can used to hash somewhat confidental data like IP a
 It is not <i>that</i> secure out of the box, so please consider using salt when dealing with passwords! 
 When hashing data, you <strong>must</strong> specify algorithms that will be used for security reasons! 
 <p>Please note that a hash cannot be reversed under normal circumstanses. You will not be able to get original value from a hash with Skript.",
-  "examples" : "command /setpass <text>:\\n    trigger:\\n        set {password::%uuid of player%} to text-argument hashed with SHA-256\\ncommand /login <text>:\\n    trigger:\\n        tif text-argument hashed with SHA-256 is {password::%uuid of player%}:\\n            message \"Login successful.\"\\n        else:\\n            message \"Wrong password!\""
+  "examples" : "command /setpass <text>:\\n    trigger:\\n        set {password::%uuid of player%} to text-argument hashed with SHA-256\\ncommand /login <text>:\\n    trigger:\\n        if text-argument hashed with SHA-256 is {password::%uuid of player%}:\\n            message \"Login successful.\"\\n        else:\\n            message \"Wrong password!\""
 },
 {
   "id" : "ExprEyeLocation",
@@ -5170,19 +5176,6 @@ Please note that the location of an entity is at it's feet, use <a href='#ExprEy
   "examples" : "set metadata value \"healer\" of player to true\\nbroadcast \"%metadata value \"\"healer\"\" of player%\"\\nclear metadata value \"healer\" of player"
 },
 {
-  "id" : "ExprBalance",
-  "name" : "Money",
-  "patterns" : [
-    "[the] (money|balance|[bank] account) of %<a href='classes.html#player'>players</a>%",
-"%<a href='classes.html#player'>players</a>%'[s] (money|balance|[bank] account)",
-
-    "pattern_end"
-  ],
-  "since" : "2.0",
-  "description" : "How much virtual money a player has (can be changed). This expression requires Vault and a compatible economy plugin to be installed.",
-  "examples" : "message \"You have %player's money%\" # the currency name will be added automatically\\nremove 20$ from the player's balance # replace '$' by whatever currency you use\\nadd 200 to the player's account # or omit the currency alltogether"
-},
-{
   "id" : "ExprPushedBlocks",
   "name" : "Moved blocks",
   "patterns" : [
@@ -5203,53 +5196,110 @@ Please note that the location of an entity is at it's feet, use <a href='#ExprEy
 
     "pattern_end"
   ],
-  "since" : "1.4.6 (players' name & display name), <i>unknown</i> (player list name), 2.0 (item name), 2.2-dev20 (inventory name)",
-  "description" : "Represents a player's minecraft account name, chat display name, or playerlist name, or the custom name of an item, en entity or an inventory.
-The differences between the different names are:
+  "since" : "before 2.1, 2.2-dev20 (inventory name), 2.4 (non-living entity support, changeable inventory name)",
+  "description" : "Represents the Minecraft account, display or tab list name of a player, or the custom name of an item, entity or inventory.
+
 <ul>
-<li>name: Minecraft account name of a player (unchangeable), or the custom name of an item or mob (changeable).</li>
-<li>display name: The name of a player as displayed in the chat and messages, e.g. when including %player% in a message. This name can be changed freely and can include colour codes, and is shared among all plugins (e.g. chat plugins will use a changed name).</li>
-<li>tab list name: The name of a player used in the player lists that usually opens with the tab key. Please note that this is limited to 16 characters, including colour codes which are counted as 2 characters each, and that no two players can have the same tab list name at the same time.</li>
+    <li><strong>Players</strong>
+        <ul>
+            <li><strong>Name:</strong> The Minecraft account name of the player. Can't be changed, but 'display name' can be changed.</li>
+            <li><strong>Display Name:</strong> The name of the player that is displayed in messages. This name can be changed freely and can include colour codes, and is shared among all plugins (e.g. chat plugins will use the display name).</li>
+        </ul>
+    </li>
+    <li><strong>Entities</strong>
+        <ul>
+            <li><strong>Name:</strong> The custom name of the entity. Can be changed. But for living entities, the players will have to target the entity to see its name tag. For non-living entities, the name will not be visible at all. To prevent this, use 'display name'.</li>
+            <li><strong>Display Name:</strong> The custom name of the entity. Can be changed, which will also enable <em>custom name visibility</em> of the entity so name tag of the entity will be visible always.</li>
+        </ul>
+    </li>
+    <li><strong>Items</strong>
+        <ul>
+            <li><strong>Name and Display Name:</strong> The <em>custom</em> name of the item (not the Minecraft locale name). Can be changed.</li>
+        </ul>
+    </li>
+    <li><strong>Inventories</strong>
+        <ul>
+            <li><strong>Name and Display Name:</strong> The name/title of the inventory. Changing name of an inventory means opening the same inventory with the same contents but with a different name to its current viewers.</li>
+        </ul>
+    </li>
 </ul>",
-  "examples" : "on join:\\n    player has permission \"name.red\"\\n    set the player's display name to \"<red>[admin]<gold>%name of player%\"\\n    set the player's tablist name to \"<green>%name of player%\"\\nset the name of the player's tool to \"Legendary Sword of Awesomeness\""
+  "examples" : "on join:\\n    player has permission \"name.red\"\\n    set the player's display name to \"<red>[admin] <gold>%name of player%\"\\n    set the player's tab list name to \"<green>%player's name%\"\\nset the name of the player's tool to \"Legendary Sword of Awesomeness\""
 },
 {
   "id" : "ExprName",
   "name" : "Name / Display Name",
   "patterns" : [
-    "[the] (display|nick|chat)[ ]name[s] of %<a href='classes.html#itemstack'>item stacks</a>/<a href='classes.html#slot'>slots</a>/<a href='classes.html#livingentity'>living entities</a>/<a href='classes.html#player'>players</a>/<a href='classes.html#inventory'>inventories</a>%",
-"%<a href='classes.html#itemstack'>item stacks</a>/<a href='classes.html#slot'>slots</a>/<a href='classes.html#livingentity'>living entities</a>/<a href='classes.html#player'>players</a>/<a href='classes.html#inventory'>inventories</a>%'[s] (display|nick|chat)[ ]name[s]",
+    "[the] (display|nick|chat)[ ]name[s] of %<a href='classes.html#itemstack'>item stacks</a>/<a href='classes.html#slot'>slots</a>/<a href='classes.html#entity'>entities</a>/<a href='classes.html#player'>players</a>/<a href='classes.html#inventory'>inventories</a>%",
+"%<a href='classes.html#itemstack'>item stacks</a>/<a href='classes.html#slot'>slots</a>/<a href='classes.html#entity'>entities</a>/<a href='classes.html#player'>players</a>/<a href='classes.html#inventory'>inventories</a>%'[s] (display|nick|chat)[ ]name[s]",
 
     "pattern_end"
   ],
-  "since" : "1.4.6 (players' name & display name), <i>unknown</i> (player list name), 2.0 (item name), 2.2-dev20 (inventory name)",
-  "description" : "Represents a player's minecraft account name, chat display name, or playerlist name, or the custom name of an item, en entity or an inventory.
-The differences between the different names are:
+  "since" : "before 2.1, 2.2-dev20 (inventory name), 2.4 (non-living entity support, changeable inventory name)",
+  "description" : "Represents the Minecraft account, display or tab list name of a player, or the custom name of an item, entity or inventory.
+
 <ul>
-<li>name: Minecraft account name of a player (unchangeable), or the custom name of an item or mob (changeable).</li>
-<li>display name: The name of a player as displayed in the chat and messages, e.g. when including %player% in a message. This name can be changed freely and can include colour codes, and is shared among all plugins (e.g. chat plugins will use a changed name).</li>
-<li>tab list name: The name of a player used in the player lists that usually opens with the tab key. Please note that this is limited to 16 characters, including colour codes which are counted as 2 characters each, and that no two players can have the same tab list name at the same time.</li>
+    <li><strong>Players</strong>
+        <ul>
+            <li><strong>Name:</strong> The Minecraft account name of the player. Can't be changed, but 'display name' can be changed.</li>
+            <li><strong>Display Name:</strong> The name of the player that is displayed in messages. This name can be changed freely and can include colour codes, and is shared among all plugins (e.g. chat plugins will use the display name).</li>
+        </ul>
+    </li>
+    <li><strong>Entities</strong>
+        <ul>
+            <li><strong>Name:</strong> The custom name of the entity. Can be changed. But for living entities, the players will have to target the entity to see its name tag. For non-living entities, the name will not be visible at all. To prevent this, use 'display name'.</li>
+            <li><strong>Display Name:</strong> The custom name of the entity. Can be changed, which will also enable <em>custom name visibility</em> of the entity so name tag of the entity will be visible always.</li>
+        </ul>
+    </li>
+    <li><strong>Items</strong>
+        <ul>
+            <li><strong>Name and Display Name:</strong> The <em>custom</em> name of the item (not the Minecraft locale name). Can be changed.</li>
+        </ul>
+    </li>
+    <li><strong>Inventories</strong>
+        <ul>
+            <li><strong>Name and Display Name:</strong> The name/title of the inventory. Changing name of an inventory means opening the same inventory with the same contents but with a different name to its current viewers.</li>
+        </ul>
+    </li>
 </ul>",
-  "examples" : "on join:\\n    player has permission \"name.red\"\\n    set the player's display name to \"<red>[admin]<gold>%name of player%\"\\n    set the player's tablist name to \"<green>%name of player%\"\\nset the name of the player's tool to \"Legendary Sword of Awesomeness\""
+  "examples" : "on join:\\n    player has permission \"name.red\"\\n    set the player's display name to \"<red>[admin] <gold>%name of player%\"\\n    set the player's tab list name to \"<green>%player's name%\"\\nset the name of the player's tool to \"Legendary Sword of Awesomeness\""
 },
 {
   "id" : "ExprName",
   "name" : "Name / Display Name",
   "patterns" : [
-    "[the] name[s] of %<a href='classes.html#itemstack'>item stacks</a>/<a href='classes.html#slot'>slots</a>/<a href='classes.html#livingentity'>living entities</a>/<a href='classes.html#player'>players</a>/<a href='classes.html#inventory'>inventories</a>%",
-"%<a href='classes.html#itemstack'>item stacks</a>/<a href='classes.html#slot'>slots</a>/<a href='classes.html#livingentity'>living entities</a>/<a href='classes.html#player'>players</a>/<a href='classes.html#inventory'>inventories</a>%'[s] name[s]",
+    "[the] name[s] of %<a href='classes.html#itemstack'>item stacks</a>/<a href='classes.html#slot'>slots</a>/<a href='classes.html#entity'>entities</a>/<a href='classes.html#player'>players</a>/<a href='classes.html#inventory'>inventories</a>%",
+"%<a href='classes.html#itemstack'>item stacks</a>/<a href='classes.html#slot'>slots</a>/<a href='classes.html#entity'>entities</a>/<a href='classes.html#player'>players</a>/<a href='classes.html#inventory'>inventories</a>%'[s] name[s]",
 
     "pattern_end"
   ],
-  "since" : "1.4.6 (players' name & display name), <i>unknown</i> (player list name), 2.0 (item name), 2.2-dev20 (inventory name)",
-  "description" : "Represents a player's minecraft account name, chat display name, or playerlist name, or the custom name of an item, en entity or an inventory.
-The differences between the different names are:
+  "since" : "before 2.1, 2.2-dev20 (inventory name), 2.4 (non-living entity support, changeable inventory name)",
+  "description" : "Represents the Minecraft account, display or tab list name of a player, or the custom name of an item, entity or inventory.
+
 <ul>
-<li>name: Minecraft account name of a player (unchangeable), or the custom name of an item or mob (changeable).</li>
-<li>display name: The name of a player as displayed in the chat and messages, e.g. when including %player% in a message. This name can be changed freely and can include colour codes, and is shared among all plugins (e.g. chat plugins will use a changed name).</li>
-<li>tab list name: The name of a player used in the player lists that usually opens with the tab key. Please note that this is limited to 16 characters, including colour codes which are counted as 2 characters each, and that no two players can have the same tab list name at the same time.</li>
+    <li><strong>Players</strong>
+        <ul>
+            <li><strong>Name:</strong> The Minecraft account name of the player. Can't be changed, but 'display name' can be changed.</li>
+            <li><strong>Display Name:</strong> The name of the player that is displayed in messages. This name can be changed freely and can include colour codes, and is shared among all plugins (e.g. chat plugins will use the display name).</li>
+        </ul>
+    </li>
+    <li><strong>Entities</strong>
+        <ul>
+            <li><strong>Name:</strong> The custom name of the entity. Can be changed. But for living entities, the players will have to target the entity to see its name tag. For non-living entities, the name will not be visible at all. To prevent this, use 'display name'.</li>
+            <li><strong>Display Name:</strong> The custom name of the entity. Can be changed, which will also enable <em>custom name visibility</em> of the entity so name tag of the entity will be visible always.</li>
+        </ul>
+    </li>
+    <li><strong>Items</strong>
+        <ul>
+            <li><strong>Name and Display Name:</strong> The <em>custom</em> name of the item (not the Minecraft locale name). Can be changed.</li>
+        </ul>
+    </li>
+    <li><strong>Inventories</strong>
+        <ul>
+            <li><strong>Name and Display Name:</strong> The name/title of the inventory. Changing name of an inventory means opening the same inventory with the same contents but with a different name to its current viewers.</li>
+        </ul>
+    </li>
 </ul>",
-  "examples" : "on join:\\n    player has permission \"name.red\"\\n    set the player's display name to \"<red>[admin]<gold>%name of player%\"\\n    set the player's tablist name to \"<green>%name of player%\"\\nset the name of the player's tool to \"Legendary Sword of Awesomeness\""
+  "examples" : "on join:\\n    player has permission \"name.red\"\\n    set the player's display name to \"<red>[admin] <gold>%name of player%\"\\n    set the player's tab list name to \"<green>%player's name%\"\\nset the name of the player's tool to \"Legendary Sword of Awesomeness\""
 },
 {
   "id" : "ExprNamed",
@@ -5407,8 +5457,8 @@ See also: <a href='#ExprVehicle'>vehicle</a>",
   "id" : "ExprSkull",
   "name" : "Player Skull",
   "patterns" : [
-    "[the] skull of %<a href='classes.html#offlineplayer'>offline players</a>%",
-"%<a href='classes.html#offlineplayer'>offline players</a>%'[s] skull",
+    "[the] (head|skull) of %<a href='classes.html#offlineplayer'>offline players</a>%",
+"%<a href='classes.html#offlineplayer'>offline players</a>%'[s] (head|skull)",
 
     "pattern_end"
   ],
@@ -5428,6 +5478,19 @@ See also: <a href='#ExprVehicle'>vehicle</a>",
   "since" : "2.2-dev34",
   "description" : "The weather for a player.",
   "examples" : "set weather of arg-player to rainy\\nreset player's weather\\nif arg-player's weather is rainy"
+},
+{
+  "id" : "ExprPortal",
+  "name" : "Portal",
+  "patterns" : [
+    "[the] portal['s] blocks",
+"[the] blocks of [the] portal",
+
+    "pattern_end"
+  ],
+  "since" : "2.4",
+  "description" : "The blocks associated with a portal in the portal creation event.",
+  "examples" : "on portal creation:\\n    loop portal blocks:\\n        broadcast \"%loop-block% is part of a portal!\""
 },
 {
   "id" : "ExprProtocolVersion",
@@ -5551,6 +5614,18 @@ This expression requires a supported regions plugin to be installed.",
   "since" : "2.2-dev35",
   "description" : "The location that a player should respawn at. This is used within the respawn event.",
   "examples" : "on respawn:\\n    set respawn location to {example::spawn}"
+},
+{
+  "id" : "ExprReversedList",
+  "name" : "Reversed List",
+  "patterns" : [
+    "reversed %<a href='classes.html#object'>objects</a>%",
+
+    "pattern_end"
+  ],
+  "since" : "2.4",
+  "description" : "Reverses given list.",
+  "examples" : "set {_list::*} to reversed {_list::*}"
 },
 {
   "id" : "ExprRound",
@@ -5711,6 +5786,19 @@ if they're not, this expression will return nothing.",
   "since" : "2.3",
   "description" : "The <a href='classes.html#spawnreason'>spawn reason</a> in a <a href='events.html#spawn'>spawn</a> event.",
   "examples" : "on spawn:\\n    spawn reason is reinforcements or breeding"
+},
+{
+  "id" : "ExprSpawnerType",
+  "name" : "Spawner Type",
+  "patterns" : [
+    "[the] (entity|creature) type[s] of %<a href='classes.html#block'>blocks</a>%",
+"%<a href='classes.html#block'>blocks</a>%'[s] (entity|creature) type[s]",
+
+    "pattern_end"
+  ],
+  "since" : "2.4",
+  "description" : "Retrieves, sets, or resets the spawner's entity type",
+  "examples" : "on right click:\\n    if event-block is spawner:\\n        send \"Spawner's type is %target block's entity type%\""
 },
 {
   "id" : "ExprSpecialNumber",
@@ -6514,6 +6602,18 @@ This can only be set in a <a href='events.html#server_list_ping'>server list pin
   "since" : "2.2",
   "description" : "Calculates the product of a list of numbers.",
   "examples" : "product(1) = 1\\nproduct(2, 3, 4) = 24\\nproduct({some list variable::*})\\nproduct(2, {_v::*}, and the player's y-coordinate)"
+},
+{
+  "id" : "rgb",
+  "name" : "rgb",
+  "patterns" : [
+    "rgb(red: long, green: long, blue: long)",
+
+    "pattern_end"
+  ],
+  "since" : "INSERT VERSION",
+  "description" : "Returns a RGB color from the given red, green and blue parameters.",
+  "examples" : "dye player's leggings rgb(120, 30, 45)"
 },
 {
   "id" : "round",
