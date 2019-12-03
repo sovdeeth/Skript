@@ -15,6 +15,7 @@ import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.variables.VariablePath;
 import ch.njol.skript.variables.VariableScope;
+import ch.njol.skript.variables.serializer.FieldsReader;
 import ch.njol.skript.variables.storage.VariableStorage;
 
 /**
@@ -86,6 +87,11 @@ public class SkDbStorage implements VariableStorage {
 	private final Journal journal;
 	
 	/**
+	 * Deserializes user data from database.
+	 */
+	private final FieldsReader fieldsReader;
+	
+	/**
 	 * Variables currently in journal, waiting to be written.
 	 */
 	private int journalSize;
@@ -94,6 +100,7 @@ public class SkDbStorage implements VariableStorage {
 		this.readCh = ch;
 		this.meta = meta;
 		this.journal = journal;
+		this.fieldsReader = new FieldsReader();
 	}
 
 	@Override
@@ -107,6 +114,10 @@ public class SkDbStorage implements VariableStorage {
 		journalSize++;
 		// TODO process journal once it grows large enough
 	}
+	
+	public void commitChanges() {
+		journal.commitChanges();
+	}
 
 	@Override
 	public int estimatedSize() {
@@ -115,7 +126,51 @@ public class SkDbStorage implements VariableStorage {
 
 	@Override
 	public void loadVariables(VariableScope scope) throws IOException {
-		// TODO Auto-generated method stub
+		MappedByteBuffer buf = readCh.map(MapMode.READ_ONLY,
+				readCh.position(), readCh.size() - readCh.position());
+		// TODO deal with mmap issues (file can't be deleted and other fun stuff)
+		assert buf != null;
+		DatabaseReader reader = new DatabaseReader(buf);
 		
+		/**
+		 * Array with path parts.
+		 */
+		Object[] pathArray = new Object[128]; // TODO figure out what is max path length
+		
+		/**
+		 * For each list in path, how many elements have not been read.
+		 */
+		int[] listRemaining = new int[pathArray.length];
+		listRemaining[0] = meta.variableCount; // For root, it is variable count from meta
+		int pathIndex = 0; // Start at root
+		outer: for (Object pathPart = reader.next();; pathPart = reader.next()) {
+			pathArray[pathIndex] = pathPart;
+			// TODO consider optimizing for simple lists (basically arrays)
+			if (reader.isList()) {
+				pathIndex++;
+				listRemaining[pathIndex] = reader.getListSize();
+			} else { // Normal value
+				// Create path by copying used parts of pathArray
+				Object[] pathCopy = new Object[pathIndex + 1];
+				System.arraycopy(pathArray, 0, pathCopy, 0, pathIndex + 1);
+				VariablePath path = VariablePath.create(pathCopy);
+				
+				Object value = fieldsReader.read(buf); // Deserialize value
+				assert value != null : "database file should not store null values";
+				scope.set(path, null, value); // TODO something faster?
+				
+				// Go towards root if we're out of list members
+				while (true) { // Root doesn't have this limitation
+					int remaining = --listRemaining[pathIndex];
+					if (remaining == 0) { // This list is out of members, go up
+						if (--pathIndex == -1) { // Root run out of members!
+							break outer; // Finish reading
+						}
+					} else { // List still has members, continue reading them
+						break;
+					}
+				}
+			}
+		}
 	}
 }

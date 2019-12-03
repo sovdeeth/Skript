@@ -87,6 +87,16 @@ public class Journal {
 		this.root = new VariableTree();
 	}
 	
+	/**
+	 * Adds a new variable to the journal. It is not yet committed; it is
+	 * written to backing file, but will not be used in case a crash occurs
+	 * before {@link #commitChanges()} is called.
+	 * @param path Variable path, or null for variables at root.
+	 * @param name Name of variable.
+	 * @param newValue New value for the variable. Null is allowed, and causes
+	 * the variable to be eventually deleted from the database.
+	 * @throws StreamCorruptedException When a serialization failure occurs.
+	 */
 	public void variableChanged(@Nullable VariablePath path, Object name, @Nullable Object newValue) throws StreamCorruptedException {
 		// Write full path to variable (path to list, name)
 		if (path != null) {
@@ -110,5 +120,14 @@ public class Journal {
 		
 		// (Over)write in-memory representation of data
 		var.value = new ChangedVariable(start, size);
+	}
+	
+	/**
+	 * Commits all changes made with
+	 * {@link #variableChanged(VariablePath, Object, Object)} that
+	 * have not yet been committed.
+	 */
+	public void commitChanges() {
+		journalBuf.putInt(0, journalBuf.position());
 	}
 }
