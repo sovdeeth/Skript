@@ -10,9 +10,12 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.nio.file.Path;
+import java.util.ArrayDeque;
+import java.util.Deque;
 
 import org.eclipse.jdt.annotation.Nullable;
 
+import ch.njol.skript.variables.ListVariable;
 import ch.njol.skript.variables.VariablePath;
 import ch.njol.skript.variables.VariableScope;
 import ch.njol.skript.variables.serializer.FieldsReader;
@@ -130,47 +133,58 @@ public class SkDbStorage implements VariableStorage {
 				readCh.position(), readCh.size() - readCh.position());
 		// TODO deal with mmap issues (file can't be deleted and other fun stuff)
 		assert buf != null;
-		DatabaseReader reader = new DatabaseReader(buf);
+		FieldsReader serializer = new FieldsReader();
+		DatabaseReader reader = new DatabaseReader(buf, meta.variableCount);
 		
-		/**
-		 * Array with path parts.
-		 */
-		Object[] pathArray = new Object[128]; // TODO figure out what is max path length
-		
-		/**
-		 * For each list in path, how many elements have not been read.
-		 */
-		int[] listRemaining = new int[pathArray.length];
-		listRemaining[0] = meta.variableCount; // For root, it is variable count from meta
-		int pathIndex = 0; // Start at root
-		outer: for (Object pathPart = reader.next();; pathPart = reader.next()) {
-			pathArray[pathIndex] = pathPart;
-			// TODO consider optimizing for simple lists (basically arrays)
-			if (reader.isList()) {
-				pathIndex++;
-				listRemaining[pathIndex] = reader.getListSize();
-			} else { // Normal value
-				// Create path by copying used parts of pathArray
-				Object[] pathCopy = new Object[pathIndex + 1];
-				System.arraycopy(pathArray, 0, pathCopy, 0, pathIndex + 1);
-				VariablePath path = VariablePath.create(pathCopy);
-				
-				Object value = fieldsReader.read(buf); // Deserialize value
-				assert value != null : "database file should not store null values";
-				scope.set(path, null, value); // TODO something faster?
-				
-				// Go towards root if we're out of list members
-				while (true) { // Root doesn't have this limitation
-					int remaining = --listRemaining[pathIndex];
-					if (remaining == 0) { // This list is out of members, go up
-						if (--pathIndex == -1) { // Root run out of members!
-							break outer; // Finish reading
-						}
-					} else { // List still has members, continue reading them
-						break;
+		// Create and use a visitor that loads all encountered variables
+		reader.visit(new DatabaseReader.Visitor() {
+
+			/**
+			 * List variables from root to current. Empty when we're
+			 * visiting root.
+			 */
+			private Deque<ListVariable> lists = new ArrayDeque<>();
+			
+			private void value(Object name, Object value) {
+				ListVariable list = lists.peek();
+				if (list == null) { // Put directly to root
+					scope.set(VariablePath.create(name), null, value);
+				} else { // Put to list variable at top
+					if (name instanceof Integer) {
+						list.put((int) name, value);
+					} else {
+						list.put((String) name, value);
 					}
 				}
 			}
-		}
+			
+			@Override
+			public void value(int size) {
+				// Deserialize value from buffer
+				Object name = 
+				Object value;
+				try {
+					value = serializer.read(buf);
+				} catch (StreamCorruptedException e) {
+					throw new AssertionError(e); // TODO handle
+				}
+				if (value != null) {
+					value(name, value);
+				}
+			}
+
+			@Override
+			public void listStart(Object name, int size, boolean isArray) {
+				lists.push(new ListVariable()); // TODO use size and isArray to reduce array copies
+			}
+
+			@Override
+			public void listEnd(Object name) {
+				ListVariable list = lists.pop();
+				assert list != null : "listEnd() must follow listStart()";
+				value(name, list); // Put list on its parent, or root
+			}
+			
+		});
 	}
 }
