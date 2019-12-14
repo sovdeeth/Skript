@@ -65,74 +65,36 @@ public class Journal {
 	}
 	
 	/**
-	 * Variable change waiting to be {@link Journal#commitChanges() committed}.
+	 * Changed variables in a list or at root
 	 */
-	private static class VariableChange {
+	private static class ChangedVariables {
 		
 		/**
-		 * Path to the variable's parent.
+		 * Changed variables by their names.
 		 */
-		@Nullable
-		public final VariablePath path;
+		public final Map<Object, SerializedVariable> changes;
 		
 		/**
-		 * Name of the variable.
+		 * If this is set, old contents of list are deleted before
+		 * applying changes.
 		 */
-		public Object name;
+		public boolean deleteBefore;
 		
-		/**
-		 * Serialized variable value.
-		 */
-		public SerializedVariable value;
-		
-		public VariableChange(@Nullable VariablePath path, Object name, SerializedVariable value) {
-			this.path = path;
-			this.name = name;
-			this.value = value;
+		public ChangedVariables() {
+			this.changes = new HashMap<>();
 		}
 	}
 	
 	/**
-	 * Changes waiting to be committed.
+	 * Changed variables cached in memory for fast application.
 	 */
-	private final Queue<VariableChange> waitingChanges;
-	
-	private static class VariableTree {
-		
-		/**
-		 * If there are other variables under this, they are stored here.
-		 */
-		public final Map<Object, VariableTree> contents;
-		
-		/**
-		 * Changed variable. Null if this exists only because some variables
-		 * under this were changed.
-		 */
-		@Nullable
-		public SerializedVariable value;
-		
-		/**
-		 * Total size is size of old values in list represented by this,
-		 * plus new values we add that do not overwrite the old values.
-		 */
-		public int totalSize;
-		
-		public VariableTree() {
-			this.contents = new HashMap<>();
-		}
-	}
-	
-	/**
-	 * A tree of changed variables.
-	 */
-	final VariableTree root;
+	final Map<VariablePath, ChangedVariables> changes;
 	
 	public Journal(DatabaseSerializer dbSerializer, FieldsWriter userSerializer, Path file, int size) throws IOException {
 		this.dbSerializer = dbSerializer;
 		this.userSerializer = userSerializer;
 		this.journalBuf = FileChannel.open(file).map(MapMode.READ_WRITE, 0, size);
-		this.waitingChanges = new ArrayDeque<>();
-		this.root = new VariableTree();
+		this.changes = new HashMap<>();
 	}
 	
 	/**
@@ -143,9 +105,10 @@ public class Journal {
 	 * @param name Name of variable.
 	 * @param newValue New value for the variable. Null is allowed, and causes
 	 * the variable to be eventually deleted from the database.
+	 * @param isList If a list variable was targeted.
 	 * @throws StreamCorruptedException When a serialization failure occurs.
 	 */
-	public void variableChanged(@Nullable VariablePath path, Object name, @Nullable Object newValue) throws StreamCorruptedException {
+	public void variableChanged(@Nullable VariablePath path, Object name, @Nullable Object newValue, boolean isList) throws StreamCorruptedException {
 		// Write full path to variable (path to list, name)
 		if (path != null) {
 			dbSerializer.writePath(path, journalBuf);
@@ -157,8 +120,8 @@ public class Journal {
 		userSerializer.write(journalBuf, newValue);
 		int size = journalBuf.position() - start;
 		
-		// Put path and reference to serialized waiting for next commit.
-		waitingChanges.add(new VariableChange(path, name, new SerializedVariable(start, size)));
+		// Store path, name and serialized change waiting for next flush
+		changes.computeIfAbsent(path, k -> new ChangedVariables()).changes.put(name, new SerializedVariable(start, size));
 	}
 	
 	/**
@@ -169,94 +132,95 @@ public class Journal {
 	public void commitChanges() {
 		// If we crash, variables added before this will now be recovered
 		journalBuf.putInt(0, journalBuf.position());
-		
-		// Store all added variables in in-memory tree
-		// This will make flushing the journal faster unless we crash
-		VariableChange change;
-		while ((change = waitingChanges.poll()) != null) {
-			addToTree(change.path, change.name, change.value);
-		}
-	}
-	
-	private void addToTree(@Nullable VariablePath path, Object name, SerializedVariable value) {
-		// Find or create this variable in change tree
-		VariableTree var = root;
-		if (path != null) {
-			for (Object part : path) {
-				var = var.contents.computeIfAbsent(part, k -> new VariableTree());
-			}
-		}
-		var = var.contents.computeIfAbsent(name, k -> new VariableTree());
-		
-		// (Over)write in-memory representation of data
-		var.value = value;
 	}
 	
 	public void flush(ByteBuffer oldDb, int oldSize, ByteBuffer newDb) {
 		DatabaseReader reader = new DatabaseReader(oldDb, oldSize);
 		
-		Deque<VariableTree> parents = new ArrayDeque<>();
-		parents.push(root);
 		reader.visit(new DatabaseReader.Visitor() {
 			
-			private VariableTree tree = root;
+			/**
+			 * Variables that changed directly under current list
+			 */
+			@Nullable
+			public ChangedVariables changed;
 			
 			/**
-			 * Where to write final size of current list. It is not known
-			 * in advance, because some new variables may replace old ones.
+			 * Where the final list size should be written at.
 			 */
-			private int listSizeOffset;
+			public int sizeOffset;
+			
+			/**
+			 * Incremented whenever something goes to the list.
+			 * In the end, this is new size of the list.
+			 */
+			private int finalSize;
+			
+			/**
+			 * Skip existing contents of this list.
+			 */
+			private boolean skipExisting;
 						
 			@Override
 			public void value(Object name, int size) {
-				dbSerializer.writePathPart(name, newDb); // Variable name
-				newDb.put(DatabaseReader.VALUE); // It is not a list
+				if (skipExisting) {
+					return;
+				}
 				
-				VariableTree serialized = tree == null ? null : tree.contents.get(name);
-				if (serialized != null && serialized.value != null) { // It has been overwritten!
-					// Copy the new serialized value from journal
-					SerializedVariable value = serialized.value;
-					newDb.putInt(value.length);
-					newDb.put(journalBuf.duplicate().position(value.position).limit(value.position + value.length));
-					serialized.value = null; // We don't want to write this again
+				newDb.put(DatabaseReader.VALUE); // It is not a list
+				dbSerializer.writePathPart(name, newDb); // Variable name
+
+				// Try to get a change from journal just for us by removing it
+				ChangedVariables changed = this.changed;
+				if (changed != null && changed.changes.containsKey(name)) { // Journal is overwriting the old value
+					SerializedVariable value = changed.changes.remove(name);
+					if (value != null) { // If null, copy nothing (i.e. delete)
+						// Copy the new serialized value from journal
+						newDb.putInt(value.length);
+						newDb.put(journalBuf.duplicate().position(value.position).limit(value.position + value.length));
+					}
 				} else { // Just copy the old serialized variable
 					newDb.putInt(size);
 					newDb.put(oldDb.duplicate().limit(oldDb.position() + size));
 				}
-				tree.totalSize++;
+				finalSize++;
 			}
 			
 			@Override
-			public void listStart(Object name, int size, boolean isArray) {
-				tree.totalSize++; // List is a member like anything else
-				
-				parents.push(tree);
-				tree = tree.contents.remove(name); // May be null; in that case, we have nothing to add
-				// TODO we're removing tree, but what if it has a shadow value?
-				dbSerializer.writePathPart(name, newDb); // Variable name
+			public void listStart(VariablePath path, int size, boolean isArray) {
 				newDb.put(DatabaseReader.LIST); // It is a list
+				sizeOffset = newDb.position(); // We'll write size here later
+				newDb.position(sizeOffset + 4);
+				dbSerializer.writePath(path, newDb); // Path to list
 				
-				// Remember offset of these 4 bytes, we'll write size later
-				listSizeOffset = newDb.position();
-				newDb.position(listSizeOffset + 4);
+				changed = changes.get(path); // What, if anything, has changed?
+				ChangedVariables changed = this.changed;
+				skipExisting = changed != null && changed.deleteBefore;
+				// FIXME change this shallow delete to deep delete, because that is what happens in memory
+				finalSize = 0; // Incremented when values are added
 			}
 			
 			@Override
-			public void listEnd(Object name) {
-				// Add any remaining values from current list
-				for (Map.Entry<Object, VariableTree> entry : tree.contents.entrySet()) {
-					SerializedVariable value = entry.getValue().value;
-					if (value != null) { // Add (shadow) value
-						dbSerializer.writePathPart(entry.getKey(), newDb); // Variable name
-						newDb.put(DatabaseReader.VALUE); // It is not a list
-						newDb.putInt(value.length);
-						newDb.put(journalBuf.duplicate().position(value.position).limit(value.position + value.length));
+			public void listEnd(VariablePath path) {
+				// Write completely new content to list
+				ChangedVariables changed = this.changed;
+				if (changed != null) {
+					for (Map.Entry<Object, SerializedVariable> entry : changed.changes.entrySet()) {
+						SerializedVariable value = entry.getValue();
+						if (value != null) { // Don't write variables that were added, then deleted
+							newDb.put(DatabaseReader.VALUE); // It is not a list
+							dbSerializer.writePathPart(entry.getKey(), newDb); // Variable name
+							newDb.putInt(value.length);
+							newDb.put(journalBuf.duplicate().position(value.position).limit(value.position + value.length));
+							finalSize++;
+						}
 					}
-					
-					// TODO list contents of a new list need to be written
 				}
 				
-				tree = parents.pop(); // Go back to parent
+				// Write final size
+				newDb.putInt(sizeOffset, finalSize);
+				
+				// Next list ready to go!
 			}
 		});
 	}

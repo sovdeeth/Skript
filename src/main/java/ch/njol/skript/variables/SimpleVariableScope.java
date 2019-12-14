@@ -99,7 +99,7 @@ public class SimpleVariableScope implements VariableScope {
 		Object var = variables.get("" + parts[0]);
 		
 		// If path has multiple parts, go through them
-		for (int i = 1; i < parts.length; i++) {
+		for (int i = 1; i < path.length(); i++) {
 			if (!(var instanceof ListVariable)) {
 				// Target of path is under this, but this isn't list
 				if (prepareList) { // Make it a list
@@ -124,7 +124,7 @@ public class SimpleVariableScope implements VariableScope {
 		
 		// If resulting var needs to be a list, ensure it is
 		if (!(var instanceof ListVariable) && prepareList) {
-			Object part = parts[parts.length - 1];
+			Object part = parts[path.length() - 1];
 			assert part != null;
 			var = createList(parent, part, var);
 		}
@@ -330,7 +330,7 @@ public class SimpleVariableScope implements VariableScope {
 		ListVariable parent = path.cachedParent;
 		if (parent != null) {
 			if (parent.isValid()) {
-				Object name = VariablePath.executePart(path.path[path.path.length - 1], event);
+				Object name = VariablePath.executePart(path.path[path.length() - 1], event);
 				deleteFromList(parent, name, deleteList);
 				if (storage != null) { // Notify storage before returning
 					// We execute before this, because doing it beyond last part

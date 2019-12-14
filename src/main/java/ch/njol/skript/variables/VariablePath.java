@@ -18,20 +18,25 @@ public class VariablePath implements Iterable<Object> {
 	 * @param path Path elements.
 	 */
 	public static VariablePath create(Object... path) {
-		assert checkPath(path);
-		return new VariablePath(path);
+		return create(path, path.length);
+	}
+	
+	public static VariablePath create(Object[] path, int length) {
+		assert checkPath(path, length);
+		return new VariablePath(path, length);
 	}
 	
 	/**
 	 * Checks that path meets criteria.
 	 * @param path Path to check.
+	 * @param length Length of the path.
 	 * @return True if check passed, otherwise false.
 	 */
-	private static boolean checkPath(Object... path) {
-		for (int i = 0; i < path.length; i++) {
+	private static boolean checkPath(Object[] path, int length) {
+		for (int i = 0; i < length; i++) {
 			Object o = path[i];
 			if (!(o instanceof Expression<?>) && !(o instanceof String) && !(o instanceof Integer)) {
-				assert false : "path[" + i + "] = " + o + "(not expression, string or number)";
+				assert false : "path[" + i + "] = " + o + " (not expression, string or number)";
 			}
 		}
 		return true;
@@ -46,6 +51,12 @@ public class VariablePath implements Iterable<Object> {
 	 * it.
 	 */
 	final Object[] path;
+	
+	/**
+	 * Length of the path. This may be less that {@link #path} array length
+	 * in some cases.
+	 */
+	private final int length;
 	
 	/**
 	 * List containing this variable. Cached when possible.
@@ -69,13 +80,15 @@ public class VariablePath implements Iterable<Object> {
 	 * Creates a new variable path. Before this path is exposed,
 	 * {@link #assertValid()} should be called on it.
 	 * @param path Path elements.
+	 * @param length Length of path.
 	 */
-	VariablePath(Object... path) {
+	VariablePath(Object[] path, int length) {
 		this.path = path;
+		this.length = length;
 	}
 	
 	void assertValid() {
-		assert checkPath(path);
+		assert checkPath(path, length);
 	}
 
 	/**
@@ -85,7 +98,7 @@ public class VariablePath implements Iterable<Object> {
 	 * @return Whether this starts with given path or not.
 	 */
 	public boolean startsWith(VariablePath prefix) {
-		if (prefix.path.length > path.length) {
+		if (prefix.length > length) {
 			return false; // Prefix can't be longer than this
 		}
 		
@@ -131,7 +144,7 @@ public class VariablePath implements Iterable<Object> {
 	 * @return Cut and executed path.
 	 */
 	VariablePath execute(@Nullable Event event, int limit) {
-		VariablePath executed = new VariablePath(new Object[limit]);
+		VariablePath executed = new VariablePath(new Object[limit], limit);
 		for (int i = 0; i < limit; i++) {
 			executed.path[i] = executePart(path[i], event);
 		}
@@ -145,11 +158,11 @@ public class VariablePath implements Iterable<Object> {
 	 * @return Path that can be used without event.
 	 */
 	public VariablePath execute(@Nullable Event event) {
-		return execute(event, path.length);
+		return execute(event, length);
 	}
 	
 	public int length() {
-		return path.length;
+		return length;
 	}
 
 	@Override

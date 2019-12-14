@@ -36,32 +36,30 @@ public class DatabaseReader {
 	}
 	
 	public void visit(Visitor visitor) {
-		// TODO don't hardcode limits
-		int[] listRemaining = new int[128];
-		listRemaining[0] = variableCount; // Treat root as a list here, even though it really isn't one
-		Object[] listNames = new Object[128];
-		int listIndex = 0;
+		/**
+		 * How many values current list has remaining.
+		 */
+		int listRemaining = 0;
+		
+		/**
+		 * Path to currently processed list.
+		 */
+		VariablePath path = null;
 		for (int i = 0; i < variableCount; i++) {
-			if (listRemaining[listIndex]-- == 0) { // Go to parent list, to root or return
-				if (listIndex == 0) {
-					return; // Visited everything
-				}
-				visitor.listEnd(listNames[listIndex]); // Gone up one list
-				listIndex--;
+			if (listRemaining-- == 0) { // Go to parent list, to root or return
+				assert path != null;
+				visitor.listEnd(path); // Gone up one list
 			}
 			
 			// List start or a singular value
-			Object name = serializer.readPathPart(data);
 			boolean isList = data.get() == LIST;
 			int size = data.getInt(); // List size (in elements) or variable size (in bytes)
 			if (isList) {
-				visitor.listStart(name, size, false); // TODO read isArray status
-				
-				// Record size and name of this list
-				listIndex++;
-				listRemaining[listIndex] = size;
-				listNames[listIndex] = name;
+				listRemaining = size;
+				path = serializer.readPath(data);
+				visitor.listStart(path, size, false); // TODO read isArray status
 			} else { // Tell visitor it can now read a value
+				Object name = serializer.readPathPart(data);
 				visitor.value(name, size);
 			}
 		}
@@ -71,8 +69,8 @@ public class DatabaseReader {
 		
 		void value(Object name, int size);
 		
-		void listStart(Object name, int size, boolean isArray);
+		void listStart(VariablePath path, int size, boolean isArray);
 		
-		void listEnd(Object name);
+		void listEnd(VariablePath path);
 	}
 }
