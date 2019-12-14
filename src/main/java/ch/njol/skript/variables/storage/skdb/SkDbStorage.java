@@ -140,16 +140,19 @@ public class SkDbStorage implements VariableStorage {
 		reader.visit(new DatabaseReader.Visitor() {
 
 			/**
-			 * List variables from root to current. Empty when we're
-			 * visiting root.
+			 * Currently visited list variable.
 			 */
-			private Deque<ListVariable> lists = new ArrayDeque<>();
+			@Nullable
+			private ListVariable list;
 			
 			private void value(Object name, Object value) {
-				ListVariable list = lists.peek();
+				// TODO we're assuming that lists closer to root are first in DB file
+				// Need to verify that this happens in ALL cases, otherwise data is lost
 				if (list == null) { // Put directly to root
 					scope.set(VariablePath.create(name), null, value);
-				} else { // Put to list variable at top
+				} else { // Put to current list variable
+					ListVariable list = this.list;
+					assert list != null;
 					if (name instanceof Integer) {
 						list.put((int) name, value);
 					} else {
@@ -159,9 +162,8 @@ public class SkDbStorage implements VariableStorage {
 			}
 			
 			@Override
-			public void value(int size) {
+			public void value(Object name, int size) {
 				// Deserialize value from buffer
-				Object name = 
 				Object value;
 				try {
 					value = serializer.read(buf);
@@ -174,15 +176,15 @@ public class SkDbStorage implements VariableStorage {
 			}
 
 			@Override
-			public void listStart(Object name, int size, boolean isArray) {
-				lists.push(new ListVariable()); // TODO use size and isArray to reduce array copies
+			public void listStart(VariablePath path, int size, boolean isArray) {
+				list = new ListVariable();
 			}
 
 			@Override
-			public void listEnd(Object name) {
-				ListVariable list = lists.pop();
-				assert list != null : "listEnd() must follow listStart()";
-				value(name, list); // Put list on its parent, or root
+			public void listEnd(VariablePath path) {
+				assert list != null : "listEnd without listStart";
+				scope.set(path, null, list);
+				list = null;
 			}
 			
 		});
