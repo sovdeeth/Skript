@@ -11,9 +11,7 @@ import ch.njol.skript.variables.VariablePath;
  * Reads database files.
  */
 public class DatabaseReader {
-	
-	static final byte VALUE = 0, LIST = 1;
-	
+		
 	/**
 	 * Buffer of database content.
 	 */
@@ -37,31 +35,29 @@ public class DatabaseReader {
 	
 	public void visit(Visitor visitor) {
 		/**
-		 * How many values current list has remaining.
+		 * How many values root or current list has remaining.
 		 */
-		int listRemaining = 0;
+		int remaining = 0;
 		
 		/**
-		 * Path to currently processed list.
+		 * Path to currently processed list. Null when at root.
 		 */
 		VariablePath path = null;
+		
 		for (int i = 0; i < variableCount; i++) {
-			if (listRemaining-- == 0) { // Go to parent list, to root or return
-				assert path != null;
-				visitor.listEnd(path); // Gone up one list
+			int size = data.getInt(); // List size (in elements) or variable size (in bytes)
+			if (remaining == 0) { // New list begins
+				visitor.listEnd(path);
+				remaining = size;
+				path = serializer.readPath(data);
+				visitor.listStart(path, size, false); // TODO isArray for simple list optimizations
 			}
 			
-			// List start or a singular value
-			boolean isList = data.get() == LIST;
-			int size = data.getInt(); // List size (in elements) or variable size (in bytes)
-			if (isList) {
-				listRemaining = size;
-				path = serializer.readPath(data);
-				visitor.listStart(path, size, false); // TODO read isArray status
-			} else { // Tell visitor it can now read a value
-				Object name = serializer.readPathPart(data);
-				visitor.value(name, size);
-			}
+			// Read a value
+			Object name = serializer.readPathPart(data); // Name in list or at root
+			visitor.value(name, size);
+			
+			remaining--;
 		}
 	}
 	
@@ -71,6 +67,6 @@ public class DatabaseReader {
 		
 		void listStart(VariablePath path, int size, boolean isArray);
 		
-		void listEnd(VariablePath path);
+		void listEnd(@Nullable VariablePath path);
 	}
 }

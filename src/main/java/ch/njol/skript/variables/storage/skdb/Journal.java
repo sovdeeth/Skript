@@ -109,19 +109,28 @@ public class Journal {
 	 * @throws StreamCorruptedException When a serialization failure occurs.
 	 */
 	public void variableChanged(@Nullable VariablePath path, Object name, @Nullable Object newValue, boolean isList) throws StreamCorruptedException {
-		// Write full path to variable (path to list, name)
-		if (path != null) {
-			dbSerializer.writePath(path, journalBuf);
+		if (isList) { // Setting (or deleting) whole list
+			VariablePath listPath = path != null ? path.append(name) : VariablePath.create(name);
+			ChangedVariables changed = changes.computeIfAbsent(listPath, k -> new ChangedVariables());
+			changed.deleteBefore = true; // We either replaced any prior contents
+			if (newValue != null) {
+				// TODO list key,value iterator
+			}
+		} else { // Setting a single value
+			// Write full path to variable (path to list, name)
+			if (path != null) {
+				dbSerializer.writePath(path, journalBuf);
+			}
+			dbSerializer.writePathPart(name, journalBuf);
+			
+			// Write variable content
+			int start = journalBuf.position();
+			userSerializer.write(journalBuf, newValue);
+			int size = journalBuf.position() - start;
+			
+			// Store path, name and serialized change (if not null) waiting for next flush
+			changes.computeIfAbsent(path, k -> new ChangedVariables()).changes.put(name, new SerializedVariable(start, size)); // Register this change
 		}
-		dbSerializer.writePathPart(name, journalBuf);
-		
-		// Write variable content
-		int start = journalBuf.position();
-		userSerializer.write(journalBuf, newValue);
-		int size = journalBuf.position() - start;
-		
-		// Store path, name and serialized change waiting for next flush
-		changes.computeIfAbsent(path, k -> new ChangedVariables()).changes.put(name, new SerializedVariable(start, size));
 	}
 	
 	/**
@@ -167,7 +176,6 @@ public class Journal {
 					return;
 				}
 				
-				newDb.put(DatabaseReader.VALUE); // It is not a list
 				dbSerializer.writePathPart(name, newDb); // Variable name
 
 				// Try to get a change from journal just for us by removing it
@@ -188,7 +196,6 @@ public class Journal {
 			
 			@Override
 			public void listStart(VariablePath path, int size, boolean isArray) {
-				newDb.put(DatabaseReader.LIST); // It is a list
 				sizeOffset = newDb.position(); // We'll write size here later
 				newDb.position(sizeOffset + 4);
 				dbSerializer.writePath(path, newDb); // Path to list
@@ -196,19 +203,17 @@ public class Journal {
 				changed = changes.get(path); // What, if anything, has changed?
 				ChangedVariables changed = this.changed;
 				skipExisting = changed != null && changed.deleteBefore;
-				// FIXME change this shallow delete to deep delete, because that is what happens in memory
 				finalSize = 0; // Incremented when values are added
 			}
 			
 			@Override
-			public void listEnd(VariablePath path) {
-				// Write completely new content to list
+			public void listEnd(@Nullable VariablePath path) {
+				// Write values with new names at end of list
 				ChangedVariables changed = this.changed;
 				if (changed != null) {
 					for (Map.Entry<Object, SerializedVariable> entry : changed.changes.entrySet()) {
 						SerializedVariable value = entry.getValue();
 						if (value != null) { // Don't write variables that were added, then deleted
-							newDb.put(DatabaseReader.VALUE); // It is not a list
 							dbSerializer.writePathPart(entry.getKey(), newDb); // Variable name
 							newDb.putInt(value.length);
 							newDb.put(journalBuf.duplicate().position(value.position).limit(value.position + value.length));
@@ -216,12 +221,14 @@ public class Journal {
 						}
 					}
 				}
-				
+								
 				// Write final size
 				newDb.putInt(sizeOffset, finalSize);
 				
 				// Next list ready to go!
 			}
 		});
+		
+		// Write completely new lists at the end
 	}
 }

@@ -619,4 +619,42 @@ public class ListVariable {
 			return values;
 		}
 	}
+	
+	/**
+	 * Merges content of other list variable to this. Content of
+	 * the other variable takes precedence.
+	 * @param other List to merge into this.
+	 */
+	public void merge(ListVariable other) {
+		if (other.isArray) { // Iterate contents of other list as array
+			other.assertPlainArray();
+			// TODO consider even faster path when this is plain array
+			Object[] values = other.values;
+			assert values != null;
+			for (int i = 0; i < other.size; i++) {
+				Object val = values[i];
+				if (val != null) {
+					put(i, val);
+				}
+			}
+		} else if (other.values != null) { // Small list
+			other.assertSmallList();
+			Object[] values = other.values;
+			assert values != null;
+			for (int i = 0; i < other.size; i++) {
+				VariableEntry entry = (VariableEntry) values[i];
+				Object val = entry.getValue();
+				if (val != null) {
+					put(entry.getName(), val);
+				}
+			}
+		} else {
+			other.assertMap();
+			Map<String, Object> map = other.map;
+			assert map != null;
+			for (Map.Entry<String, Object> entry : map.entrySet()) {
+				put(entry.getKey(), entry.getValue());
+			}
+		}
+	}
 }

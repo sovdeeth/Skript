@@ -109,4 +109,9 @@ public class GlobalVariableScope implements VariableScope {
 	public void delete(VariablePath path, @Nullable Event event, boolean deleteList) {
 		getScope(path).delete(path, event, deleteList);
 	}
+
+	@Override
+	public void mergeList(VariablePath path, @Nullable Event event, ListVariable list) {
+		getScope(path).mergeList(path, event, list);
+	}
 }

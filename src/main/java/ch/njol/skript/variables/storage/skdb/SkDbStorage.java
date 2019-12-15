@@ -146,8 +146,6 @@ public class SkDbStorage implements VariableStorage {
 			private ListVariable list;
 			
 			private void value(Object name, Object value) {
-				// TODO we're assuming that lists closer to root are first in DB file
-				// Need to verify that this happens in ALL cases, otherwise data is lost
 				if (list == null) { // Put directly to root
 					scope.set(VariablePath.create(name), null, value);
 				} else { // Put to current list variable
@@ -181,10 +179,11 @@ public class SkDbStorage implements VariableStorage {
 			}
 
 			@Override
-			public void listEnd(VariablePath path) {
-				assert list != null : "listEnd without listStart";
-				scope.set(path, null, list);
-				list = null;
+			public void listEnd(@Nullable VariablePath path) {
+				if (path != null) {
+					assert list != null : "path points to list that is null";
+					scope.mergeList(path, null, list);
+				}
 			}
 			
 		});

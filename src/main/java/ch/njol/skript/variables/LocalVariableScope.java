@@ -60,7 +60,13 @@ public class LocalVariableScope implements VariableScope {
 		getEventScope(event).delete(path, event, deleteList);
 	}
 	
+	@Override
+	public void mergeList(VariablePath path, @Nullable Event event, ListVariable list) {
+		getEventScope(event).mergeList(path, event, list);
+	}
+	
 	public void finishedEvent(Event event) {
 		scopes.remove(event);
 	}
+
 }

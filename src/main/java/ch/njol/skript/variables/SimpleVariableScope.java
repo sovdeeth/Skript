@@ -360,5 +360,41 @@ public class SimpleVariableScope implements VariableScope {
 			storage.variableChanged(pathToList, name, null);
 		}
 	}
+
+	@Override
+	public void mergeList(VariablePath path, @Nullable Event event, ListVariable list) {
+		if (path.length() == 1) { // List directly under root
+			Object oldValue = variables.get(path.path[0]);
+			if (oldValue instanceof ListVariable) {
+				((ListVariable) oldValue).merge(list);
+			} else {
+				list.shadowValue = oldValue;
+				variables.put((String) path.path[0], list);
+			}
+		} else {
+			VariablePath parentPath = path.execute(event, path.length() - 1);
+			ListVariable parent = (ListVariable) query(parentPath, event, true);
+			assert parent != null : "list not created";
+			
+			Object name = VariablePath.executePart(path.path[path.length() - 1], event);
+			if (name instanceof String) {
+				Object oldValue = parent.get((String) name);
+				if (oldValue instanceof ListVariable) {
+					((ListVariable) oldValue).merge(list);
+				} else {
+					list.shadowValue = oldValue;
+					parent.put((String) name, list);
+				}
+			} else {
+				Object oldValue = parent.get((int) name);
+				if (oldValue instanceof ListVariable) {
+					((ListVariable) oldValue).merge(list);
+				} else {
+					list.shadowValue = oldValue;
+					parent.put((int) name, list);
+				}
+			}
+		}
+	}
 }
 

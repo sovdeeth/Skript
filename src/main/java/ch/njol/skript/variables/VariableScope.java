@@ -51,4 +51,20 @@ public interface VariableScope {
 	 */
 	void delete(VariablePath path, @Nullable Event event, boolean deleteList);
 
+	/**
+	 * Merges contents of given list variable into variables in this scope.
+	 * Unlike {@link #set(VariablePath, Event, Object)}, this will not remove
+	 * lists under it, if there are any.
+	 * 
+	 * <p>If no list variable exists with given path at this scope, the given
+	 * list will be set to it. Any previous single value there might've been
+	 * will be set as a shadow value of that list.
+	 * 
+	 * <p>If a list already exists, contents of it and the given list will be
+	 * merged. Should there be conflicts, the given list takes precedence.
+	 * @param path Path to the list variable.
+	 * @param event Currently executing event.
+	 * @param list The list variable.
+	 */
+	void mergeList(VariablePath path, @Nullable Event event, ListVariable list);
 }
