@@ -1,5 +1,5 @@
 {
-  "skriptVersion" : "2.4",
+  "skriptVersion" : "2.5-alpha1",
 
   "classes" : [
     {
@@ -414,7 +414,7 @@
     "pattern_end"
   ],
   "since" : "1.0",
-  "description" : "A player. Depending on whether a player is online or offline several actions can be performed with them, though you won't get any errors when using effects that only work if the player is online (e.g. changing his inventory) on an offline player.\\nYou have two possibilities to use players as command arguments: &lt;player&gt; and &lt;offline player&gt;. The first requires that the player is online and also accepts only part of the name, while the latter doesn't require that the player is online, but the player's name has to be entered exactly.",
+  "description" : "A player. Depending on whether a player is online or offline several actions can be performed with them, though you won't get any errors when using effects that only work if the player is online (e.g. changing their inventory) on an offline player.\\nYou have two possibilities to use players as command arguments: &lt;player&gt; and &lt;offline player&gt;. The first requires that the player is online and also accepts only part of the name, while the latter doesn't require that the player is online, but the player's name has to be entered exactly.",
   "examples" : ""
 },
 {
@@ -495,7 +495,7 @@
   ],
   "since" : "2.3",
   "description" : "The spawn reason in a <a href='events.html#spawn'>spawn</a> event.",
-  "examples" : "natural, jockey, chunk generation, mob spawner, egg, spawn egg, lightning, built snowman, built iron golem, built wither, village defense, village invasion, breed, slime split, reinforcements, nether portal, dispense egg, infection, cured, ocelot baby, silverfish reveal, mount, trap, ender pearl, perching, drowned, shear, spawn reasons.explosion, spawn reasons.raid, spawn reasons.patrol, customized, default"
+  "examples" : "natural, jockey, chunk generation, mob spawner, egg, spawn egg, lightning, built snowman, built iron golem, built wither, village defense, village invasion, breed, slime split, reinforcements, nether portal, dispense egg, infection, cured, ocelot baby, silverfish reveal, mount, trap, ender pearl, perching, drowned, shear, spawn reasons.explosion, spawn reasons.raid, spawn reasons.patrol, spawn reasons.beehive, customized, default"
 },
 {
   "id" : "teleportcause",
@@ -603,7 +603,7 @@
   "id" : "visualeffect",
   "name" : "Visual Effect",
   "patterns" : [
-    "ender signal, mobspawner flames, potion break, smoke, hurt, wolf smoke, wolf hearts, wolf shaking, sheep eating, iron golem offering rose, villager hearts, angry villager entity, happy villager entity, witch magic, zombie turning to a villager, firework explosion, arrow particles, jumping rabbit, love hearts, squid rotation reset, entity poof, guardian target, block with shield, shield break, armor stand hit, hurt by thorns, iron golem sheathing rose, resurrection by totem, hurt by drowning, visual effects.hurt_explosiion.name, firework's spark, critical hit, magical critical hit, potion swirl, transparent potion swirl, spell, spell, witch spell, note, portal, flying glyph, flame, lava pop, footstep, water splash, smoke particle, huge explosion, large explosion, explosion, void fog, small smoke, cloud, coloured dust, snowball break, water drip, lava drip, snow shovel, slime, heart, angry villager, happy villager, large smoke, item crack, block break, block dust, totem, spit, squid ink, bubble pop, current down, bubble column up, nautilus, dolphin, sneeze, visual effects.campfire_cosy_smoke.name, campfire signal smoke, composter, flash, falling lava, landing lava, falling water",
+    "ender signal, mobspawner flames, potion break, smoke, hurt, wolf smoke, wolf hearts, wolf shaking, sheep eating, iron golem offering rose, villager hearts, angry villager entity, happy villager entity, witch magic, zombie turning to a villager, firework explosion, arrow particles, jumping rabbit, love hearts, squid rotation reset, entity poof, guardian target, block with shield, shield break, armor stand hit, hurt by thorns, iron golem sheathing rose, resurrection by totem, hurt by drowning, visual effects.hurt_explosiion.name, firework's spark, critical hit, magical critical hit, potion swirl, transparent potion swirl, spell, spell, witch spell, note, portal, flying glyph, flame, lava pop, footstep, water splash, smoke particle, huge explosion, large explosion, explosion, void fog, small smoke, cloud, coloured dust, snowball break, water drip, lava drip, snow shovel, slime, heart, angry villager, happy villager, large smoke, item crack, block break, block dust, totem, spit, squid ink, bubble pop, current down, bubble column up, nautilus, dolphin, sneeze, campfire cosy smoke, campfire signal smoke, composter, flash, falling lava, landing lava, falling water, dripping honey, falling honey, landing honey, falling nectar",
 
     "pattern_end"
   ],
@@ -814,6 +814,19 @@ Note: This is the only element where not all patterns are shown. It has actually
   "examples" : "{teams::%player's uuid%::preferred-team} is not set\\non damage:\\n    projectile exists\\n    broadcast \"%attacker% used a %projectile% to attack %victim%!\""
 },
 {
+  "id" : "CondAI",
+  "name" : "Has AI",
+  "patterns" : [
+    "%<a href='classes.html#livingentity'>living entities</a>% (has|have) (ai|artificial intelligence)",
+"%<a href='classes.html#livingentity'>living entities</a>% (doesn't|does not|do not|don't) have (ai|artificial intelligence)",
+
+    "pattern_end"
+  ],
+  "since" : "2.5",
+  "description" : "Checks whether an entity has AI.",
+  "examples" : "target entity has ai"
+},
+{
   "id" : "CondHasClientWeather",
   "name" : "Has Client Weather",
   "patterns" : [
@@ -825,6 +838,19 @@ Note: This is the only element where not all patterns are shown. It has actually
   "since" : "2.3",
   "description" : "Checks whether the given players have a custom client weather",
   "examples" : "if the player has custom weather:\\n    message \"Your custom weather is %player's weather%\""
+},
+{
+  "id" : "CondHasCustomModelData",
+  "name" : "Has Custom Model Data",
+  "patterns" : [
+    "%<a href='classes.html#itemtype'>item types</a>% (has|have) [custom] model data",
+"%<a href='classes.html#itemtype'>item types</a>% (doesn't|does not|do not|don't) have [custom] model data",
+
+    "pattern_end"
+  ],
+  "since" : "2.5",
+  "description" : "Check if an item has a custom model data tag",
+  "examples" : "player's tool has custom model data"
 },
 {
   "id" : "CondHasMetadata",
@@ -923,8 +949,8 @@ Note: This is the only element where not all patterns are shown. It has actually
   "id" : "CondIsBlock",
   "name" : "Is Block",
   "patterns" : [
-    "%<a href='classes.html#itemstack'>item stacks</a>% (is|are) ([a] block|blocks)",
-"%<a href='classes.html#itemstack'>item stacks</a>% (isn't|is not|aren't|are not) ([a] block|blocks)",
+    "%<a href='classes.html#itemtype'>item types</a>% (is|are) ([a] block|blocks)",
+"%<a href='classes.html#itemtype'>item types</a>% (isn't|is not|aren't|are not) ([a] block|blocks)",
 
     "pattern_end"
   ],
@@ -936,13 +962,13 @@ Note: This is the only element where not all patterns are shown. It has actually
   "id" : "CondIsBlocking",
   "name" : "Is Blocking",
   "patterns" : [
-    "%<a href='classes.html#player'>players</a>% (is|are) (blocking|defending)",
-"%<a href='classes.html#player'>players</a>% (isn't|is not|aren't|are not) (blocking|defending)",
+    "%<a href='classes.html#player'>players</a>% (is|are) (blocking|defending) [with [a] shield]",
+"%<a href='classes.html#player'>players</a>% (isn't|is not|aren't|are not) (blocking|defending) [with [a] shield]",
 
     "pattern_end"
   ],
   "since" : "<i>unknown</i> (before 2.1)",
-  "description" : "Checks whether a player is blocking with his shield.",
+  "description" : "Checks whether a player is blocking with their shield.",
   "examples" : "on damage of player:\\n    victim is blocking\\n    damage attacker by 0.5 hearts"
 },
 {
@@ -962,8 +988,8 @@ Note: This is the only element where not all patterns are shown. It has actually
   "id" : "CondIsEdible",
   "name" : "Is Edible",
   "patterns" : [
-    "%<a href='classes.html#itemstack'>item stacks</a>% (is|are) edible",
-"%<a href='classes.html#itemstack'>item stacks</a>% (isn't|is not|aren't|are not) edible",
+    "%<a href='classes.html#itemtype'>item types</a>% (is|are) edible",
+"%<a href='classes.html#itemtype'>item types</a>% (isn't|is not|aren't|are not) edible",
 
     "pattern_end"
   ],
@@ -1001,8 +1027,8 @@ Note: This is the only element where not all patterns are shown. It has actually
   "id" : "CondIsFlammable",
   "name" : "Is Flammable",
   "patterns" : [
-    "%<a href='classes.html#itemstack'>item stacks</a>% (is|are) flammable",
-"%<a href='classes.html#itemstack'>item stacks</a>% (isn't|is not|aren't|are not) flammable",
+    "%<a href='classes.html#itemtype'>item types</a>% (is|are) flammable",
+"%<a href='classes.html#itemtype'>item types</a>% (isn't|is not|aren't|are not) flammable",
 
     "pattern_end"
   ],
@@ -1041,6 +1067,32 @@ Note: This is the only element where not all patterns are shown. It has actually
   "since" : "1.0",
   "description" : "Checks whether a player is holding a specific item. Cannot be used with endermen, use 'entity is [not] an enderman holding &lt;item type&gt;' instead.",
   "examples" : "player is holding a stick\\nvictim isn't holding a sword of sharpness"
+},
+{
+  "id" : "CondIsInvulnerable",
+  "name" : "Is Invulnerable",
+  "patterns" : [
+    "%<a href='classes.html#entity'>entities</a>% (is|are) invulnerable",
+"%<a href='classes.html#entity'>entities</a>% (isn't|is not|aren't|are not) invulnerable",
+
+    "pattern_end"
+  ],
+  "since" : "2.5",
+  "description" : "Checks whether an entity is invulnerable.",
+  "examples" : "target entity is invulnerable"
+},
+{
+  "id" : "CondLeashed",
+  "name" : "Is Leashed",
+  "patterns" : [
+    "%<a href='classes.html#livingentity'>living entities</a>% (is|are) leashed",
+"%<a href='classes.html#livingentity'>living entities</a>% (isn't|is not|aren't|are not) leashed",
+
+    "pattern_end"
+  ],
+  "since" : "2.5",
+  "description" : "Checks to see if an entity is currently leashed.",
+  "examples" : "target entity is leashed"
 },
 {
   "id" : "CondIsLoaded",
@@ -1109,6 +1161,19 @@ This condition requires a supported regions plugin to be installed.",
   "examples" : "player is riding a saddled pig"
 },
 {
+  "id" : "CondIsRiptiding",
+  "name" : "Is Riptiding",
+  "patterns" : [
+    "%<a href='classes.html#livingentity'>living entities</a>% (is|are) riptiding",
+"%<a href='classes.html#livingentity'>living entities</a>% (isn't|is not|aren't|are not) riptiding",
+
+    "pattern_end"
+  ],
+  "since" : "2.5",
+  "description" : "Checks to see if an entity is currently using the Riptide enchantment.",
+  "examples" : "target entity is riptiding"
+},
+{
   "id" : "CondScriptLoaded",
   "name" : "Is Script Loaded",
   "patterns" : [
@@ -1120,6 +1185,19 @@ This condition requires a supported regions plugin to be installed.",
   "since" : "2.2-dev31",
   "description" : "Check if the current script, or another script, is currently loaded.",
   "examples" : "script is loaded\\nscript \"example.sk\" is loaded"
+},
+{
+  "id" : "CondIsSilent",
+  "name" : "Is Silent",
+  "patterns" : [
+    "%<a href='classes.html#entity'>entities</a>% (is|are) silent",
+"%<a href='classes.html#entity'>entities</a>% (isn't|is not|aren't|are not) silent",
+
+    "pattern_end"
+  ],
+  "since" : "2.5",
+  "description" : "Checks whether an entity is silent i.e. its sounds are disabled.",
+  "examples" : "target entity is silent"
 },
 {
   "id" : "CondIsSleeping",
@@ -1166,8 +1244,8 @@ For more info, see <a href='https://minecraft.gamepedia.com/Slime#.22Slime_chunk
   "id" : "CondIsSolid",
   "name" : "Is Solid",
   "patterns" : [
-    "%<a href='classes.html#itemstack'>item stacks</a>% (is|are) solid",
-"%<a href='classes.html#itemstack'>item stacks</a>% (isn't|is not|aren't|are not) solid",
+    "%<a href='classes.html#itemtype'>item types</a>% (is|are) solid",
+"%<a href='classes.html#itemtype'>item types</a>% (isn't|is not|aren't|are not) solid",
 
     "pattern_end"
   ],
@@ -1202,17 +1280,30 @@ For more info, see <a href='https://minecraft.gamepedia.com/Slime#.22Slime_chunk
   "examples" : "player is swimming"
 },
 {
+  "id" : "CondIsTameable",
+  "name" : "Is Tameable",
+  "patterns" : [
+    "%<a href='classes.html#livingentity'>living entities</a>% (is|are) tameable",
+"%<a href='classes.html#livingentity'>living entities</a>% (isn't|is not|aren't|are not) tameable",
+
+    "pattern_end"
+  ],
+  "since" : "2.5",
+  "description" : "Check if an entity is tameable.",
+  "examples" : "on damage:\\n    if victim is tameable:\\n        cancel event"
+},
+{
   "id" : "CondIsTransparent",
   "name" : "Is Transparent",
   "patterns" : [
-    "%<a href='classes.html#itemstack'>item stacks</a>% (is|are) transparent",
-"%<a href='classes.html#itemstack'>item stacks</a>% (isn't|is not|aren't|are not) transparent",
+    "%<a href='classes.html#itemtype'>item types</a>% (is|are) transparent",
+"%<a href='classes.html#itemtype'>item types</a>% (isn't|is not|aren't|are not) transparent",
 
     "pattern_end"
   ],
   "since" : "2.2-dev36",
-  "description" : "Checks whether an item is transparent.",
-  "examples" : "glass is transparent\\nplayer's tool is transparent."
+  "description" : "Checks whether an item is transparent. Note that this condition may not work for all blocks, due to the transparency list used by Spigot not being completely accurate.",
+  "examples" : "player's tool is transparent."
 },
 {
   "id" : "CondIsWearing",
@@ -1368,20 +1459,24 @@ This condition requires a supported regions plugin to be installed.",
   "id" : "EffBan",
   "name" : "Ban",
   "patterns" : [
-    "ban %<a href='classes.html#string'>texts</a>/<a href='classes.html#offlineplayer'>offline players</a>% [(by reason of|because [of]|on account of|due to) %<a href='classes.html#string'>text</a>%]",
+    "ban %<a href='classes.html#string'>texts</a>/<a href='classes.html#offlineplayer'>offline players</a>% [(by reason of|because [of]|on account of|due to) %<a href='classes.html#string'>text</a>%] [for %<a href='classes.html#timespan'>time span</a>%]",
 "unban %<a href='classes.html#string'>texts</a>/<a href='classes.html#offlineplayer'>offline players</a>%",
-"ban %<a href='classes.html#player'>players</a>% by IP [(by reason of|because [of]|on account of|due to) %<a href='classes.html#string'>text</a>%]",
+"ban %<a href='classes.html#player'>players</a>% by IP [(by reason of|because [of]|on account of|due to) %<a href='classes.html#string'>text</a>%] [for %<a href='classes.html#timespan'>time span</a>%]",
 "unban %<a href='classes.html#player'>players</a>% by IP",
-"IP(-| )ban %<a href='classes.html#player'>players</a>% [(by reason of|because [of]|on account of|due to) %<a href='classes.html#string'>text</a>%]",
+"IP(-| )ban %<a href='classes.html#player'>players</a>% [(by reason of|because [of]|on account of|due to) %<a href='classes.html#string'>text</a>%] [for %<a href='classes.html#timespan'>time span</a>%]",
 "(IP(-| )unban|un[-]IP[-]ban) %<a href='classes.html#player'>players</a>%",
 
     "pattern_end"
   ],
-  "since" : "1.4, 2.1.1 (ban reason)",
-  "description" : "Bans/unbans a player or an IP address.
-Starting with Skript 2.1.1 and Bukkit 1.7.2 R0.4, one can also ban players with a reason.
-Note that banning a player will not kick them from the server. You may use the <a href='effects.html#EffKick'>kick effect</a> if you wish so.",
-  "examples" : "unban player\\nban \"127.0.0.1\"\\nIP-ban the player because \"he is an idiot\""
+  "since" : "1.4, 2.1.1 (ban reason), 2.5 (timespan)",
+  "description" : "Bans or unbans a player or an IP address.
+If a reason is given, it will be shown to the player when they try to join the server while banned.
+A length of ban may also be given to apply a temporary ban. If it is absent for any reason, a permanent ban will be used instead.
+We recommend that you test your scripts so that no accidental permanent bans are applied.
+
+Note that banning people does not kick them from the server.
+Consider using the <a href='effects.html#EffKick'>kick effect</a> after applying a ban.",
+  "examples" : "unban player\\nban \"127.0.0.1\"\\nIP-ban the player because \"he is an idiot\"\\nban player due to \"inappropriate language\" for 2 days"
 },
 {
   "id" : "EffBreakNaturally",
@@ -1527,14 +1622,14 @@ message to all players instead of broadcasting it.",
   "id" : "EffHealth",
   "name" : "Damage/Heal/Repair",
   "patterns" : [
-    "damage %<a href='classes.html#slot'>slots</a>/<a href='classes.html#livingentity'>living entities</a>/<a href='classes.html#itemstack'>item stack</a>% by %<a href='classes.html#number'>number</a>% [heart[s]][ with fake cause %<a href='classes.html#damagecause'>damage cause</a>%]",
+    "damage %<a href='classes.html#livingentity'>living entities</a>/<a href='classes.html#itemtype'>item types</a>% by %<a href='classes.html#number'>number</a>% [heart[s]][ with fake cause %<a href='classes.html#damagecause'>damage cause</a>%]",
 "heal %<a href='classes.html#livingentity'>living entities</a>% [by %<a href='classes.html#number'>number</a>% [heart[s]]]",
-"repair %<a href='classes.html#slot'>slots</a>/<a href='classes.html#itemstack'>item stack</a>% [by %<a href='classes.html#number'>number</a>%]",
+"repair %<a href='classes.html#itemtype'>item types</a>% [by %<a href='classes.html#number'>number</a>%]",
 
     "pattern_end"
   ],
   "since" : "1.0",
-  "description" : "Damage/Heal/Repair an entity, or item stack.",
+  "description" : "Damage/Heal/Repair an entity, or item.",
   "examples" : "damage player by 5 hearts\\nheal the player\\nrepair tool of player"
 },
 {
@@ -1590,8 +1685,8 @@ message to all players instead of broadcasting it.",
   "id" : "EffEnchant",
   "name" : "Enchant/Disenchant",
   "patterns" : [
-    "enchant %~<a href='classes.html#itemstack'>item stack</a>% with %<a href='classes.html#enchantmenttype'>enchantment types</a>%",
-"disenchant %~<a href='classes.html#itemstack'>item stack</a>%",
+    "enchant %~<a href='classes.html#itemtype'>item types</a>% with %<a href='classes.html#enchantmenttype'>enchantment types</a>%",
+"disenchant %~<a href='classes.html#itemtype'>item types</a>%",
 
     "pattern_end"
   ],
@@ -1837,6 +1932,19 @@ NB: Using 'server.log' as the log file will write to the default server log. Omi
   "examples" : "make player fly\\nforce all players to stop flying"
 },
 {
+  "id" : "EffInvulnerability",
+  "name" : "Make Invulnerable",
+  "patterns" : [
+    "make %<a href='classes.html#entity'>entities</a>% invulnerable",
+"make %<a href='classes.html#entity'>entities</a>% (not invulnerable|vulnerable)",
+
+    "pattern_end"
+  ],
+  "since" : "2.5",
+  "description" : "Makes an entity invulnerable/not invulnerable.",
+  "examples" : "make target entity invulnerable"
+},
+{
   "id" : "EffMakeSay",
   "name" : "Make Say",
   "patterns" : [
@@ -1996,14 +2104,16 @@ Note: if a player was hidden and relogs, this player will be visible again.",
   "id" : "EffReplace",
   "name" : "Replace",
   "patterns" : [
-    "replace [(all|every)] %<a href='classes.html#string'>texts</a>% in %<a href='classes.html#string'>texts</a>% with %<a href='classes.html#string'>text</a>%",
-"replace [(all|every)] %<a href='classes.html#string'>texts</a>% with %<a href='classes.html#string'>text</a>% in %<a href='classes.html#string'>texts</a>%",
-"replace [(all|every)] %<a href='classes.html#itemstack'>item stacks</a>% in %<a href='classes.html#inventory'>inventories</a>% with %<a href='classes.html#itemstack'>item stack</a>%",
-"replace [(all|every)] %<a href='classes.html#itemstack'>item stacks</a>% with %<a href='classes.html#itemstack'>item stack</a>% in %<a href='classes.html#inventory'>inventories</a>%",
+    "replace [(all|every)] %<a href='classes.html#string'>texts</a>% in %<a href='classes.html#string'>texts</a>% with %<a href='classes.html#string'>text</a>% [(with case sensitivity)]",
+"replace [(all|every)] %<a href='classes.html#string'>texts</a>% with %<a href='classes.html#string'>text</a>% in %<a href='classes.html#string'>texts</a>% [(with case sensitivity)]",
+"replace first %<a href='classes.html#string'>texts</a>% in %<a href='classes.html#string'>texts</a>% with %<a href='classes.html#string'>text</a>% [(with case sensitivity)]",
+"replace first %<a href='classes.html#string'>texts</a>% with %<a href='classes.html#string'>text</a>% in %<a href='classes.html#string'>text</a>% [(with case sensitivity)]",
+"replace [(all|every)] %<a href='classes.html#itemtype'>item types</a>% in %<a href='classes.html#inventory'>inventories</a>% with %<a href='classes.html#itemtype'>item type</a>%",
+"replace [(all|every)] %<a href='classes.html#itemtype'>item types</a>% with %<a href='classes.html#itemtype'>item type</a>% in %<a href='classes.html#inventory'>inventories</a>%",
 
     "pattern_end"
   ],
-  "since" : "2.0, 2.2-dev24 (replace in muliple strings and replace items in inventory)",
+  "since" : "2.0, 2.2-dev24 (replace in muliple strings and replace items in inventory), 2.5 (replace first, case sensitivity)",
   "description" : "Replaces all occurrences of a given text with another text. Please note that you can only change variables and a few expressions, e.g. a <a href='../expressions.html#ExprMessage'>message</a> or a line of a sign.
 Starting with 2.2-dev24, you can replace items in a inventory too.",
   "examples" : "replace \"<item>\" in {textvar} with \"%item%\"\\nreplace every \"&\" with \"§\" in line 1\\n# The following acts as a simple chat censor, but it will e.g. censor mass, hassle, assassin, etc. as well:\\non chat:\\n    replace all \"kys\", \"idiot\" and \"noob\" with \"****\" in the message\\n \\nreplace all stone and dirt in player's inventory and player's top inventory with diamond"
@@ -2024,7 +2134,7 @@ Starting with 2.2-dev24, you can replace items in a inventory too.",
   "id" : "EffSendBlockChange",
   "name" : "Send Block Change",
   "patterns" : [
-    "make %<a href='classes.html#player'>players</a>% see %<a href='classes.html#block'>blocks</a>% as %<a href='classes.html#itemstack'>item stack</a>%",
+    "make %<a href='classes.html#player'>players</a>% see %<a href='classes.html#block'>blocks</a>% as %<a href='classes.html#itemtype'>item type</a>%",
 
     "pattern_end"
   ],
@@ -2079,6 +2189,21 @@ status of the sent resource pack request.",
   "since" : "1.4",
   "description" : "Shoots a projectile (or any other entity) from a given entity.",
   "examples" : "shoot an arrow\\nmake the player shoot a creeper at speed 10\\nshoot a pig from the creeper"
+},
+{
+  "id" : "EffSilence",
+  "name" : "Silence Entity",
+  "patterns" : [
+    "silence %<a href='classes.html#entity'>entities</a>%",
+"unsilence %<a href='classes.html#entity'>entities</a>%",
+"make %<a href='classes.html#entity'>entities</a>% silent",
+"make %<a href='classes.html#entity'>entities</a>% not silent",
+
+    "pattern_end"
+  ],
+  "since" : "2.5",
+  "description" : "Controls whether or not an entity is silent.",
+  "examples" : "make target entity silent"
 },
 {
   "id" : "EffSpawn",
@@ -2266,6 +2391,18 @@ This may require that there is enough space above the given location and that th
   "since" : "2.2-dev21",
   "description" : "Called when area effect cloud applies its potion effect. This happens every 5 ticks by default.",
   "examples" : "on area cloud effect:"
+},
+{
+  "id" : "armor_change",
+  "name" : "On Armor Change",
+  "patterns" : [
+    "[player] armor change[d]",
+
+    "pattern_end"
+  ],
+  "since" : "2.5",
+  "description" : "Called when armor pieces of a player are changed.",
+  "examples" : "on armor change:\\n    send \"You equipped %event-item%!\""
 },
 {
   "id" : "bed_enter",
@@ -2581,7 +2718,7 @@ This may require that there is enough space above the given location and that th
     "pattern_end"
   ],
   "since" : "<i>unknown</i> (before 2.1)",
-  "description" : "Called when a player drops an item from his inventory.",
+  "description" : "Called when a player drops an item from their inventory.",
   "examples" : "on drop:"
 },
 {
@@ -2889,8 +3026,20 @@ This may require that there is enough space above the given location and that th
     "pattern_end"
   ],
   "since" : "2.1.1",
-  "description" : "Called when a player breaks his tool because its damage reached the maximum value.\\nThis event cannot be cancelled.",
+  "description" : "Called when a player breaks their tool because its damage reached the maximum value.\\nThis event cannot be cancelled.",
   "examples" : "on tool break:"
+},
+{
+  "id" : "item_damage",
+  "name" : "On Item Damage",
+  "patterns" : [
+    "item damag(e|ing)",
+
+    "pattern_end"
+  ],
+  "since" : "2.5",
+  "description" : "Called when an item is damaged. Most tools are damaged by using them; armor is damaged when the wearer takes damage.",
+  "examples" : "on item damage:\\n    cancel event"
 },
 {
   "id" : "item_despawn",
@@ -2927,7 +3076,7 @@ This may require that there is enough space above the given location and that th
     "pattern_end"
   ],
   "since" : "<i>unknown</i> (before 2.1)",
-  "description" : "Called whenever an item stack is spawned in a world, e.g. as drop of a block or mob, a player throwing items out of his inventory, or a dispenser dispensing an item (not shooting it).",
+  "description" : "Called whenever an item stack is spawned in a world, e.g. as drop of a block or mob, a player throwing items out of their inventory, or a dispenser dispensing an item (not shooting it).",
   "examples" : "on item spawn of iron sword:\\n    broadcast \"Someone dropped an iron sword!\""
 },
 {
@@ -3043,13 +3192,13 @@ This may require that there is enough space above the given location and that th
   "id" : "pick_up",
   "name" : "On Pick Up",
   "patterns" : [
-    "[player] (pick[ ]up|picking up) [[of] %<a href='classes.html#itemtype'>item types</a>%]",
+    "[(player|entity)] (pick[ ]up|picking up) [[of] %<a href='classes.html#itemtype'>item types</a>%]",
 
     "pattern_end"
   ],
-  "since" : "<i>unknown</i> (before 2.1)",
-  "description" : "Called when a player picks up an item. Please note that the item is still on the ground when this event is called.",
-  "examples" : "on pick up:"
+  "since" : "<i>unknown</i> (before 2.1), 2.5 (entity)",
+  "description" : "Called when a player/entity picks up an item. Please note that the item is still on the ground when this event is called.",
+  "examples" : "on pick up:\\non entity pickup of wheat:"
 },
 {
   "id" : "pig_zap",
@@ -3260,6 +3409,18 @@ This may require that there is enough space above the given location and that th
   "examples" : "on resurrect attempt:\\n    entity is player\\n    entity has permission \"admin.undying\"\\n    uncancel the event"
 },
 {
+  "id" : "riptide",
+  "name" : "On Riptide",
+  "patterns" : [
+    "[use of] riptide [enchant[ment]]",
+
+    "pattern_end"
+  ],
+  "since" : "2.5",
+  "description" : "Called when the player activates the riptide enchantment, using their trident to propel them through the air.\\nNote: the riptide action is performed client side, so manipulating the player in this event may have undesired effects.",
+  "examples" : "on riptide:\\n    send \"You are riptiding!\""
+},
+{
   "id" : "script_loadunload",
   "name" : "On Script Load/Unload",
   "patterns" : [
@@ -3397,6 +3558,18 @@ This may require that there is enough space above the given location and that th
   "examples" : "on spawn change:\\n    broadcast \"someone changed the spawn!\""
 },
 {
+  "id" : "sponge_absorb",
+  "name" : "On Sponge Absorb",
+  "patterns" : [
+    "sponge absorb",
+
+    "pattern_end"
+  ],
+  "since" : "2.5",
+  "description" : "Called when a sponge absorbs blocks.",
+  "examples" : "on sponge absorb:\\n    loop absorbed blocks:\\n        broadcast \"%loop-block% was absorbed by a sponge\"!"
+},
+{
   "id" : "spread",
   "name" : "On Spread",
   "patterns" : [
@@ -3493,7 +3666,7 @@ This may require that there is enough space above the given location and that th
     "pattern_end"
   ],
   "since" : "1.0",
-  "description" : "Called whenever a player changes his held item by selecting a different slot (e.g. the keys 1-9 or the mouse wheel), <i>not</i> by dropping or replacing the item in the current slot.",
+  "description" : "Called whenever a player changes their held item by selecting a different slot (e.g. the keys 1-9 or the mouse wheel), <i>not</i> by dropping or replacing the item in the current slot.",
   "examples" : "on player's held item change:"
 },
 {
@@ -3663,6 +3836,18 @@ This may require that there is enough space above the given location and that th
 
   "expressions" : [
     {
+  "id" : "ExprAbsorbedBlocks",
+  "name" : "Absorbed blocks",
+  "patterns" : [
+    "[the] absorbed blocks",
+
+    "pattern_end"
+  ],
+  "since" : "2.5",
+  "description" : "The blocks absorbed by a sponge block.",
+  "examples" : "the absorbed blocks"
+},
+{
   "id" : "ExprAffectedEntities",
   "name" : "Affected Entities",
   "patterns" : [
@@ -3717,12 +3902,24 @@ This may require that there is enough space above the given location and that th
   "name" : "Amount",
   "patterns" : [
     "(amount|number|size) of %<a href='classes.html#object'>objects</a>%",
+"recursive (amount|number|size) of %<a href='classes.html#object'>objects</a>%",
 
     "pattern_end"
   ],
   "since" : "1.0",
   "description" : "The amount of something.
-Please note that <code>amount of %items%</code> will not return the number of items, but the number of stacks, e.g. 1 for a stack of 64 torches. To get the amount of items in a stack, see the <a href='#ExprItemAmount'>item amount</a> expression.",
+Please note that <code>amount of %items%</code> will not return the number of items, but the number of stacks, e.g. 1 for a stack of 64 torches. To get the amount of items in a stack, see the <a href='#ExprItemAmount'>item amount</a> expression.
+
+Also, you can get the recursive size of a list, which will return the recursive size of the list with sublists included, e.g.
+{list::*} Structure
+    ├──── {list::1}: 1
+    ├──── {list::2}: 2
+    │         ├──── {list::2::1}: 3
+    │         │           └──── {list::2::1::1}: 4
+    │         └──── {list::2::2}: 5
+    └──── {list::3}: 6
+Where using %size of {list::*}% will only return 3 (the first layer of indices only), while %recursive size of {list::*}% will return 6 (the entire list)
+Please note that getting a list's recursive size can cause lag if the list is large, so only use this expression if you need to!",
   "examples" : "message \"There are %number of all players% players online!\""
 },
 {
@@ -3906,8 +4103,8 @@ This expression requires a supported regions plugin to be installed.",
   "id" : "ExprBookAuthor",
   "name" : "Book Author",
   "patterns" : [
-    "[the] [book] (author|writer|publisher) of %<a href='classes.html#itemstack'>item stack</a>%",
-"%<a href='classes.html#itemstack'>item stack</a>%'[s] [book] (author|writer|publisher)",
+    "[the] [book] (author|writer|publisher) of %<a href='classes.html#itemtype'>item types</a>%",
+"%<a href='classes.html#itemtype'>item types</a>%'[s] [book] (author|writer|publisher)",
 
     "pattern_end"
   ],
@@ -3919,10 +4116,10 @@ This expression requires a supported regions plugin to be installed.",
   "id" : "ExprBookPages",
   "name" : "Book Pages",
   "patterns" : [
-    "[all] [the] [book] (pages|content) of %<a href='classes.html#itemstack'>item stack</a>%",
-"%<a href='classes.html#itemstack'>item stack</a>%'s [book] (pages|content)",
-"[book] page %<a href='classes.html#number'>number</a>% of %<a href='classes.html#itemstack'>item stack</a>%",
-"%<a href='classes.html#itemstack'>item stack</a>%'s [book] page %<a href='classes.html#number'>number</a>%",
+    "[all] [the] [book] (pages|content) of %<a href='classes.html#itemtype'>item types</a>%",
+"%<a href='classes.html#itemtype'>item types</a>%'s [book] (pages|content)",
+"[book] page %<a href='classes.html#number'>number</a>% of %<a href='classes.html#itemtype'>item types</a>%",
+"%<a href='classes.html#itemtype'>item types</a>%'s [book] page %<a href='classes.html#number'>number</a>%",
 
     "pattern_end"
   ],
@@ -3934,8 +4131,8 @@ This expression requires a supported regions plugin to be installed.",
   "id" : "ExprBookTitle",
   "name" : "Book Title",
   "patterns" : [
-    "[the] (book name|title) of %<a href='classes.html#itemstack'>item stack</a>%",
-"%<a href='classes.html#itemstack'>item stack</a>%'[s] (book name|title)",
+    "[the] book (name|title) of %<a href='classes.html#itemtype'>item types</a>%",
+"%<a href='classes.html#itemtype'>item types</a>%'[s] book (name|title)",
 
     "pattern_end"
   ],
@@ -3957,6 +4154,30 @@ This expression requires a supported regions plugin to be installed.",
   "description" : "The time a furnace takes to burn an item in a <a href='events.html#fuel_burn'>fuel burn</a> event.
 Can also be used to change the burn/cook time of a placed furnace.",
   "examples" : "on fuel burn:\\n    if fuel slot is coal:\\n        set burning time to 1 tick"
+},
+{
+  "id" : "ExprStringCase",
+  "name" : "Case Text",
+  "patterns" : [
+    "%<a href='classes.html#string'>texts</a>% in (upper|lower)[ ]case",
+"(upper|lower)[ ]case %<a href='classes.html#string'>texts</a>%",
+"capitali(s|z)ed %<a href='classes.html#string'>texts</a>%",
+"%<a href='classes.html#string'>texts</a>% in [(lenient|strict) ](proper|title)[ ]case",
+"[(lenient|strict) ](proper|title)[ ]case %<a href='classes.html#string'>texts</a>%",
+"%<a href='classes.html#string'>texts</a>% in [(lenient|strict) ]camel[ ]case",
+"[(lenient|strict) ]camel[ ]case %<a href='classes.html#string'>texts</a>%",
+"%<a href='classes.html#string'>texts</a>% in [(lenient|strict) ]pascal[ ]case",
+"[(lenient|strict) ]pascal[ ]case %<a href='classes.html#string'>texts</a>%",
+"%<a href='classes.html#string'>texts</a>% in [(lower|upper|capital|screaming)[ ]]snake[ ]case",
+"[(lower|upper|capital|screaming)[ ]]snake[ ]case %<a href='classes.html#string'>texts</a>%",
+"%<a href='classes.html#string'>texts</a>% in [(lower|upper|capital)[ ]]kebab[ ]case",
+"[(lower|upper|capital)[ ]]kebab[ ]case %<a href='classes.html#string'>texts</a>%",
+
+    "pattern_end"
+  ],
+  "since" : "2.2-dev16 (lowercase and uppercase), 2.5 (advanced cases)",
+  "description" : "Copy of given text in Lowercase, Uppercase, Proper Case, camelCase, PascalCase, Snake_Case, and Kebab-Case",
+  "examples" : "\"Oops!\" in lowercase # oops!\\n\"oops!\" in uppercase # OOPS!\\n\"hellO i'm steve!\" in proper case # HellO I'm Steve!\\n\"hellO i'm steve!\" in strict proper case # Hello I'm Steve!\\n\"spAwn neW boSs ()\" in camel case # spAwnNeWBoSs()\\n\"spAwn neW boSs ()\" in strict camel case # spawnNewBoss()\\n\"geneRate ranDom numBer ()\" in pascal case # GeneRateRanDomNumBer()\\n\"geneRate ranDom numBer ()\" in strict pascal case # GenerateRandomNumber()\\n\"Hello Player!\" in snake case # Hello_Player!\\n\"Hello Player!\" in lower snake case # hello_player!\\n\"Hello Player!\" in upper snake case # HELLO_PLAYER!\\n\"What is your name?\" in kebab case # What-is-your-name?\\n\"What is your name?\" in lower kebab case # what-is-your-name?\\n\"What is your name?\" in upper kebab case # WHAT-IS-YOUR-NAME?"
 },
 {
   "id" : "ExprChatFormat",
@@ -4060,7 +4281,8 @@ the <a href=effects.html#EffSend>send effect</a>.",
     "pattern_end"
   ],
   "since" : "2.0",
-  "description" : "The player or the console who sent a command. Mostly useful in <a href='../commands/'>commands</a> and <a href='../events.html#command'>command events</a>.",
+  "description" : "The player or the console who sent a command. Mostly useful in <a href='commands'>commands</a> and <a href='events.html#command'>command events</a>.
+If the command sender is a command block, its location can be retrieved by using %block's location%",
   "examples" : "make the command sender execute \"/say hi!\"\\non command:\\n    log \"%executor% used command /%command% %arguments%\" to \"commands.log\""
 },
 {
@@ -4156,6 +4378,19 @@ You can use the specific type of the entity that's involved in the event, e.g. i
   "since" : "2.2-dev34",
   "description" : "Returns a chest inventory with the given amount of rows and the name. Use the <a href=effects.html#EffOpenInventory>open inventory</a> effect to open it.",
   "examples" : "open chest inventory with 1 row named \"test\" to player\\nset {_inventory} to chest inventory with 1 row"
+},
+{
+  "id" : "ExprCustomModelData",
+  "name" : "Custom Model Data",
+  "patterns" : [
+    "[the] [custom] model data of %<a href='classes.html#itemtype'>item types</a>%",
+"%<a href='classes.html#itemtype'>item types</a>%'[s] [custom] model data",
+
+    "pattern_end"
+  ],
+  "since" : "2.5",
+  "description" : "Get/set the CustomModelData tag for an item. (Value is an integer between 0 and 99999999)",
+  "examples" : "set custom model data of player's tool to 3\\nset {_model} to custom model data of player's tool"
 },
 {
   "id" : "ExprDamage",
@@ -4355,6 +4590,32 @@ See also: <a href='#ExprRandom'>random</a>",
   "examples" : "kill all creepers in the player's world\\nsend \"Psst!\" to all players witin 100 meters of the player\\ngive a diamond to all ops\\nheal all tamed wolves in radius 2000 around {town center}"
 },
 {
+  "id" : "ExprAI",
+  "name" : "Entity AI",
+  "patterns" : [
+    "[the] (ai|artificial intelligence) of %<a href='classes.html#livingentity'>living entities</a>%",
+"%<a href='classes.html#livingentity'>living entities</a>%'[s] (ai|artificial intelligence)",
+
+    "pattern_end"
+  ],
+  "since" : "2.5",
+  "description" : "Returns whether an entity has AI.",
+  "examples" : "set artificial intelligence of target entity to false"
+},
+{
+  "id" : "ExprEntityTamer",
+  "name" : "Entity Owner",
+  "patterns" : [
+    "[the] (owner|tamer) of %<a href='classes.html#livingentity'>living entities</a>%",
+"%<a href='classes.html#livingentity'>living entities</a>%'[s] (owner|tamer)",
+
+    "pattern_end"
+  ],
+  "since" : "2.5",
+  "description" : "The owner of a tameable entity, such as a horse or wolf.",
+  "examples" : "set owner of target entity to player\\ndelete owner of target entity\\nset {_t} to uuid of tamer of target entity"
+},
+{
   "id" : "ExprExhaustion",
   "name" : "Exhaustion",
   "patterns" : [
@@ -4378,6 +4639,18 @@ See also: <a href='#ExprRandom'>random</a>",
   "since" : "2.1",
   "description" : "How much experience was spawned in an <a href='../events.html#experience_spawn'>experience spawn</a> event. Can be changed.",
   "examples" : "on experience spawn:\\n    add 5 to the spawned experience"
+},
+{
+  "id" : "ExprExplodedBlocks",
+  "name" : "Exploded Blocks",
+  "patterns" : [
+    "[the] exploded blocks",
+
+    "pattern_end"
+  ],
+  "since" : "2.5",
+  "description" : "Get all the blocks that were destroyed in an explode event",
+  "examples" : "on explode:\\n    loop exploded blocks:\\n        add loop-block to {exploded::blocks::*}"
 },
 {
   "id" : "ExprFacing",
@@ -4536,7 +4809,7 @@ Remember to use '<a href='#ExprBlock'>block</a>' and not 'furnace', as 'furnace'
   ],
   "since" : "2.2-dev18",
   "description" : "Indicates if targeted entity is glowing (new 1.9 effect) or not. Glowing entities can be seen through walls.",
-  "examples" : "set glowing of player on"
+  "examples" : "set glowing of player to true"
 },
 {
   "id" : "ExprGravity",
@@ -4619,6 +4892,18 @@ Please note that this location is only accurate for entities whose head is exact
   "since" : "2.2-dev34",
   "description" : "Returns the highest solid block at the x and z coordinates of the world of a given location.",
   "examples" : "highest block at location of arg-player"
+},
+{
+  "id" : "ExprHotbarButton",
+  "name" : "Hotbar Button",
+  "patterns" : [
+    "[the] hotbar button",
+
+    "pattern_end"
+  ],
+  "since" : "2.5",
+  "description" : "The hotbar button clicked in an <a href='events.html#inventory_click>inventory click</a> event.",
+  "examples" : "on inventory click:\\n    send \"You clicked the hotbar button %hotbar button%!\""
 },
 {
   "id" : "ExprHotbarSlot",
@@ -4781,8 +5066,8 @@ broadcast \"%all indexes of {l::*}%\" # result is 1, 2 and 3"
   "id" : "ExprItemAmount",
   "name" : "Item Amount",
   "patterns" : [
-    "[the] item[[ ]stack] (amount|size|number) of %<a href='classes.html#itemstack'>item stacks</a>%",
-"%<a href='classes.html#itemstack'>item stacks</a>%'[s] item[[ ]stack] (amount|size|number)",
+    "[the] item[[ ]stack] (amount|size|number) of %<a href='classes.html#itemtype'>item types</a>%",
+"%<a href='classes.html#itemtype'>item types</a>%'[s] item[[ ]stack] (amount|size|number)",
 
     "pattern_end"
   ],
@@ -4815,6 +5100,18 @@ broadcast \"%all indexes of {l::*}%\" # result is 1, 2 and 3"
   "since" : "2.2-dev35, 2.2-dev36 (improved)",
   "description" : "An item associated with an entity. For dropped item entities, it gets, obviously, the item that was dropped. For item frames, the item inside the frame is returned. Other entities do not have items associated with them.",
   "examples" : ""
+},
+{
+  "id" : "ExprItemWithCustomModelData",
+  "name" : "Item with CustomModelData",
+  "patterns" : [
+    "%<a href='classes.html#itemtype'>item type</a>% with [custom] model data %<a href='classes.html#number'>number</a>%",
+
+    "pattern_end"
+  ],
+  "since" : "2.5",
+  "description" : "Get an item with a CustomModelData tag. (Value is an integer between 0 and 99999999)",
+  "examples" : "give player a diamond sword with custom model data 2\\nset slot 1 of inventory of player to wooden hoe with custom model data 357"
 },
 {
   "id" : "ExprItemWithLore",
@@ -4986,7 +5283,7 @@ The vanilla Minecraft client will use lowercase language / country pairs separat
   ],
   "since" : "2.0",
   "description" : "The player's progress in reaching the next level, this represents the experience bar in the game. Please note that this value is between 0 and 1 (e.g. 0.5 = half experience bar).
-Changing this value can cause the player's level to change if the resulting level progess is negative or larger than 1, e.g. <code>increase the player's level progress by 0.5</code> will make the player gain a level if his progress was more than 50%.",
+Changing this value can cause the player's level to change if the resulting level progess is negative or larger than 1, e.g. <code>increase the player's level progress by 0.5</code> will make the player gain a level if their progress was more than 50%.",
   "examples" : "# use the exp bar as mana\\non rightclick with a blaze rod:\\n    player's level progress is larger than 0.2\\n    shoot a fireball from the player\\n    reduce the player's level progress by 0.2\\nevery 2 seconds:\\n    loop all players:\\n        level progress of loop-player is smaller than 0.9:\\n            increase level progress of the loop-player by 0.1\\n        else:\\n            set level progress of the loop-player to 0.99\\non xp spawn:\\n    cancel event"
 },
 {
@@ -5095,6 +5392,19 @@ Please note that the location of an entity is at it's feet, use <a href='#ExprEy
   "examples" : "on server list ping:\\n    set the motd to \"Join now!\""
 },
 {
+  "id" : "ExprMaxDurability",
+  "name" : "Max Durability",
+  "patterns" : [
+    "[the] max[imum] durabilit(y|ies) of %<a href='classes.html#itemstack'>item stacks</a>/<a href='classes.html#slot'>slots</a>%",
+"%<a href='classes.html#itemstack'>item stacks</a>/<a href='classes.html#slot'>slots</a>%'[s] max[imum] durabilit(y|ies)",
+
+    "pattern_end"
+  ],
+  "since" : "2.5",
+  "description" : "The maximum durability of an item.",
+  "examples" : "maximum durability of diamond sword\\nif max durability of player's tool is not 0: # Item is damageable"
+},
+{
   "id" : "ExprMaxHealth",
   "name" : "Max Health",
   "patterns" : [
@@ -5125,8 +5435,8 @@ Please note that the location of an entity is at it's feet, use <a href='#ExprEy
   "id" : "ExprMaxStack",
   "name" : "Maximum Stack Size",
   "patterns" : [
-    "[the] max[imum] stack[[ ]size] of %<a href='classes.html#itemstack'>item stack</a>%",
-"%<a href='classes.html#itemstack'>item stack</a>%'[s] max[imum] stack[[ ]size]",
+    "[the] max[imum] stack[[ ]size] of %<a href='classes.html#itemtype'>item type</a>%",
+"%<a href='classes.html#itemtype'>item type</a>%'[s] max[imum] stack[[ ]size]",
 
     "pattern_end"
   ],
@@ -5324,6 +5634,20 @@ Please note that the location of an entity is at it's feet, use <a href='#ExprEy
   "since" : "1.4",
   "description" : "The current <a href='classes.html#date'>system time</a> of the server. Use <a href='#ExprTime'>time</a> to get the <a href='classes.html#time'>Minecraft time</a> of a world.",
   "examples" : "broadcast \"Current server time: %now%\""
+},
+{
+  "id" : "ExprNumberOfCharacters",
+  "name" : "Number of Characters",
+  "patterns" : [
+    "number of upper[ ]case char(acters|s) in %<a href='classes.html#string'>text</a>%",
+"number of lower[ ]case char(acters|s) in %<a href='classes.html#string'>text</a>%",
+"number of digit char(acters|s) in %<a href='classes.html#string'>text</a>%",
+
+    "pattern_end"
+  ],
+  "since" : "2.5",
+  "description" : "The number of uppercase, lowercase, or digit characters in a string.",
+  "examples" : "#Simple Chat Filter\\non chat:\\n    if number of uppercase chars in message / length of message > 0.5\\n        cancel event\\n        send \"<red>Your message has to many caps!\" to player"
 },
 {
   "id" : "ExprNumbers",
@@ -5824,7 +6148,7 @@ if they're not, this expression will return nothing.",
   ],
   "since" : "<i>unknown</i> (before 2.1)",
   "description" : "A player's walking or flying speed. Both can be changed, but values must be between -1 and 1 (excessive values will be changed to -1 or 1 respectively). Negative values reverse directions.
-Please note that changing a player's speed will change his FOV just like potions do.",
+Please note that changing a player's speed will change their FOV just like potions do.",
   "examples" : "set the player's walk speed to 1\\nincrease the argument's fly speed by 0.1"
 },
 {
@@ -5947,6 +6271,19 @@ Please note that changing a player's speed will change his FOV just like potions
   "examples" : "time in world is between 18:00 and 6:00:\\n    broadcast \"It's night-time, watch out for monsters!\""
 },
 {
+  "id" : "ExprTimePlayed",
+  "name" : "Time Played",
+  "patterns" : [
+    "[the] time played of %<a href='classes.html#player'>players</a>%",
+"%<a href='classes.html#player'>players</a>%'[s] time played",
+
+    "pattern_end"
+  ],
+  "since" : "2.5",
+  "description" : "The amount of time a player has played for on the server. This info is stored in the player's statistics in the main world's data folder. Changing this will also change the player's stats which can be views in the client's statistics menu.",
+  "examples" : "set {_t} to time played of player\\nif player's time played is greater than 10 minutes:\\n    give player a diamond sword\\nset player's time played to 0 seconds"
+},
+{
   "id" : "ExprTool",
   "name" : "Tool",
   "patterns" : [
@@ -6003,6 +6340,19 @@ In the future there will be an option to use a player's UUID instead of the name
   "examples" : "unbreakable iron sword #Creates unbreakable iron sword"
 },
 {
+  "id" : "ExprUnixDate",
+  "name" : "Unix Date",
+  "patterns" : [
+    "[the] unix date of %<a href='classes.html#number'>numbers</a>%",
+"%<a href='classes.html#number'>numbers</a>%'[s] unix date",
+
+    "pattern_end"
+  ],
+  "since" : "2.5",
+  "description" : "Converts given Unix timestamp to a date. The Unix timespan represents the number of seconds elapsed since 1 January 1970.",
+  "examples" : "unix date of 946684800 #1 January 2000 12:00 AM (UTC Time)"
+},
+{
   "id" : "ExprUnixTicks",
   "name" : "Unix Timestamp",
   "patterns" : [
@@ -6014,19 +6364,6 @@ In the future there will be an option to use a player's UUID instead of the name
   "since" : "2.2-dev31",
   "description" : "Converts given date to Unix timestamp. This is roughly how many seconds have elapsed since 1 January 1970.",
   "examples" : "unix timestamp of now"
-},
-{
-  "id" : "ExprStringCase",
-  "name" : "Upper/lower Case Text",
-  "patterns" : [
-    "%<a href='classes.html#string'>text</a>% in (upper|lower) case",
-"capitalized %<a href='classes.html#string'>text</a>%",
-
-    "pattern_end"
-  ],
-  "since" : "2.2-dev16",
-  "description" : "Copy of given text in upper or lower case.",
-  "examples" : "\"oops!\" in upper case # OOPS!"
 },
 {
   "id" : "ExprVectorAngleBetween",
@@ -6293,6 +6630,19 @@ See also: <a href='#ExprPassenger'>passenger</a>",
   "description" : "The text to show if the protocol version of the server doesn't match with protocol version of the client. You can check the <a href='#ExprProtocolVersion'>protocol version</a> expression for more information about this.
 This can only be set in a <a href='events.html#server_list_ping'>server list ping</a> event.",
   "examples" : "on server list ping:\\n    set the protocol version to 0 # 13w41a (1.7), so it will show the version string always\\n    set the version string to \"<light green>Version: <orange>%minecraft version%\""
+},
+{
+  "id" : "ExprClientViewDistance",
+  "name" : "View Distance of Client",
+  "patterns" : [
+    "[the] client view distance[s] of %<a href='classes.html#player'>players</a>%",
+"%<a href='classes.html#player'>players</a>%'[s] client view distance[s]",
+
+    "pattern_end"
+  ],
+  "since" : "2.5",
+  "description" : "The view distance of the client. Can not be changed. This differs from the server side view distance of player as this will retrieve the view distance the player has set on their client.",
+  "examples" : "set {_clientView} to the client view distance of player\\nset view distance of player to client view distance of player"
 },
 {
   "id" : "ExprWeather",
@@ -6611,7 +6961,7 @@ This can only be set in a <a href='events.html#server_list_ping'>server list pin
 
     "pattern_end"
   ],
-  "since" : "INSERT VERSION",
+  "since" : "2.5",
   "description" : "Returns a RGB color from the given red, green and blue parameters.",
   "examples" : "dye player's leggings rgb(120, 30, 45)"
 },
