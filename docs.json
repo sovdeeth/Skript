@@ -1,5 +1,5 @@
 {
-  "skriptVersion" : "2.5-alpha1",
+  "skriptVersion" : "2.5-alpha2",
 
   "classes" : [
     {
@@ -368,6 +368,18 @@
   "since" : "2.2-dev36",
   "description" : "Something that can hold metadata (e.g. an entity or block)",
   "examples" : "set metadata value \"super cool\" of player to true"
+},
+{
+  "id" : "money",
+  "name" : "Money",
+  "patterns" : [
+    "&lt;code&gt;&amp;lt;number&amp;gt; $&lt;/code&gt; or &lt;code&gt;$ &amp;lt;number&amp;gt;&lt;/code&gt;, where '$' is your server's currency, e.g. '10 rupees' or '£5.00'",
+
+    "pattern_end"
+  ],
+  "since" : "2.0",
+  "description" : "A certain amount of money. Please note that this differs from <a href='#number'>numbers</a> as it includes a currency symbol or name, but usually the two are interchangeable, e.g. you can both <code>add 100$ to the player's balance</code> and <code>add 100 to the player's balance</code>.",
+  "examples" : "add 10£ to the player's account\\nremove Fr. 9.95 from the player's money\\nset the victim's money to 0\\nincrease the attacker's balance by the level of the victim * 100"
 },
 {
   "id" : "number",
@@ -985,6 +997,19 @@ Note: This is the only element where not all patterns are shown. It has actually
   "examples" : "# increased attack against burning targets\\nvictim is burning:\\n    increase damage by 2"
 },
 {
+  "id" : "CondIsCharged",
+  "name" : "Is Charged",
+  "patterns" : [
+    "%<a href='classes.html#livingentity'>living entities</a>% (is|are) (charged|powered)",
+"%<a href='classes.html#livingentity'>living entities</a>% (isn't|is not|aren't|are not) (charged|powered)",
+
+    "pattern_end"
+  ],
+  "since" : "2.5",
+  "description" : "Checks if a creeper is charged (powered).",
+  "examples" : "if the last spawned creeper is charged:\\n    broadcast \"A charged creeper is at %location of last spawned creeper%\""
+},
+{
   "id" : "CondIsEdible",
   "name" : "Is Edible",
   "patterns" : [
@@ -1567,6 +1592,19 @@ message to all players instead of broadcasting it.",
   "examples" : "# set:\\nSet the player's display name to \"<red>%name of player%\"\\nset the block above the victim to lava\\n# add:\\nadd 2 to the player's health # preferably use '<a href='#heal'>heal</a>' for this\\nadd argument to {blacklist::*}\\ngive a diamond pickaxe of efficiency 5 to the player\\nincrease the data value of the clicked block by 1\\n# remove:\\nremove 2 pickaxes from the victim\\nsubtract 2.5 from {points::%uuid of player%}\\n# remove all:\\nremove every iron tool from the player\\nremove all minecarts from {entitylist::*}\\n# delete:\\ndelete the block below the player\\nclear drops\\ndelete {variable}\\n# reset:\\nreset walk speed of player\\nreset chunk at the targeted block"
 },
 {
+  "id" : "EffChargeCreeper",
+  "name" : "Charge Creeper",
+  "patterns" : [
+    "make %<a href='classes.html#livingentity'>living entities</a>% [a[n]] (charged|powered|((un|non[-])charged|(un|non[-])powered)) [creeper[s]]",
+"(charge|power|(uncharge|unpower)) %<a href='classes.html#livingentity'>living entities</a>%",
+
+    "pattern_end"
+  ],
+  "since" : "2.5",
+  "description" : "Charges or uncharges a creeper. A creeper is charged when it has been struck by lightning.",
+  "examples" : "on spawn of creeper:\\n    charge the event-entity"
+},
+{
   "id" : "EffColorItems",
   "name" : "Colour Items",
   "patterns" : [
@@ -1704,7 +1742,7 @@ message to all players instead of broadcasting it.",
     "pattern_end"
   ],
   "since" : "1.0",
-  "description" : "Equips a player with some given armor. This will replace any armor that the player is wearing.",
+  "description" : "Equips an entity with some given armor. This will replace any armor that the entity is wearing.",
   "examples" : "equip player with diamond helmet\\nequip player with all diamond armor"
 },
 {
@@ -1726,7 +1764,7 @@ message to all players instead of broadcasting it.",
   "id" : "EffExplosion",
   "name" : "Explosion",
   "patterns" : [
-    "[(create|make)] [an] explosion (of|with) (force|strength|power) %<a href='classes.html#number'>number</a>% [%<a href='classes.html#direction'>directions</a>% %<a href='classes.html#location'>locations</a>%]",
+    "[(create|make)] [an] explosion (of|with) (force|strength|power) %<a href='classes.html#number'>number</a>% [%<a href='classes.html#direction'>directions</a>% %<a href='classes.html#location'>locations</a>%] [(with fire)]",
 "[(create|make)] [a] safe explosion (of|with) (force|strength|power) %<a href='classes.html#number'>number</a>% [%<a href='classes.html#direction'>directions</a>% %<a href='classes.html#location'>locations</a>%]",
 "[(create|make)] [a] fake explosion [%<a href='classes.html#direction'>directions</a>% %<a href='classes.html#location'>locations</a>%]",
 "[(create|make)] [an] explosion[ ]effect [%<a href='classes.html#direction'>directions</a>% %<a href='classes.html#location'>locations</a>%]",
@@ -2065,13 +2103,13 @@ Note: if a player was hidden and relogs, this player will be visible again.",
   "id" : "EffPotion",
   "name" : "Potion Effects",
   "patterns" : [
-    "apply [potion of] %<a href='classes.html#potioneffecttype'>potions</a>% [potion] [[[of] tier] %<a href='classes.html#number'>number</a>%] to %<a href='classes.html#livingentity'>living entities</a>% [for %<a href='classes.html#timespan'>time span</a>%]",
-"apply ambient [potion of] %<a href='classes.html#potioneffecttype'>potions</a>% [potion] [[[of] tier] %<a href='classes.html#number'>number</a>%] to %<a href='classes.html#livingentity'>living entities</a>% [for %<a href='classes.html#timespan'>time span</a>%]",
-"apply [potion of] %<a href='classes.html#potioneffecttype'>potions</a>% [potion] [[[of] tier] %<a href='classes.html#number'>number</a>%] without [any] particles to %<a href='classes.html#livingentity'>living entities</a>% [for %<a href='classes.html#timespan'>time span</a>%]",
+    "apply [potion of] %<a href='classes.html#potioneffecttype'>potions</a>% [potion] [[[of] tier] %<a href='classes.html#number'>number</a>%] to %<a href='classes.html#livingentity'>living entities</a>% [for %<a href='classes.html#timespan'>time span</a>%] [(replacing [the] existing effect)]",
+"apply ambient [potion of] %<a href='classes.html#potioneffecttype'>potions</a>% [potion] [[[of] tier] %<a href='classes.html#number'>number</a>%] to %<a href='classes.html#livingentity'>living entities</a>% [for %<a href='classes.html#timespan'>time span</a>%] [(replacing [the] existing effect)]",
+"apply [potion of] %<a href='classes.html#potioneffecttype'>potions</a>% [potion] [[[of] tier] %<a href='classes.html#number'>number</a>%] without [any] particles to %<a href='classes.html#livingentity'>living entities</a>% [for %<a href='classes.html#timespan'>time span</a>%] [(replacing [the] existing effect)]",
 
     "pattern_end"
   ],
-  "since" : "2.0, 2.2-dev27 (ambient and particle-less potion effects)",
+  "since" : "2.0, 2.2-dev27 (ambient and particle-less potion effects), 2.5 (replacing existing effect)",
   "description" : "Apply or remove potion effects to/from entities.",
   "examples" : "apply swiftness 2 to the player\\nremove haste from the victim\\non join:\\n    apply potion of strength of tier {strength.%player%} to the player for 999 days"
 },
@@ -2304,7 +2342,7 @@ Note: if no input is given for the title/subtitle or the times,it will keep the 
   "name" : "Tree",
   "patterns" : [
     "(grow|create|generate) tree [of type %<a href='classes.html#structuretype'>tree type</a>%] %<a href='classes.html#direction'>directions</a>% %<a href='classes.html#location'>locations</a>%",
-"(grow|create|generate) %<a href='classes.html#structuretype'>tree type</a>% [tree] %<a href='classes.html#direction'>directions</a>% %<a href='classes.html#location'>locations</a>%",
+"(grow|create|generate) %<a href='classes.html#structuretype'>tree type</a>% %<a href='classes.html#direction'>directions</a>% %<a href='classes.html#location'>locations</a>%",
 
     "pattern_end"
   ],
@@ -3860,6 +3898,18 @@ This may require that there is enough space above the given location and that th
   "examples" : "on area cloud effect:\\n    loop affected entities:\\n        if loop-value is a player:\\n            send \"WARNING: you've step on an area effect cloud!\" to loop-value"
 },
 {
+  "id" : "ExprAllGroups",
+  "name" : "All Groups",
+  "patterns" : [
+    "all groups",
+
+    "pattern_end"
+  ],
+  "since" : "2.2-dev35",
+  "description" : "All the groups a player can have. This expression requires Vault and a compatible permissions plugin to be installed.",
+  "examples" : "command /group <text>:\\n    trigger:\\n        if argument is \"list\":\\n            send \"%all groups%\""
+},
+{
   "id" : "ExprPermissions",
   "name" : "All Permissions",
   "patterns" : [
@@ -3980,6 +4030,18 @@ One can also use the type of the argument instead of its index to address the ar
   "since" : "1.0",
   "description" : "A part of a player's armour, i.e. the boots, leggings, chestplate or helmet.",
   "examples" : "set chestplate of the player to a diamond chestplate\\nhelmet of player is neither a helmet nor air # player is wearing a block, e.g. from another plugin"
+},
+{
+  "id" : "ExprArrowsStuck",
+  "name" : "Arrows Stuck",
+  "patterns" : [
+    "[number of] arrow[s] stuck in %<a href='classes.html#livingentity'>living entities</a>%",
+
+    "pattern_end"
+  ],
+  "since" : "2.5",
+  "description" : "The number of arrows stuck in a living entity.",
+  "examples" : "set arrows stuck in player to 5"
 },
 {
   "id" : "ExprAttacked",
@@ -4578,16 +4640,16 @@ See also: <a href='#ExprRandom'>random</a>",
   "id" : "ExprEntities",
   "name" : "Entities",
   "patterns" : [
-    "[(all [[of] the]|the)] %*<a href='classes.html#entitydata'>entity types</a>% [(in|of) [world[s]] %<a href='classes.html#world'>worlds</a>%]",
-"[(all [[of] the]|the)] entities of type[s] %<a href='classes.html#entitydata'>entity types</a>% [(in|of) [world[s]] %<a href='classes.html#world'>worlds</a>%]",
+    "[(all [[of] the]|the)] %*<a href='classes.html#entitydata'>entity types</a>% [(in|of) ([world[s]] %<a href='classes.html#world'>worlds</a>%|%<a href='classes.html#chunk'>chunks</a>%)]",
+"[(all [[of] the]|the)] entities of type[s] %<a href='classes.html#entitydata'>entity types</a>% [(in|of) ([world[s]] %<a href='classes.html#world'>worlds</a>%|%<a href='classes.html#chunk'>chunks</a>%)]",
 "[(all [[of] the]|the)] %*<a href='classes.html#entitydata'>entity types</a>% (within|[with]in radius) %<a href='classes.html#number'>number</a>% [(block[s]|met(er|re)[s])] (of|around) %<a href='classes.html#location'>location</a>%",
 "[(all [[of] the]|the)] entities of type[s] %<a href='classes.html#entitydata'>entity types</a>% in radius %<a href='classes.html#number'>number</a>% (of|around) %<a href='classes.html#location'>location</a>%",
 
     "pattern_end"
   ],
-  "since" : "1.2.1",
-  "description" : "All entities in all worlds, in a specific world or in a radius around a certain location, e.g. 'all players', 'all creepers in the player's world', or 'players in radius 100 of the player'.",
-  "examples" : "kill all creepers in the player's world\\nsend \"Psst!\" to all players witin 100 meters of the player\\ngive a diamond to all ops\\nheal all tamed wolves in radius 2000 around {town center}"
+  "since" : "1.2.1, 2.5 (chunks)",
+  "description" : "All entities in all worlds, in a specific world, in a chunk or in a radius around a certain location, e.g. 'all players', 'all creepers in the player's world', or 'players in radius 100 of the player'.",
+  "examples" : "kill all creepers in the player's world\\nsend \"Psst!\" to all players within 100 meters of the player\\ngive a diamond to all ops\\nheal all tamed wolves in radius 2000 around {town center}\\ndelete all monsters in chunk at player"
 },
 {
   "id" : "ExprAI",
@@ -4823,6 +4885,19 @@ Remember to use '<a href='#ExprBlock'>block</a>' and not 'furnace', as 'furnace'
   "since" : "2.2-dev21",
   "description" : "If entity is affected by gravity or not, i.e. if it has Minecraft 1.10+ NoGravity flag.",
   "examples" : "set gravity of player off"
+},
+{
+  "id" : "ExprGroup",
+  "name" : "Group",
+  "patterns" : [
+    "[the] group[(s)] of %<a href='classes.html#offlineplayer'>offline players</a>%",
+"%<a href='classes.html#offlineplayer'>offline players</a>%'[s] group[(s)]",
+
+    "pattern_end"
+  ],
+  "since" : "2.2-dev35",
+  "description" : "The primary group or all groups of a player. This expression requires Vault and a compatible permissions plugin to be installed.",
+  "examples" : "on join:\\n    broadcast \"%group of player%\" # this is the player's primary group\\n    broadcast \"%groups of player%\" # this is all of the player's groups"
 },
 {
   "id" : "ExprHash",
@@ -5486,6 +5561,19 @@ Please note that the location of an entity is at it's feet, use <a href='#ExprEy
   "examples" : "set metadata value \"healer\" of player to true\\nbroadcast \"%metadata value \"\"healer\"\" of player%\"\\nclear metadata value \"healer\" of player"
 },
 {
+  "id" : "ExprBalance",
+  "name" : "Money",
+  "patterns" : [
+    "[the] (money|balance|[bank] account) of %<a href='classes.html#player'>players</a>%",
+"%<a href='classes.html#player'>players</a>%'[s] (money|balance|[bank] account)",
+
+    "pattern_end"
+  ],
+  "since" : "2.0",
+  "description" : "How much virtual money a player has (can be changed). This expression requires Vault and a compatible economy plugin to be installed.",
+  "examples" : "message \"You have %player's money%\" # the currency name will be added automatically\\nremove 20$ from the player's balance # replace '$' by whatever currency you use\\nadd 200 to the player's account # or omit the currency alltogether"
+},
+{
   "id" : "ExprPushedBlocks",
   "name" : "Moved blocks",
   "patterns" : [
@@ -5622,6 +5710,32 @@ Please note that the location of an entity is at it's feet, use <a href='#ExprEy
   "since" : "2.0, 2.2-dev34 (inventories)",
   "description" : "Directly names an item/inventory, useful for defining a named item/inventory in a script. If you want to (re)name existing items/inventories you can either use this expression or use <code>set <a href='#ExprName'>name of &lt;item/inventory&gt;</a> to &lt;text&gt;</code>.",
   "examples" : "give a diamond sword of sharpness 100 named \"<gold>Excalibur\" to the player\\nset tool of player to the player's tool named \"<gold>Wand\"\\nset the name of the player's tool to \"<gold>Wand\"\\nopen hopper inventory named \"Magic Hopper\" to player"
+},
+{
+  "id" : "LitNewLine",
+  "name" : "New Line",
+  "patterns" : [
+    "n[ew]l[ine]",
+"line[ ]break",
+
+    "pattern_end"
+  ],
+  "since" : "2.5",
+  "description" : "Returns a line break separator.",
+  "examples" : "send \"Hello%nl%Goodbye!\" to player"
+},
+{
+  "id" : "ExprNoDamageTicks",
+  "name" : "No Damage Ticks",
+  "patterns" : [
+    "[the] (invulnerability|no damage) tick[s] of %<a href='classes.html#livingentity'>living entities</a>%",
+"%<a href='classes.html#livingentity'>living entities</a>%'[s] (invulnerability|no damage) tick[s]",
+
+    "pattern_end"
+  ],
+  "since" : "2.5",
+  "description" : "The number of ticks that an entity is invulnerable to damage for.",
+  "examples" : "on damage:\\n    set victim's invulnerability ticks to 20 #Victim will not take damage for the next second"
 },
 {
   "id" : "ExprNow",
@@ -5815,6 +5929,19 @@ See also: <a href='#ExprVehicle'>vehicle</a>",
   "since" : "2.4",
   "description" : "The blocks associated with a portal in the portal creation event.",
   "examples" : "on portal creation:\\n    loop portal blocks:\\n        broadcast \"%loop-block% is part of a portal!\""
+},
+{
+  "id" : "ExprPrefixSuffix",
+  "name" : "Prefix/Suffix",
+  "patterns" : [
+    "[the] [chat] (prefix|suffix) of %<a href='classes.html#player'>players</a>%",
+"%<a href='classes.html#player'>players</a>%'[s] [chat] (prefix|suffix)",
+
+    "pattern_end"
+  ],
+  "since" : "2.0",
+  "description" : "The prefix or suffix as defined in the server's chat plugin.",
+  "examples" : "on chat:\\n    cancel event\\n    broadcast \"%player's prefix%%player's display name%%player's suffix%: %message%\" to the player's world\\nset the player's prefix to \"[<red>Admin<reset>] \""
 },
 {
   "id" : "ExprProtocolVersion",
