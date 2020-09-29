@@ -122,7 +122,11 @@ public class Argument<T> {
 				}
 			}
 		}
+<<<<<<< HEAD
 		return new Argument<>(name, d, type, single, index, def != null || forceOptional, ScriptLoader.getLocalVariables());
+=======
+		return new Argument<>(name, d, type, single, index, def != null || forceOptional);
+>>>>>>> master
 	}
 	
 	@Override

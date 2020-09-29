@@ -58,8 +58,6 @@ public class DroppedItemData extends EntityData<Item> {
 	protected boolean init(final @Nullable Class<? extends Item> c, final @Nullable Item e) {
 		if (e != null) {
 			final ItemStack i = e.getItemStack();
-			if (i == null)
-				return false;
 			types = new ItemType[] {new ItemType(i)};
 		}
 		return true;
@@ -82,7 +80,9 @@ public class DroppedItemData extends EntityData<Item> {
 	public void set(final Item entity) {
 		final ItemType t = CollectionUtils.getRandom(types);
 		assert t != null;
-		entity.setItemStack(t.getItem().getRandom());
+		ItemStack stack = t.getItem().getRandom();
+		if (stack != null)
+			entity.setItemStack(stack);
 	}
 	
 	@Override

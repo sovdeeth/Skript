@@ -19,10 +19,8 @@
  */
 package ch.njol.skript.classes.data;
 
-import java.io.NotSerializableException;
 import java.io.StreamCorruptedException;
 import java.util.Locale;
-import java.util.Optional;
 import java.util.regex.Pattern;
 
 import org.bukkit.Material;
@@ -54,6 +52,7 @@ import ch.njol.skript.util.Date;
 import ch.njol.skript.util.Direction;
 import ch.njol.skript.util.EnchantmentType;
 import ch.njol.skript.util.Experience;
+import ch.njol.skript.util.GameruleValue;
 import ch.njol.skript.util.SkriptColor;
 import ch.njol.skript.util.StructureType;
 import ch.njol.skript.util.Time;
@@ -742,7 +741,6 @@ public class SkriptClasses {
 				})
 				.serializer(new YggdrasilSerializer<EnchantmentType>() {
 //						return o.getType().getId() + ":" + o.getLevel();
-					@SuppressWarnings("deprecation")
 					@Override
 					@Nullable
 					public EnchantmentType deserialize(final String s) {
@@ -761,6 +759,7 @@ public class SkriptClasses {
 				}));
 		
 		Classes.registerClass(new ClassInfo<>(Experience.class, "experience")
+				.user("experience ?(points?)?")
 				.name("Experience")
 				.description("Experience points. Please note that Bukkit only allows to give XP, but not remove XP from players. " +
 						"You can however change a player's <a href='../expressions.html#ExprLevel'>level</a> and <a href='../expressions/#ExprLevelProgress'>level progress</a> freely.")
@@ -845,6 +844,16 @@ public class SkriptClasses {
 		} else {
 			Classes.registerClass(new ClassInfo<>(VisualEffectDummy.class, "visualeffect"));
 		}
+		
+		Classes.registerClass(new ClassInfo<>(GameruleValue.class, "gamerulevalue")
+				.user("gamerule values?")
+				.name("Gamerule Value")
+				.description("A wrapper for the value of a gamerule for a world.")
+				.usage("")
+				.examples("")
+				.since("2.5")
+				.serializer(new YggdrasilSerializer<GameruleValue>())
+		);
 	}
 	
 }

@@ -19,8 +19,6 @@
  */
 package ch.njol.skript.util.slot;
 
-import java.util.Locale;
-
 import org.bukkit.entity.ItemFrame;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
@@ -49,6 +47,14 @@ public class ItemFrameSlot extends Slot {
 	public void setItem(@Nullable ItemStack item) {
 		frame.setItem(item);
 	}
+	
+	@Override
+	public int getAmount() {
+		return 1;
+	}
+	
+	@Override
+	public void setAmount(int amount) {}
 	
 	@Override
 	public boolean isSameSlot(Slot o) {

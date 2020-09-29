@@ -33,7 +33,6 @@ import ch.njol.util.Math2;
  * @author Peter Güttinger
  */
 
-@SuppressWarnings("null")
 public abstract class HealthUtils {
 	
 	private HealthUtils() {}
@@ -88,7 +87,6 @@ public abstract class HealthUtils {
 		EntityDamageEvent event = new EntityDamageEvent(e, DamageCause.CUSTOM, d * 2);
 		Bukkit.getPluginManager().callEvent(event);
 		if (event.isCancelled()) return;
-		
 		e.damage(event.getDamage());
 	}
 	/** Heal an entity
@@ -100,7 +98,7 @@ public abstract class HealthUtils {
 			damage(e, -h);
 			return;
 		}
-		setHealth(e, Math2.fit(0, getHealth(e) + h, getMaxHealth(e)));
+		setHealth(e, getHealth(e) + h);
 	}
 	
 	public static double getDamage(final EntityDamageEvent e) {
@@ -115,7 +113,6 @@ public abstract class HealthUtils {
 		e.setDamage(damage * 2);
 	}
 	
-	@SuppressWarnings("deprecation")
 	public static void setDamageCause(final Damageable e, final DamageCause cause) {
 		e.setLastDamageCause(new EntityDamageEvent(e, cause, 0)); // Use deprecated way too keep it compatible and create cleaner code
 		// Non-deprecated way is really, really bad

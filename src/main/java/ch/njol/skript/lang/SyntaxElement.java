@@ -21,6 +21,7 @@ package ch.njol.skript.lang;
 
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.lang.parser.ParserInstance;
 import ch.njol.util.Kleenean;
 
 /**

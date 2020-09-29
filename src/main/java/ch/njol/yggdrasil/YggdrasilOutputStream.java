@@ -19,7 +19,14 @@
  */
 package ch.njol.yggdrasil;
 
-import static ch.njol.yggdrasil.Tag.*;
+import static ch.njol.yggdrasil.Tag.T_ARRAY;
+import static ch.njol.yggdrasil.Tag.T_CLASS;
+import static ch.njol.yggdrasil.Tag.T_ENUM;
+import static ch.njol.yggdrasil.Tag.T_NULL;
+import static ch.njol.yggdrasil.Tag.T_OBJECT;
+import static ch.njol.yggdrasil.Tag.T_REFERENCE;
+import static ch.njol.yggdrasil.Tag.T_STRING;
+import static ch.njol.yggdrasil.Tag.getType;
 
 import java.io.Closeable;
 import java.io.Flushable;
@@ -170,16 +177,12 @@ public abstract class YggdrasilOutputStream implements Flushable, Closeable {
 		final YggdrasilSerializer s = yggdrasil.getSerializer(c);
 		if (s != null) {
 			fields = s.serialize(o);
-			if (fields == null)
-				throw new YggdrasilException("The serializer of " + c + " returned null");
 			if (!s.canBeInstantiated(c)) {
 				ref = ~ref; // ~ instead of - to also get a negative value if ref is 0
 				writtenObjects.put(o, ref);
 			}
 		} else if (o instanceof YggdrasilExtendedSerializable) {
 			fields = ((YggdrasilExtendedSerializable) o).serialize();
-			if (fields == null)
-				throw new YggdrasilException("The serialize() method of " + c + " returned null");
 		} else {
 			fields = new Fields(o, yggdrasil);
 		}

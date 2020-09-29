@@ -21,6 +21,7 @@ package ch.njol.skript.events;
 
 import org.bukkit.event.block.BlockCanBuildEvent;
 import org.bukkit.event.block.BlockDamageEvent;
+import org.bukkit.event.block.BlockFertilizeEvent;
 import org.bukkit.event.block.BlockFromToEvent;
 import org.bukkit.event.block.BlockIgniteEvent;
 import org.bukkit.event.block.BlockPhysicsEvent;
@@ -30,6 +31,9 @@ import org.bukkit.event.block.BlockRedstoneEvent;
 import org.bukkit.event.block.BlockSpreadEvent;
 import org.bukkit.event.block.LeavesDecayEvent;
 import org.bukkit.event.block.SignChangeEvent;
+import org.bukkit.event.enchantment.EnchantItemEvent;
+import org.bukkit.event.enchantment.PrepareItemEnchantEvent;
+import org.bukkit.event.block.SpongeAbsorbEvent;
 import org.bukkit.event.entity.AreaEffectCloudApplyEvent;
 import org.bukkit.event.entity.CreeperPowerEvent;
 import org.bukkit.event.entity.EntityBreakDoorEvent;
@@ -60,6 +64,7 @@ import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerEggThrowEvent;
 import org.bukkit.event.player.PlayerFishEvent;
 import org.bukkit.event.player.PlayerItemBreakEvent;
+import org.bukkit.event.player.PlayerItemDamageEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerKickEvent;
@@ -93,6 +98,8 @@ import org.bukkit.event.world.WorldUnloadEvent;
 import org.spigotmc.event.entity.EntityDismountEvent;
 import org.spigotmc.event.entity.EntityMountEvent;
 
+import com.destroystokyo.paper.event.entity.ProjectileCollideEvent;
+import com.destroystokyo.paper.event.player.PlayerArmorChangeEvent;
 import com.destroystokyo.paper.event.player.PlayerJumpEvent;
 import com.destroystokyo.paper.event.server.PaperServerListPingEvent;
 import ch.njol.skript.Skript;
@@ -102,7 +109,6 @@ import ch.njol.skript.lang.util.SimpleEvent;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("unchecked")
 public class SimpleEvents {
 	static {
 		Skript.registerEvent("Can Build Check", SimpleEvent.class, BlockCanBuildEvent.class, "[block] can build check")
@@ -167,8 +173,7 @@ public class SimpleEvents {
 				.examples("on chunk generate:")
 				.since("1.0");
 		Skript.registerEvent("Chunk Unload", SimpleEvent.class, ChunkUnloadEvent.class, "chunk unload[ing]")
-				.description("Called when a chunk is unloaded due to not being near any player. Cancel the event to force the server to keep the chunk loaded " +
-						"and thus keep simulating the chunk (e.g. physics, plant growth, minecarts, etc. will keep working and won't freeze).")
+				.description("Called when a chunk is unloaded due to not being near any player.")
 				.examples("on chunk unload:")
 				.since("1.0");
 		Skript.registerEvent("Creeper Power", SimpleEvent.class, CreeperPowerEvent.class, "creeper power")
@@ -223,7 +228,7 @@ public class SimpleEvents {
 				.since("1.0");
 		Skript.registerEvent("Lightning Strike", SimpleEvent.class, LightningStrikeEvent.class, "lightning [strike]")
 				.description("Called when lightning strikes.")
-				.examples("on lightning:")
+				.examples("on lightning:", "\tspawn a zombie at location of event-entity")
 				.since("1.0");
 		Skript.registerEvent("Pig Zap", SimpleEvent.class, PigZapEvent.class, "pig[ ]zap")
 				.description("Called when a pig is stroke by lightning and transformed into a zombie pigman. Cancel the event to prevent the transformation.")
@@ -263,6 +268,11 @@ public class SimpleEvents {
 					.examples("on tool break:")
 					.since("2.1.1");
 		}
+		Skript.registerEvent("Item Damage", SimpleEvent.class, PlayerItemDamageEvent.class, "item damag(e|ing)")
+				.description("Called when an item is damaged. Most tools are damaged by using them; armor is damaged when the wearer takes damage.")
+				.examples("on item damage:",
+						"\tcancel event")
+				.since("2.5");
 		Skript.registerEvent("Tool Change", SimpleEvent.class, PlayerItemHeldEvent.class, "[player['s]] (tool|item held|held item) chang(e|ing)")
 				.description("Called whenever a player changes their held item by selecting a different slot (e.g. the keys 1-9 or the mouse wheel), <i>not</i> by dropping or replacing the item in the current slot.")
 				.examples("on player's held item change:")
@@ -328,6 +338,14 @@ public class SimpleEvents {
 						"\tevent-projectile is arrow",
 						"\tdelete event-projectile")
 				.since("1.0");
+		
+		if(Skript.classExists("com.destroystokyo.paper.event.entity.ProjectileCollideEvent"))
+			Skript.registerEvent("Projectile Collide", SimpleEvent.class, ProjectileCollideEvent.class, "projectile collide")
+			.description("Called when a projectile collides with an entity.")
+			.requiredPlugins("Paper")
+			.examples("on projectile collide:",
+				"\tteleport shooter of event-projectile to event-entity")
+			.since("2.5");
 		Skript.registerEvent("Shoot", SimpleEvent.class, ProjectileLaunchEvent.class, "[projectile] shoot")
 				.description("Called whenever a <a href='classes.html#projectile'>projectile</a> is shot. Use the <a href='expressions.html#ExprShooter'>shooter expression</a> to get who shot the projectile.")
 				.examples("on shoot:",
@@ -454,7 +472,7 @@ public class SimpleEvents {
 				.examples("on flight toggle:",
 						"	if {game::%player%::playing} exists:",
 						"		cancel event")
-				.since("2.2-dev36"); 
+				.since("2.2-dev36");
 		if (Skript.classExists("org.bukkit.event.player.PlayerLocaleChangeEvent")) {
 			Skript.registerEvent("Language Change", SimpleEvent.class, PlayerLocaleChangeEvent.class, "[player] (language|locale) chang(e|ing)", "[player] chang(e|ing) (language|locale)")
 					.description("Called after a player changed their language in the game settings. You can use the <a href='expressions.html#ExprLanguage'>language</a> expression to get the current language of the player.",
@@ -516,7 +534,45 @@ public class SimpleEvents {
 					"Note: the riptide action is performed client side, so manipulating the player in this event may have undesired effects.")
 				.examples("on riptide:",
 					"	send \"You are riptiding!\"")
-				.since("INSERT VERSION");
+				.since("2.5");
 		}
+		if (Skript.classExists("com.destroystokyo.paper.event.player.PlayerArmorChangeEvent")) {
+			Skript.registerEvent("Armor Change", SimpleEvent.class, PlayerArmorChangeEvent.class, "[player] armor change[d]")
+				.description("Called when armor pieces of a player are changed.")
+				.requiredPlugins("Paper")
+				.examples("on armor change:",
+					"	send \"You equipped %event-item%!\"")
+				.since("2.5");
+		}
+		if (Skript.classExists("org.bukkit.event.block.SpongeAbsorbEvent")) {
+			Skript.registerEvent("Sponge Absorb", SimpleEvent.class, SpongeAbsorbEvent.class, "sponge absorb")
+					.description("Called when a sponge absorbs blocks.")
+					.requiredPlugins("Minecraft 1.13 or newer")
+					.examples("on sponge absorb:",
+							"\tloop absorbed blocks:",
+							"\t\tbroadcast \"%loop-block% was absorbed by a sponge\"!")
+					.since("2.5");
+		}
+		Skript.registerEvent("Enchant Prepare", SimpleEvent.class, PrepareItemEnchantEvent.class, "[item] enchant prepare")
+			.description("Called when a player puts an item into enchantment table. This event may be called multiple times.",
+				" To get the enchant item, see the <a href='expressions.html#ExprEnchantEventsEnchantItem'>enchant item expression</a>")
+			.examples("on enchant prepare:",
+				"\tset enchant offer 1 to sharpness 1",
+				"\tset the cost of enchant offer 1 to 10 levels")
+			.since("2.5");
+		Skript.registerEvent("Enchant", SimpleEvent.class, EnchantItemEvent.class, "[item] enchant")
+		.description("Called when a player successfully enchants an item.",
+			" To get the enchanted item, see the <a href='expressions.html#ExprEnchantEventsEnchantItem'>enchant item expression</a>")
+		.examples("on enchant:",
+			"\tif the clicked button is enchantment option 1:",
+			"\t\tset the applied enchantments to sharpness 10 and unbreaking 10")
+		.since("2.5");
+		if(Skript.classExists("org.bukkit.event.block.BlockFertilizeEvent"))
+			Skript.registerEvent("Block Fertilize", SimpleEvent.class, BlockFertilizeEvent.class, "[block] fertilize")
+			.description("Called when a player fertilizes blocks.")
+			.requiredPlugins("Minecraft 1.13 or newer")
+			.examples("on block fertilize:",
+				"\tsend \"Fertilized %size of fertilized blocks% blocks got fertilized.\"")
+			.since("2.5");
 	}
 }

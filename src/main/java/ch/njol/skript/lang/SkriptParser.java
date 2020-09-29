@@ -447,7 +447,7 @@ public class SkriptParser {
 						return null;
 					}
 				} else { // Mixed plurals/singulars
-					@SuppressWarnings("unchecked") final Variable<?> var = parseVariable(expr, types);
+					final Variable<?> var = parseVariable(expr, types);
 					if (var != null) { // Parsing succeeded, we have a variable
 						// If variables cannot be used here, it is now allowed
 						if ((flags & PARSE_EXPRESSIONS) == 0) {
@@ -574,7 +574,7 @@ public class SkriptParser {
 				final Object t = Classes.parse(expr, ci.getC(), context);
 				if (t != null) {
 					log.printLog();
-					return new SimpleLiteral<>(t, false);
+					return new SimpleLiteral<>(t, false, new UnparsedLiteral(expr));
 				}
 			}
 			log.printError();

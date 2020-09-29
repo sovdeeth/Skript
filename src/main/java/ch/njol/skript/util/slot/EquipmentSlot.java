@@ -26,7 +26,6 @@ import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.EntityEquipment;
-import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.eclipse.jdt.annotation.Nullable;
 
@@ -184,6 +183,20 @@ public class EquipmentSlot extends SlotWithIndex {
 		slot.set(e, item);
 		if (e.getHolder() instanceof Player)
 			PlayerUtils.updateInventory((Player) e.getHolder());
+	}
+	
+	@Override
+	public int getAmount() {
+		ItemStack item = slot.get(e);
+		return item != null ? item.getAmount() : 0;
+	}
+	
+	@Override
+	public void setAmount(int amount) {
+		ItemStack item = slot.get(e);
+		if (item != null)
+			item.setAmount(amount);
+		slot.set(e, item);
 	}
 	
 	/**
