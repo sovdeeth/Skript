@@ -1,5 +1,5 @@
 {
-  "skriptVersion" : "2.5.1",
+  "skriptVersion" : "2.5.2",
 
   "classes" : [
     {
@@ -444,6 +444,18 @@
   "examples" : "set metadata value \"super cool\" of player to true"
 },
 {
+  "id" : "money",
+  "name" : "Money",
+  "patterns" : [
+    "&lt;code&gt;&amp;lt;number&amp;gt; $&lt;/code&gt; or &lt;code&gt;$ &amp;lt;number&amp;gt;&lt;/code&gt;, where '$' is your server's currency, e.g. '10 rupees' or '£5.00'",
+
+    "pattern_end"
+  ],
+  "since" : "2.0",
+  "description" : "A certain amount of money. Please note that this differs from <a href='#number'>numbers</a> as it includes a currency symbol or name, but usually the two are interchangeable, e.g. you can both <code>add 100$ to the player's balance</code> and <code>add 100 to the player's balance</code>.",
+  "examples" : "add 10£ to the player's account\\nremove Fr. 9.95 from the player's money\\nset the victim's money to 0\\nincrease the attacker's balance by the level of the victim * 100"
+},
+{
   "id" : "number",
   "name" : "Number",
   "patterns" : [
@@ -489,6 +501,18 @@
   ],
   "since" : "1.0",
   "description" : "A player. Depending on whether a player is online or offline several actions can be performed with them, though you won't get any errors when using effects that only work if the player is online (e.g. changing their inventory) on an offline player.\\nYou have two possibilities to use players as command arguments: &lt;player&gt; and &lt;offline player&gt;. The first requires that the player is online and also accepts only part of the name, while the latter doesn't require that the player is online, but the player's name has to be entered exactly.",
+  "examples" : ""
+},
+{
+  "id" : "potioneffect",
+  "name" : "Potion Effect",
+  "patterns" : [
+    "speed of tier 1 for 10 seconds",
+
+    "pattern_end"
+  ],
+  "since" : "2.5.2",
+  "description" : "A potion effect, including the potion effect type, tier and duration.",
   "examples" : ""
 },
 {
@@ -681,7 +705,7 @@
   "id" : "visualeffect",
   "name" : "Visual Effect",
   "patterns" : [
-    "ender signal, mobspawner flames, potion break, smoke, hurt, wolf smoke, wolf hearts, wolf shaking, sheep eating, iron golem offering rose, villager hearts, angry villager entity, happy villager entity, witch magic, zombie turning to a villager, firework explosion, arrow particles, jumping rabbit, love hearts, squid rotation reset, entity poof, guardian target, block with shield, shield break, armor stand hit, hurt by thorns, iron golem sheathing rose, resurrection by totem, hurt by drowning, hurt by explosion, firework's spark, critical hit, magical critical hit, potion swirl, transparent potion swirl, spell, spell, witch spell, note, portal, flying glyph, flame, lava pop, footstep, water splash, smoke particle, huge explosion, large explosion, explosion, void fog, small smoke, cloud, coloured dust, snowball break, water drip, lava drip, snow shovel, slime, heart, angry villager, happy villager, large smoke, item crack, block break, block dust, end rod, falling dust, totem, spit, squid ink, bubble pop, current down, bubble column up, nautilus, dolphin, sneeze, campfire cosy smoke, campfire signal smoke, composter, flash, falling lava, landing lava, falling water, dripping honey, falling honey, landing honey, falling nectar, ash, crimson spore, soul fire flame, warped spore, dripping obsidian tear, falling obsidian tear, landing obsidian tear, soul, reverse portal, white ash",
+    "ender signal, mobspawner flames, potion break, smoke, hurt, wolf smoke, wolf hearts, wolf shaking, sheep eating, iron golem offering rose, villager hearts, angry villager entity, happy villager entity, witch magic, zombie turning to a villager, firework explosion, arrow particles, jumping rabbit, love hearts, squid rotation reset, entity poof, guardian target, block with shield, shield break, armor stand hit, hurt by thorns, iron golem sheathing rose, resurrection by totem, hurt by drowning, hurt by explosion, firework's spark, critical hit, magical critical hit, potion swirl, transparent potion swirl, spell, spell, witch spell, note, portal, flying glyph, flame, lava pop, footstep, water splash, smoke particle, huge explosion, large explosion, explosion, void fog, small smoke, cloud, coloured dust, snowball break, water drip, lava drip, snow shovel, slime, heart, angry villager, happy villager, large smoke, item crack, block break, block dust, end rod, barrier, damage indicator, dragon breath, mob appearance, suspended, sweep attack, water bubble, water wake, water drop, falling dust, totem, spit, squid ink, bubble pop, current down, bubble column up, nautilus, dolphin, sneeze, campfire cosy smoke, campfire signal smoke, composter, flash, falling lava, landing lava, falling water, dripping honey, falling honey, landing honey, falling nectar, ash, crimson spore, soul fire flame, warped spore, dripping obsidian tear, falling obsidian tear, landing obsidian tear, soul, reverse portal, white ash",
 
     "pattern_end"
   ],
@@ -1216,6 +1240,19 @@ Note: This is the only element where not all patterns are shown. It has actually
   "examples" : "on explosion prime:\\n    if the explosion is fiery:\\n        broadcast \"A fiery explosive has been ignited!\""
 },
 {
+  "id" : "CondIsInteractable",
+  "name" : "Is Interactable",
+  "patterns" : [
+    "%<a href='classes.html#itemtype'>item types</a>% (is|are) interactable",
+"%<a href='classes.html#itemtype'>item types</a>% (isn't|is not|aren't|are not) interactable",
+
+    "pattern_end"
+  ],
+  "since" : "2.5.2",
+  "description" : "Checks wether or not a block is interactable.",
+  "examples" : "on block break:\\n    if event-block is interactable:\\n        cancel event\\n        send \"You cannot break interactable blocks!\""
+},
+{
   "id" : "CondIsInvulnerable",
   "name" : "Is Invulnerable",
   "patterns" : [
@@ -1521,6 +1558,19 @@ For more info, see <a href='https://minecraft.gamepedia.com/Slime#.22Slime_chunk
   "examples" : "player is wearing an iron chestplate and iron leggings\\nplayer is wearing all diamond armour"
 },
 {
+  "id" : "CondIsWhitelisted",
+  "name" : "Is Whitelisted",
+  "patterns" : [
+    "[the] server (is|is(n't| not)) white[ ]listed",
+"%<a href='classes.html#player'>players</a>% (is|are)[((n't| not)]) white[ ]listed",
+
+    "pattern_end"
+  ],
+  "since" : "2.5.2",
+  "description" : "Whether or not the server or a player is whitelisted.",
+  "examples" : "if server is whitelisted:\\nif player is whitelisted"
+},
+{
   "id" : "CondIsInWorld",
   "name" : "Is in World",
   "patterns" : [
@@ -1558,6 +1608,19 @@ For more info, see <a href='https://minecraft.gamepedia.com/Slime#.22Slime_chunk
   "since" : "2.2-dev26",
   "description" : "Checks whether an entity is on ground.",
   "examples" : "player is not on ground"
+},
+{
+  "id" : "CondMatches",
+  "name" : "Matches",
+  "patterns" : [
+    "%<a href='classes.html#string'>texts</a>% (match[es]|do[es](n't| not) match) %<a href='classes.html#string'>texts</a>%",
+"%<a href='classes.html#string'>texts</a>% (partially match[es]|do[es](n't| not) partially match) %<a href='classes.html#string'>texts</a>%",
+
+    "pattern_end"
+  ],
+  "since" : "2.5.2",
+  "description" : "Checks whether the defined strings match the input regexes (Regular expressions).",
+  "examples" : "on chat:\\n    if message partially matches \"\\d\":\\n        send \"Message contains a digit!\"\\n    if message doesn't match \"[A-Za-z]+\":\\n        send \"Message doesn't only contain letters!\""
 },
 {
   "id" : "CondProjectileCanBounce",
@@ -2232,14 +2295,17 @@ NB: Using 'server.log' as the log file will write to the default server log. Omi
   "id" : "EffMessage",
   "name" : "Message",
   "patterns" : [
-    "(message|send [message[s]]) %<a href='classes.html#string'>texts</a>% [to %<a href='classes.html#commandsender'>players/console</a>%]",
+    "(message|send [message[s]]) %<a href='classes.html#string'>texts</a>% [to %<a href='classes.html#commandsender'>players/console</a>%] [from %<a href='classes.html#player'>player</a>%]",
 
     "pattern_end"
   ],
-  "since" : "1.0, 2.2-dev26 (advanced features)",
+  "since" : "1.0, 2.2-dev26 (advanced features), 2.5.2 (optional sender)",
   "description" : "Sends a message to the given player. Only styles written
-in given string or in <a href=expressions.html#ExprColoured>formatted expressions</a> will be parsed.",
-  "examples" : "message \"A wild %player% appeared!\"\\nmessage \"This message is a distraction. Mwahaha!\"\\nsend \"Your kill streak is %{kill streak::%uuid of player%}%.\" to player\\nif the targeted entity exists:\\n    message \"You're currently looking at a %type of the targeted entity%!\""
+in given string or in <a href=expressions.html#ExprColoured>formatted expressions</a> will be parsed.
+Adding an optional sender allows the messages to be sent as if a specific player sent them.
+This is useful with Minecraft 1.16.4's new chat ignore system, in which players can choose to ignore other players,
+but for this to work, the message needs to be sent from a player.",
+  "examples" : "message \"A wild %player% appeared!\"\\nmessage \"This message is a distraction. Mwahaha!\"\\nsend \"Your kill streak is %{kill streak::%uuid of player%}%.\" to player\\nif the targeted entity exists:\\n    message \"You're currently looking at a %type of the targeted entity%!\"\\non chat:\\n    cancel event\\n    send \"[%player%] >> %message%\" to all players from player"
 },
 {
   "id" : "EffOpenBook",
@@ -2351,12 +2417,13 @@ Note: if a player was hidden and relogs, this player will be visible again.",
     "apply [potion of] %<a href='classes.html#potioneffecttype'>potions</a>% [potion] [[[of] tier] %<a href='classes.html#number'>number</a>%] to %<a href='classes.html#livingentity'>living entities</a>% [for %<a href='classes.html#timespan'>time span</a>%] [(replacing [the] existing effect)]",
 "apply ambient [potion of] %<a href='classes.html#potioneffecttype'>potions</a>% [potion] [[[of] tier] %<a href='classes.html#number'>number</a>%] to %<a href='classes.html#livingentity'>living entities</a>% [for %<a href='classes.html#timespan'>time span</a>%] [(replacing [the] existing effect)]",
 "apply [potion of] %<a href='classes.html#potioneffecttype'>potions</a>% [potion] [[[of] tier] %<a href='classes.html#number'>number</a>%] without [any] particles to %<a href='classes.html#livingentity'>living entities</a>% [for %<a href='classes.html#timespan'>time span</a>%] [(replacing [the] existing effect)]",
+"apply %<a href='classes.html#potioneffect'>potion effects</a>% to %<a href='classes.html#livingentity'>living entities</a>%",
 
     "pattern_end"
   ],
-  "since" : "2.0, 2.2-dev27 (ambient and particle-less potion effects), 2.5 (replacing existing effect)",
+  "since" : "2.0, 2.2-dev27 (ambient and particle-less potion effects), 2.5 (replacing existing effect), 2.5.2 (potion effects)",
   "description" : "Apply or remove potion effects to/from entities.",
-  "examples" : "apply swiftness 2 to the player\\nremove haste from the victim\\non join:\\n    apply potion of strength of tier {strength.%player%} to the player for 999 days"
+  "examples" : "apply swiftness 2 to the player\\nremove haste from the victim\\non join:\\n    apply potion of strength of tier {strength.%player%} to the player for 999 days\\napply potion effects of player's tool to player"
 },
 {
   "id" : "EffPush",
@@ -3079,20 +3146,21 @@ This may require that there is enough space above the given location and that th
   "examples" : "on enchant prepare:\\n    set enchant offer 1 to sharpness 1\\n    set the cost of enchant offer 1 to 10 levels"
 },
 {
-  "id" : "endermansheepsilverfish",
-  "name" : "On Enderman/Sheep/Silverfish",
+  "id" : "endermansheepsilverfishfalling_block",
+  "name" : "On Enderman/Sheep/Silverfish/Falling Block",
   "patterns" : [
     "enderman place",
 "enderman pickup",
 "sheep eat",
 "silverfish enter",
 "silverfish exit",
+"falling block land[ing]",
 
     "pattern_end"
   ],
-  "since" : "<i>unknown</i>",
-  "description" : "Called when an enderman places or picks up a block, a sheep eats grass or a silverfish boops into/out of a block respectively.",
-  "examples" : "on sheep eat:\\n    kill entity\\n    broadcast \"A sheep stole some grass!\""
+  "since" : "<i>unknown</i>, 2.5.2 (falling block)",
+  "description" : "Called when an enderman places or picks up a block, a sheep eats grass, \\na silverfish boops into/out of a block or a falling block lands and turns into a block respectively.",
+  "examples" : "on sheep eat:\\n    kill entity\\n    broadcast \"A sheep stole some grass!\"\\non falling block land:\\n    if event-entity is a falling dirt:\\n        cancel event"
 },
 {
   "id" : "entity_dismount",
@@ -3457,7 +3525,7 @@ This may require that there is enough space above the given location and that th
     "pattern_end"
   ],
   "since" : "2.2-dev35",
-  "description" : "Called when dropped items merge into a single stack.",
+  "description" : "Called when dropped items merge into a single stack. event-entity will be the entity which is trying to merge, and future event-entity will be the entity which is being merged into.",
   "examples" : "on item merge of gold blocks:\\n    cancel event"
 },
 {
@@ -4536,9 +4604,9 @@ Can optionally include a direction as well, e.g. 'block above' or 'block in fron
 
     "pattern_end"
   ],
-  "since" : "2.5",
+  "since" : "2.5, 2.5.2 (set)",
   "description" : "Get the <a href='classes.html#blockdata'>block data</a> associated with a block. This data can also be used to set blocks.",
-  "examples" : "set {data} to block data of target block\\nset block at player to {data}"
+  "examples" : "set {data} to block data of target block\\nset block at player to {data}\\nset block data of target block to oak_stairs[facing=south;waterlogged=true]"
 },
 {
   "id" : "ExprBlockSphere",
@@ -5797,8 +5865,8 @@ broadcast \"%all indexes of {l::*}%\" # result is 1, 2 and 3"
 
     "pattern_end"
   ],
-  "since" : "2.2-dev35, 2.2-dev36 (improved)",
-  "description" : "An item associated with an entity. For dropped item entities, it gets, obviously, the item that was dropped. For item frames, the item inside the frame is returned. Other entities do not have items associated with them.",
+  "since" : "2.2-dev35, 2.2-dev36 (improved), 2.5.2 (throwable projectiles)",
+  "description" : "An item associated with an entity. For dropped item entities, it gets, obviously, the item that was dropped. For item frames, the item inside the frame is returned. For throwable projectiles (snowballs, enderpearls etc.),it gets the displayed item. Other entities do not have items associated with them.",
   "examples" : ""
 },
 {
@@ -5861,10 +5929,12 @@ Please note that the positions of the items in the inventory are not saved, only
     "(concat[enate]|join) %<a href='classes.html#string'>texts</a>% [(with|using|by) [[the] delimiter] %<a href='classes.html#string'>text</a>%]",
 "split %<a href='classes.html#string'>text</a>% (at|using|by) [[the] delimiter] %<a href='classes.html#string'>text</a>%",
 "%<a href='classes.html#string'>text</a>% split (at|using|by) [[the] delimiter] %<a href='classes.html#string'>text</a>%",
+"regex split %<a href='classes.html#string'>text</a>% (at|using|by) [[the] delimiter] %<a href='classes.html#string'>text</a>%",
+"regex %<a href='classes.html#string'>text</a>% split (at|using|by) [[the] delimiter] %<a href='classes.html#string'>text</a>%",
 
     "pattern_end"
   ],
-  "since" : "2.1",
+  "since" : "2.1, 2.5.2 (regex support)",
   "description" : "Joins several texts with a common delimiter (e.g. \", \"), or splits a text into multiple texts at a given delimiter.",
   "examples" : "message \"Online players: %join all players with \"\" | \"\"%\" # %all players% would use the default \"x, y, and z\"\\nset {_s::*} to the string argument split at \",\""
 },
@@ -6264,6 +6334,19 @@ Please note that the location of an entity is at it's feet, use <a href='#ExprEy
   "examples" : "on right click on minecart:\\n    set derailed velocity of event-entity to vector 2, 10, 2"
 },
 {
+  "id" : "ExprBalance",
+  "name" : "Money",
+  "patterns" : [
+    "[the] (money|balance|[bank] account) of %<a href='classes.html#offlineplayer'>offline players</a>%",
+"%<a href='classes.html#offlineplayer'>offline players</a>%'[s] (money|balance|[bank] account)",
+
+    "pattern_end"
+  ],
+  "since" : "2.0, 2.5 (offline player support)",
+  "description" : "How much virtual money a player has (can be changed). This expression requires Vault and a compatible economy plugin to be installed.",
+  "examples" : "message \"You have %player's money%\" # the currency name will be added automatically\\nremove 20$ from the player's balance # replace '$' by whatever currency you use\\nadd 200 to the player's account # or omit the currency alltogether"
+},
+{
   "id" : "ExprPushedBlocks",
   "name" : "Moved blocks",
   "patterns" : [
@@ -6592,6 +6675,36 @@ See also: <a href='#ExprVehicle'>vehicle</a>",
   "since" : "2.4",
   "description" : "The blocks associated with a portal in the portal creation event.",
   "examples" : "on portal creation:\\n    loop portal blocks:\\n        broadcast \"%loop-block% is part of a portal!\""
+},
+{
+  "id" : "ExprPotionEffect",
+  "name" : "Potion Effect",
+  "patterns" : [
+    "[new] potion effect of %<a href='classes.html#potioneffecttype'>potion</a>% [potion] [[[of] tier] %<a href='classes.html#number'>number</a>%] [(without particles)] [for %<a href='classes.html#timespan'>time span</a>%]",
+"[new] ambient potion effect of %<a href='classes.html#potioneffecttype'>potion</a>% [potion] [[[of] tier] %<a href='classes.html#number'>number</a>%] [(without particles)] [for %<a href='classes.html#timespan'>time span</a>%]",
+
+    "pattern_end"
+  ],
+  "since" : "2.5.2",
+  "description" : "Create a new potion effect to apply to an entity or item type. Do note that when applying potion effects 
+to tipped arrows/lingering potions, Minecraft reduces the timespan.",
+  "examples" : "set {_p} to potion effect of speed of tier 1 without particles for 10 minutes\\nadd {_p} to potion effects of player's tool\\nadd {_p} to potion effects of target entity\\nadd potion effect of speed 1 to potion effects of player"
+},
+{
+  "id" : "ExprPotionEffects",
+  "name" : "Potion Effects",
+  "patterns" : [
+    "[the] [(all [[of] the]|the)] [active] potion effects of %<a href='classes.html#livingentity'>living entities</a>/<a href='classes.html#itemtype'>item types</a>%",
+"%<a href='classes.html#livingentity'>living entities</a>/<a href='classes.html#itemtype'>item types</a>%'[s] [(all [[of] the]|the)] [active] potion effects",
+
+    "pattern_end"
+  ],
+  "since" : "2.5.2",
+  "description" : "Represents the active potion effects of entities and itemtypes.
+You can clear all potion effects of an entity/itemtype and add/remove a potion effect/type to/from an entity/itemtype.
+Do note you will not be able to clear the base potion effects of a potion item. In that case, just set the item to a water bottle.
+When adding a potion effect type (rather than a potion effect), it will default to 15 seconds with tier 1.",
+  "examples" : "set {_p::*} to active potion effects of player\\nclear all the potion effects of player\\nclear all the potion effects of player's tool\\nadd potion effects of player to potion effects of player's tool\\nadd speed to potion effects of target entity\\nremove speed and night vision from potion effects of player"
 },
 {
   "id" : "ExprPrefixSuffix",
@@ -7012,12 +7125,13 @@ Please note that changing a player's speed will change their FOV just like potio
     "[the] [(part|sub[ ](text|string)) of %<a href='classes.html#string'>texts</a>% (between|from) (ind(ex|ices)|character[s])] %<a href='classes.html#number'>number</a>% [(and|to) (index|character)] %<a href='classes.html#number'>number</a>%",
 "[the] (first|last) [%<a href='classes.html#number'>number</a>%] character[s] of %<a href='classes.html#string'>texts</a>%",
 "[the] %<a href='classes.html#number'>number</a>% (first|last) characters of %<a href='classes.html#string'>texts</a>%",
+"[the] character[s] at [(index|position|indexes|indices|positions)] %<a href='classes.html#number'>numbers</a>% (in|of) %<a href='classes.html#string'>texts</a>%",
 
     "pattern_end"
   ],
-  "since" : "2.1",
-  "description" : "Extracts part of a text. You can either get the first &lt;x&gt; characters, the last &lt;x&gt; characters, or the characters between indices &lt;x&gt; and &lt;y&gt;. The indices &lt;x&gt; and &lt;y&gt; should be between 1 and the <a href='#ExprLength'>length</a> of the text (other values will be fit into this range).",
-  "examples" : "set {_s} to the first 5 characters of the text argument\\nmessage \"%subtext of {_s} from characters 2 to (the length of {_s} - 1)%\" # removes the first and last character from {_s} and sends it to the player or console"
+  "since" : "2.1, 2.5.2 (character at, multiple strings support)",
+  "description" : "Extracts part of a text. You can either get the first &lt;x&gt; characters, the last &lt;x&gt; characters, the character at index &lt;x&gt;, or the characters between indices &lt;x&gt; and &lt;y&gt;. The indices &lt;x&gt; and &lt;y&gt; should be between 1 and the <a href='#ExprLength'>length</a> of the text (other values will be fit into this range).",
+  "examples" : "set {_s} to the first 5 characters of the text argument\\nmessage \"%subtext of {_s} from characters 2 to (the length of {_s} - 1)%\" # removes the first and last character from {_s} and sends it to the player or console\\nset {_characters::*} to characters at 1, 2 and 7 in player's display name\\nsend the last character of all players' names"
 },
 {
   "id" : "ExprTPS",
@@ -7166,16 +7280,17 @@ Please note that changing a player's speed will change their FOV just like potio
   "id" : "ExprTypeOf",
   "name" : "Type of",
   "patterns" : [
-    "[the] type of %<a href='classes.html#entitydata'>entity types</a>/<a href='classes.html#itemtype'>item types</a>/<a href='classes.html#inventory'>inventories</a>%",
-"%<a href='classes.html#entitydata'>entity types</a>/<a href='classes.html#itemtype'>item types</a>/<a href='classes.html#inventory'>inventories</a>%'[s] type",
+    "[the] type of %<a href='classes.html#entitydata'>entity types</a>/<a href='classes.html#itemtype'>item types</a>/<a href='classes.html#inventory'>inventories</a>/<a href='classes.html#potioneffect'>potion effects</a>%",
+"%<a href='classes.html#entitydata'>entity types</a>/<a href='classes.html#itemtype'>item types</a>/<a href='classes.html#inventory'>inventories</a>/<a href='classes.html#potioneffect'>potion effects</a>%'[s] type",
 
     "pattern_end"
   ],
-  "since" : "1.4",
-  "description" : "Type of a block, an item, en entity or an inventory.
+  "since" : "1.4, 2.5.2 (potion effect)",
+  "description" : "Type of a block, item, entity, inventory or potion effect.
 Types of items and blocks are item types similar to them but have amounts
 of one, no display names and, on Minecraft 1.13 and newer versions, are undamaged.
-Types of entities and inventories are entity types and inventory types known to Skript.",
+Types of entities and inventories are entity types and inventory types known to Skript.
+Types of potion effects are potion effect types.",
   "examples" : "on rightclick on an entity:\\n    message \"This is a %type of clicked entity%!\""
 },
 {
@@ -7522,6 +7637,18 @@ This can only be set in a <a href='events.html#server_list_ping'>server list pin
   "since" : "1.0",
   "description" : "The weather in the given or the current world.",
   "examples" : "set weather to clear\\nweather in \"world\" is rainy"
+},
+{
+  "id" : "ExprWhitelist",
+  "name" : "Whitelist",
+  "patterns" : [
+    "[the] white[ ]list",
+
+    "pattern_end"
+  ],
+  "since" : "2.5.2",
+  "description" : "A server's whitelist.This expression can be used to add/remove players to/from the whitelist, to enable it and disable it (set whitelist to true / set whitelist to false), and to empty it (reset whitelist)",
+  "examples" : "set whitelist to false\\nadd all players to whitelist\\nreset the whitelist"
 },
 {
   "id" : "ExprWorld",
