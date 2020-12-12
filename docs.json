@@ -1,5 +1,5 @@
 {
-  "skriptVersion" : "2.5.2",
+  "skriptVersion" : "2.5.3",
 
   "classes" : [
     {
@@ -3187,6 +3187,18 @@ This may require that there is enough space above the given location and that th
   "examples" : "on mount:\\n    cancel event"
 },
 {
+  "id" : "entity_portal",
+  "name" : "On Entity Portal",
+  "patterns" : [
+    "entity portal",
+
+    "pattern_end"
+  ],
+  "since" : "2.5.3",
+  "description" : "Called when an entity uses a nether or end portal. <a href='effects.html#EffCancelEvent'>Cancel the event</a> to prevent the entity from teleporting.",
+  "examples" : "on entity portal:\\n    broadcast \"A %type of event-entity% has entered a portal!"
+},
+{
   "id" : "experience_spawn",
   "name" : "On Experience Spawn",
   "patterns" : [
@@ -3741,8 +3753,8 @@ This may require that there is enough space above the given location and that th
 
     "pattern_end"
   ],
-  "since" : "1.0",
-  "description" : "Called when a portal is created, either by a player or mob lighting an obsidian frame on fire, or by a nether portal creating its teleportation target in the nether/overworld.\\nPlease note that it's not possible to use <a href='expressions.html#ExprEntity'>the player</a> in this event.",
+  "since" : "1.0, 2.5.3 (event-entity support)",
+  "description" : "Called when a portal is created, either by a player or mob lighting an obsidian frame on fire, or by a nether portal creating its teleportation target in the nether/overworld.\\nIn Minecraft 1.14+, you can use <a href='expressions.html#ExprEntity'>the player</a> in this event.\\nPlease note that there may not always be a player (or other entity) in this event.",
   "examples" : "on portal create:"
 },
 {
@@ -3755,7 +3767,7 @@ This may require that there is enough space above the given location and that th
     "pattern_end"
   ],
   "since" : "1.0",
-  "description" : "Called when a player enters a nether portal and the swirly animation starts to play.",
+  "description" : "Called when an entity enters a nether portal or an end portal. Please note that this event will be fired many times for a nether portal.",
   "examples" : "on portal enter:"
 },
 {
@@ -5286,9 +5298,9 @@ Resetting an entity's attribute is only available in Minecraft 1.11 and above.",
 
     "pattern_end"
   ],
-  "since" : "2.1",
-  "description" : "How much experience was spawned in an <a href='../events.html#experience_spawn'>experience spawn</a> event. Can be changed.",
-  "examples" : "on experience spawn:\\n    add 5 to the spawned experience"
+  "since" : "2.1, 2.5.3 (block break event)",
+  "description" : "How much experience was spawned in an experience spawn or block break event. Can be changed.",
+  "examples" : "on experience spawn:\\n    add 5 to the spawned experience\\non break of coal ore:\\n    clear dropped experience\\non break of diamond ore:\\n    if tool of player = diamond pickaxe:\\n        add 100 to dropped experience"
 },
 {
   "id" : "ExprExplodedBlocks",
@@ -7883,8 +7895,8 @@ This can only be set in a <a href='events.html#server_list_ping'>server list pin
     "pattern_end"
   ],
   "since" : "2.2",
-  "description" : "Creates a location from a world and 3 coordinates, with an optional yaw and pitch.",
-  "examples" : "location(0, 128, 0)\\nlocation(player's x-coordinate, player's y-coordinate + 5, player's z-coordinate, player's world, 0, 90)"
+  "description" : "Creates a location from a world and 3 coordinates, with an optional yaw and pitch.\\nIf for whatever reason the world is not found, it will fallback to the server's main world.",
+  "examples" : "location(0, 128, 0)\\nlocation(player's x-coordinate, player's y-coordinate + 5, player's z-coordinate, player's world, 0, 90)\\nlocation(0, 64, 0, world \"world_nether\")\\nlocation(100, 110, -145, world(\"my_custom_world\"))"
 },
 {
   "id" : "log",
