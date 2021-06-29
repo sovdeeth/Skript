@@ -1,5 +1,5 @@
 {
-  "skriptVersion" : "2.6-alpha1-nightly-55a376b",
+  "skriptVersion" : "2.6-beta1",
 
   "classes" : [
     {
@@ -2904,7 +2904,7 @@ This may require that there is enough space above the given location and that th
 
     "pattern_end"
   ],
-  "since" : "1.0 (break), <i>unknown</i> (mine), INSERT VERSION (BlockData support)",
+  "since" : "1.0 (break), <i>unknown</i> (mine), 2.6 (BlockData support)",
   "description" : "Called when a block is broken by a player. If you use 'on mine', only events where the broken block dropped something will call the trigger.",
   "examples" : "on mine:\\non break of stone:\\non mine of any ore:\\non break of chest[facing=north]:\\non break of potatoes[age=7]:"
 },
@@ -2942,7 +2942,7 @@ This may require that there is enough space above the given location and that th
 
     "pattern_end"
   ],
-  "since" : "1.0, INSERT VERSION (BlockData support)",
+  "since" : "1.0, 2.6 (BlockData support)",
   "description" : "Called when a block is destroyed by fire.",
   "examples" : "on burn:\\non burn of wood, fences, or chests:\\non burn of oak_log[axis=y]:"
 },
@@ -3261,7 +3261,7 @@ This may require that there is enough space above the given location and that th
 
     "pattern_end"
   ],
-  "since" : "1.0, INSERT VERSION (BlockData support)",
+  "since" : "1.0, 2.6 (BlockData support)",
   "description" : "Called when a block 'fades away', e.g. ice or snow melts.",
   "examples" : "on fade of snow or ice:\\non fade of snow[layers=2]"
 },
@@ -3335,7 +3335,7 @@ This may require that there is enough space above the given location and that th
 
     "pattern_end"
   ],
-  "since" : "1.0, INSERT VERSION (BlockData support)",
+  "since" : "1.0, 2.6 (BlockData support)",
   "description" : "Called when a block is created, but not by a player, e.g. snow forms due to snowfall, water freezes in cold biomes. This isn't called when block spreads (mushroom growth, water physics etc.), as it has its own event (see <a href='#spread'>spread event</a>).",
   "examples" : "on form of snow:\\non form of a mushroom:"
 },
@@ -3747,7 +3747,7 @@ This may require that there is enough space above the given location and that th
 
     "pattern_end"
   ],
-  "since" : "1.0, INSERT VERSION (BlockData support)",
+  "since" : "1.0, 2.6 (BlockData support)",
   "description" : "Called when a player places a block.",
   "examples" : "on place:\\non place of a furnace, workbench or chest:\\non break of chest[type=right] or chest[type=left]"
 },
@@ -4686,7 +4686,7 @@ Can optionally include a direction as well, e.g. 'block above' or 'block in fron
 
     "pattern_end"
   ],
-  "since" : "INSERT VERSION",
+  "since" : "2.6",
   "description" : "Obtains the block's hardness level (also known as \"strength\"). This number is used to calculate the time required to break each block.",
   "examples" : "set {_hard} to block hardness of target block\\nif block hardness of target block > 5:"
 },
