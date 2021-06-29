@@ -1,5 +1,5 @@
 {
-  "skriptVersion" : "2.6-alpha1",
+  "skriptVersion" : "2.6-alpha1-nightly-55a376b",
 
   "classes" : [
     {
@@ -126,7 +126,7 @@
   "id" : "damagecause",
   "name" : "Damage Cause",
   "patterns" : [
-    "contact, attack, sweep attack, projectile, suffocation, fall, fire, burning, melting, lava, drowning, block explosion, entity explosion, void, lightning, suicide, starvation, poison, potion, wither, falling block, thorns, dragon's breath, unknown, hitting wall while flying, magma, cramming, dryout",
+    "contact, attack, sweep attack, projectile, suffocation, fall, fire, burning, melting, lava, drowning, block explosion, entity explosion, void, lightning, suicide, starvation, poison, potion, wither, falling block, thorns, dragon's breath, unknown, hitting wall while flying, magma, cramming, dryout, freeze",
 
     "pattern_end"
   ],
@@ -292,7 +292,7 @@
   "id" : "gamerule",
   "name" : "Gamerule",
   "patterns" : [
-    "doFireTick, maxCommandChainLength, fireDamage, reducedDebugInfo, disableElytraMovementCheck, announceAdvancements, drowningDamage, commandBlockOutput, forgiveDeadPlayers, doMobSpawning, maxEntityCramming, disableRaids, doWeatherCycle, doDaylightCycle, showDeathMessages, doTileDrops, universalAnger, doInsomnia, doImmediateRespawn, naturalRegeneration, doMobLoot, fallDamage, keepInventory, doEntityDrops, doLimitedCrafting, mobGriefing, randomTickSpeed, spawnRadius, doTraderSpawning, logAdminCommands, spectatorsGenerateChunks, sendCommandFeedback, doPatrolSpawning",
+    "doFireTick, maxCommandChainLength, fireDamage, reducedDebugInfo, disableElytraMovementCheck, announceAdvancements, drowningDamage, commandBlockOutput, forgiveDeadPlayers, doMobSpawning, maxEntityCramming, disableRaids, doWeatherCycle, doDaylightCycle, showDeathMessages, doTileDrops, universalAnger, playersSleepingPercentage, doInsomnia, doImmediateRespawn, naturalRegeneration, doMobLoot, fallDamage, keepInventory, doEntityDrops, doLimitedCrafting, mobGriefing, randomTickSpeed, spawnRadius, freezeDamage, doTraderSpawning, logAdminCommands, spectatorsGenerateChunks, sendCommandFeedback, doPatrolSpawning",
 
     "pattern_end"
   ],
@@ -376,7 +376,7 @@
   "id" : "inventorytype",
   "name" : "Inventory Type",
   "patterns" : [
-    "chest inventory, dispenser inventory, dropper inventory, furnace inventory, workbench inventory, crafting table inventory, enchanting table inventory, brewing stand inventory, player inventory, creative inventory, merchant inventory, ender chest inventory, anvil inventory, smithing inventory, beacon inventory, hopper inventory, shulker box inventory, barrel inventory, blast furnace inventory, lectern inventory, smoker inventory, loom inventory, cartography table inventory, grindstone inventory, stonecutter inventory",
+    "chest inventory, dispenser inventory, dropper inventory, furnace inventory, workbench inventory, crafting table inventory, enchanting table inventory, brewing stand inventory, player inventory, creative inventory, merchant inventory, ender chest inventory, anvil inventory, smithing inventory, beacon inventory, hopper inventory, shulker box inventory, barrel inventory, blast furnace inventory, lectern inventory, smoker inventory, loom inventory, cartography table inventory, grindstone inventory, stonecutter inventory, composter inventory",
 
     "pattern_end"
   ],
@@ -590,7 +590,7 @@
   "id" : "spawnreason",
   "name" : "Spawn Reason",
   "patterns" : [
-    "natural, jockey, chunk generation, mob spawner, egg, spawn egg, lightning, built snowman, built iron golem, built wither, village defense, village invasion, breed, slime split, reinforcements, nether portal, dispense egg, infection, cured, ocelot baby, silverfish reveal, mount, trap, ender pearl, perching, drowned, shear, explosion, raid, patrol, beehive, piglin zombification, spawn reasons.command, customized, default",
+    "natural, jockey, chunk generation, mob spawner, egg, spawn egg, lightning, built snowman, built iron golem, built wither, village defense, village invasion, breed, slime split, reinforcements, nether portal, dispense egg, infection, cured, ocelot baby, silverfish reveal, mount, trap, ender pearl, perching, drowned, shear, explosion, raid, patrol, beehive, piglin zombification, command, customized, default",
 
     "pattern_end"
   ],
@@ -705,7 +705,7 @@
   "id" : "visualeffect",
   "name" : "Visual Effect",
   "patterns" : [
-    "smoke, potion break, ender signal, mobspawner flames, arrow particles, jumping rabbit, hurt, wolf smoke, wolf hearts, wolf shaking, sheep eating, iron golem offering rose, villager hearts, angry villager entity, happy villager entity, witch magic, zombie turning to a villager, firework explosion, love hearts, squid rotation reset, entity poof, guardian target, block with shield, shield break, armor stand hit, hurt by thorns, iron golem sheathing rose, resurrection by totem, hurt by drowning, hurt by explosion, explosion, large explosion, huge explosion, firework's spark, water bubble, water splash, water wake, suspended, void fog, critical hit, magical critical hit, smoke particle, large smoke, spell, spell, potion swirl, transparent potion swirl, witch spell, water drip, lava drip, angry villager, happy villager, small smoke, note, portal, flying glyph, flame, lava pop, cloud, coloured dust, snowball break, snow shovel, slime, heart, barrier, item crack, block break, block dust, water drop, mob appearance, dragon breath, end rod, damage indicator, sweep attack, falling dust, totem, spit, squid ink, bubble pop, current down, bubble column up, nautilus, dolphin, sneeze, campfire cosy smoke, campfire signal smoke, composter, flash, falling lava, landing lava, falling water, dripping honey, falling honey, landing honey, falling nectar, soul fire flame, ash, crimson spore, warped spore, soul, dripping obsidian tear, falling obsidian tear, landing obsidian tear, reverse portal, white ash",
+    "smoke, potion break, ender signal, mobspawner flames, arrow particles, jumping rabbit, hurt, wolf smoke, wolf hearts, wolf shaking, sheep eating, iron golem offering rose, villager hearts, angry villager entity, happy villager entity, witch magic, zombie turning to a villager, firework explosion, love hearts, squid rotation reset, entity poof, guardian target, block with shield, shield break, armor stand hit, hurt by thorns, iron golem sheathing rose, resurrection by totem, hurt by drowning, hurt by explosion, explosion, large explosion, huge explosion, firework's spark, water bubble, water splash, water wake, suspended, void fog, critical hit, magical critical hit, smoke particle, large smoke, spell, spell, potion swirl, transparent potion swirl, witch spell, water drip, lava drip, angry villager, happy villager, small smoke, note, portal, flying glyph, flame, lava pop, cloud, coloured dust, snowball break, snow shovel, slime, heart, barrier, item crack, block break, block dust, water drop, mob appearance, dragon breath, end rod, damage indicator, sweep attack, falling dust, totem, spit, squid ink, bubble pop, current down, bubble column up, nautilus, dolphin, sneeze, campfire cosy smoke, campfire signal smoke, composter, flash, falling lava, landing lava, falling water, dripping honey, falling honey, landing honey, falling nectar, soul fire flame, ash, crimson spore, warped spore, soul, dripping obsidian tear, falling obsidian tear, landing obsidian tear, reverse portal, white ash, light, falling spore blossom, spore blossom air, small flame, snowflake, dripping dripstone lava, falling dripstone lava, dripping dripstone water, falling dripstone water, glow squid ink, glow, wax on, wax off, electric spark, scrape",
 
     "pattern_end"
   ],
@@ -1940,7 +1940,7 @@ message to all players instead of broadcasting it.",
   "id" : "EffHealth",
   "name" : "Damage/Heal/Repair",
   "patterns" : [
-    "damage %<a href='classes.html#livingentity'>living entities</a>/<a href='classes.html#itemtype'>item types</a>% by %<a href='classes.html#number'>number</a>% [heart[s]][ with fake cause %<a href='classes.html#damagecause'>damage cause</a>%]",
+    "damage %<a href='classes.html#livingentity'>living entities</a>/<a href='classes.html#itemtype'>item types</a>% by %<a href='classes.html#number'>number</a>% [heart[s]] [with fake cause %<a href='classes.html#damagecause'>damage cause</a>%]",
 "heal %<a href='classes.html#livingentity'>living entities</a>% [by %<a href='classes.html#number'>number</a>% [heart[s]]]",
 "repair %<a href='classes.html#itemtype'>item types</a>% [by %<a href='classes.html#number'>number</a>%]",
 
@@ -2251,18 +2251,6 @@ Please note that the image must be 64x64 and the file path starts from the serve
   "description" : "Writes text into a .log file. Skript will write these files to /plugins/Skript/logs.
 NB: Using 'server.log' as the log file will write to the default server log. Omitting the log file altogether will log the message as '[Skript] [&lt;script&gt;.sk] &lt;message&gt;' in the server log.",
   "examples" : "on place of TNT:\\n    log \"%player% placed TNT in %world% at %location of block%\" to \"tnt/placement.log\""
-},
-{
-  "id" : "EffScriptOptionLoops",
-  "name" : "Loop Version",
-  "patterns" : [
-    "use[s] (old|new|2.1.2|2.2) loops",
-
-    "pattern_end"
-  ],
-  "since" : "<i>unknown</i> (2.2)",
-  "description" : "Changes loops to emulate given Skript version's behaviour.",
-  "examples" : "use old loops\\nuse new loops"
 },
 {
   "id" : "EffMakeFly",
@@ -2640,12 +2628,15 @@ Please note that sound names can get changed in any Minecraft or Spigot version,
   "id" : "EffTeleport",
   "name" : "Teleport",
   "patterns" : [
-    "teleport %<a href='classes.html#entity'>entities</a>% (to|%<a href='classes.html#direction'>direction</a>%) %<a href='classes.html#location'>location</a>%",
+    "[(force)] teleport %<a href='classes.html#entity'>entities</a>% (to|%<a href='classes.html#direction'>direction</a>%) %<a href='classes.html#location'>location</a>%",
 
     "pattern_end"
   ],
   "since" : "1.0",
-  "description" : "Teleport an entity to a specific location.",
+  "description" : "Teleport an entity to a specific location. 
+This effect is delayed by default on Paper, meaning certain syntax such as the return effect for functions cannot be used after this effect.
+The keyword 'force' indicates this effect will not be delayed, 
+which may cause lag spikes or server crashes when using this effect to teleport entities to unloaded chunks.",
   "examples" : "teleport the player to {homes.%player%}\\nteleport the attacker to the victim"
 },
 {
@@ -2909,13 +2900,13 @@ This may require that there is enough space above the given location and that th
   "id" : "break_mine",
   "name" : "On Break / Mine",
   "patterns" : [
-    "[block] (break[ing]|min(e|ing)) [[of] %<a href='classes.html#itemtype'>item types</a>%]",
+    "[block] (break[ing]|min(e|ing)) [[of] %<a href='classes.html#itemtype'>item types</a>/<a href='classes.html#blockdata'>block datas</a>%]",
 
     "pattern_end"
   ],
-  "since" : "1.0 (break), <i>unknown</i> (mine)",
+  "since" : "1.0 (break), <i>unknown</i> (mine), INSERT VERSION (BlockData support)",
   "description" : "Called when a block is broken by a player. If you use 'on mine', only events where the broken block dropped something will call the trigger.",
-  "examples" : "on mine:\\non break of stone:\\non mine of any ore:"
+  "examples" : "on mine:\\non break of stone:\\non mine of any ore:\\non break of chest[facing=north]:\\non break of potatoes[age=7]:"
 },
 {
   "id" : "bucket_empty",
@@ -2947,13 +2938,13 @@ This may require that there is enough space above the given location and that th
   "id" : "burn",
   "name" : "On Burn",
   "patterns" : [
-    "[block] burn[ing] [[of] %<a href='classes.html#itemtype'>item types</a>%]",
+    "[block] burn[ing] [[of] %<a href='classes.html#itemtype'>item types</a>/<a href='classes.html#blockdata'>block datas</a>%]",
 
     "pattern_end"
   ],
-  "since" : "1.0",
+  "since" : "1.0, INSERT VERSION (BlockData support)",
   "description" : "Called when a block is destroyed by fire.",
-  "examples" : "on burn:\\non burn of wood, fences, or chests:"
+  "examples" : "on burn:\\non burn of wood, fences, or chests:\\non burn of oak_log[axis=y]:"
 },
 {
   "id" : "can_build_check",
@@ -3266,13 +3257,13 @@ This may require that there is enough space above the given location and that th
   "id" : "fade",
   "name" : "On Fade",
   "patterns" : [
-    "[block] fad(e|ing) [[of] %<a href='classes.html#itemtype'>item types</a>%]",
+    "[block] fad(e|ing) [[of] %<a href='classes.html#itemtype'>item types</a>/<a href='classes.html#blockdata'>block datas</a>%]",
 
     "pattern_end"
   ],
-  "since" : "1.0",
+  "since" : "1.0, INSERT VERSION (BlockData support)",
   "description" : "Called when a block 'fades away', e.g. ice or snow melts.",
-  "examples" : "on fade of snow or ice:"
+  "examples" : "on fade of snow or ice:\\non fade of snow[layers=2]"
 },
 {
   "id" : "firework_explode",
@@ -3340,11 +3331,11 @@ This may require that there is enough space above the given location and that th
   "id" : "form",
   "name" : "On Form",
   "patterns" : [
-    "[block] form[ing] [[of] %<a href='classes.html#itemtype'>item types</a>%]",
+    "[block] form[ing] [[of] %<a href='classes.html#itemtype'>item types</a>/<a href='classes.html#blockdata'>block datas</a>%]",
 
     "pattern_end"
   ],
-  "since" : "1.0",
+  "since" : "1.0, INSERT VERSION (BlockData support)",
   "description" : "Called when a block is created, but not by a player, e.g. snow forms due to snowfall, water freezes in cold biomes. This isn't called when block spreads (mushroom growth, water physics etc.), as it has its own event (see <a href='#spread'>spread event</a>).",
   "examples" : "on form of snow:\\non form of a mushroom:"
 },
@@ -3752,13 +3743,13 @@ This may require that there is enough space above the given location and that th
   "id" : "place",
   "name" : "On Place",
   "patterns" : [
-    "[block] (plac(e|ing)|build[ing]) [[of] %<a href='classes.html#itemtype'>item types</a>%]",
+    "[block] (plac(e|ing)|build[ing]) [[of] %<a href='classes.html#itemtype'>item types</a>/<a href='classes.html#blockdata'>block datas</a>%]",
 
     "pattern_end"
   ],
-  "since" : "1.0",
+  "since" : "1.0, INSERT VERSION (BlockData support)",
   "description" : "Called when a player places a block.",
-  "examples" : "on place:\\non place of a furnace, workbench or chest:"
+  "examples" : "on place:\\non place of a furnace, workbench or chest:\\non break of chest[type=right] or chest[type=left]"
 },
 {
   "id" : "player_world_change",
@@ -4685,6 +4676,19 @@ Can optionally include a direction as well, e.g. 'block above' or 'block in fron
   "since" : "2.5, 2.5.2 (set)",
   "description" : "Get the <a href='classes.html#blockdata'>block data</a> associated with a block. This data can also be used to set blocks.",
   "examples" : "set {data} to block data of target block\\nset block at player to {data}\\nset block data of target block to oak_stairs[facing=south;waterlogged=true]"
+},
+{
+  "id" : "ExprBlockHardness",
+  "name" : "Block Hardness",
+  "patterns" : [
+    "[the] [block] hardness of %<a href='classes.html#itemtype'>item types</a>%",
+"%<a href='classes.html#itemtype'>item types</a>%'[s] [block] hardness",
+
+    "pattern_end"
+  ],
+  "since" : "INSERT VERSION",
+  "description" : "Obtains the block's hardness level (also known as \"strength\"). This number is used to calculate the time required to break each block.",
+  "examples" : "set {_hard} to block hardness of target block\\nif block hardness of target block > 5:"
 },
 {
   "id" : "ExprBlockSphere",
@@ -7397,14 +7401,14 @@ Please note that changing a player's speed will change their FOV just like potio
   "id" : "ExprTool",
   "name" : "Tool",
   "patterns" : [
-    "[the] (tool|held item|weapon) [of %<a href='classes.html#livingentity'>living entities</a>%]",
-"%<a href='classes.html#livingentity'>living entities</a>%'[s] (tool|held item|weapon)",
+    "[the] ((tool|held item|weapon)|(off[ ]hand (tool|item))) [of %<a href='classes.html#livingentity'>living entities</a>%]",
+"%<a href='classes.html#livingentity'>living entities</a>%'[s] ((tool|held item|weapon)|(off[ ]hand (tool|item)))",
 
     "pattern_end"
   ],
   "since" : "1.0",
-  "description" : "The item a player is holding.",
-  "examples" : "player is holding a pickaxe\\n# is the same as\\nplayer's tool is a pickaxe\\nplayer's off hand tool is shield #Only for Minecraft 1.9"
+  "description" : "The item an entity is holding in their main or off hand.",
+  "examples" : "player's tool is a pickaxe\\nplayer's off hand tool is a shield\\nset tool of all players to a diamond sword\\nset offhand tool of target entity to a bow"
 },
 {
   "id" : "ExprTypeOf",
@@ -7691,19 +7695,6 @@ In the future there will be an option to use a player's UUID instead of the name
   "examples" : "set {_v} to vector 1, 2, 3\\nsend \"%x of {_v}%, %y of {_v}%, %z of {_v}%\"\\nadd 1 to x of {_v}\\nadd 2 to y of {_v}\\nadd 3 to z of {_v}\\nsend \"%x of {_v}%, %y of {_v}%, %z of {_v}%\"\\nset x component of {_v} to 1\\nset y component of {_v} to 2\\nset z component of {_v} to 3\\nsend \"%x component of {_v}%, %y component of {_v}%, %z component of {_v}%\""
 },
 {
-  "id" : "ExprVectorYawPitch",
-  "name" : "Vectors - Yaw and Pitch",
-  "patterns" : [
-    "[the] [vector] (yaw|pitch) of %<a href='classes.html#vector'>vectors</a>%",
-"%<a href='classes.html#vector'>vectors</a>%'[s] [vector] (yaw|pitch)",
-
-    "pattern_end"
-  ],
-  "since" : "2.2-dev28",
-  "description" : "Gets or sets the yaw or pitch value of a vector.",
-  "examples" : "set {_v} to vector -1, 1, 1\\nsend \"%vector yaw of {_v}%, %vector pitch of {_v}%\"\\nadd 45 to vector yaw of {_v}\\nsubtract 45 from vector pitch of {_v}\\nsend \"%vector yaw of {_v}%, %vector pitch of {_v}%\"\\nset vector yaw of {_v} to -45\\nset vector pitch of {_v} to 45\\nsend \"%vector yaw of {_v}%, %vector pitch of {_v}%\""
-},
-{
   "id" : "ExprVehicle",
   "name" : "Vehicle",
   "patterns" : [
@@ -7834,14 +7825,14 @@ This can only be set in a <a href='events.html#server_list_ping'>server list pin
   "id" : "ExprYawPitch",
   "name" : "Yaw / Pitch",
   "patterns" : [
-    "[the] (yaw|pitch) of %<a href='classes.html#location'>locations</a>%",
-"%<a href='classes.html#location'>locations</a>%'[s] (yaw|pitch)",
+    "[the] (yaw|pitch) of %<a href='classes.html#location'>locations</a>/<a href='classes.html#vector'>vectors</a>%",
+"%<a href='classes.html#location'>locations</a>/<a href='classes.html#vector'>vectors</a>%'[s] (yaw|pitch)",
 
     "pattern_end"
   ],
-  "since" : "2.0",
-  "description" : "The yaw or pitch of a location. You likely won't need this expression ever if you don't know what this means.",
-  "examples" : "log \"%player%: %location of player%, %player's yaw%, %player's pitch%\" to \"playerlocs.log\""
+  "since" : "2.0, 2.2-dev28 (vector yaw/pitch)",
+  "description" : "The yaw or pitch of a location or vector.",
+  "examples" : "log \"%player%: %location of player%, %player's yaw%, %player's pitch%\" to \"playerlocs.log\"\\nset {_yaw} to yaw of player\\nset {_p} to pitch of target entity"
 },
 
     {"end" : true}
