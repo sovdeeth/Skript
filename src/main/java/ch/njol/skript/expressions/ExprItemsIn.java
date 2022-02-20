@@ -22,8 +22,10 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+import ch.njol.skript.aliases.ItemType;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
@@ -45,20 +47,23 @@ import ch.njol.util.Kleenean;
  */
 @Name("Items In")
 @Description({"All items in an inventory. Useful for looping or storing in a list variable.",
-		"Please note that the positions of the items in the inventory are not saved, only their order is preserved."})
+	"Please note that the positions of the items in the inventory are not saved, only their order is preserved."})
 @Examples({"loop all items in the player's inventory:",
-		"	loop-item is enchanted",
-		"	remove loop-item from the player",
-		"set {inventory::%uuid of player%::*} to items in the player's inventory"})
+	"	loop-item is enchanted",
+	"	remove loop-item from the player",
+	"set {inventory::%uuid of player%::*} to items in the player's inventory"})
 @Since("2.0")
 public class ExprItemsIn extends SimpleExpression<Slot> {
 	static {
-		Skript.registerExpression(ExprItemsIn.class, Slot.class, ExpressionType.PROPERTY, "[(all [[of] the]|the)] items ([with]in|of|contained in|out of) (|1¦inventor(y|ies)) %inventories%");
+		Skript.registerExpression(ExprItemsIn.class, Slot.class, ExpressionType.PROPERTY, "[(all [[of] the]|the)] (items|%-itemtypes%) ([with]in|of|contained in|out of) (|1¦inventor(y|ies)) %inventories%");
 	}
-	
+
 	@SuppressWarnings("null")
 	private Expression<Inventory> invis;
-	
+
+	@Nullable
+	private Expression<ItemType> types;
+
 	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	/*
@@ -66,83 +71,99 @@ public class ExprItemsIn extends SimpleExpression<Slot> {
 	 * be a variable when used with that expression (it is always a anonymous SimpleExpression)
 	 */
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, @Nullable final ParseResult parseResult) {
-		invis = (Expression<Inventory>) exprs[0];
+		types = (Expression<ItemType>) exprs[0];
+		invis = (Expression<Inventory>) exprs[1];
 		if (invis instanceof Variable && !invis.isSingle() && parseResult.mark != 1)
 			Skript.warning("'items in {variable::*}' does not actually represent the items stored in the variable. Use either '{variable::*}' (e.g. 'loop {variable::*}') if the variable contains items, or 'items in inventories {variable::*}' if the variable contains inventories.");
 		return true;
 	}
-	
+
+	private boolean matchesTypeFilter(@Nullable ItemType[] types, @Nullable ItemStack item) {
+		if (types == null)
+			return item != null;
+
+		for (ItemType type : types) {
+			if (type.isSimilar(new ItemType(item))) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	@SuppressWarnings("null")
 	@Override
 	protected Slot[] get(final Event e) {
 		final ArrayList<Slot> r = new ArrayList<>();
+		final ItemType[] types = this.types == null ? null : this.types.getArray(e);
 		for (final Inventory invi : invis.getArray(e)) {
 			for (int i = 0; i < invi.getSize(); i++) {
-				if (invi.getItem(i) != null)
+				if (invi.getItem(i) != null && matchesTypeFilter(types, invi.getItem(i)))
 					r.add(new InventorySlot(invi, i));
 			}
 		}
 		return r.toArray(new Slot[r.size()]);
 	}
-	
+
 	@Override
 	@Nullable
 	public Iterator<Slot> iterator(final Event e) {
 		final Iterator<? extends Inventory> is = invis.iterator(e);
+		final ItemType[] types = this.types == null ? null : this.types.getArray(e);
 		if (is == null || !is.hasNext())
 			return null;
 		return new Iterator<Slot>() {
 			@SuppressWarnings("null")
 			Inventory current = is.next();
-			
+
 			int next = 0;
-			
+
 			@SuppressWarnings("null")
 			@Override
 			public boolean hasNext() {
-				while (next < current.getSize() && current.getItem(next) == null)
+				while (next < current.getSize() && !matchesTypeFilter(types, current.getItem(next)))
 					next++;
 				while (next >= current.getSize() && is.hasNext()) {
 					current = is.next();
 					next = 0;
-					while (next < current.getSize() && current.getItem(next) == null)
+					while (next < current.getSize() && !matchesTypeFilter(types, current.getItem(next)))
 						next++;
 				}
 				return next < current.getSize();
 			}
-			
+
 			@Override
 			public Slot next() {
 				if (!hasNext())
 					throw new NoSuchElementException();
 				return new InventorySlot(current, next++);
 			}
-			
+
 			@Override
 			public void remove() {
 				throw new UnsupportedOperationException();
 			}
 		};
 	}
-	
+
 	@Override
 	public boolean isLoopOf(final String s) {
 		return s.equalsIgnoreCase("item");
 	}
-	
+
 	@Override
 	public String toString(final @Nullable Event e, final boolean debug) {
 		return "items in " + invis.toString(e, debug);
 	}
-	
+
 	@Override
 	public boolean isSingle() {
 		return false;
 	}
-	
+
 	@Override
 	public Class<Slot> getReturnType() {
 		return Slot.class;
 	}
-	
+
 }
