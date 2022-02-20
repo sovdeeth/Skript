@@ -5,8 +5,8 @@ test "filtering items in expression":
 	set slot 1 of {_inv} to dirt
 	set slot 2 of {_inv} to wool
 	set slot 3 of {_inv} to bucket
-	assert all blocks in {_inv} is dirt and wool with "found correct items with ExprItemsIn#get"
-	assert all blocks in {_inv} where [true is true] is dirt and wool with "found correct items with ExprItemsIn#iterator"
+	assert all blocks in {_inv} is dirt and wool with "found correct items with ExprItemsIn##get"
+	assert all blocks in {_inv} where [true is true] is dirt and wool with "found correct items with ExprItemsIn##iterator"
 
 test "unfiltered items in expression":
 	set {_world} to random world out of all worlds
@@ -15,5 +15,5 @@ test "unfiltered items in expression":
 	set slot 1 of {_inv} to dirt
 	set slot 2 of {_inv} to wool
 	set slot 3 of {_inv} to bucket
-	assert all items in {_inv} is dirt, wool and bucket with "found correct items with ExprItemsIn#get"
-	assert all items in {_inv} where [true is true] is dirt, wool and bucket with "found correct items with ExprItemsIn#iterator"
+	assert all items in {_inv} is dirt, wool and bucket with "found correct items with ExprItemsIn##get"
+	assert all items in {_inv} where [true is true] is dirt, wool and bucket with "found correct items with ExprItemsIn##iterator"
