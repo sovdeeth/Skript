@@ -78,12 +78,12 @@ public class ExprItemsIn extends SimpleExpression<Slot> {
 		return true;
 	}
 
-	private boolean matchesTypeFilter(@Nullable ItemType[] types, @Nullable ItemStack item) {
+	private boolean isAllowedItem(@Nullable ItemType[] types, @Nullable ItemStack item) {
 		if (types == null)
 			return item != null;
 
 		for (ItemType type : types) {
-			if (type.isSimilar(new ItemType(item))) {
+			if (new ItemType(item).isSimilar(type)) {
 				return true;
 			}
 		}
@@ -98,7 +98,7 @@ public class ExprItemsIn extends SimpleExpression<Slot> {
 		final ItemType[] types = this.types == null ? null : this.types.getArray(e);
 		for (final Inventory invi : invis.getArray(e)) {
 			for (int i = 0; i < invi.getSize(); i++) {
-				if (invi.getItem(i) != null && matchesTypeFilter(types, invi.getItem(i)))
+				if (isAllowedItem(types, invi.getItem(i)))
 					r.add(new InventorySlot(invi, i));
 			}
 		}
@@ -121,12 +121,12 @@ public class ExprItemsIn extends SimpleExpression<Slot> {
 			@SuppressWarnings("null")
 			@Override
 			public boolean hasNext() {
-				while (next < current.getSize() && !matchesTypeFilter(types, current.getItem(next)))
+				while (next < current.getSize() && !isAllowedItem(types, current.getItem(next)))
 					next++;
 				while (next >= current.getSize() && is.hasNext()) {
 					current = is.next();
 					next = 0;
-					while (next < current.getSize() && !matchesTypeFilter(types, current.getItem(next)))
+					while (next < current.getSize() && !isAllowedItem(types, current.getItem(next)))
 						next++;
 				}
 				return next < current.getSize();
