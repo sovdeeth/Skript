@@ -81,9 +81,11 @@ public class ExprItemsIn extends SimpleExpression<Slot> {
 	private boolean isAllowedItem(@Nullable ItemType[] types, @Nullable ItemStack item) {
 		if (types == null)
 			return item != null;
+		else if (item == null)
+			return false;
 
 		for (ItemType type : types) {
-			if (item != null && new ItemType(item).isSimilar(type)) {
+			if (new ItemType(item).isSimilar(type)) {
 				return true;
 			}
 		}
