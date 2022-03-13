@@ -79,9 +79,9 @@
     
     <h2 class="title">Arguments</h2>
     <p class="subtitle">
-        <a href="https://docs.skriptlang.org/expressions.html#ExprArgument">Arguments</a> follow the command name, and are separated by spaces. Arguments can be any text you'd like. <br>You can make arguments optional by surrounding them with brackets, like this: <code>command /kill [all entities]</code>.
-        <br>However, the real power in arguments comes from type arguments. These allow a command to take in a <a href="https://docs.skriptlang.org/classes.html">type</a>, like <code>command /kill &lt;player&gt;</code>. The player argument can now be
-        referenced in the trigger section by <code>arg-1</code> or <code>argument 1</code> or a <a href="https://docs.skriptlang.org/expressions.html#ExprArgument">number of other ways</a>. You can also name type variables like so: <code>&lt;name:type&gt;</code>, which can then be refenced as a local variable: <code>{_name}</code>. Here's the full pattern for arguments:
+        <a href="/expressions.html#ExprArgument">Arguments</a> follow the command name, and are separated by spaces. Arguments can be any text you'd like. <br>You can make arguments optional by surrounding them with brackets, like this: <code>command /kill [all entities]</code>.
+        <br>However, the real power in arguments comes from type arguments. These allow a command to take in a <a href="/classes.html">type</a>, like <code>command /kill &lt;player&gt;</code>. The player argument can now be
+        referenced in the trigger section by <code>arg-1</code> or <code>argument 1</code> or a <a href="/expressions.html#ExprArgument">number of other ways</a>. You can also name type variables like so: <code>&lt;name:type&gt;</code>, which can then be refenced as a local variable: <code>{_name}</code>. Here's the full pattern for arguments:
     </p> 
     <div class="box skript-code-block left-margin">
         &lt;name:type=%default value%&gt;
@@ -152,7 +152,7 @@
     
     <h2 class="title">Description</h2>
     <p class="subtitle">
-        The description of the command. Other plugins can get/show this, but it's not used by much, so I'll skip the example for this one.
+        The description of the command. Other plugins can get/show this like /help or /help teleport.
     </p>
     
     
@@ -173,7 +173,7 @@
     
     <h2 class="title">Cooldowns</h2>
     <p class="subtitle">
-        This field takes a timespan that the player must wait out before executing the command again. The cooldown can be canceled with <code>cancel the cooldown</code> (<a href="https://docs.skriptlang.org/effects.html#EffCancelCooldown">documentation here</a>).
+        This field takes a timespan that the player must wait out before executing the command again. The cooldown can be canceled with <code>cancel the cooldown</code> (<a href="/effects.html#EffCancelCooldown">documentation here</a>).
         Like with the permissions, you can change the default cooldown message with the <code>cooldown message:</code> field. The remaining time of the cooldown can be displayed with <code>%remaining time%</code> Additionally, you can store the cooldown in a variable with <code>cooldown storage:</code>, in order to store the cooldown even when the server restarts.
     </p>
     <div class="box skript-code-block left-margin">
@@ -240,7 +240,7 @@
     </div>
     
     <p style="padding-bottom: 20px">
-        Guide written by <a href="https://github.com/sovdeeth">sovde</a>.
+        Guide written by <a href="https://github.com/sovdeeth">sovde</a>, with parts used from <a href="https://skripthub.net/tutorials/10">blueyescat's tutorial</a> on skripthub.
     </p>
   <div style="padding-top: 32px;"></div> <!-- Space -->
 </div>
