@@ -6,12 +6,12 @@
         Skript allows you to easily create custom commands in your scripts, like the following:
     </p>
     <div class="box skript-code-block left-margin">
-        # A simple `broadcast` command for broadcasting the text argument.<br>
-        # This is accessible only to users with the `skript.example.broadcast` permission.<br>
+        # A simple "broadcast" command for broadcasting the text argument.<br>
+        # This is accessible only to users with the "skript.example.broadcast" permission.<br>
         <br>
         command /broadcast &lt;text&gt;: <br>
         &nbsp;&nbsp;&nbsp;&nbsp;permission: skript.example.broadcast <br>
-        &nbsp;&nbsp;&nbsp;&nbsp;description: Broadcasts a message to everybody. <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;description: Broadcasts a message to everyone including console. <br>
         &nbsp;&nbsp;&nbsp;&nbsp;trigger: <br>
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;broadcast arg-text <br>
     </div>
@@ -79,7 +79,7 @@
     
     <h2 class="title">Arguments</h2>
     <p class="subtitle">
-        <a href="/expressions.html#ExprArgument">Arguments</a> follow the command name, and are separated by spaces. Arguments can be any text you'd like. <br>You can make arguments optional by surrounding them with brackets, like this: <code>command /kill [all entities]</code>.
+        <a href="/expressions.html#ExprArgument">Arguments</a> follow the command name, and are separated by spaces.<br>You can make arguments optional by surrounding them with square brackets <code>[]</code>, like this: <code>command /kill [all entities]</code>.
         <br>However, the real power in arguments comes from type arguments. These allow a command to take in a <a href="/classes.html">type</a>, like <code>command /kill &lt;player&gt;</code>. The player argument can now be
         referenced in the trigger section by <code>arg-1</code> or <code>argument 1</code> or a <a href="/expressions.html#ExprArgument">number of other ways</a>. You can also name type variables like so: <code>&lt;name:type&gt;</code>, which can then be refenced as a local variable: <code>{_name}</code>. Here's the full pattern for arguments:
     </p> 
@@ -103,7 +103,7 @@
         # heals the player in the argument. If no player is given, it will heal the sender.<br>
         command /heal [&lt;player=%player%&gt;]:<br>
         &nbsp;&nbsp;&nbsp;&nbsp;trigger: <br>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;heal %argument 1%<br> 
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;heal argument 1<br> 
         <br>
         
         # this can be used like /kill zombies, /kill creepers and animals in radius 100 or /kill monsters in the radius 6. <br> # the radius will default to 20 if isn't entered.<br>
@@ -125,7 +125,7 @@
     
     <h2 class="title">Aliases</h2>
     <p class="subtitle">
-        Aliases are alternate names for your command. For example, the command <code>/teleport</code> could have an alias <code>/tp</code>. Like in the command name, the / is optional.
+        Aliases are alternate names for your command. For example, the command <code>/teleport</code> could have an alias <code>/tp</code>. Like in the command name, the forward slash (<code>/</code>) is optional.
     </p>
     <div class="box skript-code-block left-margin">
         # this command can be run by "/teleport" or by "/tp".<br>
@@ -180,16 +180,16 @@
         command /vote:<br>
         &nbsp;&nbsp;&nbsp;&nbsp;cooldown: 1 day<br>
         &nbsp;&nbsp;&nbsp;&nbsp;cooldown message: You can only vote once a day!<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;cooldown storage: {vote::cooldown::%player%}<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;cooldown storage: {vote::cooldown::%uuid of player%}<br>
         &nbsp;&nbsp;&nbsp;&nbsp;trigger: <br>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;add 1 to {vote::%player%}<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;add 1 to {vote::players::%uuid of player%}<br>
     </div>
     
     
     
     <h2 class="title">The Trigger Section</h2>
     <p class="subtitle">
-        This section is where all the code the command should run is located. I'm sure you're familiar with how it works from the previous examples, but in case you're still unsure, some more examples of commands will be displayed here. You can see these example commands and more in the <code>scripts/-examples/commands.sk</code> file in your server.
+        This section is where all the code the command should run is located. I'm sure you're familiar with how it works from the previous examples, but in case you're still unsure, some more examples of commands will be displayed here. You can see these example commands and more in the <code>/plugins/Skript/scripts/-examples/commands.sk</code> file in your server.
     </p>
     <div class="box skript-code-block left-margin">
         command /item &lt;items&gt;:<br>
@@ -200,7 +200,7 @@
         &nbsp;&nbsp;&nbsp;&nbsp;permission: skript.example.item<br>
         &nbsp;&nbsp;&nbsp;&nbsp;cooldown: 30 seconds<br>
         &nbsp;&nbsp;&nbsp;&nbsp;cooldown message: You need to wait %remaining time% to use this command again.<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;cooldown bypass: skript.example.cooldown<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;cooldown bypass: skript.example.cooldown.bypass<br>
         &nbsp;&nbsp;&nbsp;&nbsp;trigger:<br>
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if player has permission "skript.example.item.all":<br>
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;give arguments to player<br>
@@ -214,7 +214,7 @@
     <br>
     <div class="box skript-code-block left-margin">
         command /home &lt;text&gt; [&lt;text&gt;]:<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;description: Set, delete or travel to your home.<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;description: Set, delete or teleport to your home.<br>
         &nbsp;&nbsp;&nbsp;&nbsp;usage: /home set/remove &lt;name&gt;, /home &lt;name&gt;<br>
         &nbsp;&nbsp;&nbsp;&nbsp;permission: skript.example.home<br>
         &nbsp;&nbsp;&nbsp;&nbsp;executable by: players<br>
