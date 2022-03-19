@@ -20,8 +20,6 @@
         That "/broadcast" command only shows a few of the options you have available when creating a custom command.
     </p>
     
-    
-    
     <h2 class="title">Command Pattern</h2>
     <p class="subtitle">
         Here's the full list of features that you can use in your commands. They're all optional, except for the trigger section. We'll explain each one individually below.
@@ -52,9 +50,6 @@
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# The code to run goes here.
     </div><br>
     
-    
-    
-    
     <h2 class="title">Command Name</h2>
     <p class="subtitle">
         The command name is what comes immediately after <code>command</code>. It can consist of any characters you want, except for space. Additionally, the / in front of the command is optional. This means
@@ -74,14 +69,11 @@
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;broadcast "Command: //set!"<br>
     </div>
     
-    
-    
-    
     <h2 class="title">Arguments</h2>
     <p class="subtitle">
         <a href="/expressions.html#ExprArgument">Arguments</a> follow the command name, and are separated by spaces.<br>You can make arguments optional by surrounding them with square brackets <code>[]</code>, like this: <code>command /kill [all entities]</code>.
-        <br>However, the real power in arguments comes from type arguments. These allow a command to take in a <a href="/classes.html">type</a>, like <code>command /kill &lt;player&gt;</code>. The player argument can now be
-        referenced in the trigger section by <code>arg-1</code> or <code>argument 1</code> or a <a href="/expressions.html#ExprArgument">number of other ways</a>. You can also name type variables like so: <code>&lt;name:type&gt;</code>, which can then be refenced as a local variable: <code>{_name}</code>. Here's the full pattern for arguments:
+        <br>However, the real power in arguments comes from type arguments. These allow a command to take in a <a href="/classes.html">type</a>, like <code>command /kill &lt;player&gt;</code>. Type arguments must be surrounded by angle brackets <code>&lt;&gt;</code> and can also be made optional by surrounding them with square brackets: <code>[&lt;player&gt;]</code>.
+        <br> The argument can then be referenced in the trigger section by <code>arg-1</code> or <code>argument 1</code> or a <a href="/expressions.html#ExprArgument">number of other ways</a>. You can also name type variables like so: <code>&lt;name:type&gt;</code>, which can then be refenced as a local variable: <code>{_name}</code>. Here's the full pattern for arguments:
     </p> 
     <div class="box skript-code-block left-margin">
         &lt;name:type=%default value%&gt;
@@ -121,8 +113,6 @@
         
     </div>
     
-    
-    
     <h2 class="title">Aliases</h2>
     <p class="subtitle">
         Aliases are alternate names for your command. For example, the command <code>/teleport</code> could have an alias <code>/tp</code>. Like in the command name, the forward slash (<code>/</code>) is optional.
@@ -135,8 +125,6 @@
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;teleport player to location(arg-1, arg-2, arg-3)<br>
     </div>
     
-    
-    
     <h2 class="title">Executable by</h2>
     <p class="subtitle">
         Who can execute this command. The options are <code>players</code>, <code>console</code>, or <code>players and console</code>.
@@ -148,14 +136,10 @@
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shutdown the server<br>
     </div>
     
-    
-    
     <h2 class="title">Description</h2>
     <p class="subtitle">
         The description of the command. Other plugins can get/show this like /help or /help teleport.
     </p>
-    
-    
     
     <h2 class="title">Permissions</h2>
     <p class="subtitle">
@@ -168,8 +152,6 @@
         &nbsp;&nbsp;&nbsp;&nbsp;trigger: <br>
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shutdown the server<br>
     </div>
-    
-    
     
     <h2 class="title">Cooldowns</h2>
     <p class="subtitle">
@@ -184,8 +166,6 @@
         &nbsp;&nbsp;&nbsp;&nbsp;trigger: <br>
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;add 1 to {vote::players::%uuid of player%}<br>
     </div>
-    
-    
     
     <h2 class="title">The Trigger Section</h2>
     <p class="subtitle">
