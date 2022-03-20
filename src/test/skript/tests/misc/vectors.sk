@@ -1,0 +1,27 @@
+test "manipulateVector":
+    set {_vector} to vector(3, 0, 0)
+    assert length of {_vector} = 3 with "vector length should have been 3"
+    assert yaw of {_vector} = 270 with "vector yaw should have been 270"
+    assert pitch of {_vector} = 0 with "vector pitch should have been 0"
+
+    assert x component of {_vector} = 3 with "vector x component should have been 3"
+    assert y component of {_vector} = 0 with "vector y component should have been 0"
+    assert z component of {_vector} = 0 with "vector z component should have been 0"
+
+    add 135 to yaw of {_vector}
+    assert length of {_vector} = 3 with "vector length should have been 3"
+    assert yaw of {_vector} = 45 with "vector yaw should have been 45"
+    assert pitch of {_vector} = 0 with "vector pitch should have been 0"
+
+    assert x component of {_vector} = -0.7071 with "vector x component should have been -0.7071"
+    assert y component of {_vector} = 0 with "vector y component should have been 0"
+    assert z component of {_vector} = 0.7071 with "vector z component should have been 0.7071"
+
+    add 45 to pitch of {_vector}
+    assert length of {_vector} = 3 with "vector length should have been 3"
+    assert yaw of {_vector} = 45 with "vector yaw should have been 45"
+    assert pitch of {_vector} = 45 with "vector pitch should have been 45"
+
+    assert x component of {_vector} = -0.5 with "vector x component should have been -0.5"
+    assert y component of {_vector} = -0.7071 with "vector y component should have been -0.7071"
+    assert z component of {_vector} = 0.5 with "vector z component should have been 0.5"

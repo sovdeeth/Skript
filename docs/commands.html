@@ -90,7 +90,7 @@
         # broadcasts the name of the given player. "of" is optional.<br>
         command /name [of] &lt;player&gt;:<br>
         &nbsp;&nbsp;&nbsp;&nbsp;trigger: <br>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;broadcast "Player's name: %arg-1%, %argument 1%, or %player-argument%"<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;send "Player's name: %arg-1%, %argument 1%, or %player-argument%" to player # here 'player' refers to the player executing the command<br>
         <br>
         # heals the player in the argument. If no player is given, it will heal the sender.<br>
         command /heal [&lt;player=%player%&gt;]:<br>
@@ -100,6 +100,7 @@
         
         # this can be used like /kill zombies, /kill creepers and animals in radius 100 or /kill monsters in the radius 6. <br> # the radius will default to 20 if isn't entered.<br>
         command /kill &lt;entity types&gt; [in [the] radius &lt;number = 20&gt;]:<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;executable by: players # this will be explained later on<br>
         &nbsp;&nbsp;&nbsp;&nbsp;trigger: <br>
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;loop entities in radius arg-2 of player:<br>
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if loop-entity is arg-1:<br>
@@ -113,18 +114,6 @@
         
     </div>
     
-    <h2 class="title">Aliases</h2>
-    <p class="subtitle">
-        Aliases are alternate names for your command. For example, the command <code>/teleport</code> could have an alias <code>/tp</code>. Like in the command name, the forward slash (<code>/</code>) is optional.
-    </p>
-    <div class="box skript-code-block left-margin">
-        # this command can be run by "/teleport" or by "/tp".<br>
-        command /teleport &lt;number&gt; &lt;number&gt; &lt;number&gt;:<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;aliases: tp<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;trigger: <br>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;teleport player to location(arg-1, arg-2, arg-3)<br>
-    </div>
-    
     <h2 class="title">Executable by</h2>
     <p class="subtitle">
         Who can execute this command. The options are <code>players</code>, <code>console</code>, or <code>players and console</code>.
@@ -134,6 +123,19 @@
         &nbsp;&nbsp;&nbsp;&nbsp;executable by: console<br>
         &nbsp;&nbsp;&nbsp;&nbsp;trigger: <br>
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shutdown the server<br>
+    </div>
+    
+    <h2 class="title">Aliases</h2>
+    <p class="subtitle">
+        Aliases are alternate names for your command. For example, the command <code>/teleport</code> could have an alias <code>/tp</code>. Like in the command name, the forward slash (<code>/</code>) is optional.
+    </p>
+    <div class="box skript-code-block left-margin">
+        # this command can be run by "/teleport" or by "/tp".<br>
+        command /teleport &lt;number&gt; &lt;number&gt; &lt;number&gt;:<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;executable by: players<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;aliases: tp<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;trigger: <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;teleport player to location(arg-1, arg-2, arg-3)<br>
     </div>
     
     <h2 class="title">Description</h2>
@@ -160,6 +162,7 @@
     </p>
     <div class="box skript-code-block left-margin">
         command /vote:<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;executable by: players<br>
         &nbsp;&nbsp;&nbsp;&nbsp;cooldown: 1 day<br>
         &nbsp;&nbsp;&nbsp;&nbsp;cooldown message: You can only vote once a day!<br>
         &nbsp;&nbsp;&nbsp;&nbsp;cooldown storage: {vote::cooldown::%uuid of player%}<br>
