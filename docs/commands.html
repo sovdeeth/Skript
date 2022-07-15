@@ -41,7 +41,7 @@
         &nbsp;&nbsp;&nbsp;&nbsp;cooldown: 
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# a timespan, during which the command can't be used again <br>
         &nbsp;&nbsp;&nbsp;&nbsp;cooldown message: 
-        &nbsp;&nbsp;&nbsp;# the message sent when the command is used again too fast <br>
+        &nbsp;&nbsp;&nbsp;# the message sent when the command is used before the cooldown is over <br>
         &nbsp;&nbsp;&nbsp;&nbsp;cooldown bypass: 
         &nbsp;&nbsp;&nbsp;&nbsp;# the permission necessary to bypass the cooldown <br>
         &nbsp;&nbsp;&nbsp;&nbsp;cooldown storage: 
@@ -52,7 +52,7 @@
     
     <h2 class="title">Command Name</h2>
     <p class="subtitle">
-        The command name is what comes immediately after <code>command</code>. It can consist of any characters you want, except for space. Additionally, the / in front of the command is optional. This means
+        The command name is what comes immediately after <code>command</code>. It can consist of any characters you want, except for whitespace characters. Additionally, the forward slash (<code>/</code>) in front of the command is optional. This means
         <code>command /broadcast</code> and <code>command broadcast</code> are the same. Here are a few examples:
     </p>
     <div class="box skript-code-block left-margin">
@@ -114,7 +114,7 @@
         
     </div>
     
-    <h2 class="title">Executable by</h2>
+    <h2 class="title">Executable By</h2>
     <p class="subtitle">
         Who can execute this command. The options are <code>players</code>, <code>console</code>, or <code>players and console</code>.
     </p>
