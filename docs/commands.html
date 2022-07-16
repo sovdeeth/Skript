@@ -37,7 +37,7 @@
         &nbsp;&nbsp;&nbsp;&nbsp;permission: 
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# the permission needed to use the command <br>
         &nbsp;&nbsp;&nbsp;&nbsp;permission message:
-        &nbsp;# the message sent to users without the correct permissions <br>
+        &nbsp;# the message sent to users without the correct permission <br>
         &nbsp;&nbsp;&nbsp;&nbsp;cooldown: 
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# a timespan, during which the command can't be used again <br>
         &nbsp;&nbsp;&nbsp;&nbsp;cooldown message: 
@@ -143,9 +143,9 @@
         The description of the command. Other plugins can get/show this like /help or /help teleport.
     </p>
     
-    <h2 class="title">Permissions</h2>
+    <h2 class="title">Permission</h2>
     <p class="subtitle">
-        The permissions required to execute this command. The message sent to players without the proper permissions can be customized with the <code>permission message:</code> field.
+        The permission required to execute this command. The message sent to players without the proper permission can be customized with the <code>permission message:</code> field.
     </p>
     <div class="box skript-code-block left-margin">
         command /shutdown:<br>
@@ -158,7 +158,7 @@
     <h2 class="title">Cooldowns</h2>
     <p class="subtitle">
         This field takes a timespan that the player must wait out before executing the command again. The cooldown can be canceled with <code>cancel the cooldown</code> (<a href="/effects.html#EffCancelCooldown">documentation here</a>).
-        Like with the permissions, you can change the default cooldown message with the <code>cooldown message:</code> field. Additionally, you can store the cooldown in a variable with <code>cooldown storage:</code>, in order to store the cooldown even when the server restarts.
+        Like with the permission, you can change the default cooldown message with the <code>cooldown message:</code> field. Additionally, you can store the cooldown in a variable with <code>cooldown storage:</code>, in order to store the cooldown even when the server restarts.
         You can also set up a permission that allows players to bypass the cooldown with <code>bypass cooldown permission:</code>.
     </p>
     <div class="box skript-code-block left-margin">
