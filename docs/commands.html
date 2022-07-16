@@ -35,7 +35,7 @@
         &nbsp;&nbsp;&nbsp;&nbsp;description: 
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# the command's description <br>
         &nbsp;&nbsp;&nbsp;&nbsp;permission: 
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# the permissions needed to use the command <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# the permission needed to use the command <br>
         &nbsp;&nbsp;&nbsp;&nbsp;permission message:
         &nbsp;# the message sent to users without the correct permissions <br>
         &nbsp;&nbsp;&nbsp;&nbsp;cooldown: 
@@ -158,7 +158,8 @@
     <h2 class="title">Cooldowns</h2>
     <p class="subtitle">
         This field takes a timespan that the player must wait out before executing the command again. The cooldown can be canceled with <code>cancel the cooldown</code> (<a href="/effects.html#EffCancelCooldown">documentation here</a>).
-        Like with the permissions, you can change the default cooldown message with the <code>cooldown message:</code> field. The remaining time of the cooldown can be displayed with <code>%remaining time%</code> Additionally, you can store the cooldown in a variable with <code>cooldown storage:</code>, in order to store the cooldown even when the server restarts.
+        Like with the permissions, you can change the default cooldown message with the <code>cooldown message:</code> field. Additionally, you can store the cooldown in a variable with <code>cooldown storage:</code>, in order to store the cooldown even when the server restarts.
+        You can also set up a permission that allows players to bypass the cooldown with <code>bypass cooldown permission:</code>.
     </p>
     <div class="box skript-code-block left-margin">
         command /vote:<br>
@@ -166,6 +167,23 @@
         &nbsp;&nbsp;&nbsp;&nbsp;cooldown: 1 day<br>
         &nbsp;&nbsp;&nbsp;&nbsp;cooldown message: You can only vote once a day!<br>
         &nbsp;&nbsp;&nbsp;&nbsp;cooldown storage: {vote::cooldown::%uuid of player%}<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;cooldown bypass: vote.cooldown.bypass<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;trigger: <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;add 1 to {vote::players::%uuid of player%}<br>
+    </div>
+    <p class="subtitle">
+        There are also a number of expressions you can use to interact with the cooldowns of commands. You can get the remaining time with <code>remaining time</code>, the elapsed time with <code>elapsed time</code>, and the total time with <code>cooldown time</code>. You can also get the bypass permission with <code>bypass permission</code>.<br>
+        If you've enabled <code>keep command last usage dates</code> in your <code>config.sk</code> file, you can get the last time the player used the command with <code>last usage date</code>.<br>
+        You can see the full syntax for these expressions <a href="https://docs.skriptlang.org/expressions.html#ExprCmdCooldownInfo">here</a>.
+    </p>
+    <div class="box skript-code-block left-margin">
+        # The same vote command but with an improved cooldown message.<br>
+        command /vote:<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;executable by: players<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;cooldown: 1 day<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;cooldown message: You can only vote once a day! You last voted at %last usage%, and it's only been %elapsed time%. Please wait another %remaining time%.<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;cooldown storage: {vote::cooldown::%uuid of player%}<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;cooldown bypass: vote.cooldown.bypass<br>
         &nbsp;&nbsp;&nbsp;&nbsp;trigger: <br>
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;add 1 to {vote::players::%uuid of player%}<br>
     </div>
@@ -223,7 +241,7 @@
     </div>
     
     <p style="padding-bottom: 20px">
-        Guide written by <a href="https://github.com/sovdeeth">sovde</a>, with parts used with permission from <a href="https://skripthub.net/tutorials/10">blueyescat's tutorial</a> on skripthub.
+        Guide written by <a href="https://github.com/sovdeeth">sovde</a>, with parts used with permission from <a href="https://skripthub.net/tutorials/10">blueyescat's tutorial</a> on <a href="https://skripthub.net/">SkriptHub</a>.
     </p>
   <div style="padding-top: 32px;"></div> <!-- Space -->
 </div>
