@@ -97,7 +97,6 @@
         &nbsp;&nbsp;&nbsp;&nbsp;trigger: <br>
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;heal argument 1<br> 
         <br>
-        
         # this can be used like /kill zombies, /kill creepers and animals in radius 100 or /kill monsters in the radius 6. <br> # the radius will default to 20 if isn't entered.<br>
         command /kill &lt;entity types&gt; [in [the] radius &lt;number = 20&gt;]:<br>
         &nbsp;&nbsp;&nbsp;&nbsp;executable by: players # this will be explained later on<br>
@@ -111,7 +110,23 @@
         command /broadcast [&lt;text input:text="default text"&gt;]:<br>
         &nbsp;&nbsp;&nbsp;&nbsp;trigger: <br>
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;broadcast {_text input}<br>
-        
+        <br>
+        # Using optional commands as flags that don't have to all be used<br>
+        # eg: <br>
+        # /give-item stone sword with name Sword in the Stone and with lore Haha, get it?<br>
+        # or<br>
+        # /give-item heart of the sea with lore &bA murky blue orb.<br>
+        command /give-item <item> [with name <text>] [[and] with lore <text>]:<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;trigger:<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;set {_item} to arg-1<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# set name<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if arg-2 is set:<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;set name of {_item} to formatted arg-2<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# set lore<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if arg-3 is set:<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;set lore of {_item} to formatted arg-3<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# give item<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;give player {_item}<br>
     </div>
     
     <h2 class="title">Executable By</h2>
