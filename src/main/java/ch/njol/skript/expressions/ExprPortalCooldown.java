@@ -32,7 +32,7 @@ import org.bukkit.event.Event;
 import org.eclipse.jdt.annotation.Nullable;
 
 @Name("Portal Cooldown")
-@Description("The amount of time before an entity can use a portal. By default, this is 15 seconds after exiting a nether portal.")
+@Description("The amount of time before an entity can use a portal. By default, this is 15 seconds after exiting a nether portal. Using reset will set the cooldown back to the default 15 seconds.")
 @Examples({
 	"on portal:",
 	"\twait 1 tick",
@@ -42,7 +42,7 @@ import org.eclipse.jdt.annotation.Nullable;
 public class ExprPortalCooldown extends SimplePropertyExpression<Entity, Timespan> {
 
 	static {
-		register(ExprPortalCooldown.class, Timespan.class, "portal cool[-| ]down", "entities");
+		register(ExprPortalCooldown.class, Timespan.class, "portal cooldown", "entities");
 	}
 
 	@Override
@@ -61,8 +61,9 @@ public class ExprPortalCooldown extends SimplePropertyExpression<Entity, Timespa
 			case DELETE:
 			case REMOVE:
 				return CollectionUtils.array(Timespan.class);
+			default:
+				return super.acceptChange(mode);
 		}
-		return null;
 	}
 
 	@Override
@@ -77,8 +78,9 @@ public class ExprPortalCooldown extends SimplePropertyExpression<Entity, Timespa
 					entity.setPortalCooldown(Math.max(entity.getPortalCooldown() + change, 0));
 				}
 				break;
-			case DELETE:
 			case RESET:
+				change = 15 * 20; // 15 seconds, default vanilla portal cooldown.
+			case DELETE:
 			case SET:
 				for (Entity entity : entities) {
 					entity.setPortalCooldown(Math.max(change, 0));
