@@ -48,7 +48,7 @@ public class ExprPortalCooldown extends SimplePropertyExpression<Entity, Timespa
 	@Override
 	@Nullable
 	public Timespan convert(Entity entity) {
-		return Timespan.fromTicks_i(entity.getPortalCooldown());
+		return Timespan.fromTicks(entity.getPortalCooldown());
 	}
 
 	@Override
@@ -68,7 +68,7 @@ public class ExprPortalCooldown extends SimplePropertyExpression<Entity, Timespa
 	@Override
 	public void change(Event event, @Nullable Object[] delta, Changer.ChangeMode mode) {
 		Entity[] entities = getExpr().getArray(event);
-		int change = delta == null ? 0 : (int) ((Timespan) delta[0]).getTicks_i();
+		int change = delta == null ? 0 : (int) ((Timespan) delta[0]).getTicks();
 		switch (mode) {
 			case REMOVE:
 				change = -change;
