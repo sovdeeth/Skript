@@ -19,20 +19,20 @@
 package ch.njol.skript.expressions;
 
 import ch.njol.skript.classes.Changer;
+import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
 import ch.njol.skript.expressions.base.SimplePropertyExpression;
 import ch.njol.skript.util.Timespan;
-import ch.njol.skript.util.WeatherType;
 import ch.njol.util.coll.CollectionUtils;
 import org.bukkit.entity.Entity;
 import org.bukkit.event.Event;
 import org.eclipse.jdt.annotation.Nullable;
 
 @Name("Portal Cooldown")
-@Description("The amount of time before an entity can use a portal. By default, this is 15 seconds after exiting a nether portal. Using reset will set the cooldown back to the default 15 seconds.")
+@Description("The amount of time before an entity can use a portal. By default, it is 15 seconds after exiting a nether portal. Resetting will set the cooldown back to the default 15 seconds.")
 @Examples({
 	"on portal:",
 	"\twait 1 tick",
@@ -45,6 +45,10 @@ public class ExprPortalCooldown extends SimplePropertyExpression<Entity, Timespa
 		register(ExprPortalCooldown.class, Timespan.class, "portal cooldown", "entities");
 	}
 
+	// Default cooldown for nether portals is 15 seconds:
+	// https://minecraft.fandom.com/wiki/Nether_portal#Behavior
+	private static final int DEFAULT_COOLDOWN = 15 * 20;
+
 	@Override
 	@Nullable
 	public Timespan convert(Entity entity) {
@@ -53,7 +57,7 @@ public class ExprPortalCooldown extends SimplePropertyExpression<Entity, Timespa
 
 	@Override
 	@Nullable
-	public Class<?>[] acceptChange(Changer.ChangeMode mode) {
+	public Class<?>[] acceptChange(ChangeMode mode) {
 		switch (mode) {
 			case SET:
 			case ADD:
@@ -62,12 +66,12 @@ public class ExprPortalCooldown extends SimplePropertyExpression<Entity, Timespa
 			case REMOVE:
 				return CollectionUtils.array(Timespan.class);
 			default:
-				return super.acceptChange(mode);
+				return null;
 		}
 	}
 
 	@Override
-	public void change(Event event, @Nullable Object[] delta, Changer.ChangeMode mode) {
+	public void change(Event event, @Nullable Object[] delta, ChangeMode mode) {
 		Entity[] entities = getExpr().getArray(event);
 		int change = delta == null ? 0 : (int) ((Timespan) delta[0]).getTicks();
 		switch (mode) {
@@ -79,7 +83,7 @@ public class ExprPortalCooldown extends SimplePropertyExpression<Entity, Timespa
 				}
 				break;
 			case RESET:
-				change = 15 * 20; // 15 seconds, default vanilla portal cooldown.
+				change = DEFAULT_COOLDOWN;
 			case DELETE:
 			case SET:
 				for (Entity entity : entities) {
