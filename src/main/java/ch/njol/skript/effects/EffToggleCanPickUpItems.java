@@ -21,7 +21,7 @@ package ch.njol.skript.effects;
 import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.SkriptParser;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.util.Kleenean;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.Event;
@@ -32,7 +32,6 @@ public class EffToggleCanPickUpItems extends Effect {
 	static {
 		Skript.registerEffect(EffToggleCanPickUpItems.class,
 				"allow %livingentities% to pick (up items|items up)",
-				"[negated:(don't|do not)] let %livingentities% pick (up items|items up)",
 				"(forbid|disallow) %livingentities% (from|to) pick[ing] (up items|items up)");
 	}
 
@@ -40,24 +39,27 @@ public class EffToggleCanPickUpItems extends Effect {
 	private boolean allowPickUp;
 
 	@Override
-	public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult) {
+	public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
 		entityExpr = (Expression<LivingEntity>) exprs[0];
-		allowPickUp = !(matchedPattern == 2 || parseResult.hasTag("negated"));
+		allowPickUp = matchedPattern == 0;
 		return true;
 	}
 
 
 	@Override
 	protected void execute(Event event) {
-		for (LivingEntity entity : entityExpr.getArray(event))
+		for (LivingEntity entity : entityExpr.getArray(event)) {
 			entity.setCanPickupItems(allowPickUp);
+		}
 	}
 
 	@Override
 	public String toString(@Nullable Event event, boolean debug) {
-		if (allowPickUp)
+		if (allowPickUp) {
 			return "allow " + entityExpr.toString(event, debug) + " to pick up items";
-		else
+		} else {
 			return "forbid " + entityExpr.toString(event, debug) + " from picking up items";
+		}
 	}
+
 }

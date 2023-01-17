@@ -5,4 +5,4 @@ test "entity can pick up items":
 	assert {_zombie} can pick up items with "failed to allow zombie to pick up items"
 	forbid {_zombie} from picking items up
 	assert {_zombie} can't pick up items with "failed to disallow zombie to pick up items"
-	delete {_zombie}
+	delete random entity of {_zombie}

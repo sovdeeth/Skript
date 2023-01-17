@@ -41,4 +41,5 @@ public class CondCanPickUpItems extends PropertyCondition<LivingEntity> {
 	protected String getPropertyName() {
 		return "pick up items";
 	}
+
 }
