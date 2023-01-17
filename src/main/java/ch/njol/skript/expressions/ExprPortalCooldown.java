@@ -27,12 +27,14 @@ import ch.njol.skript.doc.Since;
 import ch.njol.skript.expressions.base.SimplePropertyExpression;
 import ch.njol.skript.util.Timespan;
 import ch.njol.util.coll.CollectionUtils;
+import org.bukkit.GameMode;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.eclipse.jdt.annotation.Nullable;
 
 @Name("Portal Cooldown")
-@Description("The amount of time before an entity can use a portal. By default, it is 15 seconds after exiting a nether portal. Resetting will set the cooldown back to the default 15 seconds.")
+@Description("The amount of time before an entity can use a portal. By default, it is 15 seconds after exiting a nether portal or end gateway. Players in survival/adventure get a cooldown of 0.5 seconds, while those in creative get no cooldown. Resetting will set the cooldown back to the default 15 seconds for non-player entities and 0.5 seconds for players.")
 @Examples({
 	"on portal:",
 	"\twait 1 tick",
@@ -48,6 +50,8 @@ public class ExprPortalCooldown extends SimplePropertyExpression<Entity, Timespa
 	// Default cooldown for nether portals is 15 seconds:
 	// https://minecraft.fandom.com/wiki/Nether_portal#Behavior
 	private static final int DEFAULT_COOLDOWN = 15 * 20;
+	// Players only get a 0.5 second cooldown in survival/adventure:
+	private static final int DEFAULT_COOLDOWN_PLAYER = 10;
 
 	@Override
 	@Nullable
@@ -83,7 +87,20 @@ public class ExprPortalCooldown extends SimplePropertyExpression<Entity, Timespa
 				}
 				break;
 			case RESET:
-				change = DEFAULT_COOLDOWN;
+				for (Entity entity : entities) {
+					// Players in survival/adventure get a 0.5 second cooldown, while those in creative get no cooldown
+					if (entity instanceof Player) {
+						if (((Player) entity).getGameMode() == GameMode.CREATIVE) {
+							entity.setPortalCooldown(0);
+						} else {
+							entity.setPortalCooldown(DEFAULT_COOLDOWN_PLAYER);
+						}
+					// Non-player entities get a 15 second cooldown
+					} else {
+						entity.setPortalCooldown(DEFAULT_COOLDOWN);
+					}
+				}
+				break;
 			case DELETE:
 			case SET:
 				for (Entity entity : entities) {
