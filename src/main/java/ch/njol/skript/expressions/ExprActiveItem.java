@@ -18,42 +18,54 @@
  */
 package ch.njol.skript.expressions;
 
-import ch.njol.skript.Skript;
-import ch.njol.skript.classes.Changer;
+import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.expressions.base.PropertyExpression;
-import ch.njol.skript.expressions.base.SimplePropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
-import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.slot.Slot;
 import ch.njol.util.Kleenean;
+import ch.njol.util.coll.CollectionUtils;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.EquipmentSlot;
 import ch.njol.skript.util.slot.EquipmentSlot.EquipSlot;
+import org.bukkit.inventory.ItemStack;
 import org.eclipse.jdt.annotation.Nullable;
 
-public class ExprRaisedHand extends PropertyExpression<LivingEntity, Slot> {
+import java.util.Collections;
+
+public class ExprActiveItem extends PropertyExpression<LivingEntity, ItemStack> {
 
 	static {
-		register(ExprRaisedHand.class, Slot.class, "raised (tool|hand item|item|weapon)", "livingentities");
+		register(ExprActiveItem.class, ItemStack.class, "(raised|active) (tool|item|weapon)", "livingentities");
 	}
 
 	@Override
-	protected Slot[] get(Event event, LivingEntity[] source) {
-		return get(source, (entity) -> {
-			// ensure there's actually a raised hand. getHandRaised returns the main hand if neither hand is raised.
-			if (!entity.isHandRaised())
-				return null;
+	public @Nullable Class<?>[] acceptChange(ChangeMode mode) {
+		return CollectionUtils.array(ItemStack.class);
+	}
 
-			EquipmentSlot slot = entity.getHandRaised();
-			EntityEquipment equipment = entity.getEquipment();
-			if (equipment == null)
-				return null;
+	@Override
+	public void change(Event event, @Nullable Object[] delta, ChangeMode mode) {
+		LivingEntity entity = getExpr().getSingle(event);
+		if (entity == null) return;
 
-			return new ch.njol.skript.util.slot.EquipmentSlot(equipment, (slot == EquipmentSlot.HAND ? EquipSlot.TOOL : EquipSlot.OFF_HAND));
-		});
+		if (!entity.isHandRaised()) return;
+
+		EquipmentSlot bukkitSlot = entity.getHandRaised();
+		EntityEquipment equipment = entity.getEquipment();
+		ch.njol.skript.util.slot.EquipmentSlot skriptSlot = new ch.njol.skript.util.slot.EquipmentSlot(equipment, (bukkitSlot == EquipmentSlot.HAND ? EquipSlot.TOOL : EquipSlot.OFF_HAND));
+
+		switch (mode) {
+			case SET:
+				skriptSlot.setItem((ItemStack) delta[0]);
+		}
+	}
+
+	@Override
+	protected ItemStack[] get(Event event, LivingEntity[] source) {
+		return get(source, LivingEntity::getActiveItem);
 	}
 
 	@Override
@@ -68,8 +80,8 @@ public class ExprRaisedHand extends PropertyExpression<LivingEntity, Slot> {
 	}
 
 	@Override
-	public Class<? extends Slot> getReturnType() {
-		return Slot.class;
+	public Class<? extends ItemStack> getReturnType() {
+		return ItemStack.class;
 	}
 
 
