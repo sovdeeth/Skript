@@ -16,43 +16,44 @@
  *
  * Copyright Peter Güttinger, SkriptLang team and contributors
  */
-package ch.njol.skript.expressions;
+package ch.njol.skript.effects;
 
-import ch.njol.skript.expressions.base.PropertyExpression;
+import ch.njol.skript.Skript;
+import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.SkriptParser;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.util.Kleenean;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.Event;
-import org.bukkit.inventory.ItemStack;
 import org.eclipse.jdt.annotation.Nullable;
 
-public class ExprActiveItem extends PropertyExpression<LivingEntity, ItemStack> {
+public class EffCancelItemUse extends Effect {
 
 	static {
-		register(ExprActiveItem.class, ItemStack.class, "(raised|active) (tool|item|weapon)", "livingentities");
+		Skript.registerEffect(EffCancelItemUse.class,
+			"(cancel|interrupt) %livingentities%'[s] [active|current] item us(e|age)",
+			"(cancel|interrupt) [active|current] item us(e|age) [of %livingentities%]");
 	}
 
-	@Override
-	protected ItemStack[] get(Event event, LivingEntity[] source) {
-		return get(source, LivingEntity::getActiveItem);
-	}
+	Expression<LivingEntity> entityExpression;
 
 	@Override
-	public String toString(@Nullable Event event, boolean debug) {
-		return "raised tool of " + getExpr().toString(event, debug);
-	}
-
-	@Override
-	public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult) {
-		setExpr((Expression<LivingEntity>) exprs[0]);
+	public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
+		entityExpression = (Expression<LivingEntity>) exprs[0];
 		return true;
 	}
 
 	@Override
-	public Class<? extends ItemStack> getReturnType() {
-		return ItemStack.class;
+	protected void execute(Event event) {
+		LivingEntity[] entities = entityExpression.getArray(event);
+		for (LivingEntity entity : entities) {
+			entity.clearActiveItem();
+		}
 	}
 
+	@Override
+	public String toString(@Nullable Event event, boolean debug) {
+		return "cancel item usage of " + entityExpression.toString(event, debug);
+	}
 
 }
