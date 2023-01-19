@@ -40,7 +40,7 @@ public class ExprActiveItem extends PropertyExpression<LivingEntity, ItemStack> 
 
 	@Override
 	public String toString(@Nullable Event event, boolean debug) {
-		return "raised tool of " + getExpr().toString(event, debug);
+		return "active item of " + getExpr().toString(event, debug);
 	}
 
 	@Override
