@@ -18,6 +18,11 @@
  */
 package ch.njol.skript.expressions;
 
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.RequiredPlugins;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -27,6 +32,16 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.Event;
 import org.eclipse.jdt.annotation.Nullable;
 
+@Name("Active Item Use Time")
+@Description("Returns the time that an the entity either has spent using an item, " +
+		"or the time left for them to finish using an item. " +
+		"If an entity is not using any item, this will return 0 seconds.")
+@Examples({"on right click:",
+		"\tbroadcast player's remaining item use time:",
+		"\twait 1 second",
+		"\tbroadcast player's item use time"})
+@Since("INSERTVERSION")
+@RequiredPlugins("Paper 1.12.2 or newer")
 public class ExprEntityItemUseTime extends PropertyExpression<LivingEntity, Timespan> {
 
 	static {

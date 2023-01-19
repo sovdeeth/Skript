@@ -18,6 +18,12 @@
  */
 package ch.njol.skript.expressions;
 
+import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.RequiredPlugins;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
@@ -27,10 +33,20 @@ import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
 import org.eclipse.jdt.annotation.Nullable;
 
+@Name("Active Item")
+@Description("Returns the item the entity is currently using (ie: the food they're eating, " +
+		"the bow they're drawing back, etc.). This cannot be changed. " +
+		"If an entity is not using any item, this will return 0 air.")
+@Examples({"on damage of player:",
+		"\tif victim's active tool is a bow:",
+		"\t\tinterrupt player's active item use"})
+@Since("INSERTVERSION")
+@RequiredPlugins("Paper 1.12.2 or newer")
 public class ExprActiveItem extends PropertyExpression<LivingEntity, ItemStack> {
 
 	static {
-		register(ExprActiveItem.class, ItemStack.class, "(raised|active) (tool|item|weapon)", "livingentities");
+		if (Skript.methodExists(LivingEntity.class, "getActiveItem"))
+			register(ExprActiveItem.class, ItemStack.class, "(raised|active) (tool|item|weapon)", "livingentities");
 	}
 
 	@Override

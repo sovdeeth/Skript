@@ -19,6 +19,11 @@
 package ch.njol.skript.conditions;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.RequiredPlugins;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -28,10 +33,19 @@ import org.bukkit.event.Event;
 import org.bukkit.inventory.EquipmentSlot;
 import org.eclipse.jdt.annotation.Nullable;
 
-public class CondHandRaised extends Condition {
+@Name("Is Hand Raised")
+@Description("Checks whether an entity has one or both of their hands raised. " +
+		"Hands are raised when an entity is using an item (eg: blocking, drawing a bow, eating).")
+@Examples({"on damage of player:",
+	"\tif victim's main hand is raised:",
+	"\t\tdrop player's tool at player",
+	"\t\tset player's tool to air"})
+@Since("INSERTVERSION")
+@RequiredPlugins("Paper 1.12.2 or newer")
+public class CondIsHandRaised extends Condition {
 
 static {
-		Skript.registerCondition(CondHandRaised.class,
+		Skript.registerCondition(CondIsHandRaised.class,
 		"%livingentities%'s [:main] hand[s] (is|are) raised",
 			"%livingentities%'s [:main] hand[s] (isn't|is not|aren't|are not) raised",
 			"%livingentities%'s off[( |-)]hand[s] (is|are) raised",

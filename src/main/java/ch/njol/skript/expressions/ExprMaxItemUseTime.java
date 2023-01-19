@@ -19,14 +19,27 @@
 package ch.njol.skript.expressions;
 
 import ch.njol.skript.aliases.ItemType;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.RequiredPlugins;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.expressions.base.SimplePropertyExpression;
 import ch.njol.skript.util.Timespan;
 import org.eclipse.jdt.annotation.Nullable;
 
+@Name("Max Item Use Time")
+@Description("Returns the max duration an item can be used for, before the action completes. " +
+		"Eg: it takes 1.6 seconds to drink a potion, or 1.4 seconds to load an unenchanted crossbow. " +
+		"Some items, like bows and shields, do not have a limit to their use. They will return 1 hour.")
+@Examples({"on right click:",
+		"\tbroadcast max usage duration of player's tool"})
+@Since("INSERTVERSION")
+@RequiredPlugins("Paper 1.12.2 or newer")
 public class ExprMaxItemUseTime extends SimplePropertyExpression<ItemType, Timespan> {
 
 	static {
-		register(ExprMaxItemUseTime.class, Timespan.class, "max[imum] [item] use (time|duration)", "itemtypes");
+		register(ExprMaxItemUseTime.class, Timespan.class, "max[imum] [item] us(e|age) (time|duration)", "itemtypes");
 	}
 
 	@Override
