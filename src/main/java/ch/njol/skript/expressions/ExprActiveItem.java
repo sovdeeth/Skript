@@ -19,6 +19,7 @@
 package ch.njol.skript.expressions;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
@@ -30,7 +31,6 @@ import ch.njol.skript.lang.SkriptParser;
 import ch.njol.util.Kleenean;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.Event;
-import org.bukkit.inventory.ItemStack;
 import org.eclipse.jdt.annotation.Nullable;
 
 @Name("Active Item")
@@ -46,17 +46,7 @@ public class ExprActiveItem extends PropertyExpression<LivingEntity, ItemType> {
 
 	static {
 		if (Skript.methodExists(LivingEntity.class, "getActiveItem"))
-			register(ExprActiveItem.class, ItemStack.class, "(raised|active) (tool|item|weapon)", "livingentities");
-	}
-
-	@Override
-	protected ItemStack[] get(Event event, LivingEntity[] source) {
-		return get(source, LivingEntity::getActiveItem);
-	}
-
-	@Override
-	public String toString(@Nullable Event event, boolean debug) {
-		return "active item of " + getExpr().toString(event, debug);
+			register(ExprActiveItem.class, ItemType.class, "(raised|active) (tool|item|weapon)", "livingentities");
 	}
 
 	@Override
@@ -66,8 +56,20 @@ public class ExprActiveItem extends PropertyExpression<LivingEntity, ItemType> {
 	}
 
 	@Override
-	public Class<? extends ItemStack> getReturnType() {
-		return ItemStack.class;
+	protected ItemType[] get(Event event, LivingEntity[] source) {
+		return get(source, (livingEntity -> {
+			return new ItemType(livingEntity.getActiveItem());
+		}));
+	}
+
+	@Override
+	public Class<? extends ItemType> getReturnType() {
+		return ItemType.class;
+	}
+
+	@Override
+	public String toString(@Nullable Event event, boolean debug) {
+		return "active item of " + getExpr().toString(event, debug);
 	}
 
 }

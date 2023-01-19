@@ -24,13 +24,12 @@ import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.RequiredPlugins;
 import ch.njol.skript.doc.Since;
-import ch.njol.skript.expressions.base.PropertyExpression;
+import ch.njol.skript.expressions.base.SimplePropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.Timespan;
 import ch.njol.util.Kleenean;
 import org.bukkit.entity.LivingEntity;
-import org.bukkit.event.Event;
 import org.eclipse.jdt.annotation.Nullable;
 
 @Name("Active Item Use Time")
@@ -47,7 +46,7 @@ import org.eclipse.jdt.annotation.Nullable;
 })
 @Since("INSERT VERSION")
 @RequiredPlugins("Paper")
-public class ExprEntityItemUseTime extends PropertyExpression<LivingEntity, Timespan> {
+public class ExprEntityItemUseTime extends SimplePropertyExpression<LivingEntity, Timespan> {
 
 	static {
 		if (Skript.methodExists(LivingEntity.class, "getItemUseRemainingTime"))
@@ -64,28 +63,20 @@ public class ExprEntityItemUseTime extends PropertyExpression<LivingEntity, Time
 	}
 
 	@Override
-	protected Timespan[] get(Event event, LivingEntity[] source) {
-		Timespan[] timespans = new Timespan[source.length];
-		if (remaining) {
-			for (int i = 0; i < source.length; i++) {
-				timespans[i] = Timespan.fromTicks(source[i].getItemUseRemainingTime());
-			}
-		} else {
-			for (int i = 0; i < source.length; i++) {
-				timespans[i] = Timespan.fromTicks(source[i].getHandRaisedTime());
-			}
-		}
-		return timespans;
-	}
-
-	@Override
-	public String toString(@Nullable Event event, boolean debug) {
-		return (remaining ? "remaining" : "elapsed") + " time of " + getExpr().toString(event, debug) + "'s item use";
+	public @Nullable Timespan convert(LivingEntity livingEntity) {
+		if (remaining)
+			return Timespan.fromTicks(livingEntity.getItemUseRemainingTime());
+		return Timespan.fromTicks(livingEntity.getHandRaisedTime());
 	}
 
 	@Override
 	public Class<? extends Timespan> getReturnType() {
 		return Timespan.class;
+	}
+
+	@Override
+	protected String getPropertyName() {
+		return (remaining ? "remaining" : "elapsed") + " item use time";
 	}
 
 }

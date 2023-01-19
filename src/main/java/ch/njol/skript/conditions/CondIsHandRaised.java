@@ -19,12 +19,12 @@
 package ch.njol.skript.conditions;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.conditions.base.PropertyCondition;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.RequiredPlugins;
 import ch.njol.skript.doc.Since;
-import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.util.Kleenean;
@@ -46,7 +46,7 @@ import org.eclipse.jdt.annotation.Nullable;
 })
 @Since("INSERT VERSION")
 @RequiredPlugins("Paper")
-public class CondIsHandRaised extends Condition {
+public class CondIsHandRaised extends PropertyCondition<LivingEntity> {
 
 	static {
 		Skript.registerCondition(CondIsHandRaised.class,
@@ -59,33 +59,40 @@ public class CondIsHandRaised extends Condition {
 	private Expression<LivingEntity> entities;
 
 	// 0 for either hand, 1 for main hand, 2 for off-hand.
+	private static final int EITHER_HAND = 0;
+	private static final int MAIN_HAND = 1;
+	private static final int OFF_HAND = 2;
 	private int hand;
 
 	@Override
 	public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
-		entities = (Expression<LivingEntity>) exprs[0];
+		setExpr((Expression<LivingEntity>) exprs[0]);
 		setNegated(matchedPattern == 1 || matchedPattern == 3);
 		if (matchedPattern >= 2) {
-			hand = 2;
+			hand = OFF_HAND;
 		} else if (parseResult.hasTag("main")) {
-			hand = 1;
+			hand = MAIN_HAND;
 		} else {
-			hand = 0;
+			hand = EITHER_HAND;
 		}
 		return true;
 	}
 
 	@Override
-	public boolean check(Event event) {
-		return entities.check(event, (livingEntity) -> {
-			if (hand == 0) {
-				return livingEntity.isHandRaised();
-			} else if (hand == 1) {
-				return livingEntity.isHandRaised() && livingEntity.getHandRaised().equals(EquipmentSlot.HAND);
-			} else {
-				return livingEntity.isHandRaised() && livingEntity.getHandRaised().equals(EquipmentSlot.OFF_HAND);
-			}
-		}, isNegated());
+	public boolean check(LivingEntity livingEntity) {
+		if (hand == EITHER_HAND) {
+			return livingEntity.isHandRaised();
+		} else if (hand == MAIN_HAND) {
+			return livingEntity.isHandRaised() && livingEntity.getHandRaised().equals(EquipmentSlot.HAND);
+		} else if (hand == OFF_HAND) {
+			return livingEntity.isHandRaised() && livingEntity.getHandRaised().equals(EquipmentSlot.OFF_HAND);
+		}
+		return false;
+	}
+
+	@Override
+	protected String getPropertyName() {
+		return "hand raised";
 	}
 
 	@Override

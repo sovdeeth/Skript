@@ -33,7 +33,7 @@ import org.bukkit.event.Event;
 import org.eclipse.jdt.annotation.Nullable;
 
 @Name("Cancel Active Item Use")
-@Description({
+@Description(
 	"Interrupts the action an entity is trying to complete. " +
 	"For example, interrupting eating, or drawing back a bow."
 )
@@ -64,8 +64,7 @@ public class EffCancelItemUse extends Effect {
 
 	@Override
 	protected void execute(Event event) {
-		LivingEntity[] entities = entityExpression.getArray(event);
-		for (LivingEntity entity : entities) {
+		for (LivingEntity entity : entityExpression.getArray(event)) {
 			entity.clearActiveItem();
 		}
 	}
