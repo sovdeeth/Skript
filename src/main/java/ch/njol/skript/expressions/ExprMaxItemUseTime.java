@@ -18,6 +18,7 @@
  */
 package ch.njol.skript.expressions;
 
+import ch.njol.skript.Skript;
 import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
@@ -26,6 +27,7 @@ import ch.njol.skript.doc.RequiredPlugins;
 import ch.njol.skript.doc.Since;
 import ch.njol.skript.expressions.base.SimplePropertyExpression;
 import ch.njol.skript.util.Timespan;
+import org.bukkit.inventory.ItemStack;
 import org.eclipse.jdt.annotation.Nullable;
 
 @Name("Max Item Use Time")
@@ -39,7 +41,8 @@ import org.eclipse.jdt.annotation.Nullable;
 public class ExprMaxItemUseTime extends SimplePropertyExpression<ItemType, Timespan> {
 
 	static {
-		register(ExprMaxItemUseTime.class, Timespan.class, "max[imum] [item] us(e|age) (time|duration)", "itemtypes");
+		if (Skript.methodExists(ItemStack.class, "getMaxItemUseDuration"))
+			register(ExprMaxItemUseTime.class, Timespan.class, "max[imum] [item] us(e|age) (time|duration)", "itemtypes");
 	}
 
 	@Override

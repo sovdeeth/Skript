@@ -18,6 +18,7 @@
  */
 package ch.njol.skript.expressions;
 
+import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
@@ -45,7 +46,8 @@ import org.eclipse.jdt.annotation.Nullable;
 public class ExprEntityItemUseTime extends PropertyExpression<LivingEntity, Timespan> {
 
 	static {
-		register(ExprEntityItemUseTime.class, Timespan.class, "[elapsed|:remaining] (item|tool) use time", "livingentities");
+		if (Skript.methodExists(LivingEntity.class, "getItemUseRemainingTime"))
+			register(ExprEntityItemUseTime.class, Timespan.class, "[elapsed|:remaining] (item|tool) use time", "livingentities");
 	}
 
 	private boolean remaining;
