@@ -36,7 +36,7 @@ import org.eclipse.jdt.annotation.Nullable;
 @Description({
 	"Interrupts the action an entity is trying to complete. " +
 	"For example, interrupting eating, or drawing back a bow."
-)
+	})
 @Examples({
 	"on damage of player:",
 	"\tif victim's active tool is a bow:",
