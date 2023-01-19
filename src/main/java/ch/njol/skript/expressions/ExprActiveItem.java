@@ -40,9 +40,9 @@ import org.eclipse.jdt.annotation.Nullable;
 @Examples({"on damage of player:",
 		"\tif victim's active tool is a bow:",
 		"\t\tinterrupt player's active item use"})
-@Since("INSERTVERSION")
-@RequiredPlugins("Paper 1.12.2 or newer")
-public class ExprActiveItem extends PropertyExpression<LivingEntity, ItemStack> {
+@Since("INSERT VERSION")
+@RequiredPlugins("Paper")
+public class ExprActiveItem extends PropertyExpression<LivingEntity, ItemType> {
 
 	static {
 		if (Skript.methodExists(LivingEntity.class, "getActiveItem"))
@@ -69,6 +69,5 @@ public class ExprActiveItem extends PropertyExpression<LivingEntity, ItemStack> 
 	public Class<? extends ItemStack> getReturnType() {
 		return ItemStack.class;
 	}
-
 
 }

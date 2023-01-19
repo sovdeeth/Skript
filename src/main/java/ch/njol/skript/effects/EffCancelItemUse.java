@@ -33,23 +33,28 @@ import org.bukkit.event.Event;
 import org.eclipse.jdt.annotation.Nullable;
 
 @Name("Cancel Active Item Use")
-@Description("Interrupts the action an entity is trying to complete. " +
-		"For example, interrupting eating, or drawing back a bow.")
-@Examples({"on damage of player:",
-		"\tif victim's active tool is a bow:",
-		"\t\tinterrupt player's active item use"})
-@Since("INSERTVERSION")
+@Description({
+	"Interrupts the action an entity is trying to complete. " +
+	"For example, interrupting eating, or drawing back a bow."
+)
+@Examples({
+	"on damage of player:",
+	"\tif victim's active tool is a bow:",
+	"\t\tinterrupt player's active item use"
+})
+@Since("INSERT VERSION")
 @RequiredPlugins("Paper 1.16.5 or newer")
 public class EffCancelItemUse extends Effect {
 
 	static {
-		if (Skript.methodExists(LivingEntity.class, "clearActiveItem"))
+		if (Skript.methodExists(LivingEntity.class, "clearActiveItem")) {
 			Skript.registerEffect(EffCancelItemUse.class,
-					"(cancel|interrupt) %livingentities%'[s] [active|current] item us(e|age)",
-					"(cancel|interrupt) [active|current] item us(e|age) [of %livingentities%]");
+				"(cancel|interrupt) %livingentities%'[s] [active|current] item us(e|age)",
+				"(cancel|interrupt) [active|current] item us(e|age) [of %livingentities%]");
+		}
 	}
 
-	Expression<LivingEntity> entityExpression;
+	private Expression<LivingEntity> entityExpression;
 
 	@Override
 	public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {

@@ -34,22 +34,26 @@ import org.bukkit.inventory.EquipmentSlot;
 import org.eclipse.jdt.annotation.Nullable;
 
 @Name("Is Hand Raised")
-@Description("Checks whether an entity has one or both of their hands raised. " +
-		"Hands are raised when an entity is using an item (eg: blocking, drawing a bow, eating).")
-@Examples({"on damage of player:",
+@Description(
+	"Checks whether an entity has one or both of their hands raised. " +
+	"Hands are raised when an entity is using an item (eg: blocking, drawing a bow, eating)."
+)
+@Examples({
+	"on damage of player:",
 	"\tif victim's main hand is raised:",
 	"\t\tdrop player's tool at player",
-	"\t\tset player's tool to air"})
-@Since("INSERTVERSION")
-@RequiredPlugins("Paper 1.12.2 or newer")
+	"\t\tset player's tool to air"
+})
+@Since("INSERT VERSION")
+@RequiredPlugins("Paper")
 public class CondIsHandRaised extends Condition {
 
-static {
+	static {
 		Skript.registerCondition(CondIsHandRaised.class,
-		"%livingentities%'s [:main] hand[s] (is|are) raised",
-			"%livingentities%'s [:main] hand[s] (isn't|is not|aren't|are not) raised",
-			"%livingentities%'s off[( |-)]hand[s] (is|are) raised",
-			"%livingentities%'s off[( |-)]hand[s] (isn't|is not|aren't|are not) raised");
+			"%livingentities%'[s] [:main] hand[s] (is|are) raised",
+			"%livingentities%'[s] [:main] hand[s] (isn't|is not|aren't|are not) raised",
+			"%livingentities%'[s] off[( |-)]hand[s] (is|are) raised",
+			"%livingentities%'[s] off[( |-)]hand[s] (isn't|is not|aren't|are not) raised");
 	}
 
 	private Expression<LivingEntity> entities;

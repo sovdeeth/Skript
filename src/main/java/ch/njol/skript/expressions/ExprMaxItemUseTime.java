@@ -31,13 +31,17 @@ import org.bukkit.inventory.ItemStack;
 import org.eclipse.jdt.annotation.Nullable;
 
 @Name("Max Item Use Time")
-@Description("Returns the max duration an item can be used for, before the action completes. " +
-		"Eg: it takes 1.6 seconds to drink a potion, or 1.4 seconds to load an unenchanted crossbow. " +
-		"Some items, like bows and shields, do not have a limit to their use. They will return 1 hour.")
-@Examples({"on right click:",
-		"\tbroadcast max usage duration of player's tool"})
-@Since("INSERTVERSION")
-@RequiredPlugins("Paper 1.12.2 or newer")
+@Description(
+	"Returns the max duration an item can be used for, before the action completes. " +
+	"Eg: it takes 1.6 seconds to drink a potion, or 1.4 seconds to load an unenchanted crossbow. " +
+	"Some items, like bows and shields, do not have a limit to their use. They will return 1 hour."
+)
+@Examples({
+	"on right click:",
+	"\tbroadcast max usage duration of player's tool"
+})
+@Since("INSERT VERSION")
+@RequiredPlugins("Paper")
 public class ExprMaxItemUseTime extends SimplePropertyExpression<ItemType, Timespan> {
 
 	static {
@@ -46,7 +50,8 @@ public class ExprMaxItemUseTime extends SimplePropertyExpression<ItemType, Times
 	}
 
 	@Override
-	public @Nullable Timespan convert(ItemType itemData) {
+	@Nullable 
+	public Timespan convert(ItemType itemData) {
 		return Timespan.fromTicks(itemData.getRandom().getMaxItemUseDuration());
 	}
 
