@@ -33,17 +33,17 @@ import org.bukkit.event.Event;
 import org.eclipse.jdt.annotation.Nullable;
 
 @Name("Cancel Active Item Use")
-@Description(
+@Description({
 	"Interrupts the action an entity is trying to complete. ",
 	"For example, interrupting eating, or drawing back a bow."
-)
+})
 @Examples({
 	"on damage of player:",
 	"\tif victim's active tool is a bow:",
 	"\t\tinterrupt player's active item use"
 })
 @Since("INSERT VERSION")
-@RequiredPlugins("Paper 1.16.5+")
+@RequiredPlugins("Paper 1.16.1+")
 public class EffCancelItemUse extends Effect {
 
 	static {

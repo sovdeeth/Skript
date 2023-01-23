@@ -31,11 +31,11 @@ import org.bukkit.inventory.ItemStack;
 import org.eclipse.jdt.annotation.Nullable;
 
 @Name("Max Item Use Time")
-@Description(
+@Description({
 	"Returns the max duration an item can be used for, before the action completes. " +
-	"Eg: it takes 1.6 seconds to drink a potion, or 1.4 seconds to load an unenchanted crossbow. ",
+		"Eg: it takes 1.6 seconds to drink a potion, or 1.4 seconds to load an unenchanted crossbow. ",
 	"Some items, like bows and shields, do not have a limit to their use. They will return 1 hour."
-)
+})
 @Examples({
 	"on right click:",
 	"\tbroadcast max usage duration of player's tool"

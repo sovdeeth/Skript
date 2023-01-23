@@ -34,10 +34,10 @@ import org.bukkit.inventory.EquipmentSlot;
 import org.eclipse.jdt.annotation.Nullable;
 
 @Name("Is Hand Raised")
-@Description(
+@Description({
 	"Checks whether an entity has one or both of their hands raised. ",
 	"Hands are raised when an entity is using an item (eg: blocking, drawing a bow, eating)."
-)
+})
 @Examples({
 	"on damage of player:",
 	"\tif victim's main hand is raised:",
