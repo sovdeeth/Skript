@@ -34,12 +34,16 @@ import org.bukkit.event.Event;
 import org.eclipse.jdt.annotation.Nullable;
 
 @Name("Active Item")
-@Description("Returns the item the entity is currently using (ie: the food they're eating, " +
+@Description(
+		"Returns the item the entity is currently using (ie: the food they're eating, " +
 		"the bow they're drawing back, etc.). This cannot be changed. " +
-		"If an entity is not using any item, this will return 0 air.")
-@Examples({"on damage of player:",
+		"If an entity is not using any item, this will return 0 air."
+)
+@Examples({
+		"on damage of player:",
 		"\tif victim's active tool is a bow:",
-		"\t\tinterrupt player's active item use"})
+		"\t\tinterrupt player's active item use"
+})
 @Since("INSERT VERSION")
 @RequiredPlugins("Paper")
 public class ExprActiveItem extends PropertyExpression<LivingEntity, ItemType> {

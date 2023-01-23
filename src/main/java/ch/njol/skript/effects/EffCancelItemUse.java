@@ -34,7 +34,7 @@ import org.eclipse.jdt.annotation.Nullable;
 
 @Name("Cancel Active Item Use")
 @Description(
-	"Interrupts the action an entity is trying to complete. " +
+	"Interrupts the action an entity is trying to complete. ",
 	"For example, interrupting eating, or drawing back a bow."
 )
 @Examples({
@@ -43,7 +43,7 @@ import org.eclipse.jdt.annotation.Nullable;
 	"\t\tinterrupt player's active item use"
 })
 @Since("INSERT VERSION")
-@RequiredPlugins("Paper 1.16.5 or newer")
+@RequiredPlugins("Paper 1.16.5+")
 public class EffCancelItemUse extends Effect {
 
 	static {

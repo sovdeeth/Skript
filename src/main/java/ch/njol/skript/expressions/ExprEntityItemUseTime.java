@@ -40,7 +40,7 @@ import org.eclipse.jdt.annotation.Nullable;
 )
 @Examples({
 	"on right click:",
-	"\tbroadcast player's remaining item use time:",
+	"\tbroadcast player's remaining item use time",
 	"\twait 1 second",
 	"\tbroadcast player's item use time"
 })
@@ -63,7 +63,7 @@ public class ExprEntityItemUseTime extends SimplePropertyExpression<LivingEntity
 	}
 
 	@Override
-	public @Nullable Timespan convert(LivingEntity livingEntity) {
+	public Timespan convert(LivingEntity livingEntity) {
 		if (remaining)
 			return Timespan.fromTicks(livingEntity.getItemUseRemainingTime());
 		return Timespan.fromTicks(livingEntity.getHandRaisedTime());

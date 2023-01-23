@@ -35,7 +35,7 @@ import org.eclipse.jdt.annotation.Nullable;
 
 @Name("Is Hand Raised")
 @Description(
-	"Checks whether an entity has one or both of their hands raised. " +
+	"Checks whether an entity has one or both of their hands raised. ",
 	"Hands are raised when an entity is using an item (eg: blocking, drawing a bow, eating)."
 )
 @Examples({
@@ -59,9 +59,7 @@ public class CondIsHandRaised extends PropertyCondition<LivingEntity> {
 	private Expression<LivingEntity> entities;
 
 	// 0 for either hand, 1 for main hand, 2 for off-hand.
-	private static final int EITHER_HAND = 0;
-	private static final int MAIN_HAND = 1;
-	private static final int OFF_HAND = 2;
+	private static final int EITHER_HAND = 0, MAIN_HAND = 1, OFF_HAND = 2;
 	private int hand;
 
 	@Override
