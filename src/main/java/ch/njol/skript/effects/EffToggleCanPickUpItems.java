@@ -19,6 +19,10 @@
 package ch.njol.skript.effects;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -27,6 +31,17 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.Event;
 import org.eclipse.jdt.annotation.Nullable;
 
+@Name("Toggle Picking Up Items")
+@Description("Determines whether an entity is able to pick up items or not.")
+@Examples({
+	"forbid player from picking up items",
+	"send \"You can no longer pick up items!\" to player",
+	"",
+	"on drop:",
+	"\tif player can't pick	up items:",
+	"\t\tallow player to pick up items"
+})
+@Since("INSERT VERSION")
 public class EffToggleCanPickUpItems extends Effect {
 
 	static {

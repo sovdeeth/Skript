@@ -19,8 +19,23 @@
 package ch.njol.skript.conditions;
 
 import ch.njol.skript.conditions.base.PropertyCondition;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import org.bukkit.entity.LivingEntity;
 
+@Name("Can Pick Up Items")
+@Description("Whether an entity is able to pick up items or not.")
+@Examples({
+	"if player can pick items up:",
+		"\tsend \"You can pick up items!\" to player",
+	"",
+	"on drop:",
+		"\tif player can't pick	up items:",
+			"\t\tsend \"Be careful, you won't be able to pick that up!\" to player"
+})
+@Since("INSERT VERSION")
 public class CondCanPickUpItems extends PropertyCondition<LivingEntity> {
 
 	static {
