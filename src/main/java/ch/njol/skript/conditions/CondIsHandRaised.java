@@ -96,7 +96,7 @@ public class CondIsHandRaised extends PropertyCondition<LivingEntity> {
 	@Override
 	public String toString(@Nullable Event event, boolean debug) {
 		return entities.toString(event, debug) + "'s  " + (hand == 0 ? "" : (hand == 1 ? "main " : "off ")) + "hand " +
-			(entities.isSingle() ? "is" : "s are") + (isNegated() ? " not " : "") + " raised ";
+				(entities.isSingle() ? "is" : "s are") + (isNegated() ? " not " : "") + " raised ";
 	}
 
 }

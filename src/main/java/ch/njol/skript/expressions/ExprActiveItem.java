@@ -19,23 +19,19 @@
 package ch.njol.skript.expressions;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.RequiredPlugins;
 import ch.njol.skript.doc.Since;
-import ch.njol.skript.expressions.base.PropertyExpression;
-import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.util.Kleenean;
+import ch.njol.skript.expressions.base.SimplePropertyExpression;
 import org.bukkit.entity.LivingEntity;
-import org.bukkit.event.Event;
+import org.bukkit.inventory.ItemStack;
 import org.eclipse.jdt.annotation.Nullable;
 
 @Name("Active Item")
 @Description(
-	"Returns the item the entity is currently using (ie: the food they're eating, " +
+	"Returns the item the entities are currently using (ie: the food they're eating, " +
 	"the bow they're drawing back, etc.). This cannot be changed. " +
 	"If an entity is not using any item, this will return 0 air."
 )
@@ -46,34 +42,26 @@ import org.eclipse.jdt.annotation.Nullable;
 })
 @Since("INSERT VERSION")
 @RequiredPlugins("Paper")
-public class ExprActiveItem extends PropertyExpression<LivingEntity, ItemType> {
+public class ExprActiveItem extends SimplePropertyExpression<LivingEntity, ItemStack> {
 
 	static {
 		if (Skript.methodExists(LivingEntity.class, "getActiveItem"))
-			register(ExprActiveItem.class, ItemType.class, "(raised|active) (tool|item|weapon)", "livingentities");
+			register(ExprActiveItem.class, ItemStack.class, "(raised|active) (tool|item|weapon)", "livingentities");
 	}
 
 	@Override
-	public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
-		setExpr((Expression<LivingEntity>) exprs[0]);
-		return true;
+	protected String getPropertyName() {
+		return "active item";
 	}
 
 	@Override
-	protected ItemType[] get(Event event, LivingEntity[] source) {
-		return get(source, (livingEntity -> {
-			return new ItemType(livingEntity.getActiveItem());
-		}));
+	public @Nullable ItemStack convert(LivingEntity livingEntity) {
+		return livingEntity.getActiveItem();
 	}
 
 	@Override
-	public Class<? extends ItemType> getReturnType() {
-		return ItemType.class;
-	}
-
-	@Override
-	public String toString(@Nullable Event event, boolean debug) {
-		return "active item of " + getExpr().toString(event, debug);
+	public Class<? extends ItemStack> getReturnType() {
+		return ItemStack.class;
 	}
 
 }
