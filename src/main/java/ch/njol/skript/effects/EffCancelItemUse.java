@@ -32,9 +32,9 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.Event;
 import org.eclipse.jdt.annotation.Nullable;
 
-@Name("Cancel Active Item Use")
+@Name("Cancel Active Item")
 @Description({
-	"Interrupts the action an entity is trying to complete. ",
+	"Interrupts the action entities may be trying to complete. ",
 	"For example, interrupting eating, or drawing back a bow."
 })
 @Examples({
@@ -49,8 +49,8 @@ public class EffCancelItemUse extends Effect {
 	static {
 		if (Skript.methodExists(LivingEntity.class, "clearActiveItem")) {
 			Skript.registerEffect(EffCancelItemUse.class,
-				"(cancel|interrupt) %livingentities%'[s] [active|current] item us(e|age)",
-				"(cancel|interrupt) [active|current] item us(e|age) [of %livingentities%]");
+				"(cancel|interrupt) %livingentities%'[s] [active|current] item [[in] us(e|age)]",
+				"(cancel|interrupt) [the] [active|current] item [in] us(e|age) [(of|for) %livingentities%]");
 		}
 	}
 

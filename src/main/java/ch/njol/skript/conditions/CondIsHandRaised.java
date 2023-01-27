@@ -50,10 +50,10 @@ public class CondIsHandRaised extends PropertyCondition<LivingEntity> {
 
 	static {
 		Skript.registerCondition(CondIsHandRaised.class,
-			"%livingentities%'[s] [:main] hand[s] (is|are) raised",
-			"%livingentities%'[s] [:main] hand[s] (isn't|is not|aren't|are not) raised",
-			"%livingentities%'[s] off[( |-)]hand[s] (is|are) raised",
-			"%livingentities%'[s] off[( |-)]hand[s] (isn't|is not|aren't|are not) raised");
+				"%livingentities%'[s] [:main] hand[s] (is|are) raised",
+				"%livingentities%'[s] [:main] hand[s] (isn't|is not|aren't|are not) raised",
+				"%livingentities%'[s] off[( |-)]hand[s] (is|are) raised",
+				"%livingentities%'[s] off[( |-)]hand[s] (isn't|is not|aren't|are not) raised");
 	}
 
 	private Expression<LivingEntity> entities;
@@ -96,7 +96,7 @@ public class CondIsHandRaised extends PropertyCondition<LivingEntity> {
 	@Override
 	public String toString(@Nullable Event event, boolean debug) {
 		return entities.toString(event, debug) + "'s  " + (hand == 0 ? "" : (hand == 1 ? "main " : "off ")) + "hand " +
-			(entities.isSingle() ? "is" : "s are") + " raised ";
+			(entities.isSingle() ? "is" : "s are") + (isNegated() ? " not " : "") + " raised ";
 	}
 
 }

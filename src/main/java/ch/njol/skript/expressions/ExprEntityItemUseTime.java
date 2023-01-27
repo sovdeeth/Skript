@@ -34,7 +34,7 @@ import org.eclipse.jdt.annotation.Nullable;
 
 @Name("Active Item Use Time")
 @Description(
-	"Returns the time that an the entity either has spent using an item, " +
+	"Returns the time that the entities have either spent using an item, " +
 	"or the time left for them to finish using an item. " +
 	"If an entity is not using any item, this will return 0 seconds."
 )
@@ -50,16 +50,15 @@ public class ExprEntityItemUseTime extends SimplePropertyExpression<LivingEntity
 
 	static {
 		if (Skript.methodExists(LivingEntity.class, "getItemUseRemainingTime"))
-			register(ExprEntityItemUseTime.class, Timespan.class, "[elapsed|:remaining] (item|tool) use time", "livingentities");
+			register(ExprEntityItemUseTime.class, Timespan.class, "[elapsed|:remaining] (item|tool) us[ag]e time", "livingentities");
 	}
 
 	private boolean remaining;
 
 	@Override
 	public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
-		setExpr((Expression<LivingEntity>) exprs[0]);
 		remaining = parseResult.hasTag("remaining");
-		return true;
+		return super.init(exprs, matchedPattern, isDelayed, parseResult);
 	}
 
 	@Override
