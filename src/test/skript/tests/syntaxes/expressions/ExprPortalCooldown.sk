@@ -1,17 +1,16 @@
 test "portal cooldown":
-	spawn zombie at spawn of world "world"
-	set {_m} to last spawned zombie
-	assert {_m}'s portal cooldown is 0 seconds with "entity spawned with a portal cooldown"
-	set {_m}'s portal cooldown to 25 ticks
-	assert {_m}'s portal cooldown is 25 ticks with "portal cooldown set failed"
-	add 5 seconds to {_m}'s portal cooldown
-	assert {_m}'s portal cooldown is 125 ticks with "portal cooldown add ##1 failed"
-	remove 12 ticks from {_m}'s portal cooldown
-	assert {_m}'s portal cooldown is 113 ticks with "portal cooldown remove ##1 failed"
-	remove 999 ticks from {_m}'s portal cooldown
-	assert {_m}'s portal cooldown is 0 ticks with "portal cooldown remove ##2 failed"
-	delete {_m}'s portal cooldown
-	assert {_m}'s portal cooldown is 0 ticks with "portal cooldown delete failed"
-	reset {_m}'s portal cooldown
-	assert {_m}'s portal cooldown is 15 seconds with "portal cooldown reset failed"
-	delete random entity of {_m}
+	spawn zombie at spawn of world "world":
+		assert event-entity's portal cooldown is 0 seconds with "entity spawned with a portal cooldown"
+		set event-entity's portal cooldown to 25 ticks
+		assert event-entity's portal cooldown is 25 ticks with "portal cooldown set failed"
+		add 5 seconds to event-entity's portal cooldown
+		assert event-entity's portal cooldown is 125 ticks with "portal cooldown add ##1 failed"
+		remove 12 ticks from event-entity's portal cooldown
+		assert event-entity's portal cooldown is 113 ticks with "portal cooldown remove ##1 failed"
+		remove 999 ticks from event-entity's portal cooldown
+		assert event-entity's portal cooldown is 0 ticks with "portal cooldown remove ##2 failed"
+		delete event-entity's portal cooldown
+		assert event-entity's portal cooldown is 0 ticks with "portal cooldown delete failed"
+		reset event-entity's portal cooldown
+		assert event-entity's portal cooldown is 15 seconds with "portal cooldown reset failed"
+		delete event-entity

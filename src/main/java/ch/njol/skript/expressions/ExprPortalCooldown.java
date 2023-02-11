@@ -18,7 +18,6 @@
  */
 package ch.njol.skript.expressions;
 
-import ch.njol.skript.classes.Changer;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
@@ -34,11 +33,15 @@ import org.bukkit.event.Event;
 import org.eclipse.jdt.annotation.Nullable;
 
 @Name("Portal Cooldown")
-@Description("The amount of time before an entity can use a portal. By default, it is 15 seconds after exiting a nether portal or end gateway. Players in survival/adventure get a cooldown of 0.5 seconds, while those in creative get no cooldown. Resetting will set the cooldown back to the default 15 seconds for non-player entities and 0.5 seconds for players.")
+@Description({
+	"The amount of time before an entity can use a portal. By default, it is 15 seconds after exiting a nether portal " +
+	"or end gateway. Players in survival/adventure get a cooldown of 0.5 seconds, while those in creative get no cooldown. " +
+	"Resetting will set the cooldown back to the default 15 seconds for non-player entities and 0.5 seconds for players."
+})
 @Examples({
 	"on portal:",
-	"\twait 1 tick",
-	"\tset portal cooldown of event-entity to 5 seconds"
+		"\twait 1 tick",
+		"\tset portal cooldown of event-entity to 5 seconds"
 })
 @Since("INSERT VERSION")
 public class ExprPortalCooldown extends SimplePropertyExpression<Entity, Timespan> {
