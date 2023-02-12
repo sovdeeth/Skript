@@ -32,30 +32,30 @@ import org.bukkit.event.Event;
 import org.eclipse.jdt.annotation.Nullable;
 
 @Name("Toggle Picking Up Items")
-@Description("Determines whether an entity is able to pick up items or not.")
+@Description("Determines whether living entities are able to pick up items or not")
 @Examples({
 	"forbid player from picking up items",
 	"send \"You can no longer pick up items!\" to player",
 	"",
 	"on drop:",
-	"\tif player can't pick	up items:",
-	"\t\tallow player to pick up items"
+		"\tif player can't pick	up items:",
+		"\t\tallow player to pick up items"
 })
 @Since("INSERT VERSION")
 public class EffToggleCanPickUpItems extends Effect {
 
 	static {
 		Skript.registerEffect(EffToggleCanPickUpItems.class,
-				"allow %livingentities% to pick (up items|items up)",
-				"(forbid|disallow) %livingentities% (from|to) pick[ing] (up items|items up)");
+				"allow %livingentities% to pick([ ]up items| items up)",
+				"(forbid|disallow) %livingentities% (from|to) pick[ing]([ ]up items| items up)");
 	}
 
-	private Expression<LivingEntity> entityExpr;
+	private Expression<LivingEntity> entities;
 	private boolean allowPickUp;
 
 	@Override
 	public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
-		entityExpr = (Expression<LivingEntity>) exprs[0];
+		entities = (Expression<LivingEntity>) exprs[0];
 		allowPickUp = matchedPattern == 0;
 		return true;
 	}
@@ -63,7 +63,7 @@ public class EffToggleCanPickUpItems extends Effect {
 
 	@Override
 	protected void execute(Event event) {
-		for (LivingEntity entity : entityExpr.getArray(event)) {
+		for (LivingEntity entity : entities.getArray(event)) {
 			entity.setCanPickupItems(allowPickUp);
 		}
 	}
@@ -71,9 +71,9 @@ public class EffToggleCanPickUpItems extends Effect {
 	@Override
 	public String toString(@Nullable Event event, boolean debug) {
 		if (allowPickUp) {
-			return "allow " + entityExpr.toString(event, debug) + " to pick up items";
+			return "allow " + entities.toString(event, debug) + " to pick up items";
 		} else {
-			return "forbid " + entityExpr.toString(event, debug) + " from picking up items";
+			return "forbid " + entities.toString(event, debug) + " from picking up items";
 		}
 	}
 

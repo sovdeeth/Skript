@@ -26,7 +26,7 @@ import ch.njol.skript.doc.Since;
 import org.bukkit.entity.LivingEntity;
 
 @Name("Can Pick Up Items")
-@Description("Whether an entity is able to pick up items or not.")
+@Description("Whether living entities are able to pick up items off the ground or not.")
 @Examples({
 	"if player can pick items up:",
 		"\tsend \"You can pick up items!\" to player",
@@ -39,7 +39,7 @@ import org.bukkit.entity.LivingEntity;
 public class CondCanPickUpItems extends PropertyCondition<LivingEntity> {
 
 	static {
-		register(CondCanPickUpItems.class, PropertyType.CAN, "pick (up items|items up)", "livingentities");
+		register(CondCanPickUpItems.class, PropertyType.CAN, "pick([ ]up items| items up)", "livingentities");
 	}
 
 	@Override
