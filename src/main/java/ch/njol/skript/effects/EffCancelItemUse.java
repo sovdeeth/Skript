@@ -39,19 +39,18 @@ import org.eclipse.jdt.annotation.Nullable;
 })
 @Examples({
 	"on damage of player:",
-	"\tif victim's active tool is a bow:",
-	"\t\tinterrupt player's active item use"
+		"\tif victim's active tool is a bow:",
+			"\t\tinterrupt player's active item use"
 })
 @Since("INSERT VERSION")
 @RequiredPlugins("Paper 1.16.1+")
 public class EffCancelItemUse extends Effect {
 
 	static {
-		if (Skript.methodExists(LivingEntity.class, "clearActiveItem")) {
+		if (Skript.methodExists(LivingEntity.class, "clearActiveItem"))
 			Skript.registerEffect(EffCancelItemUse.class,
-				"(cancel|interrupt) %livingentities%'[s] [active|current] item [[in] us(e|age)]",
-				"(cancel|interrupt) [the] [active|current] item [in] us(e|age) [(of|for) %livingentities%]");
-		}
+					"(cancel|interrupt) %livingentities%'[s] [active|current] item [[in] us(e|age)]",
+					"(cancel|interrupt) [the] [active|current] item [in] us(e|age) [(of|for) %livingentities%]");
 	}
 
 	private Expression<LivingEntity> entityExpression;

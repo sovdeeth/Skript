@@ -37,8 +37,8 @@ import org.eclipse.jdt.annotation.Nullable;
 )
 @Examples({
 	"on damage of player:",
-	"\tif victim's active tool is a bow:",
-	"\t\tinterrupt player's active item use"
+		"\tif victim's active tool is a bow:",
+			"\t\tinterrupt player's active item use"
 })
 @Since("INSERT VERSION")
 @RequiredPlugins("Paper")
@@ -50,18 +50,19 @@ public class ExprActiveItem extends SimplePropertyExpression<LivingEntity, ItemS
 	}
 
 	@Override
-	protected String getPropertyName() {
-		return "active item";
-	}
-
-	@Override
-	public @Nullable ItemStack convert(LivingEntity livingEntity) {
+	@Nullable
+	public ItemStack convert(LivingEntity livingEntity) {
 		return livingEntity.getActiveItem();
 	}
 
 	@Override
 	public Class<? extends ItemStack> getReturnType() {
 		return ItemStack.class;
+	}
+
+	@Override
+	protected String getPropertyName() {
+		return "active item";
 	}
 
 }

@@ -40,9 +40,9 @@ import org.eclipse.jdt.annotation.Nullable;
 })
 @Examples({
 	"on damage of player:",
-	"\tif victim's main hand is raised:",
-	"\t\tdrop player's tool at player",
-	"\t\tset player's tool to air"
+		"\tif victim's main hand is raised:",
+			"\t\tdrop player's tool at player",
+			"\t\tset player's tool to air"
 })
 @Since("INSERT VERSION")
 @RequiredPlugins("Paper")
@@ -58,7 +58,6 @@ public class CondIsHandRaised extends PropertyCondition<LivingEntity> {
 
 	private Expression<LivingEntity> entities;
 
-	// 0 for either hand, 1 for main hand, 2 for off-hand.
 	private static final int EITHER_HAND = 0, MAIN_HAND = 1, OFF_HAND = 2;
 	private int hand;
 
