@@ -39,7 +39,7 @@ import org.eclipse.jdt.annotation.Nullable;
 	"",
 	"on drop:",
 		"\tif player can't pick	up items:",
-		"\t\tallow player to pick up items"
+			"\t\tallow player to pick up items"
 })
 @Since("INSERT VERSION")
 public class EffToggleCanPickUpItems extends Effect {
