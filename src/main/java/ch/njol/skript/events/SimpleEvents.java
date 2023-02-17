@@ -19,6 +19,7 @@
 package ch.njol.skript.events;
 
 import com.destroystokyo.paper.event.block.AnvilDamagedEvent;
+import io.papermc.paper.event.player.PlayerStopUsingItemEvent;
 import org.bukkit.event.block.BlockCanBuildEvent;
 import org.bukkit.event.block.BlockDamageEvent;
 import org.bukkit.event.block.BlockFertilizeEvent;
@@ -646,6 +647,16 @@ public class SimpleEvents {
 				.requiredPlugins("Paper")
 				.examples("on anvil damage:",
 					"\tcancel the event")
+				.since("INSERT VERSION");
+		}
+		if (Skript.classExists("io.papermc.paper.event.player.PlayerStopUsingItemEvent")) {
+			Skript.registerEvent("Stop Using Item", SimpleEvent.class, PlayerStopUsingItemEvent.class, "[player] stop (using item|item use)")
+				.description("Called when a player stops using an item. For example, when the player releases the " +
+						"interact button when holding a bow, an edible item, or a spyglass.",
+						"Note that event-number/event-timespan will return the number of ticks the item was held for.")
+				.requiredPlugins("Paper 1.18.2+")
+				.examples("on player stop using item:",
+					"\tbroadcast \"%player% held %event-item% for %event-timespan%.\"")
 				.since("INSERT VERSION");
 		}
 	}

@@ -32,12 +32,14 @@ import ch.njol.skript.util.BlockUtils;
 import ch.njol.skript.util.DelayedChangeBlock;
 import ch.njol.skript.util.Direction;
 import ch.njol.skript.util.Getter;
+import ch.njol.skript.util.Timespan;
 import ch.njol.skript.util.slot.InventorySlot;
 import ch.njol.skript.util.slot.Slot;
 import com.destroystokyo.paper.event.block.AnvilDamagedEvent;
 import com.destroystokyo.paper.event.entity.ProjectileCollideEvent;
 import com.destroystokyo.paper.event.player.PlayerArmorChangeEvent;
 import io.papermc.paper.event.entity.EntityMoveEvent;
+import io.papermc.paper.event.player.PlayerStopUsingItemEvent;
 import io.papermc.paper.event.player.PlayerTradeEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
@@ -1427,5 +1429,29 @@ public final class BukkitEventValues {
 				return event.getEgg();
 			}
 		}, EventValues.TIME_NOW);
+
+		// PlayerStopUsingItemEvent
+		if (Skript.classExists("io.papermc.paper.event.player.PlayerStopUsingItemEvent")) {
+			EventValues.registerEventValue(PlayerStopUsingItemEvent.class, Integer.class, new Getter<Integer, PlayerStopUsingItemEvent>() {
+				@Override
+				public Integer get(PlayerStopUsingItemEvent event) {
+					return event.getTicksHeldFor();
+				}
+			}, EventValues.TIME_NOW);
+			EventValues.registerEventValue(PlayerStopUsingItemEvent.class, Timespan.class, new Getter<Timespan, PlayerStopUsingItemEvent>() {
+				@Override
+				public Timespan get(PlayerStopUsingItemEvent event) {
+					return Timespan.fromTicks(event.getTicksHeldFor());
+				}
+			}, EventValues.TIME_NOW);
+			EventValues.registerEventValue(PlayerStopUsingItemEvent.class, ItemType.class, new Getter<ItemType, PlayerStopUsingItemEvent>() {
+				@Override
+				public ItemType get(PlayerStopUsingItemEvent event) {
+					return new ItemType(event.getItem());
+				}
+			}, EventValues.TIME_NOW);
+
+		}
+
 	}
 }
