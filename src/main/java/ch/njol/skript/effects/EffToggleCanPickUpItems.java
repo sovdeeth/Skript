@@ -47,7 +47,7 @@ public class EffToggleCanPickUpItems extends Effect {
 	static {
 		Skript.registerEffect(EffToggleCanPickUpItems.class,
 				"allow %livingentities% to pick([ ]up items| items up)",
-				"(forbid|disallow) %livingentities% (from|to) pick[ing]([ ]up items| items up)");
+				"(forbid|disallow) %livingentities% (from|to) pick([ing | ]up items|[ing] items up)");
 	}
 
 	private Expression<LivingEntity> entities;
@@ -59,7 +59,6 @@ public class EffToggleCanPickUpItems extends Effect {
 		allowPickUp = matchedPattern == 0;
 		return true;
 	}
-
 
 	@Override
 	protected void execute(Event event) {
