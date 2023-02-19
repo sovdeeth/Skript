@@ -19,6 +19,7 @@
 package ch.njol.skript.events;
 
 import com.destroystokyo.paper.event.block.AnvilDamagedEvent;
+import com.destroystokyo.paper.event.player.PlayerReadyArrowEvent;
 import io.papermc.paper.event.player.PlayerStopUsingItemEvent;
 import org.bukkit.event.block.BlockCanBuildEvent;
 import org.bukkit.event.block.BlockDamageEvent;
@@ -658,8 +659,24 @@ public class SimpleEvents {
 						"interact button when holding a bow, an edible item, or a spyglass.",
 						"Note that event-number/event-timespan will return the number of ticks the item was held for.")
 				.requiredPlugins("Paper 1.18.2+")
-				.examples("on player stop using item:",
-					"\tbroadcast \"%player% held %event-item% for %event-timespan%.\"")
+				.examples(
+					"on player stop using item:",
+						"\tbroadcast \"%player% held %event-item% for %event-timespan%.\"")
+				.since("INSERT VERSION");
+		}
+
+		if (Skript.classExists("com.destroystokyo.paper.event.player.PlayerReadyArrowEvent")) {
+			Skript.registerEvent("Ready Arrow", SimpleEvent.class, PlayerReadyArrowEvent.class, "[player] (ready|pick|draw) arrow")
+				.description("Called when a player is firing a bow and the server is choosing an arrow to use.",
+						"Cancelling this event will skip the current arrow item and fire a new event for the next arrow item.",
+						"The arrow and bow in the event can be accessed with the Readied Arrow/Bow expression.")
+				.requiredPlugins("Paper")
+				.examples(
+					"on player ready arrow:",
+						"\tselected bow's name is \"Spectral Bow\"",
+						"\tif selected arrow is not a spectral arrow:",
+							"\t\tcancel event"
+				)
 				.since("INSERT VERSION");
 		}
 
