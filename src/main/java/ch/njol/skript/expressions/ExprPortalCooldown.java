@@ -80,7 +80,7 @@ public class ExprPortalCooldown extends SimplePropertyExpression<Entity, Timespa
 	@Override
 	public void change(Event event, @Nullable Object[] delta, ChangeMode mode) {
 		Entity[] entities = getExpr().getArray(event);
-		int change = delta == null ? 0 : (int) ((Timespan) delta[0]).getTicks();
+		int change = delta == null ? 0 : (int) ((Timespan) delta[0]).getTicks_i();
 		switch (mode) {
 			case REMOVE:
 				change = -change; // allow fall-through to avoid duplicate code
