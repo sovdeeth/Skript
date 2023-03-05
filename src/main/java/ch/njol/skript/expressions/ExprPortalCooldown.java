@@ -83,7 +83,7 @@ public class ExprPortalCooldown extends SimplePropertyExpression<Entity, Timespa
 		int change = delta == null ? 0 : (int) ((Timespan) delta[0]).getTicks();
 		switch (mode) {
 			case REMOVE:
-				change = -change;
+				change = -change; // allow fall-through to avoid duplicate code
 			case ADD:
 				for (Entity entity : entities) {
 					entity.setPortalCooldown(Math.max(entity.getPortalCooldown() + change, 0));
