@@ -30,14 +30,13 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.Timespan;
 import ch.njol.util.Kleenean;
 import org.bukkit.entity.LivingEntity;
-import org.eclipse.jdt.annotation.Nullable;
 
 @Name("Active Item Use Time")
-@Description(
+@Description({
 	"Returns the time that the entities have either spent using an item, " +
-	"or the time left for them to finish using an item. " +
+		"or the time left for them to finish using an item. ",
 	"If an entity is not using any item, this will return 0 seconds."
-)
+})
 @Examples({
 	"on right click:",
 	"\tbroadcast player's remaining item use time",
