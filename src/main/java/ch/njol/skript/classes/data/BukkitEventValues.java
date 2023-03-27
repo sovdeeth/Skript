@@ -1549,12 +1549,6 @@ public final class BukkitEventValues {
 
 		// PlayerStopUsingItemEvent
 		if (Skript.classExists("io.papermc.paper.event.player.PlayerStopUsingItemEvent")) {
-			EventValues.registerEventValue(PlayerStopUsingItemEvent.class, Integer.class, new Getter<Integer, PlayerStopUsingItemEvent>() {
-				@Override
-				public Integer get(PlayerStopUsingItemEvent event) {
-					return event.getTicksHeldFor();
-				}
-			}, EventValues.TIME_NOW);
 			EventValues.registerEventValue(PlayerStopUsingItemEvent.class, Timespan.class, new Getter<Timespan, PlayerStopUsingItemEvent>() {
 				@Override
 				public Timespan get(PlayerStopUsingItemEvent event) {
