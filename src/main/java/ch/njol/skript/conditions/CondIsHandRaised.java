@@ -84,6 +84,7 @@ public class CondIsHandRaised extends PropertyCondition<LivingEntity> {
 		} else if (hand == OFF_HAND) {
 			return livingEntity.isHandRaised() && livingEntity.getHandRaised().equals(EquipmentSlot.OFF_HAND);
 		}
+		assert false;
 		return false;
 	}
 

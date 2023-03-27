@@ -657,41 +657,41 @@ public class SimpleEvents {
 
 		if (Skript.classExists("io.papermc.paper.event.player.PlayerStopUsingItemEvent")) {
 			Skript.registerEvent("Stop Using Item", SimpleEvent.class, PlayerStopUsingItemEvent.class, "[player] stop (using item|item use)")
-				.description("Called when a player stops using an item. For example, when the player releases the " +
-						"interact button when holding a bow, an edible item, or a spyglass.",
-						"Note that event-number/event-timespan will return the number of ticks the item was held for.")
-				.requiredPlugins("Paper 1.18.2+")
-				.examples(
-					"on player stop using item:",
-						"\tbroadcast \"%player% held %event-item% for %event-timespan%.\"")
-				.since("INSERT VERSION");
+					.description("Called when a player stops using an item. For example, when the player releases the " +
+							"interact button when holding a bow, an edible item, or a spyglass.",
+							"Note that event-number/event-timespan will return the number of ticks the item was held for.")
+					.requiredPlugins("Paper 1.18.2+")
+					.examples(
+						"on player stop using item:",
+							"\tbroadcast \"%player% held %event-item% for %event-timespan%.\"")
+					.since("INSERT VERSION");
 		}
 
 		if (Skript.classExists("com.destroystokyo.paper.event.player.PlayerReadyArrowEvent")) {
 			Skript.registerEvent("Ready Arrow", SimpleEvent.class, PlayerReadyArrowEvent.class, "[player] (ready|pick|draw) arrow")
-				.description("Called when a player is firing a bow and the server is choosing an arrow to use.",
-						"Cancelling this event will skip the current arrow item and fire a new event for the next arrow item.",
-						"The arrow and bow in the event can be accessed with the Readied Arrow/Bow expression.")
-				.requiredPlugins("Paper")
-				.examples(
-					"on player ready arrow:",
-						"\tselected bow's name is \"Spectral Bow\"",
-						"\tif selected arrow is not a spectral arrow:",
-							"\t\tcancel event"
-				)
-				.since("INSERT VERSION");
+					.description("Called when a player is firing a bow and the server is choosing an arrow to use.",
+							"Cancelling this event will skip the current arrow item and fire a new event for the next arrow item.",
+							"The arrow and bow in the event can be accessed with the Readied Arrow/Bow expression.")
+					.requiredPlugins("Paper")
+					.examples(
+						"on player ready arrow:",
+							"\tselected bow's name is \"Spectral Bow\"",
+							"\tif selected arrow is not a spectral arrow:",
+								"\t\tcancel event"
+					)
+					.since("INSERT VERSION");
 		}
 
 		if (Skript.classExists("io.papermc.paper.event.player.PlayerInventorySlotChangeEvent")) {
 			Skript.registerEvent("Inventory Slot Change", SimpleEvent.class, PlayerInventorySlotChangeEvent.class, "[player] inventory slot chang(e|ing)")
-				.description("Called when a slot in a player's inventory is changed.", "Warning: setting the event-slot to a new item can result in an infinite loop.")
-				.requiredPlugins("Paper 1.19.2+")
-				.examples(
-					"on inventory slot change:",
-						"\tif event-item is a diamond:",
-							"\t\tsend \"You obtained a diamond!\" to player"
-				)
-				.since("2.7");
+					.description("Called when a slot in a player's inventory is changed.", "Warning: setting the event-slot to a new item can result in an infinite loop.")
+					.requiredPlugins("Paper 1.19.2+")
+					.examples(
+						"on inventory slot change:",
+							"\tif event-item is a diamond:",
+								"\t\tsend \"You obtained a diamond!\" to player"
+					)
+					.since("2.7");
 		}
     
 		//noinspection deprecation
