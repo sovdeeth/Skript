@@ -62,6 +62,7 @@ public class CondIsHandRaised extends PropertyCondition<LivingEntity> {
 	private int hand;
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
 		setExpr((Expression<LivingEntity>) exprs[0]);
 		setNegated(matchedPattern == 1 || matchedPattern == 3);

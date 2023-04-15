@@ -39,9 +39,9 @@ import org.bukkit.entity.LivingEntity;
 })
 @Examples({
 	"on right click:",
-	"\tbroadcast player's remaining item use time",
-	"\twait 1 second",
-	"\tbroadcast player's item use time"
+		"\tbroadcast player's remaining item use time",
+		"\twait 1 second",
+		"\tbroadcast player's item use time"
 })
 @Since("INSERT VERSION")
 @RequiredPlugins("Paper")

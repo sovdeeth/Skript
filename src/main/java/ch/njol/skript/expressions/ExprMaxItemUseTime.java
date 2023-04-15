@@ -38,7 +38,7 @@ import org.eclipse.jdt.annotation.Nullable;
 })
 @Examples({
 	"on right click:",
-	"\tbroadcast max usage duration of player's tool"
+		"\tbroadcast max usage duration of player's tool"
 })
 @Since("INSERT VERSION")
 @RequiredPlugins("Paper")

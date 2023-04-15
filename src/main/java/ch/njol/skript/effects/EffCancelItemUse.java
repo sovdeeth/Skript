@@ -56,6 +56,7 @@ public class EffCancelItemUse extends Effect {
 	private Expression<LivingEntity> entityExpression;
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
 		entityExpression = (Expression<LivingEntity>) exprs[0];
 		return true;
