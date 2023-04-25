@@ -18,20 +18,17 @@
  */
 package ch.njol.skript.events;
 
-import ch.njol.skript.util.BlockStateBlock;
-import org.bukkit.event.Event;
-import org.bukkit.event.block.BlockGrowEvent;
-import org.bukkit.event.world.StructureGrowEvent;
-import org.eclipse.jdt.annotation.Nullable;
-
 import ch.njol.skript.Skript;
 import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptEvent;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.StructureType;
-import ch.njol.util.Checker;
 import ch.njol.util.coll.CollectionUtils;
+import org.bukkit.event.Event;
+import org.bukkit.event.block.BlockGrowEvent;
+import org.bukkit.event.world.StructureGrowEvent;
+import org.eclipse.jdt.annotation.Nullable;
 
 public class EvtGrow extends SkriptEvent {
 	
@@ -56,15 +53,15 @@ public class EvtGrow extends SkriptEvent {
 	private Literal<StructureType> types;
 	@Nullable
 	private Literal<ItemType> blocks;
-	private int evtType;
+	private int eventType;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Literal<?>[] args, final int matchedPattern, final ParseResult parseResult) {
-		evtType = parseResult.mark; // ANY, STRUCTURE or BLOCK
-		if (evtType == STRUCTURE) {
+	public boolean init(Literal<?>[] args, int matchedPattern, ParseResult parseResult) {
+		eventType = parseResult.mark; // ANY, STRUCTURE or BLOCK
+		if (eventType == STRUCTURE) {
 			types = (Literal<StructureType>) args[0];
-		} else if (evtType == BLOCK) {
+		} else if (eventType == BLOCK) {
 			blocks = (Literal<ItemType>) args[1]; // Arg 1 may not be present... but it is in the array still, as null
 		}
 		// Else: no type restrictions specified
@@ -72,32 +69,22 @@ public class EvtGrow extends SkriptEvent {
 	}
 	
 	@Override
-	public boolean check(final Event event) {
-		if (evtType == STRUCTURE  && types != null && event instanceof StructureGrowEvent) {
-			return types.check(event, new Checker<StructureType>() {
-				@Override
-				public boolean check(final StructureType t) {
-					return t.is(((StructureGrowEvent) event).getSpecies());
-				}
-			});
-		} else if (evtType == BLOCK && blocks != null && event instanceof BlockGrowEvent) {
-			return blocks.check(event, new Checker<ItemType>() {
-				@Override
-				public boolean check(final ItemType t) {
-					return t.isOfType(new BlockStateBlock(((BlockGrowEvent) event).getNewState()));
-				}
-			});
+	public boolean check(Event event) {
+		if (eventType == STRUCTURE  && types != null && event instanceof StructureGrowEvent) {
+			return types.check(event, type -> type.is(((StructureGrowEvent) event).getSpecies()));
+		} else if (eventType == BLOCK && blocks != null && event instanceof BlockGrowEvent) {
+			return blocks.check(event, type -> type.isOfType(((BlockGrowEvent) event).getNewState()));
 		}
-
 		return event instanceof BlockGrowEvent || event instanceof StructureGrowEvent;
 	}
 	
 	@Override
-	public String toString(final @Nullable Event e, final boolean debug) {
-		if (evtType == STRUCTURE)
-			return "grow" + (types != null ? " of " + types.toString(e, debug) : "");
-		else if (evtType == BLOCK)
-			return "grow" + (blocks != null ? " of " + blocks.toString(e, debug) : "");
+	public String toString(@Nullable Event event, boolean debug) {
+		if (eventType == STRUCTURE) {
+			return "grow" + (types != null ? " of " + types.toString(event, debug) : "");
+		} else if (eventType == BLOCK) {
+			return "grow" + (blocks != null ? " of " + blocks.toString(event, debug) : "");
+		}
 		return "grow";
 	}
 	
