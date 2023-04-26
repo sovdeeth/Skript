@@ -285,7 +285,7 @@ databases:
 
 		monitor interval: 20 seconds
 
-		commit changes: 0.5 seconds
+		#commit changes: 0.5 seconds
 		# If you want to change how frequently SQL changes are commited.
 		# If this is disabled, auto commit will be enabled.
 		# Pros to this would be on external databases such as MySQL where it gives other servers time to react to changes.

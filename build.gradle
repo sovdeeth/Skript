@@ -278,9 +278,9 @@ tasks.register('JUnit') {
 // Generic replace tokens, e.g: '@version@'
 tasks.withType(Copy).configureEach {
 	filter(ReplaceTokens, tokens: [
-		'today'           : '' + LocalTime.now(),
-		'h2.version'      : project.property('h2.version'),
-		'hikaricp.version'      : project.property('hikaricp.version')
+		'today'            : '' + LocalTime.now(),
+		'h2.version'       : project.property('h2.version'),
+		'hikaricp.version' : project.property('hikaricp.version')
 	])
 }
 
