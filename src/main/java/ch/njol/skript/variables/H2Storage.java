@@ -28,8 +28,6 @@ import ch.njol.skript.config.SectionNode;
 public class H2Storage extends SQLStorage {
 
 	public H2Storage(String name) {
-		//super(name, "CREATE TABLE IF NOT EXISTS %s (`id` CHAR(36) PRIMARY KEY, `data` TEXT);");
-		//CREATE TABLE IF NOT EXISTS variables21 (name VARCHAR(380) NOT NULL PRIMARY KEY, type VARCHAR(50), value BLOB(10000), update_guid CHAR(36) NOT NULL)
 		super(name, "CREATE TABLE IF NOT EXISTS %s (" +
 				"`name`         VARCHAR2(" + MAX_VARIABLE_NAME_LENGTH + ")  NOT NULL  PRIMARY KEY," +
 				"`type`         VARCHAR2(" + MAX_CLASS_CODENAME_LENGTH + ")," +
