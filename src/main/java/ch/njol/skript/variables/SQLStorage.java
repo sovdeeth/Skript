@@ -39,15 +39,9 @@ import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Task;
 import ch.njol.skript.util.Timespan;
 import ch.njol.util.SynchronizedReference;
-import lib.PatPeter.SQLibrary.Database;
-import lib.PatPeter.SQLibrary.DatabaseException;
-import lib.PatPeter.SQLibrary.SQLibrary;
 
 /**
  * TODO create a metadata table to store some properties (e.g. Skript version, Yggdrasil version) -- but what if some variables cannot be converted? move them to a different table?
- * TODO create my own database connector or find a better one
- *
- * @author Peter Güttinger
  */
 public abstract class SQLStorage extends VariablesStorage {
 
@@ -82,7 +76,7 @@ public abstract class SQLStorage extends VariablesStorage {
 	 * @param name The name to be sent through this constructor when newInstance creates this class.
 	 * @param createTableQuery The create table query to send to the SQL engine.
 	 */
-	protected SQLStorage(String name, String createTableQuery) {
+	public SQLStorage(String name, String createTableQuery) {
 		super(name);
 		this.createTableQuery = createTableQuery;
 		this.tableName = "variables21";
