@@ -102,6 +102,7 @@ public class Variables {
 		registerStorage(FlatFileStorage.class, "csv", "file", "flatfile");
 		registerStorage(SQLiteStorage.class, "sqlite");
 		registerStorage(MySQLStorage.class, "mysql");
+		registerStorage(H2Storage.class, "h2");
 		yggdrasil.registerSingleClass(Kleenean.class, "Kleenean");
 		// Register ConfigurationSerializable, Bukkit's serialization system
 		yggdrasil.registerClassResolver(new ConfigurationSerializer<ConfigurationSerializable>() {
@@ -243,6 +244,13 @@ public class Variables {
 						Skript.exception(e, "Failed to initalize database type '" + type + "'");
 						successful = false;
 						continue;
+					}
+
+					if (variablesStorage instanceof SQLiteStorage) {
+						Skript.warning(
+								"Please be advised that SQL is single threaded and synchronous.\n" +
+								"Meaning you will be losing out on drastic performance.\n" +
+								"Due to this, Skript is deprecating SQLite. Please consider using H2.");
 					}
 
 					// Get the amount of variables currently loaded

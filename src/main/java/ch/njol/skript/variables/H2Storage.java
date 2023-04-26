@@ -25,39 +25,43 @@ import com.zaxxer.hikari.HikariDataSource;
 
 import ch.njol.skript.config.SectionNode;
 
-public class MySQLStorage extends SQLStorage {
+public class H2Storage extends SQLStorage {
 
-	MySQLStorage(String name) {
+	public H2Storage(String name) {
+		//super(name, "CREATE TABLE IF NOT EXISTS %s (`id` CHAR(36) PRIMARY KEY, `data` TEXT);");
+		//CREATE TABLE IF NOT EXISTS variables21 (name VARCHAR(380) NOT NULL PRIMARY KEY, type VARCHAR(50), value BLOB(10000), update_guid CHAR(36) NOT NULL)
 		super(name, "CREATE TABLE IF NOT EXISTS %s (" +
-				"rowid        BIGINT  NOT NULL  AUTO_INCREMENT  PRIMARY KEY," +
-				"name         VARCHAR(" + MAX_VARIABLE_NAME_LENGTH + ")  NOT NULL  UNIQUE," +
-				"type         VARCHAR(" + MAX_CLASS_CODENAME_LENGTH + ")," +
-				"value        BLOB(" + MAX_VALUE_SIZE + ")," +
-				"update_guid  CHAR(36)  NOT NULL" +
-				") CHARACTER SET ucs2 COLLATE ucs2_bin");
+				"`name`         VARCHAR2(" + MAX_VARIABLE_NAME_LENGTH + ")  NOT NULL  PRIMARY KEY," +
+				"`type`         VARCHAR2(" + MAX_CLASS_CODENAME_LENGTH + ")," +
+				"`value`        TEXT(" + MAX_VALUE_SIZE + ")," +
+				"`update_guid`  CHAR(36)  NOT NULL" +
+				");");
 	}
 
 	@Override
 	@Nullable
 	public HikariDataSource initialize(SectionNode config) {
-		String host = getValue(config, "host");
-		Integer port = getValue(config, "port", Integer.class);
-		String database = getValue(config, "database");
-		if (host == null || port == null || database == null)
+		if (file == null)
 			return null;
-
 		HikariConfig configuration = new HikariConfig();
-		configuration.setJdbcUrl("jdbc:mysql://" + host + ":" + port + "/" + database);
-		configuration.setUsername(getValue(config, "user"));
-		configuration.setPassword(getValue(config, "password"));
+		configuration.setPoolName("H2-Pool");
+		configuration.setDataSourceClassName("org.h2.jdbcx.JdbcDataSource");
+		configuration.setConnectionTestQuery("VALUES 1");
 
-		setTableName(config.get("table", "variables21"));
+		String url = "";
+		if (config.get("memory", "false").equalsIgnoreCase("true"))
+			url += "mem:";
+		url += "file:" + file.getAbsolutePath();
+		configuration.addDataSourceProperty("URL", "jdbc:h2:" + url);
+		configuration.addDataSourceProperty("user", config.get("user", ""));
+		configuration.addDataSourceProperty("password", config.get("password", ""));
+		configuration.addDataSourceProperty("description", config.get("description", ""));
 		return new HikariDataSource(configuration);
 	}
 
 	@Override
 	protected boolean requiresFile() {
-		return false;
+		return true;
 	}
 
 }

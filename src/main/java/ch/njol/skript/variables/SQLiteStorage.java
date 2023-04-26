@@ -20,11 +20,16 @@ package ch.njol.skript.variables;
 
 import java.io.File;
 
-import ch.njol.skript.config.SectionNode;
-import ch.njol.skript.log.SkriptLogger;
-import lib.PatPeter.SQLibrary.Database;
-import lib.PatPeter.SQLibrary.SQLite;
+import org.eclipse.jdt.annotation.Nullable;
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+
+import ch.njol.skript.config.SectionNode;
+
+@Deprecated
+@ScheduledForRemoval
 public class SQLiteStorage extends SQLStorage {
 
 	SQLiteStorage(String name) {
@@ -33,18 +38,22 @@ public class SQLiteStorage extends SQLStorage {
 				"type         VARCHAR(" + MAX_CLASS_CODENAME_LENGTH + ")," +
 				"value        BLOB(" + MAX_VALUE_SIZE + ")," +
 				"update_guid  CHAR(36)  NOT NULL" +
-				")");
+				");");
 	}
 
 	@Override
-	public Database initialize(SectionNode config) {
-		File f = file;
-		if (f == null)
+	@Nullable
+	public HikariDataSource initialize(SectionNode config) {
+		File file = this.file;
+		if (file == null)
 			return null;
 		setTableName(config.get("table", "variables21"));
-		String name = f.getName();
+		String name = file.getName();
 		assert name.endsWith(".db");
-		return new SQLite(SkriptLogger.LOGGER, "[Skript]", f.getParent(), name.substring(0, name.length() - ".db".length()));
+
+		HikariConfig configuration = new HikariConfig();
+		configuration.setJdbcUrl("jdbc:sqlite:" + (file == null ? ":memory:" : file.getAbsolutePath()));
+		return new HikariDataSource(configuration);
 	}
 
 	@Override
