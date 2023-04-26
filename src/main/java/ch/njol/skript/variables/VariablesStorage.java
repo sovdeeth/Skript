@@ -148,17 +148,51 @@ public abstract class VariablesStorage implements Closeable {
 	 */
 	@Nullable
 	protected <T> T getValue(SectionNode sectionNode, String key, Class<T> type) {
+		return getValue(sectionNode, key, type, true);
+	}
+
+	/**
+	 * Gets the value at the given key of the given section node,
+	 * parsed with the given type. Prints no errors, but can return null.
+	 *
+	 * @param sectionNode the section node.
+	 * @param key the key.
+	 * @param type the type.
+	 * @return the parsed value, or {@code null} if the value was invalid,
+	 * or not found.
+	 * @param <T> the type.
+	 */
+	@Nullable
+	protected <T> T getOptional(SectionNode sectionNode, String key, Class<T> type) {
+		return getValue(sectionNode, key, type, false);
+	}
+
+	/**
+	 * Gets the value at the given key of the given section node,
+	 * parsed with the given type.
+	 *
+	 * @param sectionNode the section node.
+	 * @param key the key.
+	 * @param type the type.
+	 * @param error if Skript should print errors and stop loading.
+	 * @return the parsed value, or {@code null} if the value was invalid,
+	 * or not found.
+	 * @param <T> the type.
+	 */
+	@Nullable
+	private <T> T getValue(SectionNode sectionNode, String key, Class<T> type, boolean error) {
 		String rawValue = sectionNode.getValue(key);
 		// Section node doesn't have this key
 		if (rawValue == null) {
-			Skript.error("The config is missing the entry for '" + key + "' in the database '" + databaseName + "'");
+			if (error)
+				Skript.error("The config is missing the entry for '" + key + "' in the database '" + databaseName + "'");
 			return null;
 		}
 
 		try (ParseLogHandler log = SkriptLogger.startParseLogHandler()) {
 			T parsedValue = Classes.parse(rawValue, type, ParseContext.CONFIG);
 
-			if (parsedValue == null)
+			if (parsedValue == null && error)
 				// Parsing failed
 				log.printError("The entry for '" + key + "' in the database '" + databaseName + "' must be " +
 					Classes.getSuperClassInfo(type).getName().withIndefiniteArticle());

@@ -24,50 +24,70 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.UUID;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 
 import org.eclipse.jdt.annotation.Nullable;
 
+import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.ClassInfo;
-import ch.njol.skript.classes.Serializer;
 import ch.njol.skript.config.SectionNode;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Task;
 import ch.njol.skript.util.Timespan;
+import ch.njol.util.NonNullPair;
 import ch.njol.util.SynchronizedReference;
 
-/**
- * TODO create a metadata table to store some properties (e.g. Skript version, Yggdrasil version) -- but what if some variables cannot be converted? move them to a different table?
- */
 public abstract class SQLStorage extends VariablesStorage {
 
-	public final static int MAX_VARIABLE_NAME_LENGTH = 380, // MySQL: 767 bytes max; cannot set max bytes, only max characters
-			MAX_CLASS_CODENAME_LENGTH = 50, // checked when registering a class
-			MAX_VALUE_SIZE = 10000;
-
-	private final static String SELECT_ORDER = "name, type, value, rowid";
-
-	@Nullable
-	private String formattedCreateQuery;
-	private final String createTableQuery;
-	private String tableName;
-
-	final SynchronizedReference<HikariDataSource> db = new SynchronizedReference<>(null);
-
-	private boolean monitor = false;
-	long monitor_interval;
-
-	private final static String guid = UUID.randomUUID().toString();
+	public static final int MAX_VARIABLE_NAME_LENGTH = 380; // MySQL: 767 bytes max; cannot set max bytes, only max characters
+	public static final int MAX_CLASS_CODENAME_LENGTH = 50; // checked when registering a class
+	public static final int MAX_VALUE_SIZE = 10000;
 
 	/**
-	 * The delay between transactions in milliseconds.
+	 * Params: name, type, value
+	 * <p>
+	 * Writes a variable to the database
 	 */
-	private final static long TRANSACTION_DELAY = 500;
+	@Nullable
+	private PreparedStatement WRITE_QUERY;
+
+	/**
+	 * Params: name
+	 * <p>
+	 * Deletes a variable from the database
+	 */
+	@Nullable
+	private PreparedStatement DELETE_QUERY;
+
+	/**
+	 * Params: rowID
+	 * <p>
+	 * Selects changed rows. values in order: {@value #SELECT_ORDER}
+	 */
+	@Nullable
+	private PreparedStatement MONITOR_QUERY;
+
+	/**
+	 * Params: rowID
+	 * <p>
+	 * Deletes null variables from the database older than the given value
+	 */
+	@Nullable
+	private PreparedStatement MONITOR_CLEAN_UP_QUERY;
+
+	private final String createTableQuery;
+	private String table;
+
+	private final SynchronizedReference<HikariDataSource> database = new SynchronizedReference<>();
+
+	private long monitor_interval;
+	private boolean monitor;
 
 	/**
 	 * Creates a SQLStorage with a create table query.
@@ -78,25 +98,88 @@ public abstract class SQLStorage extends VariablesStorage {
 	public SQLStorage(String name, String createTableQuery) {
 		super(name);
 		this.createTableQuery = createTableQuery;
-		this.tableName = "variables21";
+		this.table = "variables21";
 	}
 
 	public String getTableName() {
-		return tableName;
+		return table;
 	}
 
 	public void setTableName(String tableName) {
-		this.tableName = tableName;
+		this.table = tableName;
 	}
 
 	/**
-	 * Initializes an SQL database with the user provided configuration section for loading the database.
+	 * Build a HikariConfig from the Skript config.sk SectionNode of this database.
 	 * 
-	 * @param config The configuration from the config.sk that defines this database.
-	 * @return A Database implementation from SQLibrary.
+	 * @param config The configuration section from the config.sk that defines this database.
+	 * @return A HikariConfig implementation.
 	 */
 	@Nullable
-	public abstract HikariDataSource initialize(SectionNode config);
+	public abstract HikariConfig configuration(SectionNode config);
+
+	/**
+	 * The prepared statement for replacing with this SQL database.
+	 * Format is string (name), string (type), bytes (value), string (rowid)
+	 * 
+	 * @return The string to be placed into a prepared statement for replacing.
+	 */
+	protected abstract String getReplaceQuery();
+
+	/**
+	 * The select statement that will insert 1. the last row ID, and 2. the generated uuid.
+	 * So ensure this statement returns a selection for inputting those two values.
+	 * Must have rowid and update_guid.
+	 * 
+	 * The first string will be the monitor select of the rowid and the guid, the second string
+	 * will be the delete monitor query where it deletes that entry.
+	 * 
+	 * Return null if monitoring is disabled for this type.
+	 * You only need to be monitoring when the database is external like MySQL.
+	 * 
+	 * @return The string to be used for selecting.
+	 */
+	@Nullable
+	protected abstract NonNullPair<String, String> getMonitorQueries();
+
+	/**
+	 * Must select name, 
+	 * 
+	 * @return The query that will be used to select the elements.
+	 */
+	protected abstract String getSelectQuery();
+
+	/**
+	 * Construct a VariableResult from the SQL ResultSet based on your getSelectQuery.
+	 * The integer is the index of the entire result set, ResultSet is the current iteration and a VariableResult should be return.
+	 * 
+	 * @return a VariableResult from the SQL ResultSet based on your getSelectQuery.
+	 */
+	protected abstract BiFunction<Integer, ResultSet, VariableResult> get();
+
+	protected class VariableResult {
+
+		private final String name;
+		private final String type;
+		private final byte[] value;
+
+		private SQLException exception;
+
+		public VariableResult(SQLException exception) {
+			this(null, null, null);
+			this.exception = exception;
+		}
+
+		public VariableResult(String name, String type, byte[] value) {
+			this.name = name;
+			this.type = type;
+			this.value = value;
+		}
+
+		public boolean isError() {
+			return exception != null;
+		}
+	}
 
 	private ResultSet query(HikariDataSource source, String query) throws SQLException {
 		Statement statement = source.getConnection().createStatement();
@@ -108,223 +191,38 @@ public abstract class SQLStorage extends VariablesStorage {
 	    }
 	}
 
-	/**
-	 * Retrieve the create query with the tableName in it
-	 * @return the create query with the tableName in it (%s -> tableName)
-	 */
-	@Nullable
-	public String getFormattedCreateQuery() {
-		if (formattedCreateQuery == null)
-			formattedCreateQuery = String.format(createTableQuery, tableName);
-		return formattedCreateQuery;
-	}
-
-	/**
-	 * Doesn't lock the database for reading (it's not used anywhere else, and locking while loading will interfere with loaded variables being deleted by
-	 * {@link Variables#variableLoaded(String, Object, VariablesStorage)}).
-	 */
-	@Override
-	protected boolean load_i(SectionNode n) {
-		synchronized (db) {
-			final Boolean monitor_changes = getValue(n, "monitor changes", Boolean.class);
-			final Timespan monitor_interval = getValue(n, "monitor interval", Timespan.class);
-			if (monitor_changes == null || monitor_interval == null)
-				return false;
-			monitor = monitor_changes;
-			this.monitor_interval = monitor_interval.getMilliSeconds();
-
-			final HikariDataSource db;
-			HikariDataSource database = initialize(n);
-			if (database == null)
-				return false;
-			this.db.set(db = database);
-
-			SkriptLogger.setNode(null);
-
-			if (!connect(true))
-				return false;
-
-			try {
-				if (getFormattedCreateQuery() == null){
-					Skript.error("Could not create the variables table in the database. The query to create the variables table '" + tableName + "' in the database '" + databaseName + "' is null.");
-					return false;
-				}
-
-				try {
-					query(db, getFormattedCreateQuery());
-				} catch (final SQLException e) {
-					Skript.error("Could not create the variables table '" + tableName + "' in the database '" + databaseName + "': " + e.getLocalizedMessage() + ". "
-							+ "Please create the table yourself using the following query: " + String.format(createTableQuery, tableName).replace(",", ", ").replaceAll("\\s+", " "));
-					return false;
-				}
-
-				if (!prepareQueries()) {
-					return false;
-				}
-
-				// new
-				final ResultSet r2 = query(db, "SELECT " + SELECT_ORDER + " FROM " + getTableName());
-				assert r2 != null;
-				try {
-					loadVariables(r2);
-				} finally {
-					r2.close();
-				}
-			} catch (final SQLException e) {
-				sqlException(e);
-				return false;
-			}
-
-			// periodically executes queries to keep the collection alive
-			Skript.newThread(new Runnable() {
-				@Override
-				public void run() {
-					while (!closed) {
-						synchronized (SQLStorage.this.db) {
-							try {
-								final HikariDataSource db = SQLStorage.this.db.get();
-								if (db != null)
-									query(db, "SELECT * FROM " + getTableName() + " LIMIT 1");
-							} catch (final SQLException e) {}
-						}
-						try {
-							Thread.sleep(1000 * 10);
-						} catch (final InterruptedException e) {}
-					}
-				}
-			}, "Skript database '" + databaseName + "' connection keep-alive thread").start();
-
-			return true;
-		}
-	}
-
-	@Override
-	protected void allLoaded() {
-		Skript.debug("Database " + databaseName + " loaded. Queue size = " + changesQueue.size());
-
-		// start committing thread. Its first execution will also commit the first batch of changed variables.
-		Skript.newThread(new Runnable() {
-			@Override
-			public void run() {
-				long lastCommit;
-				while (!closed) {
-					synchronized (db) {
-						final HikariDataSource db = SQLStorage.this.db.get();
-						try {
-							if (db != null)
-								db.getConnection().commit();
-						} catch (final SQLException e) {
-							sqlException(e);
-						}
-						lastCommit = System.currentTimeMillis();
-					}
-					try {
-						Thread.sleep(Math.max(0, lastCommit + TRANSACTION_DELAY - System.currentTimeMillis()));
-					} catch (final InterruptedException e) {}
-				}
-			}
-		}, "Skript database '" + databaseName + "' transaction committing thread").start();
-
-		if (monitor) {
-			Skript.newThread(new Runnable() {
-				@Override
-				public void run() {
-					try { // variables were just downloaded, not need to check for modifications straight away
-						Thread.sleep(monitor_interval);
-					} catch (final InterruptedException e1) {}
-
-					long lastWarning = Long.MIN_VALUE;
-					final int WARING_INTERVAL = 10;
-
-					while (!closed) {
-						final long next = System.currentTimeMillis() + monitor_interval;
-						checkDatabase();
-						final long now = System.currentTimeMillis();
-						if (next < now && lastWarning + WARING_INTERVAL * 1000 < now) {
-							// TODO don't print this message when Skript loads (because scripts are loaded after variables and take some time)
-							Skript.warning("Cannot load variables from the database fast enough (loading took " + ((now - next + monitor_interval) / 1000.) + "s, monitor interval = " + (monitor_interval / 1000.) + "s). " +
-									"Please increase your monitor interval or reduce usage of variables. " +
-									"(this warning will be repeated at most once every " + WARING_INTERVAL + " seconds)");
-							lastWarning = now;
-						}
-						while (System.currentTimeMillis() < next) {
-							try {
-								Thread.sleep(next - System.currentTimeMillis());
-							} catch (final InterruptedException e) {}
-						}
-					}
-				}
-			}, "Skript database '" + databaseName + "' monitor thread").start();
-		}
-
-	}
-
-	@Override
-	protected File getFile(String file) {
-		if (!file.endsWith(".db"))
-			file = file + ".db"; // required by SQLibrary
-		return new File(file);
-	}
-
-	@Override
-	protected boolean connect() {
-		return connect(false);
-	}
-
-	private final boolean connect(final boolean first) {
-		synchronized (db) {
-			final HikariDataSource db = this.db.get();
-			if (db == null || db.isClosed()) {
-				if (first)
-					Skript.error("Cannot connect to the database '" + databaseName + "'! Please make sure that all settings are correct");// + (type == Type.MYSQL ? " and that the database software is running" : "") + ".");
-				else
-					Skript.exception("Cannot reconnect to the database '" + databaseName + "'!");
-				return false;
-			}
-			try {
-				db.getConnection().setAutoCommit(false);
-			} catch (final SQLException e) {
-				sqlException(e);
-				return false;
-			}
-			return true;
-		}
-	}
-
-	/**
-	 * (Re)creates prepared statements as they get closed as well when closing the connection
-	 *
-	 * @return
-	 */
 	private boolean prepareQueries() {
-		synchronized (db) {
-			final HikariDataSource db = this.db.get();
-			assert db != null;
+		synchronized (database) {
+			HikariDataSource database = this.database.get();
+			assert database != null;
 			try {
-				Connection connection = db.getConnection();
+				Connection connection = database.getConnection();
 				try {
-					if (writeQuery != null)
-						writeQuery.close();
-				} catch (final SQLException e) {}
-				writeQuery = connection.prepareStatement("REPLACE INTO " + getTableName() + " (name, type, value, update_guid) VALUES (?, ?, ?, ?)");
+					if (WRITE_QUERY != null)
+						WRITE_QUERY.close();
+				} catch (SQLException e) {}
+				WRITE_QUERY = connection.prepareStatement(getReplaceQuery());
 
 				try {
-					if (deleteQuery != null)
-						deleteQuery.close();
-				} catch (final SQLException e) {}
-				deleteQuery = connection.prepareStatement("DELETE FROM " + getTableName() + " WHERE name = ?");
+					if (DELETE_QUERY != null)
+						DELETE_QUERY.close();
+				} catch (SQLException e) {}
+				DELETE_QUERY = connection.prepareStatement("DELETE FROM " + getTableName() + " WHERE name = ?");
 
 				try {
-					if (monitorQuery != null)
-						monitorQuery.close();
-				} catch (final SQLException e) {}
-				monitorQuery = connection.prepareStatement("SELECT " + SELECT_ORDER + " FROM " + getTableName() + " WHERE rowid > ? AND update_guid != ?");
-				try {
-					if (monitorCleanUpQuery != null)
-						monitorCleanUpQuery.close();
-				} catch (final SQLException e) {}
-				monitorCleanUpQuery = connection.prepareStatement("DELETE FROM " + getTableName() + " WHERE value IS NULL AND rowid < ?");
-			} catch (final SQLException e) {
+					if (MONITOR_QUERY != null)
+						MONITOR_QUERY.close();
+					if (MONITOR_CLEAN_UP_QUERY != null)
+						MONITOR_CLEAN_UP_QUERY.close();
+				} catch (SQLException e) {}
+				@Nullable NonNullPair<String, String> monitorStatement = getMonitorQueries();
+				if (monitorStatement != null) {
+					MONITOR_QUERY = connection.prepareStatement(monitorStatement.getFirst());
+					MONITOR_CLEAN_UP_QUERY = connection.prepareStatement("DELETE FROM " + getTableName() + " WHERE value IS NULL AND rowid < ?");
+				} else {
+					monitor = false;
+				}
+			} catch (SQLException e) {
 				Skript.exception(e, "Could not prepare queries for the database '" + databaseName + "': " + e.getLocalizedMessage());
 				return false;
 			}
@@ -332,184 +230,106 @@ public abstract class SQLStorage extends VariablesStorage {
 		return true;
 	}
 
+	/**
+	 * Doesn't lock the database for reading (it's not used anywhere else, and locking while loading will interfere with loaded variables being deleted by
+	 * {@link Variables#variableLoaded(String, Object, VariablesStorage)}).
+	 */
 	@Override
-	protected void disconnect() {
-		synchronized (db) {
-			final HikariDataSource db = this.db.get();
-//			if (!db.isConnected())
-//				return;
-			if (db != null)
-				db.close();
-		}
-	}
+	protected boolean load_i(SectionNode section) {
+		synchronized (database) {
+			Timespan monitor_interval = getValue(section, "monitor interval", Timespan.class);
+			if (monitor_interval == null)
+				return false;
+			this.monitor = monitor_interval != null;
+			this.monitor_interval = monitor_interval.getMilliSeconds();
 
-	/**
-	 * Params: name, type, value, GUID
-	 * <p>
-	 * Writes a variable to the database
-	 */
-	@Nullable
-	private PreparedStatement writeQuery;
-	/**
-	 * Params: name
-	 * <p>
-	 * Deletes a variable from the database
-	 */
-	@Nullable
-	private PreparedStatement deleteQuery;
-	/**
-	 * Params: rowID, GUID
-	 * <p>
-	 * Selects changed rows. values in order: {@value #SELECT_ORDER}
-	 */
-	@Nullable
-	private PreparedStatement monitorQuery;
-	/**
-	 * Params: rowID
-	 * <p>
-	 * Deletes null variables from the database older than the given value
-	 */
-	@Nullable
-	PreparedStatement monitorCleanUpQuery;
+			HikariConfig configuration = configuration(section);
+			if (configuration == null)
+				return false;
 
-	@Override
-	protected boolean save(final String name, final @Nullable String type, final @Nullable byte[] value) {
-		synchronized (db) {
-			// REMIND get the actual maximum size from the database
-			if (name.length() > MAX_VARIABLE_NAME_LENGTH)
-				Skript.error("The name of the variable {" + name + "} is too long to be saved in a database (length: " + name.length() + ", maximum allowed: " + MAX_VARIABLE_NAME_LENGTH + ")! It will be truncated and won't bet available under the same name again when loaded.");
-			if (value != null && value.length > MAX_VALUE_SIZE)
-				Skript.error("The variable {" + name + "} cannot be saved in the database as its value's size (" + value.length + ") exceeds the maximum allowed size of " + MAX_VALUE_SIZE + "! An attempt to save the variable will be made nonetheless.");
+			Timespan commit_changes = getOptional(section, "commit changes", Timespan.class);
+			if (commit_changes != null)
+				enablePeriodicalCommits(configuration, commit_changes.getMilliSeconds());
+
+			configuration.setKeepaliveTime(TimeUnit.SECONDS.toMillis(10));
+
+			SkriptLogger.setNode(null);
+
+			HikariDataSource db;
+			this.database.set(db = new HikariDataSource(configuration));
+
+			if (db == null || db.isClosed()) {
+				Skript.error("Cannot connect to the database '" + databaseName + "'! Please make sure that all settings are correct.");
+				return false;
+			}
+			if (createTableQuery == null || !createTableQuery.contains("%s")) {
+				Skript.error("Could not create the variables table in the database. The query to create the variables table '" + table + "' in the database '" + databaseName + "' is null.");
+				return false;
+			}
+
+			// Create the table.
 			try {
-				if (type == null) {
-					assert value == null;
-					final PreparedStatement deleteQuery = this.deleteQuery;
-					assert deleteQuery != null;
-					deleteQuery.setString(1, name);
-					deleteQuery.executeUpdate();
-				} else {
-					int i = 1;
-					final PreparedStatement writeQuery = this.writeQuery;
-					assert writeQuery != null;
-					writeQuery.setString(i++, name);
-					writeQuery.setString(i++, type);
-					writeQuery.setBytes(i++, value); // SQLite desn't support setBlob
-					writeQuery.setString(i++, guid);
-					writeQuery.executeUpdate();
+				query(db, String.format(createTableQuery, table));
+			} catch (SQLException e) {
+				Skript.error("Could not create the variables table '" + table + "' in the database '" + databaseName + "': " + e.getLocalizedMessage() + ". " +
+						"Please create the table yourself using the following query: " + String.format(createTableQuery, table).replace(",", ", ").replaceAll("\\s+", " "));
+				return false;
+			}
+
+			// Build the queries.
+			if (!prepareQueries())
+				return false;
+
+			// First loading.
+			try {
+				ResultSet result = query(db, getSelectQuery());
+				assert result != null;
+				try {
+					loadVariables(result);
+				} finally {
+					result.close();
 				}
-			} catch (final SQLException e) {
+			} catch (SQLException e) {
 				sqlException(e);
 				return false;
 			}
-		}
-		return true;
-	}
-
-	@Override
-	public void close() {
-		synchronized (db) {
-			super.close();
-			final HikariDataSource db = this.db.get();
-			if (db != null) {
-				try {
-					db.getConnection().commit();
-				} catch (final SQLException e) {
-					sqlException(e);
-				}
-				db.close();
-				this.db.set(null);
-			}
-		}
-	}
-
-	long lastRowID = -1;
-
-	protected void checkDatabase() {
-		try {
-			final long lastRowID; // local variable as this is used to clean the database below
-			ResultSet r = null;
-			try {
-				synchronized (db) {
-					if (closed || db.get() == null)
-						return;
-					lastRowID = this.lastRowID;
-					final PreparedStatement monitorQuery = this.monitorQuery;
-					assert monitorQuery != null;
-					monitorQuery.setLong(1, lastRowID);
-					monitorQuery.setString(2, guid);
-					monitorQuery.execute();
-					r = monitorQuery.getResultSet();
-					assert r != null;
-				}
-				if (!closed)
-					loadVariables(r);
-			} finally {
-				if (r != null)
-					r.close();
-			}
-
-			if (!closed) { // Skript may have been disabled in the meantime // TODO not fixed
-				new Task(Skript.getInstance(), (long) Math.ceil(2. * monitor_interval / 50) + 100, true) { // 2 times the interval + 5 seconds
-					@Override
-					public void run() {
-						try {
-							synchronized (db) {
-								if (closed || db.get() == null)
-									return;
-								final PreparedStatement monitorCleanUpQuery = SQLStorage.this.monitorCleanUpQuery;
-								assert monitorCleanUpQuery != null;
-								monitorCleanUpQuery.setLong(1, lastRowID);
-								monitorCleanUpQuery.executeUpdate();
-							}
-						} catch (final SQLException e) {
-							sqlException(e);
-						}
-					}
-				};
-			}
-		} catch (final SQLException e) {
-			sqlException(e);
+			return true;
 		}
 	}
 
 	/**
 	 * Doesn't lock the database - {@link #save(String, String, byte[])} does that // what?
 	 */
-	private void loadVariables(final ResultSet r) throws SQLException {
-		final SQLException e = Task.callSync(new Callable<SQLException>() {
+	private void loadVariables(ResultSet result) throws SQLException {
+		SQLException e = Task.callSync(new Callable<SQLException>() {
 			@Override
 			@Nullable
 			public SQLException call() throws Exception {
 				try {
-					while (r.next()) {
-						int i = 1;
-						final String name = r.getString(i++);
-						if (name == null) {
-							Skript.error("Variable with NULL name found in the database '" + databaseName + "', ignoring it");
+					BiFunction<Integer, ResultSet, VariableResult> handle = get();
+					int index = 0;
+					while (result.next()) {
+						VariableResult variable = handle.apply(index, result);
+						index++;
+						if (variable == null)
 							continue;
-						}
-						final String type = r.getString(i++);
-						final byte[] value = r.getBytes(i++); // Blob not supported by SQLite
-						lastRowID = r.getLong(i++);
-						if (value == null) {
-							Variables.variableLoaded(name, null, SQLStorage.this);
+						if (variable.value == null) {
+							Variables.variableLoaded(variable.name, null, SQLStorage.this);
 						} else {
-							final ClassInfo<?> c = Classes.getClassInfoNoError(type);
-							@SuppressWarnings("unused")
-							Serializer<?> s;
-							if (c == null || (s = c.getSerializer()) == null) {
-								Skript.error("Cannot load the variable {" + name + "} from the database '" + databaseName + "', because the type '" + type + "' cannot be recognised or cannot be stored in variables");
+							ClassInfo<?> c = Classes.getClassInfoNoError(variable.type);
+							if (c == null || c.getSerializer() == null) {
+								Skript.error("Cannot load the variable {" + variable.name + "} from the database '" + databaseName + "', because the type '" + variable.type + "' cannot be recognised or cannot be stored in variables");
 								continue;
 							}
-							final Object d = Classes.deserialize(c, value);
-							if (d == null) {
-								Skript.error("Cannot load the variable {" + name + "} from the database '" + databaseName + "', because it cannot be loaded as " + c.getName().withIndefiniteArticle());
+							Object object = Classes.deserialize(c, variable.value);
+							if (object == null) {
+								Skript.error("Cannot load the variable {" + variable.name + "} from the database '" + databaseName + "', because it cannot be loaded as " + c.getName().withIndefiniteArticle());
 								continue;
 							}
-							Variables.variableLoaded(name, d, SQLStorage.this);
+							Variables.variableLoaded(variable.name, object, SQLStorage.this);
 						}
 					}
-				} catch (final SQLException e) {
+				} catch (SQLException e) {
 					return e;
 				}
 				return null;
@@ -519,7 +339,199 @@ public abstract class SQLStorage extends VariablesStorage {
 			throw e;
 	}
 
-	void sqlException(final SQLException e) {
+	private boolean committing;
+
+	/**
+	 * Start a committing thread. Use this in the {@link #configuration(SectionNode)} method.
+	 * This changes the configuration from auto commiting to periodic commiting.
+	 * 
+	 * @param configuration The HikariConfig being represented from the SectionNode.
+	 * @param delay The delay in milliseconds between transactions.
+	 */
+	protected void enablePeriodicalCommits(HikariConfig configuration, long delay) {
+		if (committing)
+			return;
+		committing = true;
+		configuration.setAutoCommit(false);
+		Skript.newThread(() -> {
+			long lastCommit = System.currentTimeMillis();
+			while (!closed) {
+				synchronized (database) {
+					HikariDataSource database = this.database.get();
+					try {
+						if (database != null)
+							database.getConnection().commit();
+						lastCommit = System.currentTimeMillis();
+					} catch (SQLException e) {
+						sqlException(e);
+					}
+				}
+				try {
+					Thread.sleep(Math.max(0, lastCommit + delay - System.currentTimeMillis()));
+				} catch (InterruptedException e) {}
+			}
+		}, "Skript database '" + databaseName + "' transaction committing thread").start();
+	}
+
+	@Override
+	protected void allLoaded() {
+		Skript.debug("Database " + databaseName + " loaded. Queue size = " + changesQueue.size());
+		if (!monitor)
+			return;
+		Skript.newThread(new Runnable() {
+			@Override
+			public void run() {
+				try { // variables were just downloaded, not need to check for modifications straight away
+					Thread.sleep(monitor_interval);
+				} catch (final InterruptedException e1) {}
+
+				long lastWarning = Long.MIN_VALUE;
+				int WARING_INTERVAL = 10;
+
+				while (!closed) {
+					long next = System.currentTimeMillis() + monitor_interval;
+					checkDatabase();
+					long now = System.currentTimeMillis();
+					if (next < now && lastWarning + WARING_INTERVAL * 1000 < now) {
+						// TODO don't print this message when Skript loads (because scripts are loaded after variables and take some time)
+						Skript.warning("Cannot load variables from the database fast enough (loading took " + ((now - next + monitor_interval) / 1000.) + "s, monitor interval = " + (monitor_interval / 1000.) + "s). " +
+								"Please increase your monitor interval or reduce usage of variables. " +
+								"(this warning will be repeated at most once every " + WARING_INTERVAL + " seconds)");
+						lastWarning = now;
+					}
+					while (System.currentTimeMillis() < next) {
+						try {
+							Thread.sleep(next - System.currentTimeMillis());
+						} catch (final InterruptedException e) {}
+					}
+				}
+			}
+		}, "Skript database '" + databaseName + "' monitor thread").start();
+	}
+
+	@Override
+	protected File getFile(String file) {
+		return new File(file);
+	}
+
+	@Override
+	protected boolean connect() {
+		synchronized (database) {
+			HikariDataSource database = this.database.get();
+			if (database == null || database.isClosed()) {
+				Skript.exception("Cannot reconnect to the database '" + databaseName + "'!");
+				return false;
+			}
+			return true;
+		}
+	}
+
+	@Override
+	protected void disconnect() {
+		synchronized (database) {
+			HikariDataSource database = this.database.get();
+			if (database != null)
+				database.close();
+		}
+	}
+
+	@Override
+	protected boolean save(String name, @Nullable String type, @Nullable byte[] value) {
+		synchronized (database) {
+			// REMIND get the actual maximum size from the database
+			if (name.length() > MAX_VARIABLE_NAME_LENGTH)
+				Skript.error("The name of the variable {" + name + "} is too long to be saved in a database (length: " + name.length() + ", maximum allowed: " + MAX_VARIABLE_NAME_LENGTH + ")! It will be truncated and won't bet available under the same name again when loaded.");
+			if (value != null && value.length > MAX_VALUE_SIZE)
+				Skript.error("The variable {" + name + "} cannot be saved in the database as its value's size (" + value.length + ") exceeds the maximum allowed size of " + MAX_VALUE_SIZE + "! An attempt to save the variable will be made nonetheless.");
+			try {
+				if (type == null) {
+					assert value == null;
+					assert DELETE_QUERY != null;
+					DELETE_QUERY.setString(1, name);
+					DELETE_QUERY.executeUpdate();
+				} else {
+					int i = 1;
+					assert WRITE_QUERY != null;
+					WRITE_QUERY.setString(i++, name);
+					WRITE_QUERY.setString(i++, type);
+					WRITE_QUERY.setBytes(i++, value);
+					WRITE_QUERY.executeUpdate();
+				}
+			} catch (SQLException e) {
+				sqlException(e);
+				return false;
+			}
+		}
+		return true;
+	}
+
+	@Override
+	public void close() {
+		synchronized (database) {
+			super.close();
+			HikariDataSource database = this.database.get();
+			if (database != null) {
+				try {
+					database.getConnection().commit();
+				} catch (SQLException e) {
+					sqlException(e);
+				}
+				database.close();
+				this.database.set(null);
+			}
+		}
+	}
+
+	long lastRowID = -1;
+
+	protected void checkDatabase() {
+		if (!monitor)
+			return;
+		try {
+			long lastRowID; // local variable as this is used to clean the database below
+			ResultSet result = null;
+			try {
+				synchronized (database) {
+					if (closed || database.get() == null)
+						return;
+					lastRowID = this.lastRowID;
+					assert MONITOR_QUERY != null;
+					MONITOR_QUERY.setLong(1, lastRowID);
+					MONITOR_QUERY.execute();
+					result = MONITOR_QUERY.getResultSet();
+					assert result != null;
+				}
+				if (!closed)
+					loadVariables(result);
+			} finally {
+				if (result != null)
+					result.close();
+			}
+
+			if (!closed) { // Skript may have been disabled in the meantime // TODO not fixed
+				new Task(Skript.getInstance(), (long) Math.ceil(2. * monitor_interval / 50) + 100, true) { // 2 times the interval + 5 seconds
+					@Override
+					public void run() {
+						try {
+							synchronized (database) {
+								if (closed || database.get() == null)
+									return;
+								assert MONITOR_CLEAN_UP_QUERY != null;
+								MONITOR_CLEAN_UP_QUERY.setLong(1, lastRowID);
+								MONITOR_CLEAN_UP_QUERY.executeUpdate();
+							}
+						} catch (SQLException e) {
+							sqlException(e);
+						}
+					}
+				};
+			}
+		} catch (SQLException e) {
+			sqlException(e);
+		}
+	}
+
+	void sqlException(SQLException e) {
 		Skript.error("database error: " + e.getLocalizedMessage());
 		if (Skript.testing())
 			e.printStackTrace();

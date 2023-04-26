@@ -19,14 +19,18 @@
 package ch.njol.skript.variables;
 
 import java.io.File;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.function.BiFunction;
 
 import org.eclipse.jdt.annotation.Nullable;
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 
 import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
 
+import ch.njol.skript.Skript;
 import ch.njol.skript.config.SectionNode;
+import ch.njol.util.NonNullPair;
 
 @Deprecated
 @ScheduledForRemoval
@@ -36,14 +40,13 @@ public class SQLiteStorage extends SQLStorage {
 		super(name, "CREATE TABLE IF NOT EXISTS %s (" +
 				"name         VARCHAR(" + MAX_VARIABLE_NAME_LENGTH + ")  NOT NULL  PRIMARY KEY," +
 				"type         VARCHAR(" + MAX_CLASS_CODENAME_LENGTH + ")," +
-				"value        BLOB(" + MAX_VALUE_SIZE + ")," +
-				"update_guid  CHAR(36)  NOT NULL" +
+				"value        BLOB(" + MAX_VALUE_SIZE + ")" +
 				");");
 	}
 
 	@Override
 	@Nullable
-	public HikariDataSource initialize(SectionNode config) {
+	public HikariConfig configuration(SectionNode config) {
 		File file = this.file;
 		if (file == null)
 			return null;
@@ -53,12 +56,54 @@ public class SQLiteStorage extends SQLStorage {
 
 		HikariConfig configuration = new HikariConfig();
 		configuration.setJdbcUrl("jdbc:sqlite:" + (file == null ? ":memory:" : file.getAbsolutePath()));
-		return new HikariDataSource(configuration);
+		return configuration;
 	}
 
 	@Override
 	protected boolean requiresFile() {
 		return true;
+	}
+
+	@Override
+	protected File getFile(String file) {
+		if (!file.endsWith(".db"))
+			file = file + ".db"; // required by SQLibrary
+		return new File(file);
+	}
+
+	@Override
+	protected String getReplaceQuery() {
+		return "REPLACE INTO " + getTableName() + " (name, type, value, update_guid) VALUES (?, ?, ?, ?)";
+	}
+
+	@Override
+	@Nullable
+	protected NonNullPair<String, String> getMonitorQueries() {
+		return null;
+	}
+
+	@Override
+	protected String getSelectQuery() {
+		return "SELECT name, type, value from " + getTableName();
+	}
+
+	@Override
+	protected BiFunction<Integer, ResultSet, VariableResult> get() {
+		return (index, result) -> {
+			int i = 1;
+			try {
+				String name = result.getString(i++);
+				if (name == null) {
+					Skript.error("Variable with NULL name found in the database '" + databaseName + "', ignoring it");
+					return null;
+				}
+				String type = result.getString(i++);
+				byte[] value = result.getBytes(i++);
+				return new VariableResult(name, type, value);
+			} catch (SQLException e) {
+				return new VariableResult(e);
+			}
+		};
 	}
 
 }

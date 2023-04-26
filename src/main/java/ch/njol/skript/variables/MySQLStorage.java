@@ -18,12 +18,17 @@
  */
 package ch.njol.skript.variables;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.function.BiFunction;
+
 import org.eclipse.jdt.annotation.Nullable;
 
 import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
 
+import ch.njol.skript.Skript;
 import ch.njol.skript.config.SectionNode;
+import ch.njol.util.NonNullPair;
 
 public class MySQLStorage extends SQLStorage {
 
@@ -32,14 +37,13 @@ public class MySQLStorage extends SQLStorage {
 				"rowid        BIGINT  NOT NULL  AUTO_INCREMENT  PRIMARY KEY," +
 				"name         VARCHAR(" + MAX_VARIABLE_NAME_LENGTH + ")  NOT NULL  UNIQUE," +
 				"type         VARCHAR(" + MAX_CLASS_CODENAME_LENGTH + ")," +
-				"value        BLOB(" + MAX_VALUE_SIZE + ")," +
-				"update_guid  CHAR(36)  NOT NULL" +
+				"value        BLOB(" + MAX_VALUE_SIZE + ")" +
 				") CHARACTER SET ucs2 COLLATE ucs2_bin");
 	}
 
 	@Override
 	@Nullable
-	public HikariDataSource initialize(SectionNode config) {
+	public HikariConfig configuration(SectionNode config) {
 		String host = getValue(config, "host");
 		Integer port = getValue(config, "port", Integer.class);
 		String database = getValue(config, "database");
@@ -52,12 +56,50 @@ public class MySQLStorage extends SQLStorage {
 		configuration.setPassword(getValue(config, "password"));
 
 		setTableName(config.get("table", "variables21"));
-		return new HikariDataSource(configuration);
+		return configuration;
 	}
 
 	@Override
 	protected boolean requiresFile() {
 		return false;
+	}
+
+	@Override
+	protected String getReplaceQuery() {
+		return "REPLACE INTO " + getTableName() + " (name, type, value, update_guid) VALUES (?, ?, ?, ?)";
+	}
+
+	@Override
+	protected @Nullable NonNullPair<String, String> getMonitorQueries() {
+		return new NonNullPair<>(
+				"SELECT rowid, name, type, value FROM " + getTableName() + " WHERE rowid > ?",
+				"DELETE FROM " + getTableName() + " WHERE value IS NULL AND rowid < ?"
+		);
+	}
+
+	@Override
+	protected String getSelectQuery() {
+		return "SELECT rowid, name, type, value from " + getTableName();
+	}
+
+	@Override
+	protected BiFunction<Integer, ResultSet, VariableResult> get() {
+		return (index, result) -> {
+			int i = 1;
+			try {
+				long rowid = result.getLong(i++);
+				String name = result.getString(i++);
+				if (name == null) {
+					Skript.error("Variable with NULL name found in the database '" + databaseName + "', ignoring it");
+					return null;
+				}
+				String type = result.getString(i++);
+				byte[] value = result.getBytes(i++);
+				return new VariableResult(name, type, value);
+			} catch (SQLException e) {
+				return new VariableResult(e);
+			}
+		};
 	}
 
 }
