@@ -18,7 +18,6 @@
  */
 package ch.njol.skript.variables;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
@@ -29,6 +28,7 @@ import java.util.concurrent.TimeoutException;
 import org.junit.Before;
 import org.junit.Test;
 
+import ch.njol.skript.Skript;
 import ch.njol.skript.config.Config;
 import ch.njol.skript.config.EntryNode;
 import ch.njol.skript.config.SectionNode;
@@ -36,6 +36,7 @@ import ch.njol.skript.registrations.Classes;
 
 public class H2StorageTest {
 
+	private static final boolean ENABLED = Skript.classExists("com.zaxxer.hikari.HikariConfig");
 	private final String testSection =
 			"h2:\n" +
 				"\tpattern: .*\n" +
@@ -47,6 +48,8 @@ public class H2StorageTest {
 
 	@Before
 	public void setup() {
+		if (!ENABLED)
+			return;
 		Config config;
 		try {
 			config = new Config(testSection, "h2-junit.sk", false, false, ":");
@@ -67,6 +70,8 @@ public class H2StorageTest {
 
 	@Test
 	public void testStorage() throws SQLException, InterruptedException, ExecutionException, TimeoutException {
+		if (!ENABLED)
+			return;
 		synchronized (database) {
 			assertTrue(database.save("testing", "string", Classes.serialize("Hello World!").data));
 //			SerializedVariable result = database.executeTestQuery();
