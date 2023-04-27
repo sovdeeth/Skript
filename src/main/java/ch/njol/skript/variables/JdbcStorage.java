@@ -43,7 +43,7 @@ import ch.njol.skript.util.Timespan;
 import ch.njol.util.NonNullPair;
 import ch.njol.util.SynchronizedReference;
 
-public abstract class SQLStorage extends VariablesStorage {
+public abstract class JdbcStorage extends VariablesStorage {
 
 	public static final int MAX_VARIABLE_NAME_LENGTH = 380; // MySQL: 767 bytes max; cannot set max bytes, only max characters
 	public static final int MAX_CLASS_CODENAME_LENGTH = 50; // checked when registering a class
@@ -95,7 +95,7 @@ public abstract class SQLStorage extends VariablesStorage {
 	 * @param name The name to be sent through this constructor when newInstance creates this class.
 	 * @param createTableQuery The create table query to send to the SQL engine.
 	 */
-	public SQLStorage(String name, String createTableQuery) {
+	public JdbcStorage(String name, String createTableQuery) {
 		super(name);
 		this.createTableQuery = createTableQuery;
 		this.table = "variables21";
@@ -152,34 +152,14 @@ public abstract class SQLStorage extends VariablesStorage {
 	/**
 	 * Construct a VariableResult from the SQL ResultSet based on your getSelectQuery.
 	 * The integer is the index of the entire result set, ResultSet is the current iteration and a VariableResult should be return.
+	 * If the integer is -1, it's a test query.
+	 * 
+	 * Null if exception happened.
 	 * 
 	 * @return a VariableResult from the SQL ResultSet based on your getSelectQuery.
 	 */
-	protected abstract BiFunction<Integer, ResultSet, VariableResult> get();
-
-	protected class VariableResult {
-
-		private final String name;
-		private final String type;
-		private final byte[] value;
-
-		private SQLException exception;
-
-		public VariableResult(SQLException exception) {
-			this(null, null, null);
-			this.exception = exception;
-		}
-
-		public VariableResult(String name, String type, byte[] value) {
-			this.name = name;
-			this.type = type;
-			this.value = value;
-		}
-
-		public boolean isError() {
-			return exception != null;
-		}
-	}
+	@Nullable
+	protected abstract BiFunction<Integer, ResultSet, SerializedVariable> get();
 
 	private ResultSet query(HikariDataSource source, String query) throws SQLException {
 		Statement statement = source.getConnection().createStatement();
@@ -251,7 +231,8 @@ public abstract class SQLStorage extends VariablesStorage {
 			if (commit_changes != null)
 				enablePeriodicalCommits(configuration, commit_changes.getMilliSeconds());
 
-			configuration.setKeepaliveTime(TimeUnit.SECONDS.toMillis(10));
+			// Max lifetime is 30 minutes, idle lifetime is 10 minutes. This value has to be less than.
+			configuration.setKeepaliveTime(TimeUnit.MINUTES.toMillis(5));
 
 			SkriptLogger.setNode(null);
 
@@ -306,27 +287,27 @@ public abstract class SQLStorage extends VariablesStorage {
 			@Nullable
 			public SQLException call() throws Exception {
 				try {
-					BiFunction<Integer, ResultSet, VariableResult> handle = get();
+					BiFunction<Integer, ResultSet, SerializedVariable> handle = get();
 					int index = 0;
 					while (result.next()) {
-						VariableResult variable = handle.apply(index, result);
+						SerializedVariable variable = handle.apply(index, result);
 						index++;
 						if (variable == null)
 							continue;
-						if (variable.value == null) {
-							Variables.variableLoaded(variable.name, null, SQLStorage.this);
+						if (variable.getValue() == null) {
+							Variables.variableLoaded(variable.getName(), null, JdbcStorage.this);
 						} else {
-							ClassInfo<?> c = Classes.getClassInfoNoError(variable.type);
+							ClassInfo<?> c = Classes.getClassInfoNoError(variable.getType());
 							if (c == null || c.getSerializer() == null) {
-								Skript.error("Cannot load the variable {" + variable.name + "} from the database '" + databaseName + "', because the type '" + variable.type + "' cannot be recognised or cannot be stored in variables");
+								Skript.error("Cannot load the variable {" + variable.getName() + "} from the database '" + databaseName + "', because the type '" + variable.getType() + "' cannot be recognised or cannot be stored in variables");
 								continue;
 							}
-							Object object = Classes.deserialize(c, variable.value);
+							Object object = Classes.deserialize(c, variable.getData());
 							if (object == null) {
-								Skript.error("Cannot load the variable {" + variable.name + "} from the database '" + databaseName + "', because it cannot be loaded as " + c.getName().withIndefiniteArticle());
+								Skript.error("Cannot load the variable {" + variable.getName() + "} from the database '" + databaseName + "', because it cannot be loaded as " + c.getName().withIndefiniteArticle());
 								continue;
 							}
-							Variables.variableLoaded(variable.name, object, SQLStorage.this);
+							Variables.variableLoaded(variable.getName(), object, JdbcStorage.this);
 						}
 					}
 				} catch (SQLException e) {
@@ -529,6 +510,14 @@ public abstract class SQLStorage extends VariablesStorage {
 		} catch (SQLException e) {
 			sqlException(e);
 		}
+	}
+
+	SerializedVariable executeTestQuery() throws SQLException {
+		synchronized (database) {
+			database.get().getConnection().commit();
+		}
+		ResultSet result = query(database.get(), getSelectQuery());
+		return get().apply(-1, result);
 	}
 
 	void sqlException(SQLException e) {

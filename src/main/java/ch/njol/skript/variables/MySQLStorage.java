@@ -30,7 +30,7 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.config.SectionNode;
 import ch.njol.util.NonNullPair;
 
-public class MySQLStorage extends SQLStorage {
+public class MySQLStorage extends JdbcStorage {
 
 	MySQLStorage(String name) {
 		super(name, "CREATE TABLE IF NOT EXISTS %s (" +
@@ -83,7 +83,7 @@ public class MySQLStorage extends SQLStorage {
 	}
 
 	@Override
-	protected BiFunction<Integer, ResultSet, VariableResult> get() {
+	protected BiFunction<Integer, ResultSet, SerializedVariable> get() {
 		return (index, result) -> {
 			int i = 1;
 			try {
@@ -95,9 +95,10 @@ public class MySQLStorage extends SQLStorage {
 				}
 				String type = result.getString(i++);
 				byte[] value = result.getBytes(i++);
-				return new VariableResult(name, type, value);
+				return new SerializedVariable(name, type, value);
 			} catch (SQLException e) {
-				return new VariableResult(e);
+				Skript.exception(e, "Failed to collect variable from database.");
+				return null;
 			}
 		};
 	}

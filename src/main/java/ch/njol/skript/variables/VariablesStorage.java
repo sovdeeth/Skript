@@ -108,13 +108,13 @@ public abstract class VariablesStorage implements Closeable {
 				try {
 					// Take a variable from the queue and process it
 					SerializedVariable variable = changesQueue.take();
-					Value value = variable.value;
+					Value value = variable.getValue();
 
 					// Actually save the variable
 					if (value != null)
-						save(variable.name, value.type, value.data);
+						save(variable.getName(), value.type, value.data);
 					else
-						save(variable.name, null, null);
+						save(variable.getName(), null, null);
 				} catch (InterruptedException ignored) {
 					// Ignored as the `closed` field will indicate whether the thread actually needs to stop
 				}

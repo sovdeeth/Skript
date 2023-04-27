@@ -30,7 +30,7 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.config.SectionNode;
 import ch.njol.util.NonNullPair;
 
-public class H2Storage extends SQLStorage {
+public class H2Storage extends JdbcStorage {
 
 	public H2Storage(String name) {
 		super(name, "CREATE TABLE IF NOT EXISTS %s (" +
@@ -68,7 +68,7 @@ public class H2Storage extends SQLStorage {
 
 	@Override
 	protected String getReplaceQuery() {
-		return "INSERT INTO " + getTableName() + " VALUES (?, ?, ?)";
+		return "MERGE INTO " + getTableName() + " KEY(name) VALUES (?, ?, ?)";
 	}
 
 	@Override
@@ -83,7 +83,7 @@ public class H2Storage extends SQLStorage {
 	}
 
 	@Override
-	protected BiFunction<Integer, ResultSet, VariableResult> get() {
+	protected BiFunction<Integer, ResultSet, SerializedVariable> get() {
 		return (index, result) -> {
 			int i = 1;
 			try {
@@ -94,9 +94,10 @@ public class H2Storage extends SQLStorage {
 				}
 				String type = result.getString(i++);
 				byte[] value = result.getBytes(i++);
-				return new VariableResult(name, type, value);
+				return new SerializedVariable(name, type, value);
 			} catch (SQLException e) {
-				return new VariableResult(e);
+				Skript.exception(e, "Failed to collect variable from database.");
+				return null;
 			}
 		};
 	}

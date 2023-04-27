@@ -34,7 +34,7 @@ import ch.njol.util.NonNullPair;
 
 @Deprecated
 @ScheduledForRemoval
-public class SQLiteStorage extends SQLStorage {
+public class SQLiteStorage extends JdbcStorage {
 
 	SQLiteStorage(String name) {
 		super(name, "CREATE TABLE IF NOT EXISTS %s (" +
@@ -88,7 +88,7 @@ public class SQLiteStorage extends SQLStorage {
 	}
 
 	@Override
-	protected BiFunction<Integer, ResultSet, VariableResult> get() {
+	protected BiFunction<Integer, ResultSet, SerializedVariable> get() {
 		return (index, result) -> {
 			int i = 1;
 			try {
@@ -99,9 +99,10 @@ public class SQLiteStorage extends SQLStorage {
 				}
 				String type = result.getString(i++);
 				byte[] value = result.getBytes(i++);
-				return new VariableResult(name, type, value);
+				return new SerializedVariable(name, type, value);
 			} catch (SQLException e) {
-				return new VariableResult(e);
+				Skript.exception(e, "Failed to collect variable from database.");
+				return null;
 			}
 		};
 	}

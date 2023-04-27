@@ -100,9 +100,13 @@ public class Variables {
 	// Register some things with Yggdrasil
 	static {
 		registerStorage(FlatFileStorage.class, "csv", "file", "flatfile");
-		registerStorage(SQLiteStorage.class, "sqlite");
-		registerStorage(MySQLStorage.class, "mysql");
-		registerStorage(H2Storage.class, "h2");
+		if (Skript.classExists("com.zaxxer.hikari.HikariConfig")) {
+			registerStorage(SQLiteStorage.class, "sqlite");
+			registerStorage(MySQLStorage.class, "mysql");
+			registerStorage(H2Storage.class, "h2");
+		} else {
+			Skript.warning("SpigotLibraryLoader failed to load HikariCP. No JDBC databases were enabled.");
+		}
 		yggdrasil.registerSingleClass(Kleenean.class, "Kleenean");
 		// Register ConfigurationSerializable, Bukkit's serialization system
 		yggdrasil.registerClassResolver(new ConfigurationSerializer<ConfigurationSerializable>() {
@@ -851,7 +855,7 @@ public class Variables {
 				SerializedVariable variable = saveQueue.take();
 
 				for (VariablesStorage variablesStorage : STORAGES) {
-					if (variablesStorage.accept(variable.name)) {
+					if (variablesStorage.accept(variable.getName())) {
 						variablesStorage.save(variable);
 
 						break;
