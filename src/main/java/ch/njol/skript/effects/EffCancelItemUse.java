@@ -43,14 +43,15 @@ import org.eclipse.jdt.annotation.Nullable;
 			"\t\tinterrupt player's active item use"
 })
 @Since("INSERT VERSION")
-@RequiredPlugins("Paper 1.16.1+")
+@RequiredPlugins("Paper 1.16+")
 public class EffCancelItemUse extends Effect {
 
 	static {
 		if (Skript.methodExists(LivingEntity.class, "clearActiveItem"))
 			Skript.registerEffect(EffCancelItemUse.class,
 					"(cancel|interrupt) %livingentities%'[s] [active|current] item [[in] us(e|age)]",
-					"(cancel|interrupt) [the] [active|current] item [in] us(e|age) [(of|for) %livingentities%]");
+					"(cancel|interrupt) [the] [active|current] item [in] us(e|age) [(of|for) %livingentities%]"
+			);
 	}
 
 	private Expression<LivingEntity> entityExpression;
@@ -71,7 +72,7 @@ public class EffCancelItemUse extends Effect {
 
 	@Override
 	public String toString(@Nullable Event event, boolean debug) {
-		return "cancel item usage of " + entityExpression.toString(event, debug);
+		return "cancel the item usage for " + entityExpression.toString(event, debug);
 	}
 
 }

@@ -58,7 +58,7 @@ public class ExprReadiedArrow extends SimpleExpression<ItemType> {
 	@Override
 	public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
 		if (!getParser().isCurrentEvent(PlayerReadyArrowEvent.class)) {
-			Skript.error("Cannot use 'readied " + parseResult.tags.get(0) + "' outside of a ready arrow event");
+			Skript.error("Cannot use 'the readied " + parseResult.tags.get(0) + "' outside of a ready arrow event");
 			return false;
 		}
 		isArrow = parseResult.hasTag("arrow");

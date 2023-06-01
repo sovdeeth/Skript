@@ -52,8 +52,8 @@ public class CondIsHandRaised extends PropertyCondition<LivingEntity> {
 		Skript.registerCondition(CondIsHandRaised.class,
 				"%livingentities%'[s] [:main] hand[s] (is|are) raised",
 				"%livingentities%'[s] [:main] hand[s] (isn't|is not|aren't|are not) raised",
-				"%livingentities%'[s] off[( |-)]hand[s] (is|are) raised",
-				"%livingentities%'[s] off[( |-)]hand[s] (isn't|is not|aren't|are not) raised");
+				"%livingentities%'[s] off[ |-]hand[s] (is|are) raised",
+				"%livingentities%'[s] off[ |-]hand[s] (isn't|is not|aren't|are not) raised");
 	}
 
 	private Expression<LivingEntity> entities;

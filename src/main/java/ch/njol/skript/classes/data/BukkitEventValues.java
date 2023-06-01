@@ -1561,7 +1561,6 @@ public final class BukkitEventValues {
 					return new ItemType(event.getItem());
 				}
 			}, EventValues.TIME_NOW);
-
 		}
 
 		// LootGenerateEvent
