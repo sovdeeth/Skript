@@ -28,6 +28,7 @@ import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
+import org.apache.commons.lang.ArrayUtils;
 import org.bukkit.event.Event;
 import org.eclipse.jdt.annotation.Nullable;
 
@@ -40,7 +41,11 @@ import org.eclipse.jdt.annotation.Nullable;
 })
 @Examples({
 	"loop characters from \"a\" to \"f\":",
+	"",
+	"# 0123456789:;<=>?@ABC... ...uvwxyz",
 	"send characters between \"0\" and \"z\"",
+	"",
+	"# 0123456789ABC... ...uvwxyz",
 	"send alphanumeric characters between \"0\" and \"z\""
 })
 @Since("INSERT VERSION")
@@ -76,6 +81,8 @@ public class ExprCharacters extends SimpleExpression<String> {
 		char startChar = start.charAt(0);
 		char endChar = end.charAt(0);
 
+		boolean reversed = startChar > endChar;
+
 		int min = Math.min(startChar, endChar);
 		int max = Math.max(startChar, endChar);
 
@@ -85,6 +92,9 @@ public class ExprCharacters extends SimpleExpression<String> {
 				continue;
 			chars[c - min] = String.valueOf(c);
 		}
+
+		if (reversed)
+			ArrayUtils.reverse(chars);
 
 		return chars;
 	}

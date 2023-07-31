@@ -32,6 +32,7 @@ import org.bukkit.event.Event;
 import org.eclipse.jdt.annotation.Nullable;
 
 import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Name("Random Character")
 @Description({
@@ -55,7 +56,6 @@ public class ExprRandomCharacter extends SimpleExpression<String> {
 	private Expression<Number> amount;
 	private Expression<String> from, to;
 	private boolean isAlphanumeric;
-	private final Random rand = new Random();
 
 	@Override
 	public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
@@ -77,6 +77,7 @@ public class ExprRandomCharacter extends SimpleExpression<String> {
 		if (from.length() < 1 || to.length() < 1)
 			return new String[0];
 
+		Random random = ThreadLocalRandom.current();
 		char fromChar = from.charAt(0);
 		char toChar = to.charAt(0);
 		int min = Math.min(fromChar, toChar);
@@ -100,13 +101,13 @@ public class ExprRandomCharacter extends SimpleExpression<String> {
 			}
 
 			for (int i = 0; i < amount; i++) {
-				chars[i] = String.valueOf(validChars.charAt(rand.nextInt(validChars.length())));
+				chars[i] = String.valueOf(validChars.charAt(random.nextInt(validChars.length())));
 			}
 			return chars;
 		}
 
 		for (int i = 0; i < amount; i++) {
-			chars[i] = String.valueOf((char) (rand.nextInt(max - min + 1) + min));
+			chars[i] = String.valueOf((char) (random.nextInt(max - min + 1) + min));
 		}
 
 		return chars;
