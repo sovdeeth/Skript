@@ -48,7 +48,7 @@ public class ExprRandomCharacter extends SimpleExpression<String> {
 
 	static {
 		Skript.registerExpression(ExprRandomCharacter.class, String.class, ExpressionType.COMBINED,
-			"[a|%-number%] random [:alphanumeric] character[s] (from|between) %string% (to|and) %string%");
+				"[a|%-number%] random [:alphanumeric] character[s] (from|between) %string% (to|and) %string%");
 	}
 
 	@Nullable
