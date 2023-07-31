@@ -84,7 +84,7 @@ public class ExprRandomCharacter extends SimpleExpression<String> {
 
 		String[] chars = new String[amount];
 
-		// iIf alphanumeric, we need to find the valid characters.
+		// If isAlphanumeric, we need to find the valid characters.
 		// We can't just repeat the random character generation because
 		// it's possible that there are no valid characters in the range.
 		if (isAlphanumeric) {
