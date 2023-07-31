@@ -55,9 +55,9 @@ public class EvtGrow extends SkriptEvent {
 				"grow[th] from %itemtypes/blockdatas% [in]to (1:%structuretypes%|2:%itemtypes/blockdatas%)"
 				)
 				.description(
-					"Called when a tree, giant mushroom or plant grows to next stage.\n" +
+					"Called when a tree, giant mushroom or plant grows to next stage.",
 					"\"of\" matches any grow event, \"from\" matches only the old state, \"into\" matches only the new state," +
-					"and \"from into\" requires matching both the old and new states.\n" +
+					"and \"from into\" requires matching both the old and new states.",
 					"Using \"and\" lists in this event is equivalent to using \"or\" lists. The event will trigger if any one of the elements is what grew.")
 				.examples(
 					"on grow:",
@@ -124,8 +124,10 @@ public class EvtGrow extends SkriptEvent {
 	
 	@Override
 	public boolean check(Event event) {
+		// Exit early if we need fromTypes, but don't have it
 		if (fromTypes == null && actionRestriction != INTO)
-			// True for "on grow", false for anything else.
+			// We want true for "on grow:", false for anything else
+			// So check against "OF", which is the first pattern; the one that allows "on grow:"
 			return actionRestriction == OF;
 
 		// Can exit early if we're checking against a structure, but the event isn't a structure grow event
@@ -153,12 +155,11 @@ public class EvtGrow extends SkriptEvent {
 	}
 
 	private static boolean checkFrom(Event event, Literal<Object> types) {
+		// treat and lists as or lists
 		if (types instanceof LiteralList)
 			((LiteralList<Object>) types).setAnd(false);
 		if (event instanceof StructureGrowEvent) {
-			// We want the original block, not the new one, so we get the first blockstate in the list and get its block
-			// Feels a bit hacky, but it seems to be the only way to get the original block
-			Block rootBlock = ((StructureGrowEvent) event).getBlocks().get(0).getBlock();
+			Block rootBlock = ((StructureGrowEvent) event).getLocation().getBlock();
 			return types.check(event, type -> {
 				if (type instanceof ItemType) {
 					return ((ItemType) type).isOfType(rootBlock);
@@ -182,6 +183,7 @@ public class EvtGrow extends SkriptEvent {
 	}
 
 	private static boolean checkTo(Event event, Literal<Object> types) {
+		// treat and lists as or lists
 		if (types instanceof LiteralList)
 			((LiteralList<Object>) types).setAnd(false);
 		if (event instanceof StructureGrowEvent) {
