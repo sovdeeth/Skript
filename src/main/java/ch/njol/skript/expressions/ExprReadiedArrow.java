@@ -19,7 +19,6 @@
 package ch.njol.skript.expressions;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Events;
 import ch.njol.skript.doc.Examples;
@@ -29,7 +28,6 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
-import ch.njol.skript.log.ErrorQuality;
 import ch.njol.util.Kleenean;
 import com.destroystokyo.paper.event.player.PlayerReadyArrowEvent;
 import org.bukkit.event.Event;
@@ -46,35 +44,35 @@ import org.eclipse.jdt.annotation.Nullable;
 })
 @Since("INSERT VERSION")
 @Events("player ready arrow")
-public class ExprReadiedArrow extends SimpleExpression<ItemType> {
+public class ExprReadiedArrow extends SimpleExpression<ItemStack> {
 
 	static {
 		if (Skript.classExists("com.destroystokyo.paper.event.player.PlayerReadyArrowEvent"))
-			Skript.registerExpression(ExprReadiedArrow.class, ItemType.class, ExpressionType.SIMPLE, "[the] (readied|selected|drawn) (:arrow|:bow)");
+			Skript.registerExpression(ExprReadiedArrow.class, ItemStack.class, ExpressionType.SIMPLE, "[the] (readied|selected|drawn) (:arrow|bow)");
 	}
 
 	private boolean isArrow;
 
 	@Override
 	public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
+		isArrow = parseResult.hasTag("arrow");
 		if (!getParser().isCurrentEvent(PlayerReadyArrowEvent.class)) {
-			Skript.error("Cannot use 'the readied " + parseResult.tags.get(0) + "' outside of a ready arrow event");
+			Skript.error("Cannot use 'the readied " + (isArrow ? "arrow" : "bow") + "' outside of a ready arrow event");
 			return false;
 		}
-		isArrow = parseResult.hasTag("arrow");
 		return true;
 	}
 
 	@Override
 	@Nullable
-	protected ItemType[] get(Event event) {
+	protected ItemStack[] get(Event event) {
 		ItemStack item;
 		if (isArrow) {
 			item = ((PlayerReadyArrowEvent) event).getArrow();
 		} else {
 			item = ((PlayerReadyArrowEvent) event).getBow();
 		}
-		return new ItemType[]{new ItemType(item)};
+		return new ItemStack[]{item};
 	}
 
 	@Override
@@ -83,13 +81,13 @@ public class ExprReadiedArrow extends SimpleExpression<ItemType> {
 	}
 
 	@Override
-	public Class<? extends ItemType> getReturnType() {
-		return ItemType.class;
+	public Class<? extends ItemStack> getReturnType() {
+		return ItemStack.class;
 	}
 
 	@Override
 	public String toString(@Nullable Event event, boolean debug) {
-		return "readied " + (isArrow ? "arrow" : "bow");
+		return "the readied " + (isArrow ? "arrow" : "bow");
 	}
 
 }

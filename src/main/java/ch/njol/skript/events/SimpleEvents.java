@@ -656,7 +656,8 @@ public class SimpleEvents {
 		}
 
 		if (Skript.classExists("io.papermc.paper.event.player.PlayerStopUsingItemEvent")) {
-			Skript.registerEvent("Stop Using Item", SimpleEvent.class, PlayerStopUsingItemEvent.class, "[player] stop (using item|item use)")
+			Skript.registerEvent("Stop Using Item", SimpleEvent.class, PlayerStopUsingItemEvent.class,
+							"[player] (stop|end) (using item|item use)")
 					.description("Called when a player stops using an item. For example, when the player releases the " +
 							"interact button when holding a bow, an edible item, or a spyglass.",
 							"Note that event-number/event-timespan will return the number of ticks the item was held for.")

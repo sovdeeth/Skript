@@ -19,7 +19,6 @@
 package ch.njol.skript.expressions;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
@@ -42,17 +41,17 @@ import org.eclipse.jdt.annotation.Nullable;
 })
 @Since("INSERT VERSION")
 @RequiredPlugins("Paper")
-public class ExprMaxItemUseTime extends SimplePropertyExpression<ItemType, Timespan> {
+public class ExprMaxItemUseTime extends SimplePropertyExpression<ItemStack, Timespan> {
 
 	static {
 		if (Skript.methodExists(ItemStack.class, "getMaxItemUseDuration"))
-			register(ExprMaxItemUseTime.class, Timespan.class, "max[imum] [item] us(e|age) (time|duration)", "itemtypes");
+			register(ExprMaxItemUseTime.class, Timespan.class, "max[imum] [item] us(e|age) (time|duration)", "itemstacks");
 	}
 
 	@Override
 	@Nullable 
-	public Timespan convert(ItemType itemData) {
-		return Timespan.fromTicks(itemData.getRandom().getMaxItemUseDuration());
+	public Timespan convert(ItemStack item) {
+		return Timespan.fromTicks(item.getMaxItemUseDuration());
 	}
 
 	@Override

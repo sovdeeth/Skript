@@ -25,6 +25,7 @@ import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.RequiredPlugins;
 import ch.njol.skript.doc.Since;
 import ch.njol.skript.expressions.base.SimplePropertyExpression;
+import org.bukkit.Material;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.ItemStack;
 import org.eclipse.jdt.annotation.Nullable;
@@ -33,7 +34,7 @@ import org.eclipse.jdt.annotation.Nullable;
 @Description(
 	"Returns the item the entities are currently using (ie: the food they're eating, " +
 	"the bow they're drawing back, etc.). This cannot be changed. " +
-	"If an entity is not using any item, this will return 0 air."
+	"If an entity is not using any item, this will return null."
 )
 @Examples({
 	"on damage of player:",
@@ -52,7 +53,8 @@ public class ExprActiveItem extends SimplePropertyExpression<LivingEntity, ItemS
 	@Override
 	@Nullable
 	public ItemStack convert(LivingEntity livingEntity) {
-		return livingEntity.getActiveItem();
+		ItemStack item = livingEntity.getActiveItem();
+		return item.getType() == Material.AIR ? null : item;
 	}
 
 	@Override
