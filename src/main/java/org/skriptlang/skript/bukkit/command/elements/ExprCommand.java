@@ -47,7 +47,7 @@ import org.skriptlang.skript.bukkit.command.api.ScriptCommandEvent;
 	"\t\t\tmessage \"You're not allowed to use commands during the game\"",
 	"\t\t\tcancel the event"
 })
-@Since("2.0, INSERT VERSION (support for script commands)")
+@Since("2.0, 2.7 (support for script commands)")
 @Events("command")
 public class ExprCommand extends SimpleExpression<String> {
 

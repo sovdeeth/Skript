@@ -93,7 +93,7 @@ public class StructCommand extends Structure {
 		ARGUMENT_PATTERN = Pattern.compile("<\\s*(?:([^>]+?)\\s*:\\s*)?(.+?)\\s*(?:=\\s*(" + SkriptParser.wildcard + "))?\\s*>"),
 		DESCRIPTION_PATTERN = Pattern.compile("(?<!\\\\)%-?(.+?)%");
 
-	private static final AtomicBoolean syncCommands = new AtomicBoolean();
+	private static final AtomicBoolean SYNC_COMMANDS = new AtomicBoolean();
 
 	static {
 		Skript.registerStructure(
@@ -102,6 +102,7 @@ public class StructCommand extends Structure {
 				.addEntry("prefix", null, true)
 				.addEntry("description", "", true)
 				.addEntry("usage", null, true)
+				.addEntry("prefix", null, true)
 				.addEntry("permission", "", true)
 				.addEntryData(new VariableStringEntryData("permission message", null, true, ScriptCommandEvent.class))
 				.addEntryData(new KeyValueEntryData<List<String>>("aliases", new ArrayList<>(), true) {
@@ -139,9 +140,12 @@ public class StructCommand extends Structure {
 				})
 				.addEntryData(new LiteralEntryData<>("cooldown", null, true, Timespan.class))
 				.addEntryData(new VariableStringEntryData("cooldown message", null, true, ScriptCommandEvent.class))
-				.addEntry("cooldown bypass", null,true)
+				.addEntry("cooldown bypass", null, true)
 				.addEntryData(new VariableStringEntryData("cooldown storage", null, true, StringMode.VARIABLE_NAME, ScriptCommandEvent.class))
 				.addSection("trigger", false)
+				.unexpectedEntryMessage(key ->
+					"Unexpected entry '" + key + "'. Check that it's spelled correctly, and ensure that you have put all code into a trigger."
+				)
 				.build(),
 			"command [/]<^(\\S+)\\s*(.+)?>"
 		);
@@ -255,8 +259,6 @@ public class StructCommand extends Structure {
 
 		EntryContainer entryContainer = getEntryContainer();
 
-		String prefix = entryContainer.getOptional("prefix", String.class, false);
-
 		String desc = "/" + command + " ";
 		desc += StringUtils.replaceAll(pattern, DESCRIPTION_PATTERN, m1 -> {
 			assert m1 != null;
@@ -272,6 +274,7 @@ public class StructCommand extends Structure {
 		}
 
 		String description = entryContainer.get("description", String.class, true);
+		String prefix = entryContainer.getOptional("prefix", String.class, false);
 
 		String permission = entryContainer.get("permission", String.class, true);
 		VariableString permissionMessage = entryContainer.getOptional("permission message", VariableString.class, false);
@@ -321,7 +324,7 @@ public class StructCommand extends Structure {
 			// something went wrong, let's hope the register method printed an error
 			return false;
 		}
-		syncCommands.set(true);
+		SYNC_COMMANDS.set(true);
 
 		return true;
 	}
@@ -340,7 +343,7 @@ public class StructCommand extends Structure {
 					"An error occurred while attempting to unregister the command '" + command.getLabel() + "'"
 				);
 			}
-			syncCommands.set(true);
+			SYNC_COMMANDS.set(true);
 		}
 	}
 
@@ -350,7 +353,7 @@ public class StructCommand extends Structure {
 	}
 
 	private static void attemptCommandSync() {
-		if (syncCommands.compareAndSet(true, false)) {
+		if (SYNC_COMMANDS.compareAndSet(true, false)) {
 			if (CommandUtils.syncCommands(Bukkit.getServer())) {
 				Skript.debug("Commands synced to clients");
 			} else {
@@ -365,7 +368,7 @@ public class StructCommand extends Structure {
 	}
 
 	@Override
-	public String toString(@Nullable Event e, boolean debug) {
+	public String toString(@Nullable Event event, boolean debug) {
 		return "command";
 	}
 
