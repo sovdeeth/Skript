@@ -16,11 +16,12 @@
  *
  * Copyright Peter Güttinger, SkriptLang team and contributors
  */
-package ch.njol.skript.expressions;
+package org.skriptlang.skript.bukkit.command.elements;
 
 import java.util.List;
 import java.util.regex.MatchResult;
 
+import ch.njol.skript.lang.parser.ParserInstance;
 import org.bukkit.event.Event;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.server.ServerCommandEvent;
@@ -28,9 +29,6 @@ import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.ClassInfo;
-import ch.njol.skript.command.Argument;
-import ch.njol.skript.command.Commands;
-import ch.njol.skript.command.ScriptCommandEvent;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
@@ -45,6 +43,8 @@ import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Kleenean;
 import ch.njol.util.StringUtils;
+import org.skriptlang.skript.bukkit.command.api.Argument;
+import org.skriptlang.skript.bukkit.command.api.ScriptCommandEvent;
 
 @Name("Argument")
 @Description({
@@ -68,14 +68,18 @@ public class ExprArgument extends SimpleExpression<Object> {
 				"[the] last arg[ument]", // LAST
 				"[the] arg[ument](-| )<(\\d+)>", // ORDINAL
 				"[the] <(\\d*1)st|(\\d*2)nd|(\\d*3)rd|(\\d*[4-90])th> arg[ument][s]", // ORDINAL
-				"[(all [[of] the]|the)] arg[ument][(1:s)]", // SINGLE OR ALL
+				"[all [[of] the]|the] arg[ument][all:s]", // SINGLE OR ALL
 				"[the] %*classinfo%( |-)arg[ument][( |-)<\\d+>]", // CLASSINFO
 				"[the] arg[ument]( |-)%*classinfo%[( |-)<\\d+>]" // CLASSINFO
 		);
 	}
 
-	private static final int LAST = 0, ORDINAL = 1, SINGLE = 2, ALL = 3, CLASSINFO = 4;
-	private int what;
+	private enum ArgumentType {
+		LAST, ORDINAL, SINGLE, ALL, CLASSINFO
+	}
+
+	@SuppressWarnings("NotNullFieldNotInitialized")
+	private ArgumentType argumentType;
 
 	@Nullable
 	private Argument<?> argument;
@@ -85,43 +89,46 @@ public class ExprArgument extends SimpleExpression<Object> {
 	@Override
 	@SuppressWarnings("unchecked")
 	public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
-		boolean scriptCommand = getParser().isCurrentEvent(ScriptCommandEvent.class);
-		if (!scriptCommand && !getParser().isCurrentEvent(PlayerCommandPreprocessEvent.class, ServerCommandEvent.class)) {
+		ParserInstance parser = getParser();
+
+		boolean scriptCommand = parser.isCurrentStructure(StructCommand.class);
+		if (!scriptCommand && !parser.isCurrentEvent(PlayerCommandPreprocessEvent.class, ServerCommandEvent.class)) {
 			Skript.error("The 'argument' expression can only be used in a script command or command event");
 			return false;
 		}
 
 		switch (matchedPattern) {
 			case 0:
-				what = LAST;
+				argumentType = ArgumentType.LAST;
 				break;
 			case 1:
 			case 2:
-				what = ORDINAL;
+				argumentType = ArgumentType.ORDINAL;
 				break;
 			case 3:
-				what = parseResult.mark == 1 ? ALL : SINGLE;
+				argumentType = parseResult.hasTag("all") ? ArgumentType.ALL : ArgumentType.SINGLE;
 				break;
 			case 4:
 			case 5:
-				what = CLASSINFO;
+				argumentType = ArgumentType.CLASSINFO;
 				break;
 			default:
-				assert false;
+				assert false : matchedPattern;
 		}
 
-		if (!scriptCommand && what == CLASSINFO) {
+		if (!scriptCommand && argumentType == ArgumentType.CLASSINFO) {
 			Skript.error("Command event arguments are strings, meaning type specification is useless");
 			return false;
 		}
 
-		List<Argument<?>> currentArguments = Commands.currentArguments;
-		if (scriptCommand && (currentArguments == null || currentArguments.isEmpty())) {
+		//noinspection ConstantConditions - current structure will never be null
+		List<Argument<?>> arguments = ((StructCommand) parser.getCurrentStructure()).getArguments();
+		if (scriptCommand && arguments.isEmpty()) {
 			Skript.error("This command doesn't have any arguments", ErrorQuality.SEMANTIC_ERROR);
 			return false;
 		}
 
-		if (what == ORDINAL) {
+		if (argumentType == ArgumentType.ORDINAL) {
 			// Figure out in which format (1st, 2nd, 3rd, Nth) argument was given in
 			MatchResult regex = parseResult.regexes.get(0);
 			String argMatch = null;
@@ -133,23 +140,23 @@ public class ExprArgument extends SimpleExpression<Object> {
 			}
 			assert argMatch != null;
 			ordinal = Utils.parseInt(argMatch);
-			if (scriptCommand && ordinal > currentArguments.size()) { // Only check if it's a script command as we know nothing of command event arguments
+			if (scriptCommand && ordinal > arguments.size()) { // Only check if it's a script command as we know nothing of command event arguments
 				Skript.error("This command doesn't have a " + StringUtils.fancyOrderNumber(ordinal) + " argument", ErrorQuality.SEMANTIC_ERROR);
 				return false;
 			}
 		}
 
 		if (scriptCommand) { // Handle before execution
-			switch (what) {
+			switch (argumentType) {
 				case LAST:
-					argument = currentArguments.get(currentArguments.size() - 1);
+					argument = arguments.get(arguments.size() - 1);
 					break;
 				case ORDINAL:
-					argument = currentArguments.get(ordinal - 1);
+					argument = arguments.get(ordinal - 1);
 					break;
 				case SINGLE:
-					if (currentArguments.size() == 1) {
-						argument = currentArguments.get(0);
+					if (arguments.size() == 1) {
+						argument = arguments.get(0);
 					} else {
 						Skript.error("This command has multiple arguments, meaning it is not possible to get the 'argument'. Use 'argument 1', 'argument 2', etc. instead", ErrorQuality.SEMANTIC_ERROR);
 						return false;
@@ -162,7 +169,7 @@ public class ExprArgument extends SimpleExpression<Object> {
 					ClassInfo<?> c = ((Literal<ClassInfo<?>>) exprs[0]).getSingle();
 					if (parseResult.regexes.size() > 0) {
 						ordinal = Utils.parseInt(parseResult.regexes.get(0).group());
-						if (ordinal > currentArguments.size()) {
+						if (ordinal > arguments.size()) {
 							Skript.error("This command doesn't have a " + StringUtils.fancyOrderNumber(ordinal) + " " + c + " argument", ErrorQuality.SEMANTIC_ERROR);
 							return false;
 						}
@@ -170,7 +177,7 @@ public class ExprArgument extends SimpleExpression<Object> {
 
 					Argument<?> arg = null;
 					int argAmount = 0;
-					for (Argument<?> a : currentArguments) {
+					for (Argument<?> a : arguments) {
 						if (!c.getC().isAssignableFrom(a.getType())) // This argument is not of the required type
 							continue;
 
@@ -203,7 +210,7 @@ public class ExprArgument extends SimpleExpression<Object> {
 					argument = arg;
 					break;
 				default:
-					assert false : what;
+					assert false : argumentType;
 					return false;
 			}
 		}
@@ -213,16 +220,19 @@ public class ExprArgument extends SimpleExpression<Object> {
 	
 	@Override
 	@Nullable
-	protected Object[] get(final Event e) {
-		if (argument != null) {
-			return argument.getCurrent(e);
+	protected Object[] get(Event event) {
+		if (argument != null) { // handle this as a script command
+			if (!(event instanceof ScriptCommandEvent)) {
+				return new Object[0];
+			}
+			return argument.getValues((ScriptCommandEvent) event);
 		}
 
 		String fullCommand;
-		if (e instanceof PlayerCommandPreprocessEvent) {
-			fullCommand = ((PlayerCommandPreprocessEvent) e).getMessage().substring(1).trim();
-		} else if (e instanceof ServerCommandEvent) { // It's a ServerCommandEvent then
-			fullCommand = ((ServerCommandEvent) e).getCommand().trim();
+		if (event instanceof PlayerCommandPreprocessEvent) {
+			fullCommand = ((PlayerCommandPreprocessEvent) event).getMessage().substring(1).trim();
+		} else if (event instanceof ServerCommandEvent) { // It's a ServerCommandEvent then
+			fullCommand = ((ServerCommandEvent) event).getCommand().trim();
 		} else {
 			return new Object[0];
 		}
@@ -236,18 +246,21 @@ public class ExprArgument extends SimpleExpression<Object> {
 			return new String[0];
 		}
 
-		switch (what) {
+		switch (argumentType) {
 			case LAST:
-				if (arguments.length > 0)
+				if (arguments.length > 0) {
 					return new String[]{arguments[arguments.length - 1]};
+				}
 				break;
 			case ORDINAL:
-				if (arguments.length >= ordinal)
+				if (arguments.length >= ordinal) {
 					return new String[]{arguments[ordinal - 1]};
+				}
 				break;
 			case SINGLE:
-				if (arguments.length == 1)
+				if (arguments.length == 1) {
 					return new String[]{arguments[arguments.length - 1]};
+				}
 				break;
 			case ALL:
 				return arguments;
@@ -258,7 +271,7 @@ public class ExprArgument extends SimpleExpression<Object> {
 
 	@Override
 	public boolean isSingle() {
-		return argument != null ? argument.isSingle() : what != ALL;
+		return argument != null ? argument.isSingle() : argumentType != ArgumentType.ALL;
 	}
 	
 	@Override
@@ -272,8 +285,8 @@ public class ExprArgument extends SimpleExpression<Object> {
 	}
 
 	@Override
-	public String toString(@Nullable Event e, boolean debug) {
-		switch (what) {
+	public String toString(@Nullable Event event, boolean debug) {
+		switch (argumentType) {
 			case LAST:
 				return "the last argument";
 			case ORDINAL:

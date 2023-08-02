@@ -16,17 +16,13 @@
  *
  * Copyright Peter Güttinger, SkriptLang team and contributors
  */
-package ch.njol.skript.structures;
+package org.skriptlang.skript.bukkit.command.elements;
 
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
-import ch.njol.skript.bukkitutil.CommandReloader;
+import ch.njol.skript.SkriptAPIException;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.Parser;
-import ch.njol.skript.command.Argument;
-import ch.njol.skript.command.CommandEvent;
-import ch.njol.skript.command.Commands;
-import ch.njol.skript.command.ScriptCommand;
 import ch.njol.skript.config.SectionNode;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
@@ -34,16 +30,12 @@ import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.ParseContext;
-import org.skriptlang.skript.lang.script.Script;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.lang.Trigger;
 import ch.njol.skript.lang.VariableString;
-import org.skriptlang.skript.lang.entry.EntryContainer;
-import org.skriptlang.skript.lang.entry.KeyValueEntryData;
-import org.skriptlang.skript.lang.structure.Structure;
-import org.skriptlang.skript.lang.entry.EntryValidator;
-import org.skriptlang.skript.lang.entry.util.LiteralEntryData;
-import org.skriptlang.skript.lang.entry.util.VariableStringEntryData;
+import ch.njol.skript.lang.util.SimpleEvent;
+import ch.njol.skript.patterns.PatternCompiler;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.StringMode;
 import ch.njol.skript.util.Timespan;
@@ -53,11 +45,26 @@ import ch.njol.util.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.event.Event;
 import org.eclipse.jdt.annotation.Nullable;
+import org.skriptlang.skript.bukkit.command.CommandModule;
+import org.skriptlang.skript.bukkit.command.CommandUtils;
+import org.skriptlang.skript.bukkit.command.api.Argument;
+import org.skriptlang.skript.bukkit.command.api.ScriptCommand;
+import org.skriptlang.skript.bukkit.command.api.ScriptCommand.ExecutableBy;
+import org.skriptlang.skript.bukkit.command.api.ScriptCommandEvent;
+import org.skriptlang.skript.lang.entry.EntryContainer;
+import org.skriptlang.skript.lang.entry.EntryValidator;
+import org.skriptlang.skript.lang.entry.KeyValueEntryData;
+import org.skriptlang.skript.lang.entry.util.LiteralEntryData;
+import org.skriptlang.skript.lang.entry.util.VariableStringEntryData;
+import org.skriptlang.skript.lang.script.Script;
+import org.skriptlang.skript.lang.structure.Structure;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -83,7 +90,6 @@ public class StructCommand extends Structure {
 	public static final Priority PRIORITY = new Priority(500);
 
 	private static final Pattern
-		COMMAND_PATTERN = Pattern.compile("(?i)^command /?(\\S+)\\s*(\\s+(.+))?$"),
 		ARGUMENT_PATTERN = Pattern.compile("<\\s*(?:([^>]+?)\\s*:\\s*)?(.+?)\\s*(?:=\\s*(" + SkriptParser.wildcard + "))?\\s*>"),
 		DESCRIPTION_PATTERN = Pattern.compile("(?<!\\\\)%-?(.+?)%");
 
@@ -93,10 +99,11 @@ public class StructCommand extends Structure {
 		Skript.registerStructure(
 			StructCommand.class,
 			EntryValidator.builder()
-				.addEntry("usage", null, true)
+				.addEntry("prefix", null, true)
 				.addEntry("description", "", true)
+				.addEntry("usage", null, true)
 				.addEntry("permission", "", true)
-				.addEntryData(new VariableStringEntryData("permission message", null, true, CommandEvent.class))
+				.addEntryData(new VariableStringEntryData("permission message", null, true, ScriptCommandEvent.class))
 				.addEntryData(new KeyValueEntryData<List<String>>("aliases", new ArrayList<>(), true) {
 					private final Pattern pattern = Pattern.compile("\\s*,\\s*/?");
 
@@ -111,18 +118,18 @@ public class StructCommand extends Structure {
 						return aliases;
 					}
 				})
-				.addEntryData(new KeyValueEntryData<Integer>("executable by", ScriptCommand.CONSOLE | ScriptCommand.PLAYERS, true) {
+				.addEntryData(new KeyValueEntryData<ExecutableBy>("executable by", ExecutableBy.ALL, true) {
 					private final Pattern pattern = Pattern.compile("\\s*,\\s*|\\s+(and|or)\\s+");
 
 					@Override
 					@Nullable
-					protected Integer getValue(String value) {
-						int executableBy = 0;
+					protected ExecutableBy getValue(String value) {
+						ExecutableBy executableBy = null;
 						for (String b : pattern.split(value)) {
 							if (b.equalsIgnoreCase("console") || b.equalsIgnoreCase("the console")) {
-								executableBy |= ScriptCommand.CONSOLE;
+								executableBy = executableBy != null ? ExecutableBy.ALL : ExecutableBy.CONSOLE;
 							} else if (b.equalsIgnoreCase("players") || b.equalsIgnoreCase("player")) {
-								executableBy |= ScriptCommand.PLAYERS;
+								executableBy = executableBy != null ? ExecutableBy.ALL : ExecutableBy.PLAYERS;
 							} else {
 								return null;
 							}
@@ -131,118 +138,124 @@ public class StructCommand extends Structure {
 					}
 				})
 				.addEntryData(new LiteralEntryData<>("cooldown", null, true, Timespan.class))
-				.addEntryData(new VariableStringEntryData("cooldown message", null, true, CommandEvent.class))
+				.addEntryData(new VariableStringEntryData("cooldown message", null, true, ScriptCommandEvent.class))
 				.addEntry("cooldown bypass", null,true)
-				.addEntryData(new VariableStringEntryData("cooldown storage", null, true, StringMode.VARIABLE_NAME, CommandEvent.class))
+				.addEntryData(new VariableStringEntryData("cooldown storage", null, true, StringMode.VARIABLE_NAME, ScriptCommandEvent.class))
 				.addSection("trigger", false)
 				.build(),
-			"command <.+>"
+			"command [/]<^(\\S+)\\s*(.+)?>"
 		);
 	}
 
 	@Nullable
-	private ScriptCommand scriptCommand;
+	private ScriptCommand command;
+
+	@SuppressWarnings("NotNullFieldNotInitialized")
+	private MatchResult matchResult;
 
 	@Override
 	public boolean init(Literal<?>[] args, int matchedPattern, ParseResult parseResult, EntryContainer entryContainer) {
+		matchResult = parseResult.regexes.get(0);
 		return true;
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
 	public boolean load() {
-		getParser().setCurrentEvent("command", CommandEvent.class);
+		getParser().setCurrentEvent("command", ScriptCommandEvent.class);
 
-		EntryContainer entryContainer = getEntryContainer();
+		String command = matchResult.group(0).toLowerCase(Locale.ENGLISH);
 
-		String fullCommand = entryContainer.getSource().getKey();
-		assert fullCommand != null;
-		fullCommand = ScriptLoader.replaceOptions(fullCommand);
-
-		int level = 0;
-		for (int i = 0; i < fullCommand.length(); i++) {
-			if (fullCommand.charAt(i) == '[') {
-				level++;
-			} else if (fullCommand.charAt(i) == ']') {
-				if (level == 0) {
-					Skript.error("Invalid placement of [optional brackets]");
-					getParser().deleteCurrentEvent();
-					return false;
-				}
-				level--;
-			}
-		}
-		if (level > 0) {
-			Skript.error("Invalid amount of [optional brackets]");
-			getParser().deleteCurrentEvent();
-			return false;
-		}
-
-		Matcher matcher = COMMAND_PATTERN.matcher(fullCommand);
-		boolean matches = matcher.matches();
-		assert matches;
-
-		String command = matcher.group(1).toLowerCase();
-		ScriptCommand existingCommand = Commands.getScriptCommand(command);
+		// check whether this command already exists
+		ScriptCommand existingCommand = CommandModule.getCommandHandler().getScriptCommand(command);
 		if (existingCommand != null && existingCommand.getLabel().equals(command)) {
-			Script script = existingCommand.getScript();
-			Skript.error("A command with the name /" + existingCommand.getName() + " is already defined"
+			Script script = existingCommand.getTrigger().getScript();
+			Skript.error("A command with the name /" + existingCommand.getLabel() + " is already defined"
 				+ (script != null ? (" in " + script.getConfig().getFileName()) : "")
 			);
 			getParser().deleteCurrentEvent();
 			return false;
 		}
 
-		String arguments = matcher.group(3) == null ? "" : matcher.group(3);
+		// parse the arguments
+
+		String rawArguments = matchResult.group(1);
+
+		Matcher matcher = ARGUMENT_PATTERN.matcher(rawArguments);
+		List<Argument<?>> arguments = new ArrayList<>();
+		// arguments are converted into a SkriptPattern
 		StringBuilder pattern = new StringBuilder();
 
-		List<Argument<?>> currentArguments = Commands.currentArguments = new ArrayList<>(); //Mirre
-		matcher = ARGUMENT_PATTERN.matcher(arguments);
 		int lastEnd = 0;
-		int optionals = 0;
-		for (int i = 0; matcher.find(); i++) {
-			pattern.append(Commands.escape(arguments.substring(lastEnd, matcher.start())));
-			optionals += StringUtils.count(arguments, '[', lastEnd, matcher.start());
-			optionals -= StringUtils.count(arguments, ']', lastEnd, matcher.start());
+		int optionals = 0; // special bracket tracking to avoid counting any within arguments
+		while (matcher.find()) {
+			int start = matcher.start();
+
+			// append all the stuff between the end of the last argument and the beginning of this one
+			pattern.append(escape(rawArguments.substring(lastEnd, start)));
+
+			// if this argument is required, we should expect this to be 0
+			optionals += StringUtils.count(rawArguments, '[', lastEnd, start);
+			optionals -= StringUtils.count(rawArguments, ']', lastEnd, start);
 
 			lastEnd = matcher.end();
 
-			ClassInfo<?> c;
-			c = Classes.getClassInfoFromUserInput(matcher.group(2));
-			NonNullPair<String, Boolean> p = Utils.getEnglishPlural(matcher.group(2));
-			if (c == null)
-				c = Classes.getClassInfoFromUserInput(p.getFirst());
-			if (c == null) {
-				Skript.error("Unknown type '" + matcher.group(2) + "'");
-				getParser().deleteCurrentEvent();
-				return false;
+			String rawType = matcher.group(2);
+			ClassInfo<?> classInfo = Classes.getClassInfoFromUserInput(rawType);
+			NonNullPair<String, Boolean> pluralPair = Utils.getEnglishPlural(rawType);
+			if (classInfo == null) { // Attempt parsing the singular version as a backup
+				classInfo = Classes.getClassInfoFromUserInput(pluralPair.getFirst());
+
+				if (classInfo == null) { // We tried!
+					Skript.error("Unknown type '" + rawType + "'");
+					getParser().deleteCurrentEvent();
+					return false;
+				}
 			}
-			Parser<?> parser = c.getParser();
+			Parser<?> parser = classInfo.getParser();
 			if (parser == null || !parser.canParse(ParseContext.COMMAND)) {
-				Skript.error("Can't use " + c + " as argument of a command");
+				Skript.error("Can't use " + classInfo + " as argument of a command");
 				getParser().deleteCurrentEvent();
 				return false;
 			}
 
-			Argument<?> arg = Argument.newInstance(matcher.group(1), c, matcher.group(3), i, !p.getSecond(), optionals > 0);
-			if (arg == null) {
+			// parse argument
+
+			Argument<?> argument = Argument.of(
+				matcher.group(1), classInfo.getC(), optionals > 0, !pluralPair.getSecond(), matcher.group(3)
+			);
+
+			if (argument == null) { // Our argument parsing method should've printed an error
 				getParser().deleteCurrentEvent();
 				return false;
 			}
-			currentArguments.add(arg);
 
-			if (arg.isOptional() && optionals == 0) {
-				pattern.append('[');
-				optionals++;
-			}
-			pattern.append("%").append(arg.isOptional() ? "-" : "").append(Utils.toEnglishPlural(c.getCodeName(), p.getSecond())).append("%");
+			arguments.add(argument);
+
+			// append type portion to argument
+			pattern.append("%")
+					.append(argument.isOptional() ? "-" : "")
+					.append(Utils.toEnglishPlural(classInfo.getCodeName(), pluralPair.getSecond()))
+					.append("%");
 		}
 
-		pattern.append(Commands.escape("" + arguments.substring(lastEnd)));
-		optionals += StringUtils.count(arguments, '[', lastEnd);
-		optionals -= StringUtils.count(arguments, ']', lastEnd);
-		for (int i = 0; i < optionals; i++)
-			pattern.append(']');
+		// append the rest of the user's input
+		pattern.append(escape(rawArguments.substring(lastEnd)));
+
+		// ensure brackets have been properly closed
+		optionals += StringUtils.count(rawArguments, '[', lastEnd);
+		optionals -= StringUtils.count(rawArguments, ']', lastEnd);
+		if (optionals != 0) {
+			Skript.error("Unclosed brackets within command declaration. Ensure all opening brackets have a respective closing bracket");
+			getParser().deleteCurrentEvent();
+			return false;
+		}
+
+		// obtain and validate the entries
+
+		EntryContainer entryContainer = getEntryContainer();
+
+		String prefix = entryContainer.getOptional("prefix", String.class, false);
 
 		String desc = "/" + command + " ";
 		desc += StringUtils.replaceAll(pattern, DESCRIPTION_PATTERN, m1 -> {
@@ -251,11 +264,11 @@ public class StructCommand extends Structure {
 			String s1 = p.getFirst();
 			return "<" + Classes.getClassInfo(s1).getName().toString(p.getSecond()) + ">";
 		});
-		desc = Commands.unescape(desc).trim();
+		desc = unescape(desc).trim();
 
 		String usage = entryContainer.getOptional("usage", String.class, false);
 		if (usage == null) {
-			usage = Commands.m_correct_usage + " " + desc;
+			usage = ScriptCommand.M_CORRECT_USAGE + " " + desc;
 		}
 
 		String description = entryContainer.get("description", String.class, true);
@@ -266,7 +279,7 @@ public class StructCommand extends Structure {
 			Skript.warning("command /" + command + " has a permission message set, but not a permission");
 
 		List<String> aliases = (List<String>) entryContainer.get("aliases", true);
-		int executableBy = (Integer) entryContainer.get("executable by", true);
+		ExecutableBy executableBy = (ExecutableBy) entryContainer.get("executable by", true);
 
 		Timespan cooldown = entryContainer.getOptional("cooldown", Timespan.class, false);
 		VariableString cooldownMessage = entryContainer.getOptional("cooldown message", VariableString.class, false);
@@ -287,21 +300,27 @@ public class StructCommand extends Structure {
 		if (Skript.debug() || node.debug())
 			Skript.debug("command " + desc + ":");
 
-		Commands.currentArguments = currentArguments;
-		try {
-			scriptCommand = new ScriptCommand(getParser().getCurrentScript(), command, pattern.toString(), currentArguments, description, usage,
-				aliases, permission, permissionMessage, cooldown, cooldownMessage, cooldownBypass, cooldownStorage,
-				executableBy, entryContainer.get("trigger", SectionNode.class, false));
-		} finally {
-			Commands.currentArguments = null;
-		}
+		SectionNode triggerNode = entryContainer.get("trigger", SectionNode.class, false);
+		Trigger trigger = new Trigger(getParser().getCurrentScript(), "command /" + command, new SimpleEvent(), ScriptLoader.loadItems(triggerNode));
+		trigger.setLineNumber(triggerNode.getLine());
+
+		// construct our command
 
 		if (Skript.logVeryHigh() && !Skript.debug())
 			Skript.info("Registered command " + desc);
 
 		getParser().deleteCurrentEvent();
 
-		Commands.registerCommand(scriptCommand);
+		this.command = new ScriptCommand(
+			command, prefix, description, usage, aliases,
+			executableBy, permission, permissionMessage,
+			cooldown, cooldownMessage, cooldownBypass, cooldownStorage,
+			trigger, arguments, PatternCompiler.compile(pattern.toString())
+		);
+		if (!CommandModule.getCommandHandler().registerCommand(this.command)) {
+			// something went wrong, let's hope the register method printed an error
+			return false;
+		}
 		syncCommands.set(true);
 
 		return true;
@@ -315,8 +334,12 @@ public class StructCommand extends Structure {
 
 	@Override
 	public void unload() {
-		if (scriptCommand != null) {
-			Commands.unregisterCommand(scriptCommand);
+		if (command != null) {
+			if (!CommandModule.getCommandHandler().unregisterCommand(command)) {
+				throw new SkriptAPIException(
+					"An error occurred while attempting to unregister the command '" + command.getLabel() + "'"
+				);
+			}
 			syncCommands.set(true);
 		}
 	}
@@ -326,10 +349,9 @@ public class StructCommand extends Structure {
 		attemptCommandSync();
 	}
 
-	private void attemptCommandSync() {
-		if (syncCommands.get()) {
-			syncCommands.set(false);
-			if (CommandReloader.syncCommands(Bukkit.getServer())) {
+	private static void attemptCommandSync() {
+		if (syncCommands.compareAndSet(true, false)) {
+			if (CommandUtils.syncCommands(Bukkit.getServer())) {
 				Skript.debug("Commands synced to clients");
 			} else {
 				Skript.debug("Commands changed but not synced to clients (normal on 1.12 and older)");
@@ -345,6 +367,22 @@ public class StructCommand extends Structure {
 	@Override
 	public String toString(@Nullable Event e, boolean debug) {
 		return "command";
+	}
+
+	public List<Argument<?>> getArguments() {
+		// TODO complete method
+		return new ArrayList<>();
+	}
+
+	private static final Pattern ESCAPE = Pattern.compile("[" + Pattern.quote("(|)<>%\\") + "]");
+	private static final  Pattern UNESCAPE = Pattern.compile("\\\\[" + Pattern.quote("(|)<>%\\") + "]");
+
+	public static String escape(String s) {
+		return ESCAPE.matcher(s).replaceAll("\\\\$0");
+	}
+
+	public static String unescape(String s) {
+		return UNESCAPE.matcher(s).replaceAll("$0");
 	}
 
 }

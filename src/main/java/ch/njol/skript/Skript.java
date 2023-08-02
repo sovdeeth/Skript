@@ -112,6 +112,7 @@ import org.skriptlang.skript.lang.entry.EntryValidator;
 import org.skriptlang.skript.lang.script.Script;
 import org.skriptlang.skript.lang.structure.Structure;
 import org.skriptlang.skript.lang.structure.StructureInfo;
+import org.skriptlang.skript.bukkit.command.CommandModule;
 
 import java.io.File;
 import java.io.IOException;
@@ -532,6 +533,7 @@ public final class Skript extends JavaPlugin implements Listener {
 		try {
 			getAddonInstance().loadClasses("ch.njol.skript",
 				"conditions", "effects", "events", "expressions", "entity", "sections", "structures");
+			new CommandModule().load(getAddonInstance());
 		} catch (final Exception e) {
 			exception(e, "Could not load required .class files: " + e.getLocalizedMessage());
 			setEnabled(false);

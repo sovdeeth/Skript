@@ -16,7 +16,7 @@
  *
  * Copyright Peter Güttinger, SkriptLang team and contributors
  */
-package ch.njol.skript.expressions;
+package org.skriptlang.skript.bukkit.command.elements;
 
 import java.util.ArrayList;
 import java.util.Locale;
@@ -42,15 +42,17 @@ import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
 
 @Name("Command Info")
-@Description("Get information about a command.")
-@Examples({"main name of command \"skript\"",
+@Description("An expression to obtain various details about a command")
+@Examples({
+	"main name of command \"skript\"",
 	"description of command \"help\"",
 	"label of command \"pl\"",
 	"usage of command \"help\"",
 	"aliases of command \"bukkit:help\"",
 	"permission of command \"/op\"",
 	"command \"op\"'s permission message",
-	"command \"sk\"'s plugin owner"})
+	"command \"sk\"'s plugin owner"
+})
 @Since("2.6")
 public class ExprCommandInfo extends SimpleExpression<String> {
 
@@ -153,7 +155,8 @@ public class ExprCommandInfo extends SimpleExpression<String> {
 	}
 
 	@Override
-	public String toString(@Nullable Event e, boolean debug) {
-		return "the " + type.name().toLowerCase(Locale.ENGLISH).replace("_", " ") + " of command " + commandName.toString(e, debug);
+	public String toString(@Nullable Event event, boolean debug) {
+		return "the " + type.name().toLowerCase(Locale.ENGLISH).replace("_", " ") +
+			" of command " + commandName.toString(event, debug);
 	}
 }
