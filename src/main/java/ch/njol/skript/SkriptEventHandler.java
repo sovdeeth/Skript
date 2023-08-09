@@ -109,35 +109,33 @@ public final class SkriptEventHandler {
 	 * @param priority The priority of the Event.
 	 */
 	private static void check(Event event, EventPriority priority) {
+		// Get all triggers for this event, return if there are none
 		List<Trigger> triggers = getTriggers(event.getClass());
-
-		if (Skript.logVeryHigh()) {
-			boolean hasTrigger = false;
-			for (Trigger trigger : triggers) {
-				SkriptEvent triggerEvent = trigger.getEvent();
-				if (triggerEvent.getEventPriority() == priority && triggerEvent.check(event)) {
-					hasTrigger = true;
-					break;
-				}
-			}
-			if (!hasTrigger)
-				return;
-
-			logEventStart(event);
-		}
-		
-		boolean isCancelled = event instanceof Cancellable && ((Cancellable) event).isCancelled() && !listenCancelled.contains(event.getClass());
-		boolean isResultDeny = !(event instanceof PlayerInteractEvent && (((PlayerInteractEvent) event).getAction() == Action.LEFT_CLICK_AIR || ((PlayerInteractEvent) event).getAction() == Action.RIGHT_CLICK_AIR) && ((PlayerInteractEvent) event).useItemInHand() != Result.DENY);
-
-		if (isCancelled && isResultDeny) {
-			if (Skript.logVeryHigh())
-				Skript.info(" -x- was cancelled");
+		if (triggers.isEmpty())
 			return;
-		}
+
+		// This handles cancelled left/right clicks on air. Left/right clicks on air are called as cancelled, making isCancelled() unreliable.
+		// Checking useItemInHand() is a reliable method, as it will be DENY if the event was specifically cancelled.
+		// Note that right clicks on air with nothing in hand aren't ever sent to the server.
+		boolean isResultDeny = !(event instanceof PlayerInteractEvent &&
+			(((PlayerInteractEvent) event).getAction() == Action.LEFT_CLICK_AIR || ((PlayerInteractEvent) event).getAction() == Action.RIGHT_CLICK_AIR) &&
+			((PlayerInteractEvent) event).useItemInHand() != Result.DENY);
+
+		// Check if this event should be treated as cancelled
+		boolean isCancelled = event instanceof Cancellable &&
+			(((Cancellable) event).isCancelled() && isResultDeny) &&
+			!listenCancelled.contains(event.getClass());
+
+		// This now logs events even if there isn't a trigger that's going to run at that priority.
+		// However, there should only be a priority listener IF there's a trigger at that priority.
+		// So the only change is that the time will be logged even if no triggers pass check(),
+		// which is still useful information.
+		logEventStart(event);
 
 		for (Trigger trigger : triggers) {
 			SkriptEvent triggerEvent = trigger.getEvent();
-			if (triggerEvent.getEventPriority() != priority || !triggerEvent.check(event))
+			// Check if the trigger should be executed (matches priority, should be called if cancelled, and passes event.check())
+			if (triggerEvent.getEventPriority() != priority || (isCancelled && triggerEvent.shouldIgnoreCancelled()) || !triggerEvent.check(event))
 				continue;
 
 			logTriggerStart(trigger);

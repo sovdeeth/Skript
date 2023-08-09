@@ -56,6 +56,7 @@ public abstract class SkriptEvent extends Structure {
 	@Nullable
 	protected EventPriority eventPriority;
 	private SkriptEventInfo<?> skriptEventInfo;
+	protected boolean ignoreCancelled = true;
 
 	/**
 	 * The Trigger containing this SkriptEvent's code.
@@ -65,8 +66,12 @@ public abstract class SkriptEvent extends Structure {
 	@Override
 	public final boolean init(Literal<?>[] args, int matchedPattern, ParseResult parseResult, EntryContainer entryContainer) {
 		String expr = parseResult.expr;
-		if (StringUtils.startsWithIgnoreCase(expr, "on "))
+		if (StringUtils.startsWithIgnoreCase(expr, "on all ")) {
+			expr = expr.substring("on all ".length());
+			ignoreCancelled = false;
+		} else if (StringUtils.startsWithIgnoreCase(expr, "on ")) {
 			expr = expr.substring("on ".length());
+		}
 
 		String[] split = expr.split(" with priority ");
 		if (split.length != 1) {
@@ -214,6 +219,13 @@ public abstract class SkriptEvent extends Structure {
 	 */
 	public boolean isEventPrioritySupported() {
 		return true;
+	}
+
+	/**
+	 * @return whether this SkriptEvent will ignore cancelled events
+	 */
+	public boolean shouldIgnoreCancelled() {
+		return ignoreCancelled;
 	}
 
 	/**
