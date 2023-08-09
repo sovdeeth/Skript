@@ -1470,7 +1470,7 @@ public final class Skript extends JavaPlugin implements Listener {
 
 		String[] transformedPatterns = new String[patterns.length];
 		for (int i = 0; i < patterns.length; i++)
-			transformedPatterns[i] = "[on] [all] " + SkriptEvent.fixPattern(patterns[i]) + SkriptEventInfo.EVENT_PRIORITY_SYNTAX;
+			transformedPatterns[i] = "[on] [:all] " + SkriptEvent.fixPattern(patterns[i]) + SkriptEventInfo.EVENT_PRIORITY_SYNTAX;
 
 		SkriptEventInfo<E> r = new SkriptEventInfo<>(name, transformedPatterns, c, originClassPath, events);
 		structures.add(r);

@@ -18,18 +18,17 @@
  */
 package ch.njol.skript.lang;
 
-import java.util.Locale;
-
-import org.skriptlang.skript.lang.structure.StructureInfo;
+import ch.njol.skript.SkriptAPIException;
 import org.bukkit.event.Event;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.eclipse.jdt.annotation.Nullable;
+import org.skriptlang.skript.lang.structure.StructureInfo;
 
-import ch.njol.skript.SkriptAPIException;
+import java.util.Locale;
 
 public final class SkriptEventInfo<E extends SkriptEvent> extends StructureInfo<E> {
 
-	public static final String EVENT_PRIORITY_SYNTAX = " [with priority (lowest|low|normal|high|highest|monitor)]";
+	public static final String EVENT_PRIORITY_SYNTAX = " [with priority (1:lowest|2:low|3:normal|4:high|5:highest|6:monitor)]";
 	
 	public Class<? extends Event>[] events;
 	public final String name;

@@ -25,6 +25,7 @@ import ch.njol.skript.SkriptEventHandler;
 import ch.njol.skript.config.SectionNode;
 import ch.njol.skript.events.EvtClick;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.util.StringUtils;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventPriority;
 import org.eclipse.jdt.annotation.Nullable;
@@ -32,11 +33,8 @@ import org.skriptlang.skript.lang.entry.EntryContainer;
 import org.skriptlang.skript.lang.script.Script;
 import org.skriptlang.skript.lang.structure.Structure;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * A SkriptEvent is like a condition. It is called when any of the registered events occurs.
@@ -52,7 +50,6 @@ import java.util.regex.Pattern;
 public abstract class SkriptEvent extends Structure {
 
 	public static final Priority PRIORITY = new Priority(600);
-	private static final Pattern EVENT_PATTERN = Pattern.compile("(?:on\\s+)?(all\\s+)?(.+)", Pattern.CASE_INSENSITIVE);
 
 	private String expr;
 	@Nullable
@@ -67,36 +64,25 @@ public abstract class SkriptEvent extends Structure {
 
 	@Override
 	public final boolean init(Literal<?>[] args, int matchedPattern, ParseResult parseResult, EntryContainer entryContainer) {
-		String expr = parseResult.expr;
-		Matcher matcher = EVENT_PATTERN.matcher(expr);
-		if (!matcher.matches())
-			return false;
+		int priority = parseResult.mark;
+		ignoreCancelled = !parseResult.hasTag("all");
 
-		if (matcher.group(1) != null) {
-			ignoreCancelled = false;
-		}
-		expr = matcher.group(2);
-
-		String[] split = expr.split(" with priority ");
-		if (split.length != 1) {
+		eventPriority = null;
+		if (priority > 0) {
 			if (!isEventPrioritySupported()) {
 				Skript.error("This event doesn't support event priority");
 				return false;
 			}
-
-			expr = String.join(" with priority ", Arrays.copyOfRange(split, 0, split.length - 1));
-
-			String priorityString = split[split.length - 1];
-			try {
-				eventPriority = EventPriority.valueOf(priorityString.toUpperCase());
-			} catch (IllegalArgumentException e) {
-				throw new IllegalStateException(e);
-			}
-		} else {
-			eventPriority = null;
+			// parse marks go from 1 to 6, event priorities from 0 to 5
+			eventPriority = EventPriority.values()[priority - 1];
 		}
 
-		this.expr = parseResult.expr = expr;
+		this.expr = parseResult.expr;
+
+		// remove "on " from the beginning of the expression for better readability in logs
+		if (StringUtils.startsWithIgnoreCase(expr, "on ")) {
+			expr = expr.substring("on ".length());
+		}
 
 		SyntaxElementInfo<? extends Structure> syntaxElementInfo = getParser().getData(StructureData.class).getStructureInfo();
 		if (!(syntaxElementInfo instanceof SkriptEventInfo))
