@@ -64,17 +64,22 @@ public abstract class SkriptEvent extends Structure {
 
 	@Override
 	public final boolean init(Literal<?>[] args, int matchedPattern, ParseResult parseResult, EntryContainer entryContainer) {
-		int priority = parseResult.mark;
 		ignoreCancelled = !parseResult.hasTag("all");
 
-		eventPriority = null;
-		if (priority > 0) {
+		if (parseResult.hasTag("priority")) {
 			if (!isEventPrioritySupported()) {
 				Skript.error("This event doesn't support event priority");
 				return false;
 			}
-			// parse marks go from 1 to 6, event priorities from 0 to 5
-			eventPriority = EventPriority.values()[priority - 1];
+
+			try {
+				String priorityString = parseResult.tags.get(parseResult.tags.size() - 1);
+				eventPriority = EventPriority.valueOf(priorityString.toUpperCase());
+			} catch (IllegalArgumentException e) {
+				throw new IllegalStateException(e);
+			}
+		} else {
+			eventPriority = null;
 		}
 
 		this.expr = parseResult.expr;

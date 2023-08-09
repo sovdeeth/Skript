@@ -28,7 +28,7 @@ import java.util.Locale;
 
 public final class SkriptEventInfo<E extends SkriptEvent> extends StructureInfo<E> {
 
-	public static final String EVENT_PRIORITY_SYNTAX = " [with priority (1:lowest|2:low|3:normal|4:high|5:highest|6:monitor)]";
+	public static final String EVENT_PRIORITY_SYNTAX = " [priority:with priority (:lowest|:low|:normal|:high|:highest|:monitor)]";
 	
 	public Class<? extends Event>[] events;
 	public final String name;

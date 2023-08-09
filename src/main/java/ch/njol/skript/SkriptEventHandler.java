@@ -130,7 +130,7 @@ public final class SkriptEventHandler {
 		// However, there should only be a priority listener IF there's a trigger at that priority.
 		// So the only change is that the time will be logged even if no triggers pass check(),
 		// which is still useful information.
-		logEventStart(event);
+		logEventStart(event, priority);
 
 		for (Trigger trigger : triggers) {
 			SkriptEvent triggerEvent = trigger.getEvent();
@@ -163,6 +163,19 @@ public final class SkriptEventHandler {
 			return;
 		Skript.info("");
 		Skript.info("== " + event.getClass().getName() + " ==");
+	}
+
+	/**
+	 * Logs that the provided Event has started with a priority.
+	 * Requires {@link Skript#logVeryHigh()} to be true to log anything.
+	 * @param event The Event that started.
+	 */
+	public static void logEventStart(Event event, EventPriority priority) {
+		startEvent = System.nanoTime();
+		if (!Skript.logVeryHigh())
+			return;
+		Skript.info("");
+		Skript.info("== " + event.getClass().getName() + " with priority " + priority + " ==");
 	}
 
 	/**
