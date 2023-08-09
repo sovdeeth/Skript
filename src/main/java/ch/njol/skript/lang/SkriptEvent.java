@@ -25,17 +25,18 @@ import ch.njol.skript.SkriptEventHandler;
 import ch.njol.skript.config.SectionNode;
 import ch.njol.skript.events.EvtClick;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import org.skriptlang.skript.lang.script.Script;
-import org.skriptlang.skript.lang.entry.EntryContainer;
-import org.skriptlang.skript.lang.structure.Structure;
-import ch.njol.util.StringUtils;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventPriority;
 import org.eclipse.jdt.annotation.Nullable;
+import org.skriptlang.skript.lang.entry.EntryContainer;
+import org.skriptlang.skript.lang.script.Script;
+import org.skriptlang.skript.lang.structure.Structure;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * A SkriptEvent is like a condition. It is called when any of the registered events occurs.
@@ -51,6 +52,7 @@ import java.util.Locale;
 public abstract class SkriptEvent extends Structure {
 
 	public static final Priority PRIORITY = new Priority(600);
+	private static final Pattern EVENT_PATTERN = Pattern.compile("(?:on\\s+)?(all\\s+)?(.+)", Pattern.CASE_INSENSITIVE);
 
 	private String expr;
 	@Nullable
@@ -66,12 +68,14 @@ public abstract class SkriptEvent extends Structure {
 	@Override
 	public final boolean init(Literal<?>[] args, int matchedPattern, ParseResult parseResult, EntryContainer entryContainer) {
 		String expr = parseResult.expr;
-		if (StringUtils.startsWithIgnoreCase(expr, "on all ")) {
-			expr = expr.substring("on all ".length());
+		Matcher matcher = EVENT_PATTERN.matcher(expr);
+		if (!matcher.matches())
+			return false;
+
+		if (matcher.group(1) != null) {
 			ignoreCancelled = false;
-		} else if (StringUtils.startsWithIgnoreCase(expr, "on ")) {
-			expr = expr.substring("on ".length());
 		}
+		expr = matcher.group(2);
 
 		String[] split = expr.split(" with priority ");
 		if (split.length != 1) {
