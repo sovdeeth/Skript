@@ -671,7 +671,7 @@ public class SimpleEvents {
 		}
 
 		if (Skript.classExists("com.destroystokyo.paper.event.player.PlayerReadyArrowEvent")) {
-			Skript.registerEvent("Ready Arrow", SimpleEvent.class, PlayerReadyArrowEvent.class, "[player] (ready|pick|draw) arrow")
+			Skript.registerEvent("Ready Arrow", SimpleEvent.class, PlayerReadyArrowEvent.class, "[player] ((ready|choose|draw|load) arrow|arrow (choose|draw|load))")
 					.description("Called when a player is firing a bow and the server is choosing an arrow to use.",
 							"Cancelling this event will skip the current arrow item and fire a new event for the next arrow item.",
 							"The arrow and bow in the event can be accessed with the Readied Arrow/Bow expression.")
