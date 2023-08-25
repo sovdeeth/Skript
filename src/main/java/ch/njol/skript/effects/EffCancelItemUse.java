@@ -72,7 +72,7 @@ public class EffCancelItemUse extends Effect {
 
 	@Override
 	public String toString(@Nullable Event event, boolean debug) {
-		return "cancel the item usage for " + entityExpression.toString(event, debug);
+		return "cancel the usage of " + entityExpression.toString(event, debug) + "'s active item";
 	}
 
 }
