@@ -35,7 +35,7 @@ import org.bukkit.inventory.ItemStack;
 import org.eclipse.jdt.annotation.Nullable;
 
 @Name("Readied Arrow/Bow")
-@Description("The bow or arrow is a Ready Arrow event.")
+@Description("The bow or arrow in a <a href='events.html#ready_arrow'>Ready Arrow event</a>.")
 @Examples({
 	"on player ready arrow:",
 		"\tselected bow's name is \"Spectral Bow\"",
@@ -43,7 +43,7 @@ import org.eclipse.jdt.annotation.Nullable;
 			"\t\tcancel event"
 })
 @Since("INSERT VERSION")
-@Events("player ready arrow")
+@Events("ready arrow")
 public class ExprReadiedArrow extends SimpleExpression<ItemStack> {
 
 	static {
@@ -72,7 +72,7 @@ public class ExprReadiedArrow extends SimpleExpression<ItemStack> {
 		} else {
 			item = ((PlayerReadyArrowEvent) event).getBow();
 		}
-		return new ItemStack[]{item};
+		return new ItemStack[] {item};
 	}
 
 	@Override

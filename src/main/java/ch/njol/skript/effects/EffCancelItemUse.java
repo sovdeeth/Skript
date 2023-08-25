@@ -34,7 +34,7 @@ import org.eclipse.jdt.annotation.Nullable;
 
 @Name("Cancel Active Item")
 @Description({
-	"Interrupts the action entities may be trying to complete. ",
+	"Interrupts the action entities may be trying to complete.",
 	"For example, interrupting eating, or drawing back a bow."
 })
 @Examples({
