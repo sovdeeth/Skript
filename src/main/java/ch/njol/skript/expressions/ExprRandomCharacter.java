@@ -67,7 +67,8 @@ public class ExprRandomCharacter extends SimpleExpression<String> {
 	}
 
 	@Override
-	protected @Nullable String[] get(Event event) {
+	@Nullable
+	protected String[] get(Event event) {
 		int amount = this.amount == null ? 1 : this.amount.getOptionalSingle(event).orElse(1).intValue();
 		String from = this.from.getSingle(event);
 		String to = this.to.getSingle(event);
@@ -91,14 +92,12 @@ public class ExprRandomCharacter extends SimpleExpression<String> {
 		if (isAlphanumeric) {
 			StringBuilder validChars = new StringBuilder();
 			for (int c = min; c <= max; c++) {
-				if (Character.isLetterOrDigit(c)) {
+				if (Character.isLetterOrDigit(c))
 					validChars.append((char) c);
-				}
 			}
 
-			if (validChars.length() == 0) {
+			if (validChars.length() == 0)
 				return new String[0];
-			}
 
 			for (int i = 0; i < amount; i++) {
 				chars[i] = String.valueOf(validChars.charAt(random.nextInt(validChars.length())));
