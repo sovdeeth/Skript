@@ -25,6 +25,7 @@ import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
+import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
@@ -115,6 +116,8 @@ public class ExprRandomCharacter extends SimpleExpression<String> {
 
 	@Override
 	public boolean isSingle() {
+		if (amount instanceof Literal)
+			return ((Literal<Number>) amount).getSingle().intValue() == 1;
 		return amount == null;
 	}
 

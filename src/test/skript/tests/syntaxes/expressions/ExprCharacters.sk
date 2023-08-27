@@ -1,4 +1,5 @@
 test "characters between":
+	set {_a} to 1 random character between "a" and "z"
 	assert join characters between "a" and "d" is "abcd" with "Invalid characters between a and d"
 	assert join characters between "d" and "a" is "dcba" with "Invalid characters between d and a"
 	assert join characters between "Z" and "a" is "Z[\]^_`a" with "Invalid characters between Z and a"

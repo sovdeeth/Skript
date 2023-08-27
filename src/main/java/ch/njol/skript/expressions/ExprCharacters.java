@@ -42,6 +42,7 @@ import org.eclipse.jdt.annotation.Nullable;
 })
 @Examples({
 	"loop characters from \"a\" to \"f\":",
+		"\tbroadcast \"%loop-value%\"",
 	"",
 	"# 0123456789:;<=>?@ABC... ...uvwxyz",
 	"send characters between \"0\" and \"z\"",
@@ -83,12 +84,14 @@ public class ExprCharacters extends SimpleExpression<String> {
 		char endChar = end.charAt(0);
 
 		boolean reversed = startChar > endChar;
+		char delta = reversed ? (char) -1 : (char) 1;
 
 		int min = Math.min(startChar, endChar);
 		int max = Math.max(startChar, endChar);
 
 		String[] chars = new String[max - min + 1];
-		for (char c = (char) min; c <= max; c++) {
+
+		for (char c = startChar; min <= c && c <= max; c += delta) {
 			if (isAlphanumeric && !Character.isLetterOrDigit(c))
 				continue;
 			chars[c - min] = String.valueOf(c);
