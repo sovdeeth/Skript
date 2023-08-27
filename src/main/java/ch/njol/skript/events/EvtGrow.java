@@ -20,14 +20,15 @@ package ch.njol.skript.events;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.aliases.ItemType;
+import ch.njol.skript.bukkitutil.ItemUtils;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.LiteralList;
 import ch.njol.skript.lang.SkriptEvent;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.StructureType;
 import ch.njol.util.coll.CollectionUtils;
+import org.bukkit.Material;
 import org.bukkit.TreeType;
-import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.event.Event;
@@ -36,7 +37,7 @@ import org.bukkit.event.world.StructureGrowEvent;
 import org.eclipse.jdt.annotation.Nullable;
 
 public class EvtGrow extends SkriptEvent {
-	
+
 	/**
 	 * Growth event restriction.
 	 * ANY means any grow event goes.
@@ -159,17 +160,19 @@ public class EvtGrow extends SkriptEvent {
 		if (types instanceof LiteralList)
 			((LiteralList<Object>) types).setAnd(false);
 		if (event instanceof StructureGrowEvent) {
-			Block rootBlock = ((StructureGrowEvent) event).getLocation().getBlock();
+			Material sapling = ItemUtils.getTreeSapling(((StructureGrowEvent) event).getSpecies());
+			Skript.info("sapling: " + sapling);
 			return types.check(event, type -> {
 				if (type instanceof ItemType) {
-					return ((ItemType) type).isOfType(rootBlock);
+					return ((ItemType) type).isOfType(sapling);
 				} else if (type instanceof BlockData) {
-					return ((BlockData) type).getMaterial() == rootBlock.getType();
+					return ((BlockData) type).getMaterial() == sapling;
 				}
 				return false;
 			});
 		} else if (event instanceof BlockGrowEvent) {
 			BlockState oldState = ((BlockGrowEvent) event).getBlock().getState();
+			Skript.info("oldState: " + oldState.getBlockData());
 			return types.check(event, type -> {
 				if (type instanceof ItemType) {
 					return ((ItemType) type).isOfType(oldState);
@@ -179,6 +182,7 @@ public class EvtGrow extends SkriptEvent {
 				return false;
 			});
 		}
+		Skript.info("event: " + event.getClass());
 		return false;
 	}
 
