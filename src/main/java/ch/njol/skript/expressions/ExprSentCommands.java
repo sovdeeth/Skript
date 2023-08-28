@@ -43,7 +43,7 @@ import java.util.List;
 
 @Name("Sent Commands")
 @Description({
-	"The commands that will be sent to the player in a XYZ event.",
+	"The commands that will be sent to the player in a <a href='events.html#send_commands_to_player'>send commands to player event</a>.",
 	"Modifications will affect what commands show up for the player to tab complete. They will not affect what commands the player can actually run.",
 	"Adding new commands to the list is illegal behavior and will be ignored."
 })

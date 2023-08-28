@@ -37,7 +37,7 @@ import java.util.Collection;
 
 @Name("Send Commands to Player")
 @Description({
-		"Called when the server sends a list of commands to the player. The sent commands can be modified via XYZ.",
+		"Called when the server sends a list of commands to the player. The sent commands can be modified via the <a href='expressions.html#ExprSentCommands'>sent commands expression</a>.",
 		"Modifications will affect what commands show up for the player to tab complete. They will not affect what commands the player can actually run.",
 		"Adding new commands to the list is illegal behavior and will be ignored."
 })
