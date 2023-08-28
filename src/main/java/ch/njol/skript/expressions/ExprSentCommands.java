@@ -43,24 +43,25 @@ import java.util.List;
 
 @Name("Sent Commands")
 @Description({
-	"The commands that will be sent to the player in a <a href='events.html#send_commands_to_player'>send commands to player event</a>.",
+	"The commands that will be sent to the player in a <a href='events.html#send_command_list'>send commands to player event</a>.",
 	"Modifications will affect what commands show up for the player to tab complete. They will not affect what commands the player can actually run.",
 	"Adding new commands to the list is illegal behavior and will be ignored."
 })
 @Examples({
-	"on send commands to player:",
-	"\tset sent commands to sent commands where [input does not contain \":\"]",
-	"\tadd \"fly\" to sent commands"
+	"on send command list:",
+		"\tset command list to command list where [input does not contain \":\"]",
+		"\tremove \"help\" from command list"
 })
 @Since("INSERT VERSION")
-@Events("send commands to player")
+@Events("send command list")
 public class ExprSentCommands extends SimpleExpression<String> {
 
 	static {
-		Skript.registerExpression(ExprSentCommands.class, String.class, ExpressionType.SIMPLE, "[the] sent commands");
+		Skript.registerExpression(ExprSentCommands.class, String.class, ExpressionType.SIMPLE, "[the] [sent] [server] command[s] list");
 	}
 
 	private EvtPlayerCommandSend parent;
+	private Kleenean delay;
 
 	@Override
 	public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
@@ -69,6 +70,7 @@ public class ExprSentCommands extends SimpleExpression<String> {
 		Structure structure = getParser().getCurrentStructure();
 		if (!(structure instanceof EvtPlayerCommandSend))
 			return false;
+		delay = isDelayed;
 		parent = (EvtPlayerCommandSend) structure;
 		return true;
 	}
@@ -76,6 +78,10 @@ public class ExprSentCommands extends SimpleExpression<String> {
 	@Override
 	@Nullable
 	protected String[] get(Event event) {
+		if (delay != Kleenean.FALSE) {
+			Skript.error("Can't change the command list after the event has already passed");
+			return null;
+		}
 		if (!(event instanceof PlayerCommandSendEvent))
 			return null;
 		return ((PlayerCommandSendEvent) event).getCommands().toArray(new String[0]);
@@ -146,7 +152,7 @@ public class ExprSentCommands extends SimpleExpression<String> {
 
 	@Override
 	public String toString(@Nullable Event event, boolean debug) {
-		return "the sent commands";
+		return "the sent server command list";
 	}
 
 }
