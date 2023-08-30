@@ -41,7 +41,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-@Name("Sent Commands")
+@Name("Sent Command List")
 @Description({
 	"The commands that will be sent to the player in a <a href='events.html#send_command_list'>send commands to player event</a>.",
 	"Modifications will affect what commands show up for the player to tab complete. They will not affect what commands the player can actually run.",
@@ -82,8 +82,10 @@ public class ExprSentCommands extends SimpleExpression<String> {
 			Skript.error("Can't change the command list after the event has already passed");
 			return null;
 		}
-		if (!(event instanceof PlayerCommandSendEvent))
+		if (!(event instanceof PlayerCommandSendEvent)) {
+			Skript.error("The 'command list' expression can only be used in a 'send command list' event");
 			return null;
+		}
 		return ((PlayerCommandSendEvent) event).getCommands().toArray(new String[0]);
 	}
 

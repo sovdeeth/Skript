@@ -49,7 +49,7 @@ public class EvtPlayerCommandSend extends SkriptEvent {
 				.since("INSERT VERSION");
 	}
 
-	Collection<String> originalCommands = new ArrayList<>();
+	private final Collection<String> originalCommands = new ArrayList<>();
 
 	@Override
 	public boolean init(Literal<?>[] args, int matchedPattern, ParseResult parseResult) {
