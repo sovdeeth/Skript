@@ -682,6 +682,7 @@ public class SimpleEvents {
 				"\t\tset chat format to \"&lt;orange&gt;[player]&lt;light gray&gt;: &lt;white&gt;[message]\""
 			)
 			.since("1.4.1");
+
 		if (Skript.classExists("org.bukkit.event.world.LootGenerateEvent")) {
 			Skript.registerEvent("Loot Generate", SimpleEvent.class, LootGenerateEvent.class, "loot generat(e|ing)")
 					.description(

@@ -21,6 +21,7 @@ package org.skriptlang.skript.lang.entry.util;
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.config.Node;
 import ch.njol.skript.config.SectionNode;
+import ch.njol.skript.lang.ThreadContext;
 import ch.njol.skript.lang.Trigger;
 import ch.njol.skript.lang.parser.ParserInstance;
 import org.skriptlang.skript.lang.entry.EntryData;
@@ -63,9 +64,11 @@ public class TriggerEntryData extends EntryData<Trigger> {
 
 		Class<? extends Event>[] oldEvents = parser.getCurrentEvents();
 		Kleenean oldHasDelayBefore = parser.getHasDelayBefore();
+		ThreadContext oldContext = parser.getThreadContext();
 
 		parser.setCurrentEvents(events);
 		parser.setHasDelayBefore(Kleenean.FALSE);
+		parser.setThreadContext(ThreadContext.MAIN_THREAD);
 
 		Trigger trigger = new Trigger(
 			parser.getCurrentScript(), "entry with key: " + getKey(), new SimpleEvent(), ScriptLoader.loadItems((SectionNode) node)
@@ -73,6 +76,7 @@ public class TriggerEntryData extends EntryData<Trigger> {
 
 		parser.setCurrentEvents(oldEvents);
 		parser.setHasDelayBefore(oldHasDelayBefore);
+		parser.setThreadContext(oldContext);
 
 		return trigger;
 	}

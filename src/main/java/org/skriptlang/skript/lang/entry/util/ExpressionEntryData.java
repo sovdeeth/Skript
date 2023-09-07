@@ -21,6 +21,7 @@ package org.skriptlang.skript.lang.entry.util;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.lang.SkriptParser;
+import ch.njol.skript.lang.ThreadContext;
 import ch.njol.skript.lang.parser.ParserInstance;
 import org.skriptlang.skript.lang.entry.KeyValueEntryData;
 import ch.njol.util.Kleenean;
@@ -80,14 +81,17 @@ public class ExpressionEntryData<T> extends KeyValueEntryData<Expression<? exten
 
 		Class<? extends Event>[] oldEvents = parser.getCurrentEvents();
 		Kleenean oldHasDelayBefore = parser.getHasDelayBefore();
+		ThreadContext oldThreadContext = parser.getThreadContext();
 
 		parser.setCurrentEvents(events);
 		parser.setHasDelayBefore(Kleenean.FALSE);
+		parser.setThreadContext(ThreadContext.MAIN_THREAD);
 
 		Expression<? extends T> expression = new SkriptParser(value, flags, ParseContext.DEFAULT).parseExpression(returnType);
 
 		parser.setCurrentEvents(oldEvents);
 		parser.setHasDelayBefore(oldHasDelayBefore);
+		parser.setThreadContext(oldThreadContext);
 
 		return expression;
 	}

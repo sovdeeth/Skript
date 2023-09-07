@@ -18,6 +18,7 @@
  */
 package org.skriptlang.skript.lang.entry.util;
 
+import ch.njol.skript.lang.ThreadContext;
 import ch.njol.skript.lang.VariableString;
 import ch.njol.skript.lang.parser.ParserInstance;
 import org.skriptlang.skript.lang.entry.KeyValueEntryData;
@@ -74,9 +75,11 @@ public class VariableStringEntryData extends KeyValueEntryData<VariableString> {
 
 		Class<? extends Event>[] oldEvents = parser.getCurrentEvents();
 		Kleenean oldHasDelayBefore = parser.getHasDelayBefore();
+		ThreadContext oldThreadContext = parser.getThreadContext();
 
 		parser.setCurrentEvents(events);
 		parser.setHasDelayBefore(Kleenean.FALSE);
+		parser.setThreadContext(ThreadContext.MAIN_THREAD);
 
 		// Double up quotations outside of expressions
 		if (stringMode != StringMode.VARIABLE_NAME)
@@ -86,6 +89,7 @@ public class VariableStringEntryData extends KeyValueEntryData<VariableString> {
 
 		parser.setCurrentEvents(oldEvents);
 		parser.setHasDelayBefore(oldHasDelayBefore);
+		parser.setThreadContext(oldThreadContext);
 
 		return variableString;
 	}

@@ -25,6 +25,7 @@ import ch.njol.skript.config.Node;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptEvent;
 import ch.njol.skript.lang.SkriptParser;
+import ch.njol.skript.lang.ThreadContext;
 import ch.njol.skript.lang.TriggerSection;
 import ch.njol.skript.log.HandlerList;
 import ch.njol.skript.structures.StructOptions.OptionsData;
@@ -200,12 +201,14 @@ public final class ParserInstance {
 		currentEventName = name;
 		setCurrentEvents(events);
 		setHasDelayBefore(Kleenean.FALSE);
+		setThreadContext(ThreadContext.MAIN_THREAD);
 	}
 
 	public void deleteCurrentEvent() {
 		currentEventName = null;
 		setCurrentEvents(null);
 		setHasDelayBefore(Kleenean.FALSE);
+		setThreadContext(ThreadContext.MAIN_THREAD);
 	}
 
 	public Class<? extends Event> @Nullable [] getCurrentEvents() {
@@ -354,6 +357,25 @@ public final class ParserInstance {
 	 */
 	public Kleenean getHasDelayBefore() {
 		return hasDelayBefore;
+	}
+
+	// Thread Safety API
+
+	private ThreadContext threadContext = ThreadContext.MAIN_THREAD;
+
+	/**
+	 * @return The {@link ThreadContext} of this ParserInstance.
+	 */
+	public ThreadContext getThreadContext() {
+		return threadContext;
+	}
+
+	/**
+	 * Sets the {@link ThreadContext} of this ParserInstance.
+	 * @param threadContext The new {@link ThreadContext}.
+	 */
+	public void setThreadContext(ThreadContext threadContext) {
+		this.threadContext = threadContext;
 	}
 
 	// Miscellaneous

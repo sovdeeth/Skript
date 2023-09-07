@@ -48,7 +48,6 @@ import ch.njol.util.NonNullPair;
 import ch.njol.util.StringUtils;
 import ch.njol.util.coll.CollectionUtils;
 import com.google.common.primitives.Booleans;
-import org.bukkit.event.EventPriority;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.eclipse.jdt.annotation.Nullable;
 import org.skriptlang.skript.lang.script.Script;
@@ -263,6 +262,18 @@ public class SkriptParser {
 								x = x2;
 							}
 							T t = info.c.newInstance();
+							for (Expression<?> expr : res.exprs) {
+								if (expr == null)
+									continue;
+								if (!expr.getThreadSafety().isSafe(getParser().getThreadContext())) {
+									Skript.error("A " + expr.getThreadSafety() + " element cannot be used in a " + getParser().getThreadContext() + " context");
+									continue patternsLoop;
+								}
+							}
+							if (!t.getThreadSafety().isSafe(getParser().getThreadContext())) {
+								Skript.error("A " + t.getThreadSafety() + " element cannot be used in a " + getParser().getThreadContext() + " context");
+								continue;
+							}
 							if (t.init(res.exprs, i, getParser().getHasDelayBefore(), res)) {
 								log.printLog();
 								return t;

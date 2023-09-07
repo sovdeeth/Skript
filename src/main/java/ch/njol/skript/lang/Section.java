@@ -84,12 +84,18 @@ public abstract class Section extends TriggerSection implements SyntaxElement {
 	 * (although the loaded code may change it), the calling code must deal with this.
 	 */
 	protected void loadCode(SectionNode sectionNode) {
-		List<TriggerSection> currentSections = getParser().getCurrentSections();
+		ParserInstance parser = getParser();
+		List<TriggerSection> currentSections = parser.getCurrentSections();
 		currentSections.add(this);
+		ThreadContext threadContext = parser.getThreadContext();
+		if (this.affectsThreadContext()) {
+			parser.setThreadContext(this.getThreadContext());
+		}
 		try {
 			setTriggerItems(ScriptLoader.loadItems(sectionNode));
 		} finally {
 			currentSections.remove(currentSections.size() - 1);
+			parser.setThreadContext(threadContext);
 		}
 	}
 
@@ -135,12 +141,14 @@ public abstract class Section extends TriggerSection implements SyntaxElement {
 		Structure previousStructure = parser.getCurrentStructure();
 		List<TriggerSection> previousSections = parser.getCurrentSections();
 		Kleenean previousDelay = parser.getHasDelayBefore();
+		ThreadContext previousThread = parser.getThreadContext();
 
 		parser.setCurrentEvent(name, events);
 		SkriptEvent skriptEvent = new SectionSkriptEvent(name, this);
 		parser.setCurrentStructure(skriptEvent);
 		parser.setCurrentSections(new ArrayList<>());
 		parser.setHasDelayBefore(Kleenean.FALSE);
+		parser.setThreadContext(this.getThreadContext());
 		List<TriggerItem> triggerItems = ScriptLoader.loadItems(sectionNode);
 
 		if (afterLoading != null)
@@ -151,6 +159,7 @@ public abstract class Section extends TriggerSection implements SyntaxElement {
 		parser.setCurrentStructure(previousStructure);
 		parser.setCurrentSections(previousSections);
 		parser.setHasDelayBefore(previousDelay);
+		parser.setThreadContext(previousThread);
 
 		return new Trigger(parser.getCurrentScript(), name, skriptEvent, triggerItems);
 	}
@@ -169,6 +178,14 @@ public abstract class Section extends TriggerSection implements SyntaxElement {
 			return;
 		if (!getParser().getHasDelayBefore().isFalse())
 			getParser().setHasDelayBefore(Kleenean.UNKNOWN);
+	}
+
+	public boolean affectsThreadContext() {
+		return false;
+	}
+
+	public ThreadContext getThreadContext() {
+		return ThreadContext.MAIN_THREAD;
 	}
 
 	@SuppressWarnings({"unchecked", "rawtypes"})
