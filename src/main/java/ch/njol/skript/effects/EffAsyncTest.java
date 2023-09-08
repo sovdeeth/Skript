@@ -22,7 +22,7 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
-import ch.njol.skript.lang.ThreadSafety;
+import ch.njol.skript.lang.ThreadConstraint;
 import ch.njol.util.Kleenean;
 import org.bukkit.event.Event;
 import org.eclipse.jdt.annotation.Nullable;
@@ -49,7 +49,7 @@ public class EffAsyncTest extends Effect {
 	}
 
 	@Override
-	public ThreadSafety getThreadSafety() {
-		return ThreadSafety.ASYNC_THREAD_ONLY;
+	public ThreadConstraint getThreadConstraint() {
+		return ThreadConstraint.ASYNC_THREAD_ONLY;
 	}
 }

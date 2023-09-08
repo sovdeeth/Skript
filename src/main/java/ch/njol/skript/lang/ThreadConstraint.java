@@ -18,7 +18,7 @@
  */
 package ch.njol.skript.lang;
 
-public enum ThreadSafety {
+public enum ThreadConstraint {
 	MAIN_THREAD_ONLY,
 	ASYNC_THREAD_ONLY,
 	EITHER_THREAD;

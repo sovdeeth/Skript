@@ -47,8 +47,8 @@ public interface SyntaxElement {
 		return ParserInstance.get();
 	}
 
-	default ThreadSafety getThreadSafety() {
-		return ThreadSafety.MAIN_THREAD_ONLY;
+	default ThreadConstraint getThreadConstraint() {
+		return ThreadConstraint.MAIN_THREAD_ONLY;
 	}
 
 }

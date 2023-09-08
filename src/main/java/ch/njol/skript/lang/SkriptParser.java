@@ -265,13 +265,13 @@ public class SkriptParser {
 							for (Expression<?> expr : res.exprs) {
 								if (expr == null)
 									continue;
-								if (!expr.getThreadSafety().isSafe(getParser().getThreadContext())) {
-									Skript.error("A " + expr.getThreadSafety() + " element cannot be used in a " + getParser().getThreadContext() + " context");
+								if (!expr.getThreadConstraint().isSafe(getParser().getThreadContext())) {
+									Skript.error("A " + expr.getThreadConstraint() + " element cannot be used in a " + getParser().getThreadContext() + " context");
 									continue patternsLoop;
 								}
 							}
-							if (!t.getThreadSafety().isSafe(getParser().getThreadContext())) {
-								Skript.error("A " + t.getThreadSafety() + " element cannot be used in a " + getParser().getThreadContext() + " context");
+							if (!t.getThreadConstraint().isSafe(getParser().getThreadContext())) {
+								Skript.error("A " + t.getThreadConstraint() + " element cannot be used in a " + getParser().getThreadContext() + " context");
 								continue;
 							}
 							if (t.init(res.exprs, i, getParser().getHasDelayBefore(), res)) {
