@@ -85,7 +85,7 @@ public abstract class PropertyCondition<T> extends Condition implements Checker<
 	 * @param property the property name, for example <i>fly</i> in <i>players can fly</i>
 	 * @param type must be plural, for example <i>players</i> in <i>players can fly</i>
 	 */
-	public static void register(final Class<? extends Condition> c, final String property, final String type) {
+	public static void register(Class<? extends Condition> c, String property, String type) {
 		register(c, PropertyType.BE, property, type);
 	}
 	
@@ -95,7 +95,7 @@ public abstract class PropertyCondition<T> extends Condition implements Checker<
 	 * @param property the property name, for example <i>fly</i> in <i>players can fly</i>
 	 * @param type must be plural, for example <i>players</i> in <i>players can fly</i>
 	 */
-	public static void register(final Class<? extends Condition> c, final PropertyType propertyType, final String property, final String type) {
+	public static void register(Class<? extends Condition> c, PropertyType propertyType, String property, String type) {
 		if (type.contains("%")) {
 			throw new SkriptAPIException("The type argument must not contain any '%'s");
 		}
@@ -122,19 +122,19 @@ public abstract class PropertyCondition<T> extends Condition implements Checker<
 	
 	@SuppressWarnings({"unchecked", "null"})
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
-		expr = (Expression<? extends T>) exprs[0];
+	public boolean init(Expression<?>[] expressions, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
+		expr = (Expression<? extends T>) expressions[0];
 		setNegated(matchedPattern == 1);
 		return true;
 	}
 	
 	@Override
-	public final boolean check(final Event e) {
-		return expr.check(e, this, isNegated());
+	public final boolean check(Event event) {
+		return expr.check(event, this, isNegated());
 	}
 	
 	@Override
-	public abstract boolean check(T t);
+	public abstract boolean check(T value);
 	
 	protected abstract String getPropertyName();
 	
@@ -147,27 +147,27 @@ public abstract class PropertyCondition<T> extends Condition implements Checker<
 	 *
 	 * @param expr
 	 */
-	protected final void setExpr(final Expression<? extends T> expr) {
+	protected final void setExpr(Expression<? extends T> expr) {
 		this.expr = expr;
 	}
 	
 	@Override
-	public String toString(final @Nullable Event e, final boolean debug) {
-		return toString(this, getPropertyType(), e, debug, expr, getPropertyName());
+	public String toString(@Nullable Event event, boolean debug) {
+		return toString(this, getPropertyType(), event, debug, expr, getPropertyName());
 	}
 	
-	public static String toString(Condition condition, PropertyType propertyType, @Nullable Event e,
+	public static String toString(Condition condition, PropertyType propertyType, @Nullable Event event,
 								  boolean debug, Expression<?> expr, String property) {
 		switch (propertyType) {
 			case BE:
-				return expr.toString(e, debug) + (expr.isSingle() ? " is " : " are ") + (condition.isNegated() ? "not " : "") + property;
+				return expr.toString(event, debug) + (expr.isSingle() ? " is " : " are ") + (condition.isNegated() ? "not " : "") + property;
 			case CAN:
-				return expr.toString(e, debug) + (condition.isNegated() ? " can't " : " can ") + property;
+				return expr.toString(event, debug) + (condition.isNegated() ? " can't " : " can ") + property;
 			case HAVE:
 				if (expr.isSingle())
-					return expr.toString(e, debug) + (condition.isNegated() ? " doesn't have " : " has ") + property;
+					return expr.toString(event, debug) + (condition.isNegated() ? " doesn't have " : " has ") + property;
 				else
-					return expr.toString(e, debug) + (condition.isNegated() ? " don't have " : " have ") + property;
+					return expr.toString(event, debug) + (condition.isNegated() ? " don't have " : " have ") + property;
 			default:
 				assert false;
 				throw new AssertionError();

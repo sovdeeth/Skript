@@ -305,28 +305,28 @@ public class Documentation {
 	}
 
 	private static void insertSyntaxElement(final PrintWriter pw, final SyntaxElementInfo<?> info, final String type) {
-		if (info.c.getAnnotation(NoDoc.class) != null)
+		if (info.elementClass.getAnnotation(NoDoc.class) != null)
 			return;
-		if (info.c.getAnnotation(Name.class) == null || info.c.getAnnotation(Description.class) == null || info.c.getAnnotation(Examples.class) == null || info.c.getAnnotation(Since.class) == null) {
-			Skript.warning("" + info.c.getSimpleName() + " is missing information");
+		if (info.elementClass.getAnnotation(Name.class) == null || info.elementClass.getAnnotation(Description.class) == null || info.elementClass.getAnnotation(Examples.class) == null || info.elementClass.getAnnotation(Since.class) == null) {
+			Skript.warning("" + info.elementClass.getSimpleName() + " is missing information");
 			return;
 		}
-		final String desc = validateHTML(StringUtils.join(info.c.getAnnotation(Description.class).value(), "<br/>"), type + "s");
-		final String since = validateHTML(info.c.getAnnotation(Since.class).value(), type + "s");
+		final String desc = validateHTML(StringUtils.join(info.elementClass.getAnnotation(Description.class).value(), "<br/>"), type + "s");
+		final String since = validateHTML(info.elementClass.getAnnotation(Since.class).value(), type + "s");
 		if (desc == null || since == null) {
-			Skript.warning("" + info.c.getSimpleName() + "'s description or 'since' is invalid");
+			Skript.warning("" + info.elementClass.getSimpleName() + "'s description or 'since' is invalid");
 			return;
 		}
-		final String patterns = cleanPatterns(StringUtils.join(info.patterns, "\n", 0, info.c == CondCompare.class ? 8 : info.patterns.length));
+		final String patterns = cleanPatterns(StringUtils.join(info.patterns, "\n", 0, info.elementClass == CondCompare.class ? 8 : info.patterns.length));
 		insertOnDuplicateKeyUpdate(pw, "syntax_elements",
 				"id, name, type, patterns, description, examples, since",
 				"patterns = TRIM(LEADING '\n' FROM CONCAT(patterns, '\n', '" + escapeSQL(patterns) + "'))",
-				escapeHTML("" + info.c.getSimpleName()),
-				escapeHTML(info.c.getAnnotation(Name.class).value()),
+				escapeHTML("" + info.elementClass.getSimpleName()),
+				escapeHTML(info.elementClass.getAnnotation(Name.class).value()),
 				type,
 				patterns,
 				desc,
-				escapeHTML(StringUtils.join(info.c.getAnnotation(Examples.class).value(), "\n")),
+				escapeHTML(StringUtils.join(info.elementClass.getAnnotation(Examples.class).value(), "\n")),
 				since);
 	}
 
@@ -334,7 +334,7 @@ public class Documentation {
 		if (info.getDescription() == SkriptEventInfo.NO_DOC)
 			return;
 		if (info.getDescription() == null || info.getExamples() == null || info.getSince() == null) {
-			Skript.warning("" + info.getName() + " (" + info.c.getSimpleName() + ") is missing information");
+			Skript.warning("" + info.getName() + " (" + info.elementClass.getSimpleName() + ") is missing information");
 			return;
 		}
 		for (final SkriptEventInfo<?> i : Skript.getEvents()) {
@@ -346,7 +346,7 @@ public class Documentation {
 		final String desc = validateHTML(StringUtils.join(info.getDescription(), "<br/>"), "events");
 		final String since = validateHTML(info.getSince(), "events");
 		if (desc == null || since == null) {
-			Skript.warning("description or 'since' of " + info.getName() + " (" + info.c.getSimpleName() + ") is invalid");
+			Skript.warning("description or 'since' of " + info.getName() + " (" + info.elementClass.getSimpleName() + ") is invalid");
 			return;
 		}
 		final String patterns = cleanPatterns(info.getName().startsWith("On ") ? "[on] " + StringUtils.join(info.patterns, "\n[on] ") : StringUtils.join(info.patterns, "\n"));

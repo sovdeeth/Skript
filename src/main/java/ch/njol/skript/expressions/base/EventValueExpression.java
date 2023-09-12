@@ -18,14 +18,6 @@
  */
 package ch.njol.skript.expressions.base;
 
-import java.lang.reflect.Array;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-
-import org.bukkit.event.Event;
-import org.eclipse.jdt.annotation.Nullable;
-
 import ch.njol.skript.SkriptAPIException;
 import ch.njol.skript.classes.Changer;
 import ch.njol.skript.classes.Changer.ChangeMode;
@@ -42,6 +34,13 @@ import ch.njol.skript.registrations.EventValues;
 import ch.njol.skript.util.Getter;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Kleenean;
+import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
+
+import java.lang.reflect.Array;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * A useful class for creating default expressions. It simply returns the event value of the given type.
@@ -63,7 +62,7 @@ import ch.njol.util.Kleenean;
  */
 public class EventValueExpression<T> extends SimpleExpression<T> implements DefaultExpression<T> {
 	
-	private final Class<? extends T> c;
+	private final Class<? extends T> type;
 	private final Class<?> componentType;
 	@Nullable
 	private Changer<? super T> changer;
@@ -71,31 +70,31 @@ public class EventValueExpression<T> extends SimpleExpression<T> implements Defa
 	private final boolean single;
 	private final boolean exact;
 	
-	public EventValueExpression(Class<? extends T> c) {
-		this(c, null);
+	public EventValueExpression(Class<? extends T> type) {
+		this(type, null);
 	}
 
 	/**
 	 * Construct an event value expression.
 	 * 
-	 * @param c The class that this event value represents.
+	 * @param type The class that this event value represents.
 	 * @param exact If false, the event value can be a subclass or a converted event value.
 	 */
-	public EventValueExpression(Class<? extends T> c, boolean exact) {
-		this(c, null, exact);
+	public EventValueExpression(Class<? extends T> type, boolean exact) {
+		this(type, null, exact);
 	}
 
-	public EventValueExpression(Class<? extends T> c, @Nullable Changer<? super T> changer) {
-		this(c, changer, false);
+	public EventValueExpression(Class<? extends T> type, @Nullable Changer<? super T> changer) {
+		this(type, changer, false);
 	}
 
-	public EventValueExpression(Class<? extends T> c, @Nullable Changer<? super T> changer, boolean exact) {
-		assert c != null;
-		this.c = c;
+	public EventValueExpression(Class<? extends T> type, @Nullable Changer<? super T> changer, boolean exact) {
+		assert type != null;
+		this.type = type;
 		this.exact = exact;
 		this.changer = changer;
-		single = !c.isArray();
-		componentType = single ? c : c.getComponentType();
+		single = !type.isArray();
+		componentType = single ? type : type.getComponentType();
 	}
 	
 	@Override
@@ -106,7 +105,7 @@ public class EventValueExpression<T> extends SimpleExpression<T> implements Defa
 		if (value == null)
 			return (T[]) Array.newInstance(componentType, 0);
 		if (single) {
-			T[] one = (T[]) Array.newInstance(c, 1);
+			T[] one = (T[]) Array.newInstance(type, 1);
 			one[0] = value;
 			return one;
 		}
@@ -120,14 +119,14 @@ public class EventValueExpression<T> extends SimpleExpression<T> implements Defa
 	@SuppressWarnings("unchecked")
 	private <E extends Event> T getValue(E event) {
 		if (getters.containsKey(event.getClass())) {
-			final Getter<? extends T, ? super E> g = (Getter<? extends T, ? super E>) getters.get(event.getClass());
-			return g == null ? null : g.get(event);
+			Getter<? extends T, ? super E> getter = (Getter<? extends T, ? super E>) getters.get(event.getClass());
+			return getter == null ? null : getter.get(event);
 		}
 		
-		for (final Entry<Class<? extends Event>, Getter<? extends T, ?>> p : getters.entrySet()) {
-			if (p.getKey().isAssignableFrom(event.getClass())) {
-				getters.put(event.getClass(), p.getValue());
-				return p.getValue() == null ? null : ((Getter<? extends T, ? super E>) p.getValue()).get(event);
+		for (Entry<Class<? extends Event>, Getter<? extends T, ?>> entry : getters.entrySet()) {
+			if (entry.getKey().isAssignableFrom(event.getClass())) {
+				getters.put(event.getClass(), entry.getValue());
+				return entry.getValue() == null ? null : ((Getter<? extends T, ? super E>) entry.getValue()).get(event);
 			}
 		}
 		
@@ -137,15 +136,15 @@ public class EventValueExpression<T> extends SimpleExpression<T> implements Defa
 	}
 	
 	@Override
-	public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, ParseResult parser) {
-		if (exprs.length != 0)
+	public boolean init(Expression<?>[] expressions, int matchedPattern, Kleenean isDelayed, ParseResult parser) {
+		if (expressions.length != 0)
 			throw new SkriptAPIException(this.getClass().getName() + " has expressions in its pattern but does not override init(...)");
 		return init();
 	}
 	
 	@Override
 	public boolean init() {
-		final ParseLogHandler log = SkriptLogger.startParseLogHandler();
+		ParseLogHandler log = SkriptLogger.startParseLogHandler();
 		try {
 			boolean hasValue = false;
 			Class<? extends Event>[] events = getParser().getCurrentEvents();
@@ -160,9 +159,9 @@ public class EventValueExpression<T> extends SimpleExpression<T> implements Defa
 				}
 				Getter<? extends T, ?> getter;
 				if (exact) {
-					getter = EventValues.getExactEventValueGetter(event, c, getTime());
+					getter = EventValues.getExactEventValueGetter(event, type, getTime());
 				} else {
-					getter = EventValues.getEventValueGetter(event, c, getTime());
+					getter = EventValues.getEventValueGetter(event, type, getTime());
 				}
 				if (getter != null) {
 					getters.put(event, getter);
@@ -225,13 +224,13 @@ public class EventValueExpression<T> extends SimpleExpression<T> implements Defa
 			assert event != null;
 			boolean has;
 			if (exact) {
-				has = EventValues.doesExactEventValueHaveTimeStates(event, c);
+				has = EventValues.doesExactEventValueHaveTimeStates(event, type);
 			} else {
-				has = EventValues.doesEventValueHaveTimeStates(event, c);
+				has = EventValues.doesEventValueHaveTimeStates(event, type);
 			}
 			if (has) {
 				super.setTime(time);
-				// Since the time was changed, we now need to re-initalize the getters we already got. START
+				// Since the time was changed, we now need to re-initialize the getters we already got. START
 				getters.clear();
 				init();
 				// END
