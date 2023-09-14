@@ -79,17 +79,17 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 		if (values.length == 0)
 			return values;
 		int numNonNull = 0;
-		for (T t : values)
-			if (t != null)
+		for (T value : values)
+			if (value != null)
 				numNonNull++;
 		if (numNonNull == values.length)
 			return Arrays.copyOf(values, values.length);
 		T[] valueArray = (T[]) Array.newInstance(getReturnType(), numNonNull);
 		assert valueArray != null;
 		int i = 0;
-		for (T t : values)
-			if (t != null)
-				valueArray[i++] = t;
+		for (T value : values)
+			if (value != null)
+				valueArray[i++] = value;
 		return valueArray;
 	}
 
