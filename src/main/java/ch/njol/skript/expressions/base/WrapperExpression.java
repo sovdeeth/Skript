@@ -67,7 +67,7 @@ public abstract class WrapperExpression<T> extends SimpleExpression<T> {
 	@Nullable
 	@SuppressWarnings("unchecked")
 	protected <R> ConvertedExpression<T, ? extends R> getConvertedExpr(Class<R>... to) {
-		for (final Class<R> type : to) {
+		for (Class<R> type : to) {
 			assert type != null;
 			ConverterInfo<? super T, ? extends R> conv = (ConverterInfo<? super T, ? extends R>) Converters.getConverterInfo(getReturnType(), type);
 			if (conv == null)
