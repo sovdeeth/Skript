@@ -28,6 +28,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class EvtGrowTest extends SkriptJUnitTest {
+
 	private Block plant, birch;
 	private static final boolean canRun = Skript.methodExists(Block.class, "applyBoneMeal", BlockFace.class);
 
