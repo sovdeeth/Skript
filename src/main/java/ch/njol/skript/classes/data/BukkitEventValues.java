@@ -1076,7 +1076,7 @@ public final class BukkitEventValues {
 				if (invi instanceof PlayerInventory && slotIndex >= 36) {
 					return new ch.njol.skript.util.slot.EquipmentSlot(((PlayerInventory) invi).getHolder(), slotIndex);
 				} else {
-					return new InventorySlot(invi, slotIndex);
+					return new InventorySlot(invi, slotIndex, e.getRawSlot());
 				}
 			}
 		}, 0);
@@ -1382,7 +1382,7 @@ public final class BukkitEventValues {
 				book.setItemMeta(event.getNewBookMeta());
 				return book;
 			}
-		}, EventValues.TIME_FUTURE);
+		}, EventValues.TIME_NOW);
 		EventValues.registerEventValue(PlayerEditBookEvent.class, String[].class, new Getter<String[], PlayerEditBookEvent>() {
 			@Override
 			public String[] get(PlayerEditBookEvent event) {
@@ -1394,7 +1394,7 @@ public final class BukkitEventValues {
 			public String[] get(PlayerEditBookEvent event) {
 				return event.getNewBookMeta().getPages().toArray(new String[0]);
 			}
-		}, EventValues.TIME_FUTURE);
+		}, EventValues.TIME_NOW);
 		//ItemDespawnEvent
 		EventValues.registerEventValue(ItemDespawnEvent.class, Item.class, new Getter<Item, ItemDespawnEvent>() {
 			@Override
