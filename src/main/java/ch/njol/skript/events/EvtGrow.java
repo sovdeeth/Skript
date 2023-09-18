@@ -161,7 +161,6 @@ public class EvtGrow extends SkriptEvent {
 			((LiteralList<Object>) types).setAnd(false);
 		if (event instanceof StructureGrowEvent) {
 			Material sapling = ItemUtils.getTreeSapling(((StructureGrowEvent) event).getSpecies());
-			Skript.info("sapling: " + sapling);
 			return types.check(event, type -> {
 				if (type instanceof ItemType) {
 					return ((ItemType) type).isOfType(sapling);
@@ -172,7 +171,6 @@ public class EvtGrow extends SkriptEvent {
 			});
 		} else if (event instanceof BlockGrowEvent) {
 			BlockState oldState = ((BlockGrowEvent) event).getBlock().getState();
-			Skript.info("oldState: " + oldState.getBlockData());
 			return types.check(event, type -> {
 				if (type instanceof ItemType) {
 					return ((ItemType) type).isOfType(oldState);
@@ -182,7 +180,6 @@ public class EvtGrow extends SkriptEvent {
 				return false;
 			});
 		}
-		Skript.info("event: " + event.getClass());
 		return false;
 	}
 
@@ -221,7 +218,6 @@ public class EvtGrow extends SkriptEvent {
 			case OF:
 				return "grow of " + fromTypes.toString(event, debug);
 			case FROM:
-
 				return "grow from " + fromTypes.toString(event, debug);
 			case INTO:
 				return "grow into " + toTypes.toString(event, debug);
