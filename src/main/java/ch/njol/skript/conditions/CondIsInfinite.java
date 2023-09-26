@@ -16,38 +16,37 @@
  *
  * Copyright Peter Güttinger, SkriptLang team and contributors
  */
-package ch.njol.skript.expressions;
+package ch.njol.skript.conditions;
 
-import org.bukkit.command.CommandSender;
+import org.bukkit.potion.PotionEffect;
 
+import ch.njol.skript.Skript;
+import ch.njol.skript.conditions.base.PropertyCondition;
 import ch.njol.skript.doc.Description;
-import ch.njol.skript.doc.Events;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
-import ch.njol.skript.expressions.base.EventValueExpression;
 
-@Name("Command Sender")
-@Description({
-	"The player or the console who sent a command. Mostly useful in <a href='commands'>commands</a> and <a href='events.html#command'>command events</a>.",
-	"If the command sender is a command block, its location can be retrieved by using %block's location%"
-})
-@Examples({
-	"make the command sender execute \"/say hi!\"",
-	"",
-	"on command:",
-		"\tlog \"%executor% used command /%command% %arguments%\" to \"commands.log\""
-})
-@Since("2.0")
-@Events("command")
-public class ExprCommandSender extends EventValueExpression<CommandSender> {
+// This class can be expanded apon for other types if needed.
+@Name("Is Infinite")
+@Description("Checks whether potion effects are infinite.")
+@Examples("all of the active potion effects of the player are infinite")
+@Since("2.7")
+public class CondIsInfinite extends PropertyCondition<PotionEffect> {
 
 	static {
-		register(ExprCommandSender.class, CommandSender.class, "[command['s]] (sender|executor)");
+		if (Skript.methodExists(PotionEffect.class, "isInfinite"))
+			register(CondIsInfinite.class, "infinite", "potioneffects");
 	}
 
-	public ExprCommandSender() {
-		super(CommandSender.class);
+	@Override
+	public boolean check(PotionEffect potion) {
+		return potion.isInfinite();
+	}
+
+	@Override
+	protected String getPropertyName() {
+		return "infinite";
 	}
 
 }
