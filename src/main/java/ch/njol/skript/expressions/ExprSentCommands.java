@@ -31,13 +31,13 @@ import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
+import com.google.common.collect.Lists;
 import org.bukkit.event.Event;
 import org.bukkit.event.player.PlayerCommandSendEvent;
 import org.eclipse.jdt.annotation.Nullable;
 import org.skriptlang.skript.lang.structure.Structure;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -61,16 +61,24 @@ public class ExprSentCommands extends SimpleExpression<String> {
 	}
 
 	private EvtPlayerCommandSend parent;
-	private Kleenean delay;
 
 	@Override
-	public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
-		if (!getParser().isCurrentEvent(PlayerCommandSendEvent.class))
+	public boolean init(Expression<?>[] expressions, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
+		if (!getParser().isCurrentEvent(PlayerCommandSendEvent.class)) {
+			Skript.error("The 'command list' expression can only be used in a 'send command list' event");
 			return false;
+		}
+
 		Structure structure = getParser().getCurrentStructure();
-		if (!(structure instanceof EvtPlayerCommandSend))
+		if (!(structure instanceof EvtPlayerCommandSend)) {
+			Skript.error("The 'command list' expression can only be used in a 'send command list' event");
 			return false;
-		delay = isDelayed;
+		}
+
+		if (isDelayed.isFalse()) {
+			Skript.error("Can't change the command list after the event has already passed");
+			return false;
+		}
 		parent = (EvtPlayerCommandSend) structure;
 		return true;
 	}
@@ -78,14 +86,8 @@ public class ExprSentCommands extends SimpleExpression<String> {
 	@Override
 	@Nullable
 	protected String[] get(Event event) {
-		if (delay != Kleenean.FALSE) {
-			Skript.error("Can't change the command list after the event has already passed");
+		if (!(event instanceof PlayerCommandSendEvent))
 			return null;
-		}
-		if (!(event instanceof PlayerCommandSendEvent)) {
-			Skript.error("The 'command list' expression can only be used in a 'send command list' event");
-			return null;
-		}
 		return ((PlayerCommandSendEvent) event).getCommands().toArray(new String[0]);
 	}
 
@@ -118,7 +120,7 @@ public class ExprSentCommands extends SimpleExpression<String> {
 			return;
 		}
 
-		List<String> deltaCommands = (delta != null && delta.length > 0) ? new ArrayList<>(Arrays.asList((String[]) delta)) : new ArrayList<>();
+		List<String> deltaCommands = (delta != null && delta.length > 0) ? Lists.newArrayList((String[]) delta) : new ArrayList<>();
 		switch (mode) {
 			case REMOVE:
 				commands.removeAll(deltaCommands);
@@ -154,7 +156,7 @@ public class ExprSentCommands extends SimpleExpression<String> {
 
 	@Override
 	public String toString(@Nullable Event event, boolean debug) {
-		return "the sent server command list";
+		return "sent server command list";
 	}
 
 }
