@@ -75,7 +75,7 @@ public class ExprSentCommands extends SimpleExpression<String> {
 			return false;
 		}
 
-		if (isDelayed.isFalse()) {
+		if (!isDelayed.isFalse()) {
 			Skript.error("Can't change the command list after the event has already passed");
 			return false;
 		}
