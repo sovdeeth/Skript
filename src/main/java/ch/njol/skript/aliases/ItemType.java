@@ -741,8 +741,8 @@ public class ItemType implements Unit, Iterable<ItemData>, Container<ItemStack>,
 	}
 
 	/**
-	 * Removes instances of this itemtype from given lists of ItemStacks.
-	 * If the ItemStack is completely removed, that index in the list is set to null, instead of being removed.
+	 * Removes this ItemType from given lists of ItemStacks.
+	 * If an ItemStack is completely removed, that index in the list is set to null, instead of being removed.
 	 *
 	 * @param lists The lists to remove this type from. Each list should implement {@link RandomAccess}. Lists may contain null values after this method.
 	 * @return Whether this whole item type could be removed (i.e. returns false if the lists didn't contain this item type completely)

@@ -28,7 +28,6 @@ public class ExprDropsTest extends SkriptJUnitTest {
 	private Pig pig;
 
 	static {
-		// Set the delay to 1 tick. This allows the zombie to be spawned into the world and killed.
 		setShutdownDelay(1);
 	}
 
@@ -38,7 +37,7 @@ public class ExprDropsTest extends SkriptJUnitTest {
 	}
 
 	@Test
-	public void killPig() { // Try to have more descriptive method names other than 'test()'
+	public void killPig() {
 		pig.damage(100);
 	}
 
