@@ -1,4 +1,4 @@
-on script load:
+test "ExprDropsJUnit" when running JUnit:
 	set {_tests::1} to "clear drops"
 	set {_tests::2} to "set drops to two items"
 	set {_tests::3} to "add item to drops"
