@@ -18,6 +18,10 @@
  */
 package ch.njol.skript.expressions;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
 import ch.njol.skript.Skript;
 import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.classes.Changer.ChangeMode;
@@ -39,10 +43,6 @@ import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.eclipse.jdt.annotation.Nullable;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
 
 /**
  * @author Peter Güttinger
