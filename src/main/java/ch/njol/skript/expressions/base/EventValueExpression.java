@@ -23,9 +23,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.bukkit.event.Event;
-import org.eclipse.jdt.annotation.Nullable;
-
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptAPIException;
 import ch.njol.skript.classes.Changer;
@@ -48,16 +45,11 @@ import ch.njol.util.Kleenean;
 import org.bukkit.event.Event;
 import org.eclipse.jdt.annotation.Nullable;
 
-import java.lang.reflect.Array;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-
 /**
  * A useful class for creating default expressions. It simply returns the event value of the given type.
  * <p>
  * This class can be used as default expression with <code>new EventValueExpression&lt;T&gt;(T.class)</code> or extended to make it manually placeable in expressions with:
- * 
+ *
  * <pre>
  * class MyExpression extends EventValueExpression&lt;SomeClass&gt; {
  * 	public MyExpression() {
@@ -66,19 +58,18 @@ import java.util.Map.Entry;
  * 	// ...
  * }
  * </pre>
- * 
+ *
  * @see Classes#registerClass(ClassInfo)
  * @see ClassInfo#defaultExpression(DefaultExpression)
  * @see DefaultExpression
  */
 public class EventValueExpression<T> extends SimpleExpression<T> implements DefaultExpression<T> {
-	
-	private final Class<? extends T> type;
+
 
 	/**
 	 * Registers an expression as {@link ExpressionType#EVENT} with the provided pattern.
 	 * This also adds '[the]' to the start of the pattern.
-	 * 
+	 *
 	 * @param expression The class that represents this EventValueExpression.
 	 * @param type The return type of the expression.
 	 * @param pattern The pattern for this syntax.
@@ -90,20 +81,20 @@ public class EventValueExpression<T> extends SimpleExpression<T> implements Defa
 	private final Map<Class<? extends Event>, Getter<? extends T, ?>> getters = new HashMap<>();
 
 	private final Class<?> componentType;
-	private final Class<? extends T> c;
+	private final Class<? extends T> type;
 
 	@Nullable
 	private Changer<? super T> changer;
 	private final boolean single;
 	private final boolean exact;
-	
+
 	public EventValueExpression(Class<? extends T> type) {
 		this(type, null);
 	}
 
 	/**
 	 * Construct an event value expression.
-	 * 
+	 *
 	 * @param type The class that this event value represents.
 	 * @param exact If false, the event value can be a subclass or a converted event value.
 	 */
@@ -146,7 +137,7 @@ public class EventValueExpression<T> extends SimpleExpression<T> implements Defa
 					hasValue = getters.get(event) != null;
 					continue;
 				}
-				if (EventValues.hasMultipleGetters(event, c, getTime()) == Kleenean.TRUE) {
+				if (EventValues.hasMultipleGetters(event, type, getTime()) == Kleenean.TRUE) {
 					Noun typeName = Classes.getExactClassInfo(componentType).getName();
 					log.printError("There are multiple " + typeName.toString(true) + " in " + Utils.a(getParser().getCurrentEventName()) + " event. " +
 							"You must define which " + typeName + " to use.");
@@ -182,7 +173,7 @@ public class EventValueExpression<T> extends SimpleExpression<T> implements Defa
 		if (value == null)
 			return (T[]) Array.newInstance(componentType, 0);
 		if (single) {
-			T[] one = (T[]) Array.newInstance(c, 1);
+			T[] one = (T[]) Array.newInstance(type, 1);
 			one[0] = value;
 			return one;
 		}
@@ -199,16 +190,16 @@ public class EventValueExpression<T> extends SimpleExpression<T> implements Defa
 			final Getter<? extends T, ? super E> g = (Getter<? extends T, ? super E>) getters.get(event.getClass());
 			return g == null ? null : g.get(event);
 		}
-		
+
 		for (final Entry<Class<? extends Event>, Getter<? extends T, ?>> p : getters.entrySet()) {
 			if (p.getKey().isAssignableFrom(event.getClass())) {
 				getters.put(event.getClass(), p.getValue());
 				return p.getValue() == null ? null : ((Getter<? extends T, ? super E>) p.getValue()).get(event);
 			}
 		}
-		
+
 		getters.put(event.getClass(), null);
-		
+
 		return null;
 	}
 
