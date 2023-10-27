@@ -324,7 +324,10 @@ public class SkriptParser {
 		assert types.length == 1 || !CollectionUtils.contains(types, Object.class);
 		if (expr.isEmpty())
 			return null;
-		if (context != ParseContext.COMMAND && expr.startsWith("(") && expr.endsWith(")") && next(expr, 0, context) == expr.length())
+		if (context != ParseContext.COMMAND &&
+					context != ParseContext.PARSE &&
+					expr.startsWith("(") && expr.endsWith(")") &&
+					next(expr, 0, context) == expr.length())
 			return new SkriptParser(this, "" + expr.substring(1, expr.length() - 1)).parseSingleExpr(allowUnparsedLiteral, error, types);
 		ParseLogHandler log = SkriptLogger.startParseLogHandler();
 		try {
@@ -412,9 +415,11 @@ public class SkriptParser {
 			return null;
 
 		// Command special parsing
-		if (context != ParseContext.COMMAND && expr.startsWith("(") && expr.endsWith(")") && next(expr, 0, context) == expr.length())
+		if (context != ParseContext.COMMAND &&
+					context != ParseContext.PARSE &&
+					expr.startsWith("(") && expr.endsWith(")") &&
+					next(expr, 0, context) == expr.length())
 			return new SkriptParser(this, "" + expr.substring(1, expr.length() - 1)).parseSingleExpr(allowUnparsedLiteral, error, exprInfo);
-
 		ParseLogHandler log = SkriptLogger.startParseLogHandler();
 		try {
 			// Construct types array which contains all potential classes
@@ -649,7 +654,7 @@ public class SkriptParser {
 					}
 				}
 				if (i != expr.length()) {
-					assert i == -1 && context != ParseContext.COMMAND : i + "; " + expr;
+					assert i == -1 && context != ParseContext.COMMAND && context != ParseContext.PARSE : i + "; " + expr;
 					log.printError("Invalid brackets/variables/text in '" + expr + "'", ErrorQuality.NOT_AN_EXPRESSION);
 					return null;
 				}
@@ -768,7 +773,7 @@ public class SkriptParser {
 					}
 				}
 				if (i != expr.length()) {
-					assert i == -1 && context != ParseContext.COMMAND : i + "; " + expr;
+					assert i == -1 && context != ParseContext.COMMAND && context != ParseContext.PARSE : i + "; " + expr;
 					log.printError("Invalid brackets/variables/text in '" + expr + "'", ErrorQuality.NOT_AN_EXPRESSION);
 					return null;
 				}
@@ -1131,7 +1136,7 @@ public class SkriptParser {
 	/**
 	 * Returns the next character in the expression, skipping strings,
 	 * variables and parentheses
-	 * (unless {@code context} is {@link ParseContext#COMMAND}).
+	 * (unless {@code context} is {@link ParseContext#COMMAND} or {@link ParseContext#PARSE}).
 	 * 
 	 * @param expr The expression to traverse.
 	 * @param startIndex The index to start at.
@@ -1148,7 +1153,7 @@ public class SkriptParser {
 		if (startIndex >= exprLength)
 			return -1;
 
-		if (context == ParseContext.COMMAND)
+		if (context == ParseContext.COMMAND || context == ParseContext.PARSE)
 			return startIndex + 1;
 
 		int index;
@@ -1173,7 +1178,8 @@ public class SkriptParser {
 	/**
 	 * Returns the next occurrence of the needle in the haystack.
 	 * Similar to {@link #next(String, int, ParseContext)}, this method skips
-	 * strings, variables and parentheses (unless <tt>context</tt> is {@link ParseContext#COMMAND}).
+	 * strings, variables and parentheses (unless <tt>context</tt> is {@link ParseContext#COMMAND}
+	 * or {@link ParseContext#PARSE}).
 	 *
 	 * @param haystack The string to search in.
 	 * @param needle The string to search for.
@@ -1186,7 +1192,7 @@ public class SkriptParser {
 	public static int nextOccurrence(String haystack, String needle, int startIndex, ParseContext parseContext, boolean caseSensitive) {
 		if (startIndex < 0)
 			throw new StringIndexOutOfBoundsException(startIndex);
-		if (parseContext == ParseContext.COMMAND)
+		if (parseContext == ParseContext.COMMAND || parseContext == ParseContext.PARSE)
 			return haystack.indexOf(needle, startIndex);
 
 		int haystackLength = haystack.length();
@@ -1255,11 +1261,11 @@ public class SkriptParser {
 	 * @return The pattern with %codenames% and a boolean array that contains whether the expressions are plural or not
 	 */
 	@Nullable
-	public static NonNullPair<String, boolean[]> validatePattern(String pattern) {
-		List<Boolean> pluralsList = new ArrayList<>();
+	public static NonNullPair<String, NonNullPair<ClassInfo<?>, Boolean>[]> validatePattern(String pattern) {
+		List<NonNullPair<ClassInfo<?>, Boolean>> pairs = new ArrayList<>();
 		int groupLevel = 0, optionalLevel = 0;
 		Deque<Character> groups = new LinkedList<>();
-		StringBuilder validatedPattern = new StringBuilder(pattern.length());
+		StringBuilder stringBuilder = new StringBuilder(pattern.length());
 		int last = 0;
 		for (int i = 0; i < pattern.length(); i++) {
 			char character = pattern.charAt(i);
@@ -1302,13 +1308,13 @@ public class SkriptParser {
 				int j = pattern.indexOf('%', i + 1);
 				if (j == -1)
 					return error("Missing end sign '%' of expression. Escape the percent sign to match a literal '%': '\\%'");
-				NonNullPair<String, Boolean> p = Utils.getEnglishPlural("" + pattern.substring(i + 1, j));
-				ClassInfo<?> classInfo = Classes.getClassInfoFromUserInput(p.getFirst());
+				NonNullPair<String, Boolean> pair = Utils.getEnglishPlural("" + pattern.substring(i + 1, j));
+				ClassInfo<?> classInfo = Classes.getClassInfoFromUserInput(pair.getFirst());
 				if (classInfo == null)
-					return error("The type '" + p.getFirst() + "' could not be found. Please check your spelling or escape the percent signs if you want to match literal %s: \"\\%not an expression\\%\"");
-				pluralsList.add(p.getSecond());
-				validatedPattern.append(pattern, last, i + 1);
-				validatedPattern.append(Utils.toEnglishPlural(classInfo.getCodeName(), p.getSecond()));
+					return error("The type '" + pair.getFirst() + "' could not be found. Please check your spelling or escape the percent signs if you want to match literal %s: \"\\%not an expression\\%\"");
+				pairs.add(new NonNullPair<>(classInfo, pair.getSecond()));
+				stringBuilder.append(pattern, last, i + 1);
+				stringBuilder.append(Utils.toEnglishPlural(classInfo.getCodeName(), pair.getSecond()));
 				last = j;
 				i = j;
 			} else if (character == '\\') {
@@ -1317,15 +1323,13 @@ public class SkriptParser {
 				i++;
 			}
 		}
-		validatedPattern.append(pattern.substring(last));
-		boolean[] plurals = new boolean[pluralsList.size()];
-		for (int i = 0; i < plurals.length; i++)
-			plurals[i] = pluralsList.get(i);
-		return new NonNullPair<>(validatedPattern.toString(), plurals);
+		stringBuilder.append(pattern.substring(last));
+		//noinspection unchecked
+		return new NonNullPair<>(stringBuilder.toString(), pairs.toArray(new NonNullPair[0]));
 	}
 
 	@Nullable
-	private static NonNullPair<String, boolean[]> error(String error) {
+	private static NonNullPair<String, NonNullPair<ClassInfo<?>, Boolean>[]> error(final String error) {
 		Skript.error("Invalid pattern: " + error);
 		return null;
 	}
