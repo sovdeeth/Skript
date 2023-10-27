@@ -18,6 +18,16 @@
  */
 package ch.njol.skript.lang;
 
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.NoSuchElementException;
+import java.util.TreeMap;
+
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptAPIException;
 import ch.njol.skript.SkriptConfig;
@@ -52,16 +62,6 @@ import org.skriptlang.skript.lang.comparator.Relation;
 import org.skriptlang.skript.lang.converter.Converters;
 import org.skriptlang.skript.lang.script.Script;
 import org.skriptlang.skript.lang.script.ScriptWarning;
-
-import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.NoSuchElementException;
-import java.util.TreeMap;
 
 public class Variable<T> implements Expression<T> {
 
@@ -141,10 +141,10 @@ public class Variable<T> implements Expression<T> {
 			int count = asterisks.size();
 			int index = 0;
 			for (int i = 0; i < percents.size(); i += 2) {
-				if (index == asterisks.size() || i+1 == percents.size()) // Out of bounds 
+				if (index == asterisks.size() || i+1 == percents.size()) // Out of bounds
 					break;
 				int lowerBound = percents.get(i), upperBound = percents.get(i+1);
-				// Continually decrement asterisk count by checking if any asterisks in current range 
+				// Continually decrement asterisk count by checking if any asterisks in current range
 				while (index < asterisks.size() && lowerBound < asterisks.get(index) && asterisks.get(index) < upperBound) {
 					count--;
 					index++;
@@ -537,7 +537,7 @@ public class Variable<T> implements Expression<T> {
 					for (Object value : delta) {
 						if (value instanceof Object[]) {
 							for (int j = 0; j < ((Object[]) value).length; j++) {
-								setIndex(event, "" + i + SEPARATOR + j, ((Object[]) value)[j]);
+								setIndex(event, "" + i + SEPARATOR + (j + 1), ((Object[]) value)[j]);
 							}
 						} else {
 							setIndex(event, "" + i, value);
