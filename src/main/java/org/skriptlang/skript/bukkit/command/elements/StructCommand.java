@@ -93,6 +93,7 @@ public class StructCommand extends Structure {
 		ARGUMENT_PATTERN = Pattern.compile("<\\s*(?:([^>]+?)\\s*:\\s*)?(.+?)\\s*(?:=\\s*(" + SkriptParser.wildcard + "))?\\s*>"),
 		DESCRIPTION_PATTERN = Pattern.compile("(?<!\\\\)%-?(.+?)%");
 
+
 	private static final AtomicBoolean SYNC_COMMANDS = new AtomicBoolean();
 
 	static {
@@ -104,7 +105,7 @@ public class StructCommand extends Structure {
 				.addEntry("usage", null, true)
 				.addEntry("prefix", null, true)
 				.addEntry("permission", "", true)
-				.addEntryData(new VariableStringEntryData("permission message", null, true, ScriptCommandEvent.class))
+				.addEntryData(new VariableStringEntryData("permission message", null, true))
 				.addEntryData(new KeyValueEntryData<List<String>>("aliases", new ArrayList<>(), true) {
 					private final Pattern pattern = Pattern.compile("\\s*,\\s*/?");
 
@@ -139,9 +140,9 @@ public class StructCommand extends Structure {
 					}
 				})
 				.addEntryData(new LiteralEntryData<>("cooldown", null, true, Timespan.class))
-				.addEntryData(new VariableStringEntryData("cooldown message", null, true, ScriptCommandEvent.class))
+				.addEntryData(new VariableStringEntryData("cooldown message", null, true))
 				.addEntry("cooldown bypass", null, true)
-				.addEntryData(new VariableStringEntryData("cooldown storage", null, true, StringMode.VARIABLE_NAME, ScriptCommandEvent.class))
+				.addEntryData(new VariableStringEntryData("cooldown storage", null, true, StringMode.VARIABLE_NAME))
 				.addSection("trigger", false)
 				.unexpectedEntryMessage(key ->
 					"Unexpected entry '" + key + "'. Check that it's spelled correctly, and ensure that you have put all code into a trigger."
@@ -164,7 +165,6 @@ public class StructCommand extends Structure {
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
 	public boolean load() {
 		getParser().setCurrentEvent("command", ScriptCommandEvent.class);
 

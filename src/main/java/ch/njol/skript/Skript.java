@@ -53,42 +53,9 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
-import org.bstats.bukkit.Metrics;
-import org.bstats.charts.SimplePie;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Material;
-import org.bukkit.Server;
-import org.bukkit.command.CommandSender;
-import org.bukkit.command.PluginCommand;
-import org.bukkit.entity.Player;
-import org.bukkit.event.Event;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerCommandPreprocessEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.server.PluginDisableEvent;
-import org.bukkit.event.server.ServerCommandEvent;
-import org.bukkit.plugin.Plugin;
-import org.bukkit.plugin.PluginDescriptionFile;
-import org.bukkit.plugin.java.JavaPlugin;
-import org.eclipse.jdt.annotation.Nullable;
-import org.junit.runner.JUnitCore;
-import org.junit.runner.Result;
-import org.skriptlang.skript.bukkit.command.CommandModule;
-import org.skriptlang.skript.lang.entry.EntryValidator;
-import org.skriptlang.skript.lang.script.Script;
-import org.skriptlang.skript.lang.structure.Structure;
-import org.skriptlang.skript.lang.structure.StructureInfo;
-
-import com.google.common.collect.Lists;
-import com.google.gson.Gson;
-
 import ch.njol.skript.aliases.Aliases;
 import ch.njol.skript.bukkitutil.BurgerHelper;
 import ch.njol.skript.classes.ClassInfo;
-import org.skriptlang.skript.lang.comparator.Comparator;
-import org.skriptlang.skript.lang.converter.Converter;
 import ch.njol.skript.classes.data.BukkitClasses;
 import ch.njol.skript.classes.data.BukkitEventValues;
 import ch.njol.skript.classes.data.DefaultComparators;
@@ -125,8 +92,6 @@ import ch.njol.skript.log.LogHandler;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.log.Verbosity;
 import ch.njol.skript.registrations.Classes;
-import org.skriptlang.skript.lang.comparator.Comparators;
-import org.skriptlang.skript.lang.converter.Converters;
 import ch.njol.skript.registrations.EventValues;
 import ch.njol.skript.test.runner.EffObjectives;
 import ch.njol.skript.test.runner.SkriptJUnitTest;
@@ -154,6 +119,39 @@ import ch.njol.util.NullableChecker;
 import ch.njol.util.StringUtils;
 import ch.njol.util.coll.iterator.CheckedIterator;
 import ch.njol.util.coll.iterator.EnumerationIterable;
+import com.google.common.collect.Lists;
+import com.google.gson.Gson;
+import org.bstats.bukkit.Metrics;
+import org.bstats.charts.SimplePie;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.Material;
+import org.bukkit.Server;
+import org.bukkit.command.CommandSender;
+import org.bukkit.command.PluginCommand;
+import org.bukkit.entity.Player;
+import org.bukkit.event.Event;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.server.PluginDisableEvent;
+import org.bukkit.event.server.ServerCommandEvent;
+import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.PluginDescriptionFile;
+import org.bukkit.plugin.java.JavaPlugin;
+import org.eclipse.jdt.annotation.Nullable;
+import org.junit.runner.JUnitCore;
+import org.junit.runner.Result;
+import org.skriptlang.skript.bukkit.command.CommandModule;
+import org.skriptlang.skript.lang.comparator.Comparator;
+import org.skriptlang.skript.lang.comparator.Comparators;
+import org.skriptlang.skript.lang.converter.Converter;
+import org.skriptlang.skript.lang.converter.Converters;
+import org.skriptlang.skript.lang.entry.EntryValidator;
+import org.skriptlang.skript.lang.script.Script;
+import org.skriptlang.skript.lang.structure.Structure;
+import org.skriptlang.skript.lang.structure.StructureInfo;
 
 // TODO meaningful error if someone uses an %expression with percent signs% outside of text or a variable
 
@@ -605,52 +603,51 @@ public final class Skript extends JavaPlugin implements Listener {
 				
 				
 				Documentation.generate(); // TODO move to test classes?
-				
-				Bukkit.getScheduler().scheduleSyncDelayedTask(Skript.this, () -> {
-					if (logNormal())
-						info("Loading variables...");
-					long vls = System.currentTimeMillis();
-					
-					LogHandler h = SkriptLogger.startLogHandler(new ErrorDescLogHandler() {
-						@Override
-						public LogResult log(final LogEntry entry) {
-							super.log(entry);
-							if (entry.level.intValue() >= Level.SEVERE.intValue()) {
-								logEx(entry.message); // no [Skript] prefix
-								return LogResult.DO_NOT_LOG;
-							} else {
-								return LogResult.LOG;
-							}
+
+				// Variable loading
+				if (logNormal())
+					info("Loading variables...");
+				long vls = System.currentTimeMillis();
+
+				LogHandler h = SkriptLogger.startLogHandler(new ErrorDescLogHandler() {
+					@Override
+					public LogResult log(final LogEntry entry) {
+						super.log(entry);
+						if (entry.level.intValue() >= Level.SEVERE.intValue()) {
+							logEx(entry.message); // no [Skript] prefix
+							return LogResult.DO_NOT_LOG;
+						} else {
+							return LogResult.LOG;
 						}
-						
-						@Override
-						protected void beforeErrors() {
-							logEx();
-							logEx("===!!!=== Skript variable load error ===!!!===");
-							logEx("Unable to load (all) variables:");
-						}
-						
-						@Override
-						protected void afterErrors() {
-							logEx();
-							logEx("Skript will work properly, but old variables might not be available at all and new ones may or may not be saved until Skript is able to create a backup of the old file and/or is able to connect to the database (which requires a restart of Skript)!");
-							logEx();
-						}
-					});
-					
-					try (CountingLogHandler c = new CountingLogHandler(SkriptLogger.SEVERE).start()) {
-						if (!Variables.load())
-							if (c.getCount() == 0)
-								error("(no information available)");
-					} finally {
-						h.stop();
 					}
-					
-					long vld = System.currentTimeMillis() - vls;
-					if (logNormal())
-						info("Loaded " + Variables.numVariables() + " variables in " + ((vld / 100) / 10.) + " seconds");
+
+					@Override
+					protected void beforeErrors() {
+						logEx();
+						logEx("===!!!=== Skript variable load error ===!!!===");
+						logEx("Unable to load (all) variables:");
+					}
+
+					@Override
+					protected void afterErrors() {
+						logEx();
+						logEx("Skript will work properly, but old variables might not be available at all and new ones may or may not be saved until Skript is able to create a backup of the old file and/or is able to connect to the database (which requires a restart of Skript)!");
+						logEx();
+					}
 				});
-				
+
+				try (CountingLogHandler c = new CountingLogHandler(SkriptLogger.SEVERE).start()) {
+					if (!Variables.load())
+						if (c.getCount() == 0)
+							error("(no information available)");
+				} finally {
+					h.stop();
+				}
+
+				long vld = System.currentTimeMillis() - vls;
+				if (logNormal())
+					info("Loaded " + Variables.numVariables() + " variables in " + ((vld / 100) / 10.) + " seconds");
+
 				// Skript initialization done
 				debug("Early init done");
 
@@ -773,7 +770,7 @@ public final class Skript extends JavaPlugin implements Listener {
 					SkriptConfig.defaultEventPriority.value().name().toLowerCase(Locale.ENGLISH).replace('_', ' ')
 				));
 				metrics.addCustomChart(new SimplePie("logPlayerCommands", () ->
-					SkriptConfig.logPlayerCommands.value().toString()
+					String.valueOf((SkriptConfig.logEffectCommands.value() || SkriptConfig.logPlayerCommands.value()))
 				));
 				metrics.addCustomChart(new SimplePie("maxTargetDistance", () ->
 					SkriptConfig.maxTargetBlockDistance.value().toString()
