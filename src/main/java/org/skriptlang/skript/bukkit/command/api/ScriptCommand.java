@@ -1,7 +1,24 @@
+/**
+ *   This file is part of Skript.
+ *
+ *  Skript is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Skript is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Copyright Peter Güttinger, SkriptLang team and contributors
+ */
 package org.skriptlang.skript.bukkit.command.api;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.SkriptConfig;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -16,8 +33,6 @@ import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.log.Verbosity;
 import ch.njol.skript.patterns.MatchResult;
 import ch.njol.skript.patterns.SkriptPattern;
-import ch.njol.skript.util.Date;
-import ch.njol.skript.util.Timespan;
 import ch.njol.skript.util.Utils;
 import ch.njol.skript.util.chat.BungeeConverter;
 import ch.njol.skript.variables.Variables;
@@ -26,14 +41,10 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Event;
 import org.eclipse.jdt.annotation.Nullable;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-import java.util.UUID;
 
 public class ScriptCommand {
 
@@ -55,14 +66,8 @@ public class ScriptCommand {
 	private final String permission;
 	private final VariableString permissionMessage;
 
-	private final Map<UUID, Date> cooldownStartDates = new HashMap<>();
 	@Nullable
-	private final Timespan cooldown;
-	private final VariableString cooldownMessage;
-	@Nullable
-	private final String cooldownBypassPermission;
-	@Nullable
-	private final VariableString cooldownStorageVariableName;
+	private final CommandCooldown cooldown;
 
 	private final Trigger trigger;
 	private final List<Argument<?>> arguments;
@@ -89,9 +94,7 @@ public class ScriptCommand {
 	public ScriptCommand(
 		String label, @Nullable String namespace, String description, String usage, List<String> aliases,
 		ExecutableBy executableBy, @Nullable String permission, @Nullable VariableString permissionMessage,
-		@Nullable Timespan cooldown, @Nullable VariableString cooldownMessage,
-		@Nullable String cooldownBypassPermission, @Nullable VariableString cooldownStorageVariableName,
-		Trigger trigger, List<Argument<?>> arguments, SkriptPattern pattern
+		@Nullable CommandCooldown cooldown, Trigger trigger, List<Argument<?>> arguments, SkriptPattern pattern
 	) {
 		this.label = label.toLowerCase(Locale.ENGLISH);
 		this.description = Utils.replaceEnglishChatStyles(description);
@@ -125,10 +128,6 @@ public class ScriptCommand {
 			VariableString.newInstance(Language.get("commands.no permission message"));
 
 		this.cooldown = cooldown;
-		this.cooldownMessage = cooldownMessage != null ? cooldownMessage :
-			VariableString.newInstance(Language.get("commands.cooldown message"));
-		this.cooldownBypassPermission = cooldownBypassPermission;
-		this.cooldownStorageVariableName = cooldownStorageVariableName;
 
 		this.trigger = trigger;
 		this.arguments = arguments;
@@ -176,92 +175,9 @@ public class ScriptCommand {
 		return permissionMessage;
 	}
 
-	//
-	// Cooldowns
-	//
-
 	@Nullable
-	public Date getCooldownStart(UUID uuid, Event event) {
-		if (cooldownStorageVariableName == null) {
-			return cooldownStartDates.get(uuid);
-		} else {
-			String name = getStorageVariableName(event);
-			assert name != null;
-			return (Date) Variables.getVariable(name, null, false);
-		}
-	}
-
-	public void setCooldownStart(UUID uuid, Event event, @Nullable Date date) {
-		if (cooldownStorageVariableName != null) {
-			// Using a variable
-			String name = getStorageVariableName(event);
-			assert name != null;
-			Variables.setVariable(name, date, null, false);
-		} else {
-			// Use the map
-			if (date == null) {
-				cooldownStartDates.remove(uuid);
-			} else {
-				cooldownStartDates.put(uuid, date);
-			}
-		}
-	}
-
-	public long getRemainingMilliseconds(UUID uuid, Event event) {
-		if (cooldown == null || getCooldownStart(uuid, event) == null) {
-			return 0;
-		}
-		return Math.max(cooldown.getMilliSeconds() - getElapsedMilliseconds(uuid, event), 0);
-	}
-
-	public void setRemainingMilliseconds(UUID uuid, Event event, long milliseconds) {
-		if (cooldown == null) {
-			return;
-		}
-		setElapsedMilliSeconds(uuid, event, cooldown.getMilliSeconds() - milliseconds);
-	}
-
-	public long getElapsedMilliseconds(UUID uuid, Event event) {
-		Date lastUsage = getCooldownStart(uuid, event);
-		return lastUsage == null ? 0 : new Date().getTimestamp() - lastUsage.getTimestamp();
-	}
-
-	public void setElapsedMilliSeconds(UUID uuid, Event event, long milliseconds) {
-		setCooldownStart(uuid, event, new Date(System.currentTimeMillis() - milliseconds));
-	}
-
-	@Nullable
-	public Timespan getCooldown() {
+	public CommandCooldown getCooldown() {
 		return cooldown;
-	}
-
-	public VariableString getCooldownMessage() {
-		return cooldownMessage;
-	}
-
-	@Nullable
-	public String getCooldownBypassPermission() {
-		return cooldownBypassPermission;
-	}
-
-	@Nullable
-	public VariableString getCooldownStorageVariableName() {
-		return cooldownStorageVariableName;
-	}
-
-	@Nullable
-	private String getStorageVariableName(Event event) {
-		if (cooldownStorageVariableName == null) {
-			return null;
-		}
-		String variableString = cooldownStorageVariableName.getSingle(event);
-		if (variableString.startsWith("{")) {
-			variableString = variableString.substring(1);
-		}
-		if (variableString.endsWith("}")) {
-			variableString = variableString.substring(0, variableString.length() - 1);
-		}
-		return variableString;
 	}
 
 	//
@@ -310,25 +226,15 @@ public class ScriptCommand {
 
 		// cooldown checks
 		if (cooldown != null && sender instanceof Player) {
-			Player player = ((Player) sender);
-			UUID uuid = player.getUniqueId();
-
-			// cooldown bypass
-			if (cooldownBypassPermission != null && player.hasPermission(cooldownBypassPermission)) {
-				setCooldownStart(uuid, event, null);
-			} else {
-				if (getRemainingMilliseconds(uuid, event) == 0) {
-					if (!SkriptConfig.keepLastUsageDates.value()) {
-						setCooldownStart(uuid, event, null);
-					}
-				} else {
-					sender.spigot().sendMessage(BungeeConverter.convert(
-						cooldownMessage.getMessageComponents(event)
-					));
-					return;
-				}
+			if (cooldown.isOnCooldown(((Player) sender), event)) {
+				sender.spigot().sendMessage(BungeeConverter.convert(
+					cooldown.getCooldownMessage().getMessageComponents(event)
+				));
+				return;
 			}
 		}
+
+		// TODO: start cooldowns, handle async calls, update to current behavior, etc.
 
 		// argument parsing
 		ParseLogHandler log = SkriptLogger.startParseLogHandler();

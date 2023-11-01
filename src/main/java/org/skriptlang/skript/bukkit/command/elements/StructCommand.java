@@ -48,6 +48,7 @@ import org.eclipse.jdt.annotation.Nullable;
 import org.skriptlang.skript.bukkit.command.CommandModule;
 import org.skriptlang.skript.bukkit.command.CommandUtils;
 import org.skriptlang.skript.bukkit.command.api.Argument;
+import org.skriptlang.skript.bukkit.command.api.CommandCooldown;
 import org.skriptlang.skript.bukkit.command.api.ScriptCommand;
 import org.skriptlang.skript.bukkit.command.api.ScriptCommand.ExecutableBy;
 import org.skriptlang.skript.bukkit.command.api.ScriptCommandEvent;
@@ -298,6 +299,12 @@ public class StructCommand extends Structure {
 		if (cooldownStorage != null && cooldown == null)
 			Skript.warning("command /" + command + " has a cooldown storage set, but not a cooldown");
 
+		CommandCooldown commandCooldown = null;
+		if (cooldown != null) {
+			commandCooldown = new CommandCooldown(cooldown, cooldownMessage, cooldownBypass, cooldownStorage);
+		}
+
+
 		SectionNode node = entryContainer.getSource();
 
 		if (Skript.debug() || node.debug())
@@ -317,8 +324,8 @@ public class StructCommand extends Structure {
 		this.command = new ScriptCommand(
 			command, prefix, description, usage, aliases,
 			executableBy, permission, permissionMessage,
-			cooldown, cooldownMessage, cooldownBypass, cooldownStorage,
-			trigger, arguments, PatternCompiler.compile(pattern.toString())
+			commandCooldown, trigger, arguments,
+			PatternCompiler.compile(pattern.toString())
 		);
 		if (!CommandModule.getCommandHandler().registerCommand(this.command)) {
 			// something went wrong, let's hope the register method printed an error
