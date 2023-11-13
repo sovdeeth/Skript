@@ -41,7 +41,8 @@ public class SQLiteStorage extends JdbcStorage {
 				"name         VARCHAR(" + MAX_VARIABLE_NAME_LENGTH + ")  NOT NULL  PRIMARY KEY," +
 				"type         VARCHAR(" + MAX_CLASS_CODENAME_LENGTH + ")," +
 				"value        BLOB(" + MAX_VALUE_SIZE + ")" +
-				");");
+				");"
+		);
 	}
 
 	@Override
@@ -50,7 +51,7 @@ public class SQLiteStorage extends JdbcStorage {
 		File file = this.file;
 		if (file == null)
 			return null;
-		setTableName(config.get("table", "variables21"));
+		setTableName(config.get("table", DEFAULT_TABLE_NAME));
 		String name = file.getName();
 		assert name.endsWith(".db");
 
@@ -67,7 +68,7 @@ public class SQLiteStorage extends JdbcStorage {
 	@Override
 	protected File getFile(String file) {
 		if (!file.endsWith(".db"))
-			file = file + ".db"; // required by SQLibrary
+			file = file + ".db"; // required by SQLite
 		return new File(file);
 	}
 

@@ -38,7 +38,8 @@ public class MySQLStorage extends JdbcStorage {
 				"name         VARCHAR(" + MAX_VARIABLE_NAME_LENGTH + ")  NOT NULL  UNIQUE," +
 				"type         VARCHAR(" + MAX_CLASS_CODENAME_LENGTH + ")," +
 				"value        BLOB(" + MAX_VALUE_SIZE + ")" +
-				") CHARACTER SET ucs2 COLLATE ucs2_bin");
+				") CHARACTER SET ucs2 COLLATE ucs2_bin"
+		);
 	}
 
 	@Override
@@ -55,7 +56,7 @@ public class MySQLStorage extends JdbcStorage {
 		configuration.setUsername(getValue(config, "user"));
 		configuration.setPassword(getValue(config, "password"));
 
-		setTableName(config.get("table", "variables21"));
+		setTableName(config.get("table", DEFAULT_TABLE_NAME));
 		return configuration;
 	}
 
@@ -70,7 +71,8 @@ public class MySQLStorage extends JdbcStorage {
 	}
 
 	@Override
-	protected @Nullable NonNullPair<String, String> getMonitorQueries() {
+	@Nullable
+	protected NonNullPair<String, String> getMonitorQueries() {
 		return new NonNullPair<>(
 				"SELECT rowid, name, type, value FROM " + getTableName() + " WHERE rowid > ?",
 				"DELETE FROM " + getTableName() + " WHERE value IS NULL AND rowid < ?"

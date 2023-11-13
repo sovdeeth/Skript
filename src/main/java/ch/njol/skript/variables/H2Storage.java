@@ -37,7 +37,8 @@ public class H2Storage extends JdbcStorage {
 				"`name`         VARCHAR(" + MAX_VARIABLE_NAME_LENGTH + ")  NOT NULL  PRIMARY KEY," +
 				"`type`         VARCHAR(" + MAX_CLASS_CODENAME_LENGTH + ")," +
 				"`value`        BINARY LARGE OBJECT(" + MAX_VALUE_SIZE + ")" +
-				");");
+				");"
+		);
 	}
 
 	@Override

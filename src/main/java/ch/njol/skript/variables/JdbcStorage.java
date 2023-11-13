@@ -45,6 +45,8 @@ import ch.njol.util.SynchronizedReference;
 
 public abstract class JdbcStorage extends VariablesStorage {
 
+	protected static final String DEFAULT_TABLE_NAME = "variables21";
+
 	public static final int MAX_VARIABLE_NAME_LENGTH = 380; // MySQL: 767 bytes max; cannot set max bytes, only max characters
 	public static final int MAX_CLASS_CODENAME_LENGTH = 50; // checked when registering a class
 	public static final int MAX_VALUE_SIZE = 10000;
@@ -419,9 +421,8 @@ public abstract class JdbcStorage extends VariablesStorage {
 	@Override
 	protected boolean save(String name, @Nullable String type, @Nullable byte[] value) {
 		synchronized (database) {
-			// REMIND get the actual maximum size from the database
 			if (name.length() > MAX_VARIABLE_NAME_LENGTH)
-				Skript.error("The name of the variable {" + name + "} is too long to be saved in a database (length: " + name.length() + ", maximum allowed: " + MAX_VARIABLE_NAME_LENGTH + ")! It will be truncated and won't bet available under the same name again when loaded.");
+				Skript.error("The name of the variable {" + name + "} is too long to be saved in a database (length: " + name.length() + ", maximum allowed: " + MAX_VARIABLE_NAME_LENGTH + ")! It will be truncated and won't be available under the same name again when loaded.");
 			if (value != null && value.length > MAX_VALUE_SIZE)
 				Skript.error("The variable {" + name + "} cannot be saved in the database as its value's size (" + value.length + ") exceeds the maximum allowed size of " + MAX_VALUE_SIZE + "! An attempt to save the variable will be made nonetheless.");
 			try {
@@ -520,10 +521,10 @@ public abstract class JdbcStorage extends VariablesStorage {
 		return get().apply(-1, result);
 	}
 
-	void sqlException(SQLException e) {
-		Skript.error("database error: " + e.getLocalizedMessage());
+	void sqlException(SQLException exception) {
+		Skript.error("database error: " + exception.getLocalizedMessage());
 		if (Skript.testing())
-			e.printStackTrace();
+			exception.printStackTrace();
 		prepareQueries(); // a query has to be recreated after an error
 	}
 
