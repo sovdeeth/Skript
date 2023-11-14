@@ -16,7 +16,7 @@
  *
  * Copyright Peter Güttinger, SkriptLang team and contributors
  */
-package org.skriptlang.skript.bukkit.command.elements;
+package org.skriptlang.skript.commands.elements;
 
 import java.util.ArrayList;
 import java.util.List;

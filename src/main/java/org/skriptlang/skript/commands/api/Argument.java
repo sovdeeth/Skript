@@ -16,7 +16,7 @@
  *
  * Copyright Peter Güttinger, SkriptLang team and contributors
  */
-package org.skriptlang.skript.bukkit.command.api;
+package org.skriptlang.skript.commands.api;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Expression;
@@ -26,7 +26,6 @@ import ch.njol.skript.lang.Variable;
 import ch.njol.skript.lang.VariableString;
 import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.skript.log.RetainingLogHandler;
-import ch.njol.skript.log.SkriptLogger;
 import org.eclipse.jdt.annotation.Nullable;
 import org.jetbrains.annotations.ApiStatus;
 

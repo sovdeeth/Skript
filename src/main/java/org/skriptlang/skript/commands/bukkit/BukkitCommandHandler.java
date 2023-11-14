@@ -16,7 +16,7 @@
  *
  * Copyright Peter Güttinger, SkriptLang team and contributors
  */
-package org.skriptlang.skript.bukkit.command.base;
+package org.skriptlang.skript.commands.bukkit;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptAPIException;
@@ -30,9 +30,10 @@ import org.bukkit.command.TabExecutor;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.SimplePluginManager;
 import org.eclipse.jdt.annotation.Nullable;
-import org.skriptlang.skript.bukkit.command.api.Argument;
-import org.skriptlang.skript.bukkit.command.api.CommandHandler;
-import org.skriptlang.skript.bukkit.command.api.ScriptCommand;
+import org.skriptlang.skript.commands.api.Argument;
+import org.skriptlang.skript.commands.api.CommandHandler;
+import org.skriptlang.skript.commands.api.ScriptCommand;
+import org.skriptlang.skript.commands.api.ScriptCommandSender;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -41,7 +42,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class BukkitCommandHandler implements CommandHandler {
@@ -80,7 +80,8 @@ public class BukkitCommandHandler implements CommandHandler {
 			command.setExecutor(new TabExecutor() {
 				@Override
 				public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-					scriptCommand.execute(sender, label, args);
+					ScriptCommandSender scriptSender = new BukkitCommandSender(sender);
+					scriptCommand.execute(scriptSender, label, args);
 					return true;
 				}
 
@@ -118,6 +119,7 @@ public class BukkitCommandHandler implements CommandHandler {
 			if (command == null) {
 				return false;
 			}
+			scriptCommandMap.remove(scriptCommand);
 
 			bukkitKnownCommands.remove(scriptCommand.getLabel());
 			bukkitKnownCommands.remove(scriptCommand.getNamespace() + ":" + scriptCommand.getLabel());

@@ -16,9 +16,33 @@
  *
  * Copyright Peter Güttinger, SkriptLang team and contributors
  */
-@NonNullByDefault({DefaultLocation.PARAMETER, DefaultLocation.RETURN_TYPE, DefaultLocation.FIELD})
-package org.skriptlang.skript.bukkit.command.base;
+package org.skriptlang.skript.commands.api;
 
-import org.eclipse.jdt.annotation.DefaultLocation;
-import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.bukkit.event.Event;
+import org.bukkit.event.HandlerList;
 
+public class CommandSenderEvent extends Event {
+
+	private final ScriptCommandSender sender;
+
+	public CommandSenderEvent(ScriptCommandSender sender) {
+		this.sender = sender;
+	}
+
+	public ScriptCommandSender getSender() {
+		return sender;
+	}
+
+	// Bukkit stuff
+	private final static HandlerList handlers = new HandlerList();
+
+	@Override
+	public HandlerList getHandlers() {
+		return handlers;
+	}
+
+	public static HandlerList getHandlerList() {
+		return handlers;
+	}
+
+}

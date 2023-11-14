@@ -16,16 +16,7 @@
  *
  * Copyright Peter Güttinger, SkriptLang team and contributors
  */
-package org.skriptlang.skript.bukkit.command.elements;
-
-import java.util.List;
-import java.util.regex.MatchResult;
-
-import ch.njol.skript.lang.parser.ParserInstance;
-import org.bukkit.event.Event;
-import org.bukkit.event.player.PlayerCommandPreprocessEvent;
-import org.bukkit.event.server.ServerCommandEvent;
-import org.eclipse.jdt.annotation.Nullable;
+package org.skriptlang.skript.commands.elements;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.ClassInfo;
@@ -37,14 +28,22 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.lang.parser.ParserInstance;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.log.ErrorQuality;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Kleenean;
 import ch.njol.util.StringUtils;
-import org.skriptlang.skript.bukkit.command.api.Argument;
-import org.skriptlang.skript.bukkit.command.api.ScriptCommandEvent;
+import org.bukkit.event.Event;
+import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.server.ServerCommandEvent;
+import org.eclipse.jdt.annotation.Nullable;
+import org.skriptlang.skript.commands.api.Argument;
+import org.skriptlang.skript.commands.api.ScriptCommandEvent;
+
+import java.util.List;
+import java.util.regex.MatchResult;
 
 @Name("Argument")
 @Description({
@@ -124,7 +123,7 @@ public class ExprArgument extends SimpleExpression<Object> {
 		//noinspection ConstantConditions - current structure will never be null
 		List<Argument<?>> arguments = ((StructCommand) parser.getCurrentStructure()).getArguments();
 		if (scriptCommand && arguments.isEmpty()) {
-			Skript.error("This command doesn't have any arguments", ErrorQuality.SEMANTIC_ERROR);
+			Skript.error("This command doesn't have any arguments");
 			return false;
 		}
 
@@ -141,7 +140,7 @@ public class ExprArgument extends SimpleExpression<Object> {
 			assert argMatch != null;
 			ordinal = Utils.parseInt(argMatch);
 			if (scriptCommand && ordinal > arguments.size()) { // Only check if it's a script command as we know nothing of command event arguments
-				Skript.error("This command doesn't have a " + StringUtils.fancyOrderNumber(ordinal) + " argument", ErrorQuality.SEMANTIC_ERROR);
+				Skript.error("This command doesn't have a " + StringUtils.fancyOrderNumber(ordinal) + " argument");
 				return false;
 			}
 		}

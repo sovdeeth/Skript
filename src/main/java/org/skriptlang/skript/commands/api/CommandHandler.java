@@ -16,7 +16,7 @@
  *
  * Copyright Peter Güttinger, SkriptLang team and contributors
  */
-package org.skriptlang.skript.bukkit.command.api;
+package org.skriptlang.skript.commands.api;
 
 import org.eclipse.jdt.annotation.Nullable;
 

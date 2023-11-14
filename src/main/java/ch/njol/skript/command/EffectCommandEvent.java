@@ -23,7 +23,7 @@ import org.bukkit.event.Cancellable;
 import org.bukkit.event.HandlerList;
 
 /**
- * Use {@link org.skriptlang.skript.bukkit.command.api.EffectCommandEvent}
+ * Use {@link org.skriptlang.skript.commands.api.EffectCommandEvent}
  */
 @Deprecated
 public class EffectCommandEvent extends CommandEvent implements Cancellable {

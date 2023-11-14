@@ -16,18 +16,14 @@
  *
  * Copyright Peter Güttinger, SkriptLang team and contributors
  */
-package org.skriptlang.skript.bukkit.command.api;
+package org.skriptlang.skript.commands.api;
 
 import ch.njol.skript.effects.Delay;
 import ch.njol.skript.util.Date;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
-import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
-public class ScriptCommandEvent extends Event {
+public class ScriptCommandEvent extends CommandSenderEvent {
 
-	private final CommandSender sender;
 	private final ScriptCommand scriptCommand;
 	private final String label;
 	private final String[] args;
@@ -35,15 +31,11 @@ public class ScriptCommandEvent extends Event {
 	private final Date executionDate = new Date();
 	private boolean cooldownCancelled;
 
-	public ScriptCommandEvent(CommandSender sender, ScriptCommand scriptCommand, String label, String[] args) {
-		this.sender = sender;
+	public ScriptCommandEvent(ScriptCommandSender sender, ScriptCommand scriptCommand, String label, String[] args) {
+		super(sender);
 		this.scriptCommand = scriptCommand;
 		this.label = label;
 		this.args = args;
-	}
-
-	public CommandSender getSender() {
-		return sender;
 	}
 
 	public ScriptCommand getScriptCommand() {
@@ -65,16 +57,16 @@ public class ScriptCommandEvent extends Event {
 	public void setCooldownCancelled(boolean cooldownCancelled) {
 		if (Delay.isDelayed(this)) {
 			// If the event is delayed, we must assume the player has already been put on cooldown
-			if (sender instanceof Player) {
+			if (getSender().getType() == ScriptCommandSender.CommandSenderType.PLAYER) {
 				CommandCooldown cooldown = scriptCommand.getCooldown();
 				if (cooldown == null)
 					return;
 				if (cooldownCancelled) {
 					// If the cooldown is cancelled, we should remove the cooldown from the player
-					cooldown.cancelCooldown((Player) sender, this);
+					cooldown.cancelCooldown(getSender(), this);
 				} else {
 					// If the cooldown is uncancelled, we should retroactively put the player on cooldown
-					cooldown.startCooldown((Player) sender, this, executionDate);
+					cooldown.applyCooldown(getSender(), this, executionDate);
 				}
 			}
 		} else {

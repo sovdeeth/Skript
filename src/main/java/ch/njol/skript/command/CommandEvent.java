@@ -26,6 +26,7 @@ import org.eclipse.jdt.annotation.Nullable;
 /**
  * @author Peter Güttinger
  */
+@Deprecated
 public class CommandEvent extends Event {
 
 	private final CommandSender sender;

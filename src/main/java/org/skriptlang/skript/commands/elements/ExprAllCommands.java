@@ -16,7 +16,7 @@
  *
  * Copyright Peter Güttinger, SkriptLang team and contributors
  */
-package org.skriptlang.skript.bukkit.command.elements;
+package org.skriptlang.skript.commands.elements;
 
 import org.bukkit.event.Event;
 import org.eclipse.jdt.annotation.Nullable;
@@ -31,7 +31,7 @@ import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
-import org.skriptlang.skript.bukkit.command.CommandModule;
+import org.skriptlang.skript.commands.CommandModule;
 
 @Name("All Commands")
 @Description("An expression to obtain all registered commands or all registered script commands.")

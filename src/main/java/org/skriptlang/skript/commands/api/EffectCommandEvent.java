@@ -16,27 +16,20 @@
  *
  * Copyright Peter Güttinger, SkriptLang team and contributors
  */
-package org.skriptlang.skript.bukkit.command.api;
+package org.skriptlang.skript.commands.api;
 
-import org.bukkit.command.CommandSender;
 import org.bukkit.event.Cancellable;
-import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
-public class EffectCommandEvent extends Event implements Cancellable {
+public class EffectCommandEvent extends CommandSenderEvent implements Cancellable {
 
-	private final CommandSender sender;
 	private final String command;
 
 	private boolean cancelled;
 
-	public EffectCommandEvent(CommandSender sender, String command) {
-		this.sender = sender;
+	public EffectCommandEvent(ScriptCommandSender sender, String command) {
+		super(sender);
 		this.command = command;
-	}
-
-	public CommandSender getSender() {
-		return sender;
 	}
 
 	public String getCommand() {

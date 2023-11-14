@@ -16,14 +16,13 @@
  *
  * Copyright Peter Güttinger, SkriptLang team and contributors
  */
-package org.skriptlang.skript.bukkit.command.api;
+package org.skriptlang.skript.commands.api;
 
 import ch.njol.skript.lang.VariableString;
 import ch.njol.skript.localization.Language;
 import ch.njol.skript.util.Date;
 import ch.njol.skript.util.Timespan;
 import ch.njol.skript.variables.Variables;
-import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.eclipse.jdt.annotation.Nullable;
 
@@ -41,13 +40,13 @@ public class CommandCooldown {
 
 	private final Timespan cooldown;
 	private final VariableString cooldownMessage;
-	@Nullable
+
 	private final String cooldownBypassPermission;
 	@Nullable
 	private final VariableString cooldownStorageVariableName;
 
 	@SuppressWarnings("ConstantConditions")
-	public CommandCooldown(Timespan cooldown, @Nullable VariableString cooldownMessage, @Nullable String cooldownBypassPermission, @Nullable VariableString cooldownStorageVariableName) {
+	public CommandCooldown(Timespan cooldown, @Nullable VariableString cooldownMessage, String cooldownBypassPermission, @Nullable VariableString cooldownStorageVariableName) {
 		this.cooldown = cooldown;
 		this.cooldownMessage = cooldownMessage != null ? cooldownMessage :
 			VariableString.newInstance(Language.get("commands.cooldown message"));
@@ -56,75 +55,84 @@ public class CommandCooldown {
 	}
 
 	/**
-	 * Checks if the given {@link org.bukkit.entity.Player} is on cooldown.
+	 * Checks if the given {@link ScriptCommandSender} is on cooldown.
 	 *
-	 * @param sender The {@link org.bukkit.entity.Player} to check.
+	 * @param sender The {@link ScriptCommandSender} to check.
 	 * @param event The event used to evaluate the cooldown storage variable name, if one exists.
-	 * @return {@code true} if the {@link org.bukkit.entity.Player} is on cooldown, {@code false} otherwise.
+	 * @return {@code true} if the {@link ScriptCommandSender} is on cooldown, {@code false} otherwise.
 	 */
-	public boolean isOnCooldown(Player sender, Event event) {
-		if (cooldownBypassPermission != null && sender.hasPermission(cooldownBypassPermission))
-			return false;
-		return getEndDate(sender, event) != null;
+	public boolean isOnCooldown(ScriptCommandSender sender, Event event) {
+		return !hasBypassPermission(sender) && getEndDate(sender, event) != null;
 	}
 
 	/**
-	 * Puts the given {@link org.bukkit.entity.Player} on cooldown using the command's default cooldown.
-	 * Respects the cooldown bypass permission. This should be preferred over other methods when putting a {@link org.bukkit.entity.Player} on cooldown.
+	 * Puts the given {@link ScriptCommandSender} on cooldown using the command's default cooldown.
+	 * If the {@link ScriptCommandSender} has the permission to bypass the cooldown, this method will do nothing.
+	 * This should be preferred over other methods when putting a {@link ScriptCommandSender} on cooldown.
 	 *
-	 * @param sender The {@link org.bukkit.entity.Player} to put on cooldown.
+	 * @param sender The {@link ScriptCommandSender} to put on cooldown.
 	 * @param event The event used to evaluate the cooldown storage variable name, if one exists.
-	 * @see #setRemainingDuration(Player, Event, Timespan)
-	 * @see #setEndDate(Player, Event, Date)
+	 * @see #setRemainingDuration(ScriptCommandSender, Event, Timespan)
+	 * @see #setEndDate(ScriptCommandSender, Event, Date)
 	 */
-	public void startCooldown(Player sender, Event event) {
-		if (cooldownBypassPermission != null && sender.hasPermission(cooldownBypassPermission))
+	public void applyCooldown(ScriptCommandSender sender, Event event) {
+		if (hasBypassPermission(sender))
 			return;
 		setRemainingDuration(sender, event, cooldown);
 	}
 
 	/**
-	 * Retroactively puts the given {@link org.bukkit.entity.Player} on cooldown using the command's default cooldown.
-	 * This acts like the {@link Player} was put on cooldown at the given start date. Respects the cooldown bypass permission.
-	 * This should be preferred over other methods when putting a {@link org.bukkit.entity.Player} on cooldown.
+	 * Retroactively puts the given {@link ScriptCommandSender} on cooldown using the command's default cooldown.
+	 * This acts like the {@link ScriptCommandSender} was put on cooldown at the given start date.
+	 * If the {@link ScriptCommandSender} has the permission to bypass the cooldown, this method will do nothing.
+	 * This should be preferred over other methods when putting a {@link ScriptCommandSender} on cooldown.
 	 *
-	 * @param sender The {@link org.bukkit.entity.Player} to put on cooldown.
+	 * @param sender The {@link ScriptCommandSender} to put on cooldown.
 	 * @param event The event used to evaluate the cooldown storage variable name, if one exists.
 	 * @param startDate The retroactive start date of the cooldown. Must be in the past.
-	 * @see #setRemainingDuration(Player, Event, Timespan)
-	 * @see #setEndDate(Player, Event, Date)
+	 * @see #setRemainingDuration(ScriptCommandSender, Event, Timespan)
+	 * @see #setEndDate(ScriptCommandSender, Event, Date)
 	 */
-	public void startCooldown(Player sender, Event event, Date startDate) {
-		if (cooldownBypassPermission != null && sender.hasPermission(cooldownBypassPermission))
-			return;
+	public void applyCooldown(ScriptCommandSender sender, Event event, Date startDate) {
 		if (startDate.isAfter(new Date()))
 			throw new IllegalArgumentException("Start date must be in the past.");
+		if (hasBypassPermission(sender))
+			return;
 		Timespan elapsed = new Date().difference(startDate);
 		Timespan remaining = new Timespan(cooldown.getMilliSeconds() - elapsed.getMilliSeconds());
 		setRemainingDuration(sender, event, remaining);
 	}
 
 	/**
-	 * Removes the cooldown for the given {@link org.bukkit.entity.Player}.
-	 * This should be preferred over other methods when removing a {@link org.bukkit.entity.Player}'s cooldown.
+	 * Removes the cooldown for the given {@link ScriptCommandSender}.
+	 * This should be preferred over other methods when removing a {@link ScriptCommandSender}'s cooldown.
 	 *
-	 * @param sender The {@link org.bukkit.entity.Player} to remove the cooldown for.
+	 * @param sender The {@link ScriptCommandSender} to remove the cooldown for.
 	 * @param event The event used to evaluate the cooldown storage variable name, if one exists.
 	 */
-	public void cancelCooldown(Player sender, Event event) {
+	public void cancelCooldown(ScriptCommandSender sender, Event event) {
 		setEndDate(sender, event, null);
 	}
 
+	/**
+	 * Helper method to check if the given {@link ScriptCommandSender} has the permission to bypass the cooldown.
+	 *
+	 * @param sender The {@link ScriptCommandSender} to check.
+	 * @return {@code true} if the {@link ScriptCommandSender} has the permission to bypass the cooldown, {@code false} otherwise.
+	 */
+	public boolean hasBypassPermission(ScriptCommandSender sender) {
+		return !cooldownBypassPermission.isEmpty() && sender.hasPermission(cooldownBypassPermission);
+	}
 
 	/**
-	 * Gets the remaining cooldown duration for the given {@link org.bukkit.entity.Player}.
+	 * Gets the remaining cooldown duration for the given {@link ScriptCommandSender}.
 	 *
-	 * @param sender The {@link org.bukkit.entity.Player} to check.
+	 * @param sender The {@link ScriptCommandSender} to check.
 	 * @param event The event used to evaluate the cooldown storage variable name, if one exists.
-	 * @return The remaining cooldown duration. If the {@link org.bukkit.entity.Player} is not
+	 * @return The remaining cooldown duration. If the {@link ScriptCommandSender} is not
 	 * 			on cooldown, a {@link Timespan} of {@code 0} milliseconds will be returned.
 	 */
-	public Timespan getRemainingDuration(Player sender, Event event) {
+	public Timespan getRemainingDuration(ScriptCommandSender sender, Event event) {
 		Date endDate = getEndDate(sender, event);
 		if (endDate == null) {
 			return new Timespan(0);
@@ -133,18 +141,18 @@ public class CommandCooldown {
 	}
 
 	/**
-	 * Sets the remaining cooldown duration for the given {@link org.bukkit.entity.Player}. Does not respect the cooldown bypass permission.
+	 * Sets the remaining cooldown duration for the given {@link ScriptCommandSender}. Does not respect the cooldown bypass permission.
 	 * If the user is not on cooldown, setting the remaining cooldown duration to a value greater than {@code 0} milliseconds will put the user on cooldown.
-	 * Note that multiple {@link org.bukkit.entity.Player}s may share the same cooldown variable, and thus this method may affect multiple {@link org.bukkit.entity.Player}s.
+	 * Note that multiple {@link ScriptCommandSender}s may share the same cooldown variable, and thus this method may affect multiple {@link ScriptCommandSender}s.
 	 *
-	 * @param sender The {@link org.bukkit.entity.Player} to set the cooldown for.
+	 * @param sender The {@link ScriptCommandSender} to set the cooldown for.
 	 * @param event The event used to evaluate the cooldown storage variable name, if one exists.
 	 * @param newDuration The remaining cooldown duration. If equal to {@code 0} milliseconds,
-	 *                    the {@link org.bukkit.entity.Player} will be taken off cooldown.
-	 * @see #startCooldown(Player, Event)
-	 * @see #setEndDate(Player, Event, Date)
+	 *                    the {@link ScriptCommandSender} will be taken off cooldown.
+	 * @see #applyCooldown(ScriptCommandSender, Event)
+	 * @see #setEndDate(ScriptCommandSender, Event, Date)
 	 */
-	public void setRemainingDuration(Player sender, Event event, Timespan newDuration) {
+	public void setRemainingDuration(ScriptCommandSender sender, Event event, Timespan newDuration) {
 		Date endDate = null;
 		if (newDuration.getMilliSeconds() > 0) {
 			endDate = new Date();
@@ -154,35 +162,39 @@ public class CommandCooldown {
 	}
 
 	/**
-	 * Gets the end date of the cooldown for the given {@link org.bukkit.entity.Player}.
+	 * Gets the end date of the cooldown for the given {@link ScriptCommandSender}.
 	 *
-	 * @param sender The {@link org.bukkit.entity.Player} to get the cooldown of.
+	 * @param sender The {@link ScriptCommandSender} to get the cooldown of.
 	 * @param event The event used to evaluate the cooldown storage variable name, if one exists.
-	 * @return The end date of the cooldown. Will be {@code null} if the {@link org.bukkit.entity.Player} is not on cooldown.
+	 * @return The end date of the cooldown. Will be {@code null} if the {@link ScriptCommandSender} is not on cooldown.
 	 */
 	@Nullable
-	public Date getEndDate(Player sender, Event event) {
+	public Date getEndDate(ScriptCommandSender sender, Event event) {
 		// prefer the cooldown storage variable if it exists
 		if (cooldownStorageVariableName != null)
 			return getEndDateVariable(event);
 		// otherwise, use the cooldown end date map
-		Date endDate = cooldownEndDates.get(sender.getUniqueId());
+		UUID senderUUID = sender.getUniqueID();
+		if (senderUUID == null)
+			return null;
+
+		Date endDate = cooldownEndDates.get(senderUUID);
 		if (endDate == null)
 			return null;
 		// If the cooldown has expired, remove the player from the cooldown map.
 		if (endDate.isBefore(new Date())) {
-			cooldownEndDates.remove(sender.getUniqueId());
+			cooldownEndDates.remove(senderUUID);
 			return null;
 		}
 		return endDate;
 	}
 
 	/**
-	 * Gets the end date of the cooldown for the given {@link org.bukkit.entity.Player} from the cooldown storage variable.
+	 * Gets the end date of the cooldown for the given {@link ScriptCommandSender} from the cooldown storage variable.
 	 * Requires the cooldown storage variable name to be non-null.
 	 *
 	 * @param event The event used to evaluate the cooldown storage variable.
-	 * @return The end date of the cooldown. Will be {@code null} if the {@link org.bukkit.entity.Player} is not on cooldown.
+	 * @return The end date of the cooldown. Will be {@code null} if the {@link ScriptCommandSender} is not on cooldown.
 	 */
 	@Nullable
 	private Date getEndDateVariable(Event event) {
@@ -200,27 +212,31 @@ public class CommandCooldown {
 	}
 
 	/**
-	 * Sets the end date of the cooldown for the given {@link org.bukkit.entity.Player}. Does not respect the cooldown bypass permission.
-	 * Note that multiple {@link org.bukkit.entity.Player}s may share the same cooldown variable, and thus this method may affect multiple {@link org.bukkit.entity.Player}s.
+	 * Sets the end date of the cooldown for the given {@link ScriptCommandSender}. Does not respect the cooldown bypass permission.
+	 * Note that multiple {@link ScriptCommandSender}s may share the same cooldown variable, and thus this method may affect multiple {@link ScriptCommandSender}s.
 	 *
 	 * @param event The event used to evaluate the cooldown storage variable name, if one exists.
-	 * @param sender The {@link org.bukkit.entity.Player} to set the cooldown for.
-	 * @param newEndDate The end date of the cooldown. If {@code null} or in the past, the {@link org.bukkit.entity.Player} will be taken off cooldown.
-	 * @see #startCooldown(Player, Event)
-	 * @see #setRemainingDuration(Player, Event, Timespan)
+	 * @param sender The {@link ScriptCommandSender} to set the cooldown for.
+	 * @param newEndDate The end date of the cooldown. If {@code null} or in the past, the {@link ScriptCommandSender} will be taken off cooldown.
+	 * @see #applyCooldown(ScriptCommandSender, Event)
+	 * @see #setRemainingDuration(ScriptCommandSender, Event, Timespan)
 	 */
-	public void setEndDate(Player sender, Event event, @Nullable Date newEndDate) {
+	public void setEndDate(ScriptCommandSender sender, Event event, @Nullable Date newEndDate) {
 		// prefer the cooldown storage variable if it exists
 		if (cooldownStorageVariableName != null) {
 			setEndDateVariable(event, newEndDate);
 			return;
 		}
 		// Otherwise, use the cooldown end date map
+		UUID senderUUID = sender.getUniqueID();
+		if (senderUUID == null)
+			return;
+
 		if (newEndDate == null) {
-			cooldownEndDates.remove(sender.getUniqueId());
+			cooldownEndDates.remove(senderUUID);
 			return;
 		}
-		cooldownEndDates.put(sender.getUniqueId(), newEndDate);
+		cooldownEndDates.put(senderUUID, newEndDate);
 	}
 
 	/**
@@ -228,7 +244,7 @@ public class CommandCooldown {
 	 * Requires the cooldown storage variable name to be non-null.
 	 *
 	 * @param event The event used to evaluate the cooldown storage variable.
-	 * @param newEndDate The end date of the cooldown. If {@code null}, the {@link org.bukkit.entity.Player} will be taken off cooldown.
+	 * @param newEndDate The end date of the cooldown. If {@code null}, the {@link ScriptCommandSender} will be taken off cooldown.
 	 */
 	private void setEndDateVariable(Event event, @Nullable Date newEndDate) {
 		String variableName = getStorageVariableName(event);
@@ -240,31 +256,32 @@ public class CommandCooldown {
 	}
 
 	/**
-	 * Gets the elapsed cooldown duration for the given {@link org.bukkit.entity.Player} in milliseconds.
+	 * Gets the elapsed cooldown duration for the given {@link ScriptCommandSender} in milliseconds.
 	 *
-	 * @param sender The {@link org.bukkit.entity.Player} to check.
+	 * @param sender The {@link ScriptCommandSender} to check.
 	 * @param event The event used to evaluate the cooldown storage variable name, if one exists.
-	 * @return The elapsed cooldown duration, or {@code null} if the {@link org.bukkit.entity.Player} is not on cooldown.
+	 * @return The elapsed cooldown duration, or {@code null} if the {@link ScriptCommandSender} is not on cooldown.
 	 */
 	@Nullable
-	public Timespan getElapsedDuration(Player sender, Event event) {
+	public Timespan getElapsedDuration(ScriptCommandSender sender, Event event) {
 		return null;
 	}
 
 	/**
-	 * Sets the elapsed cooldown duration for the given {@link org.bukkit.entity.Player} in milliseconds.
+	 * Sets the elapsed cooldown duration for the given {@link ScriptCommandSender} in milliseconds.
+	 * Does not respect the cooldown bypass permission.
 	 *
-	 * @param sender The {@link org.bukkit.entity.Player} to set the cooldown for.
+	 * @param sender The {@link ScriptCommandSender} to set the cooldown for.
 	 * @param event The event used to evaluate the cooldown storage variable name, if one exists.
-	 * @param newElapsedDuration The elapsed cooldown duration in milliseconds. If less than {@code 0} or greater than the {@link org.bukkit.entity.Player}'s
-	 *                    current cooldown, the {@link org.bukkit.entity.Player} will be taken off cooldown.
+	 * @param newElapsedDuration The elapsed cooldown duration in milliseconds. If less than {@code 0} or greater than the {@link ScriptCommandSender}'s
+	 *                    current cooldown, the {@link ScriptCommandSender} will be taken off cooldown.
 	 */
-	public void setElapsedDuration(Player sender, Event event, Timespan newElapsedDuration) {
+	public void setElapsedDuration(ScriptCommandSender sender, Event event, Timespan newElapsedDuration) {
 	}
 
 	/**
-	 * Gets the default cooldown duration. This may not be the same as the cooldown duration for a specific {@link org.bukkit.entity.Player}, as the
-	 * cooldown for an individual {@link org.bukkit.entity.Player} may be modified.
+	 * Gets the default cooldown duration. This may not be the same as the cooldown duration for a specific {@link ScriptCommandSender}, as the
+	 * cooldown for an individual {@link ScriptCommandSender} may be modified.
 	 *
 	 * @return The default cooldown duration.
 	 */

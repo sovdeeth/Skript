@@ -16,7 +16,7 @@
  *
  * Copyright Peter Güttinger, SkriptLang team and contributors
  */
-package org.skriptlang.skript.bukkit.command;
+package org.skriptlang.skript.commands.bukkit;
 
 import ch.njol.skript.Skript;
 import org.bukkit.Bukkit;

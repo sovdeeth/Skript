@@ -16,7 +16,7 @@
  *
  * Copyright Peter Güttinger, SkriptLang team and contributors
  */
-package org.skriptlang.skript.bukkit.command.elements;
+package org.skriptlang.skript.commands.elements;
 
 import ch.njol.util.StringUtils;
 import org.bukkit.event.Event;
@@ -35,7 +35,7 @@ import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
-import org.skriptlang.skript.bukkit.command.api.ScriptCommandEvent;
+import org.skriptlang.skript.commands.api.ScriptCommandEvent;
 
 @Name("Command")
 @Description("The command that caused an 'on command' event (excluding the leading slash and all arguments)")

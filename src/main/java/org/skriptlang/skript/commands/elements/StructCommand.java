@@ -16,7 +16,7 @@
  *
  * Copyright Peter Güttinger, SkriptLang team and contributors
  */
-package org.skriptlang.skript.bukkit.command.elements;
+package org.skriptlang.skript.commands.elements;
 
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
@@ -45,13 +45,14 @@ import ch.njol.util.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.event.Event;
 import org.eclipse.jdt.annotation.Nullable;
-import org.skriptlang.skript.bukkit.command.CommandModule;
-import org.skriptlang.skript.bukkit.command.CommandUtils;
-import org.skriptlang.skript.bukkit.command.api.Argument;
-import org.skriptlang.skript.bukkit.command.api.CommandCooldown;
-import org.skriptlang.skript.bukkit.command.api.ScriptCommand;
-import org.skriptlang.skript.bukkit.command.api.ScriptCommand.ExecutableBy;
-import org.skriptlang.skript.bukkit.command.api.ScriptCommandEvent;
+import org.skriptlang.skript.commands.CommandModule;
+import org.skriptlang.skript.commands.api.Argument;
+import org.skriptlang.skript.commands.api.CommandCooldown;
+import org.skriptlang.skript.commands.api.ScriptCommand;
+import org.skriptlang.skript.commands.api.ScriptCommandEvent;
+import org.skriptlang.skript.commands.api.ScriptCommandSender.CommandSenderType;
+import org.skriptlang.skript.commands.bukkit.BukkitScriptCommand;
+import org.skriptlang.skript.commands.bukkit.CommandUtils;
 import org.skriptlang.skript.lang.entry.EntryContainer;
 import org.skriptlang.skript.lang.entry.EntryValidator;
 import org.skriptlang.skript.lang.entry.KeyValueEntryData;
@@ -121,18 +122,22 @@ public class StructCommand extends Structure {
 						return aliases;
 					}
 				})
-				.addEntryData(new KeyValueEntryData<ExecutableBy>("executable by", ExecutableBy.ALL, true) {
+				.addEntryData(new KeyValueEntryData<List<CommandSenderType>>("executable by", new ArrayList<>(), true) {
 					private final Pattern pattern = Pattern.compile("\\s*,\\s*|\\s+(and|or)\\s+");
 
 					@Override
 					@Nullable
-					protected ExecutableBy getValue(String value) {
-						ExecutableBy executableBy = null;
+					protected List<CommandSenderType> getValue(String value) {
+						List<CommandSenderType> executableBy = new ArrayList<>();
 						for (String b : pattern.split(value)) {
 							if (b.equalsIgnoreCase("console") || b.equalsIgnoreCase("the console")) {
-								executableBy = executableBy != null ? ExecutableBy.ALL : ExecutableBy.CONSOLE;
+								executableBy.add(CommandSenderType.SERVER);
+							} else if (b.equalsIgnoreCase("blocks") || b.equalsIgnoreCase("block")) {
+								executableBy.add(CommandSenderType.BLOCK);
+							} else if (b.equalsIgnoreCase("entities") || b.equalsIgnoreCase("entity")) {
+								executableBy.add(CommandSenderType.ENTITY);
 							} else if (b.equalsIgnoreCase("players") || b.equalsIgnoreCase("player")) {
-								executableBy = executableBy != null ? ExecutableBy.ALL : ExecutableBy.PLAYERS;
+								executableBy.add(CommandSenderType.PLAYER);
 							} else {
 								return null;
 							}
@@ -156,6 +161,12 @@ public class StructCommand extends Structure {
 	@Nullable
 	private ScriptCommand command;
 
+	// todo: figure out a better way
+	// right now the trigger parsing needs access to the arguments, but we can't get them from the command
+	// because the command is created after the trigger is parsed
+	@Nullable
+	private List<Argument<?>> arguments;
+
 	@SuppressWarnings("NotNullFieldNotInitialized")
 	private MatchResult matchResult;
 
@@ -165,11 +176,12 @@ public class StructCommand extends Structure {
 		return true;
 	}
 
+	// todo: this is really bad. this should be like 4 different methods if possible
 	@Override
 	public boolean load() {
 		getParser().setCurrentEvent("command", ScriptCommandEvent.class);
 
-		String command = matchResult.group(0).toLowerCase(Locale.ENGLISH);
+		String command = matchResult.group(1).toLowerCase(Locale.ENGLISH);
 
 		// check whether this command already exists
 		ScriptCommand existingCommand = CommandModule.getCommandHandler().getScriptCommand(command);
@@ -183,14 +195,14 @@ public class StructCommand extends Structure {
 		}
 
 		// parse the arguments
-
-		String rawArguments = matchResult.group(1);
+		String rawArguments = matchResult.group(2);
+		if (rawArguments == null)
+			rawArguments = "";
 
 		Matcher matcher = ARGUMENT_PATTERN.matcher(rawArguments);
-		List<Argument<?>> arguments = new ArrayList<>();
+		arguments = new ArrayList<>();
 		// arguments are converted into a SkriptPattern
 		StringBuilder pattern = new StringBuilder();
-
 		int lastEnd = 0;
 		int optionals = 0; // special bracket tracking to avoid counting any within arguments
 		while (matcher.find()) {
@@ -283,7 +295,7 @@ public class StructCommand extends Structure {
 			Skript.warning("command /" + command + " has a permission message set, but not a permission");
 
 		List<String> aliases = (List<String>) entryContainer.get("aliases", true);
-		ExecutableBy executableBy = (ExecutableBy) entryContainer.get("executable by", true);
+		List<CommandSenderType> executableBy = (List<CommandSenderType>) entryContainer.get("executable by", true);
 
 		Timespan cooldown = entryContainer.getOptional("cooldown", Timespan.class, false);
 		VariableString cooldownMessage = entryContainer.getOptional("cooldown message", VariableString.class, false);
@@ -321,7 +333,8 @@ public class StructCommand extends Structure {
 
 		getParser().deleteCurrentEvent();
 
-		this.command = new ScriptCommand(
+		// todo: make scriptcommand factory method
+		this.command = new BukkitScriptCommand(
 			command, prefix, description, usage, aliases,
 			executableBy, permission, permissionMessage,
 			commandCooldown, trigger, arguments,
@@ -379,9 +392,9 @@ public class StructCommand extends Structure {
 		return "command";
 	}
 
+	@Nullable
 	public List<Argument<?>> getArguments() {
-		// TODO complete method
-		return new ArrayList<>();
+		return this.arguments;
 	}
 
 	private static final Pattern ESCAPE = Pattern.compile("[" + Pattern.quote("(|)<>%\\") + "]");

@@ -16,7 +16,7 @@
  *
  * Copyright Peter Güttinger, SkriptLang team and contributors
  */
-package org.skriptlang.skript.bukkit.command;
+package org.skriptlang.skript.commands;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptAddon;
@@ -36,14 +36,16 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.server.ServerCommandEvent;
-import org.skriptlang.skript.bukkit.command.api.CommandHandler;
-import org.skriptlang.skript.bukkit.command.api.EffectCommandEvent;
-import org.skriptlang.skript.bukkit.command.base.BukkitCommandHandler;
-import org.skriptlang.skript.bukkit.command.elements.ExprAllCommands;
-import org.skriptlang.skript.bukkit.command.elements.ExprArgument;
-import org.skriptlang.skript.bukkit.command.elements.ExprCommand;
-import org.skriptlang.skript.bukkit.command.elements.ExprCommandInfo;
-import org.skriptlang.skript.bukkit.command.elements.StructCommand;
+import org.skriptlang.skript.commands.api.CommandHandler;
+import org.skriptlang.skript.commands.api.EffectCommandEvent;
+import org.skriptlang.skript.commands.api.ScriptCommandSender;
+import org.skriptlang.skript.commands.bukkit.BukkitCommandHandler;
+import org.skriptlang.skript.commands.bukkit.BukkitCommandSender;
+import org.skriptlang.skript.commands.elements.ExprAllCommands;
+import org.skriptlang.skript.commands.elements.ExprArgument;
+import org.skriptlang.skript.commands.elements.ExprCommand;
+import org.skriptlang.skript.commands.elements.ExprCommandInfo;
+import org.skriptlang.skript.commands.elements.StructCommand;
 
 public class CommandModule {
 
@@ -64,7 +66,7 @@ public class CommandModule {
 						&& SkriptConfig.enableEffectCommands.value()
 						&& event.getCommand().startsWith(SkriptConfig.effectCommandToken.value())
 				) {
-					if (handleEffectCommand(event.getCommand(), event.getSender()))
+					if (handleEffectCommand(event.getCommand(), new BukkitCommandSender(event.getSender())))
 						event.setCancelled(true);
 				}
 			}
@@ -87,11 +89,14 @@ public class CommandModule {
 		return commandHandler;
 	}
 
-	private static boolean handleEffectCommand(String command, CommandSender sender) {
+	// todo: decouple from Bukkit
+	private static boolean handleEffectCommand(String command, ScriptCommandSender sender) {
+		// this is a temporary measure until this method is refactored to be more generic
+		CommandSender bukkitSender = ((CommandSender) sender.getOriginal());
 		if (!(
-			sender instanceof ConsoleCommandSender
-			|| sender.hasPermission(EFFECT_COMMANDS_PERMISSION)
-			|| (SkriptConfig.allowOpsToUseEffectCommands.value() && sender.isOp())
+			bukkitSender instanceof ConsoleCommandSender
+			|| bukkitSender.hasPermission(EFFECT_COMMANDS_PERMISSION)
+			|| (SkriptConfig.allowOpsToUseEffectCommands.value() && bukkitSender.isOp())
 		)) {
 			return false;
 		}
@@ -113,27 +118,27 @@ public class CommandModule {
 				log.clear(); // ignore warnings and stuff
 				log.printLog();
 				if (!effectCommand.isCancelled()) {
-					sender.sendMessage(ChatColor.GRAY + "executing '" + SkriptColor.replaceColorChar(command) + "'");
-					if (SkriptConfig.logPlayerCommands.value() && !(sender instanceof ConsoleCommandSender)) {
-						Skript.info(sender.getName() + " issued effect command: " + SkriptColor.replaceColorChar(command));
+					bukkitSender.sendMessage(ChatColor.GRAY + "executing '" + SkriptColor.replaceColorChar(command) + "'");
+					if (SkriptConfig.logPlayerCommands.value() && !(bukkitSender instanceof ConsoleCommandSender)) {
+						Skript.info(bukkitSender.getName() + " issued effect command: " + SkriptColor.replaceColorChar(command));
 					}
 					TriggerItem.walk(effect, effectCommand);
 					Variables.removeLocals(effectCommand);
 				} else {
-					sender.sendMessage(ChatColor.RED + "your effect command '" + SkriptColor.replaceColorChar(command) + "' was cancelled.");
+					bukkitSender.sendMessage(ChatColor.RED + "your effect command '" + SkriptColor.replaceColorChar(command) + "' was cancelled.");
 				}
 			} else {
-				if (sender == Bukkit.getConsoleSender()) { // log as SEVERE instead of INFO like printErrors below
+				if (bukkitSender == Bukkit.getConsoleSender()) { // log as SEVERE instead of INFO like printErrors below
 					SkriptLogger.LOGGER.severe("Error in: " + SkriptColor.replaceColorChar(command));
 				} else {
-					sender.sendMessage(ChatColor.RED + "Error in: " + ChatColor.GRAY + SkriptColor.replaceColorChar(command));
+					bukkitSender.sendMessage(ChatColor.RED + "Error in: " + ChatColor.GRAY + SkriptColor.replaceColorChar(command));
 				}
-				log.printErrors(sender, "(No specific information is available)");
+				log.printErrors(bukkitSender, "(No specific information is available)");
 			}
 			return true;
 		} catch (Exception e) {
-			Skript.exception(e, "Unexpected error while executing effect command '" + SkriptColor.replaceColorChar(command) + "' by '" + sender.getName() + "'");
-			sender.sendMessage(ChatColor.RED + "An internal error occurred while executing this effect. Please refer to the server log for details.");
+			Skript.exception(e, "Unexpected error while executing effect command '" + SkriptColor.replaceColorChar(command) + "' by '" + bukkitSender.getName() + "'");
+			bukkitSender.sendMessage(ChatColor.RED + "An internal error occurred while executing this effect. Please refer to the server log for details.");
 			return true;
 		}
 	}

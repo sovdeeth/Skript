@@ -25,7 +25,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.HandlerList;
 
 /**
- * @deprecated Use {@link org.skriptlang.skript.bukkit.command.api.ScriptCommandEvent}.
+ * @deprecated Use {@link org.skriptlang.skript.commands.api.ScriptCommandEvent}.
  */
 @Deprecated
 public class ScriptCommandEvent extends CommandEvent {
