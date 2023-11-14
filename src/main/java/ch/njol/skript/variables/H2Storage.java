@@ -90,7 +90,7 @@ public class H2Storage extends JdbcStorage {
 			try {
 				String name = result.getString(i++);
 				if (name == null) {
-					Skript.error("Variable with NULL name found in the database '" + databaseName + "', ignoring it");
+					Skript.error("Variable with a NULL name found in the database '" + databaseName + "', ignoring it");
 					return null;
 				}
 				String type = result.getString(i++);
