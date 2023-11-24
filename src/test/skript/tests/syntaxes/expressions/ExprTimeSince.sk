@@ -1,0 +1,47 @@
+test "time since":
+
+	# normal dates
+	set {_time} to time since now
+	assert {_time} is 0 seconds with "Time since now failed (expected 0 seconds, got %{_time}%)"
+
+	set {_date} to 1 day ago
+	set {_time} to time since {_date}
+	assert {_time} is 1 day with "Time since 1 day ago failed (expected 1 day, got %{_time}%)"
+
+	set {_date} to 1 hour ago
+	set {_time} to time since {_date}
+	assert {_time} is 1 hour with "Time since 1 hour ago failed (expected 1 hour, got %{_time}%)"
+
+	# future date
+	set {_date} to 1 minute from now
+	set {_time} to time since {_date}
+	assert {_time} is 0 seconds with "Time since 1 minute from now failed (expected 0 seconds, got %{_time}%)"
+
+	# null date
+	set {_date} to {_none}
+	set {_time} to time since {_date}
+	assert {_time} is not set with "Time since none failed (expected <none>, got %{_time}%)"
+
+test "time until":
+
+	# normal dates
+	set {_time} to time until now
+	assert {_time} is 0 seconds with "Time until now failed (expected 0 seconds, got %{_time}%)"
+
+	set {_date} to 1 day from now
+	set {_time} to time until {_date}
+	assert {_time} is 1 day with "Time until 1 day from now failed (expected 1 day, got %{_time}%)"
+
+	set {_date} to 1 hour from now
+	set {_time} to time until {_date}
+	assert {_time} is 1 hour with "Time until 1 hour from now failed (expected 1 hour, got %{_time}%)"
+
+	# past date
+	set {_date} to 1 minute ago
+	set {_time} to time until {_date}
+	assert {_time} is 0 seconds with "Time until 1 minute ago failed (expected 0 seconds, got %{_time}%)"
+
+	# null date
+	set {_date} to {_none}
+	set {_time} to time until {_date}
+	assert {_time} is not set with "Time until none failed (expected <none>, got %{_time}%)"
