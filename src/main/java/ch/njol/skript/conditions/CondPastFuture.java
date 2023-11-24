@@ -45,7 +45,7 @@ import org.eclipse.jdt.annotation.Nullable;
 		"\t# this will be true",
 	"",
 	"if now is in the future:",
-		"\t# this will be false"
+		"\t# this will be false",
 	"",
 	"set {_dates::*} to 1 day from now, 12 days from now, and 1 year from now",
 	"if {_dates::*} are in the future:",
