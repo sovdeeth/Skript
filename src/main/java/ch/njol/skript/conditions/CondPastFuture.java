@@ -58,8 +58,8 @@ public class CondPastFuture extends Condition {
 
 	static {
 		Skript.registerCondition(CondPastFuture.class,
-			"%dates% (is|are)[negated:(n't| not)] in the (past|:future)",
-			"%dates% ha(s|ve)[negated:(n't| not)] passed");
+				"%dates% (is|are)[negated:(n't| not)] in the (past|:future)",
+				"%dates% ha(s|ve)[negated:(n't| not)] passed");
 	}
 
 	private Expression<Date> dates;
