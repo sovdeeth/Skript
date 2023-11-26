@@ -638,7 +638,8 @@ public class DefaultComparators {
 			@Override
 			public Relation compare(Location location1, Location location2) {
 				// check normal equality first
-				if (location1.equals(location2)) return Relation.EQUAL;
+				if (location1.equals(location2))
+					return Relation.EQUAL;
 				// if not, standardize values
 				Location normalizedLocation1 = LocationUtils.normalize(location1.clone());
 				Location normalizedLocation2 = LocationUtils.normalize(location2.clone());
