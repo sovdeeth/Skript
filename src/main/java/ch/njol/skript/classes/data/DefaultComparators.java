@@ -24,27 +24,27 @@ import ch.njol.skript.aliases.Aliases;
 import ch.njol.skript.aliases.ItemData;
 import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.classes.ClassInfo;
-import org.skriptlang.skript.lang.comparator.Comparator;
 import ch.njol.skript.entity.BoatChestData;
 import ch.njol.skript.entity.BoatData;
 import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.entity.RabbitData;
-import org.skriptlang.skript.lang.comparator.Comparators;
 import ch.njol.skript.util.BlockUtils;
 import ch.njol.skript.util.Date;
 import ch.njol.skript.util.EnchantmentType;
 import ch.njol.skript.util.Experience;
-import ch.njol.skript.util.WeatherType;
 import ch.njol.skript.util.GameruleValue;
+import ch.njol.skript.util.LocationUtils;
 import ch.njol.skript.util.StructureType;
 import ch.njol.skript.util.Time;
 import ch.njol.skript.util.Timeperiod;
 import ch.njol.skript.util.Timespan;
+import ch.njol.skript.util.WeatherType;
 import ch.njol.skript.util.slot.EquipmentSlot;
 import ch.njol.skript.util.slot.Slot;
 import ch.njol.skript.util.slot.SlotWithIndex;
 import ch.njol.util.StringUtils;
 import ch.njol.util.coll.CollectionUtils;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
@@ -61,6 +61,8 @@ import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.skriptlang.skript.lang.comparator.Comparator;
+import org.skriptlang.skript.lang.comparator.Comparators;
 import org.skriptlang.skript.lang.comparator.Relation;
 
 import java.util.Objects;
@@ -623,6 +625,25 @@ public class DefaultComparators {
 			@Override
 			public Relation compare(World world, WeatherType weatherType) {
 				return Relation.get(WeatherType.fromWorld(world) == weatherType);
+			}
+
+			@Override
+			public boolean supportsOrdering() {
+				return false;
+			}
+		});
+
+		// Location - Location
+		Comparators.registerComparator(Location.class, Location.class, new Comparator<Location, Location>() {
+			@Override
+			public Relation compare(Location location1, Location location2) {
+				// check normal equality first
+				if (location1.equals(location2)) return Relation.EQUAL;
+				// if not, standardize values
+				Location normalizedLocation1 = LocationUtils.normalize(location1.clone());
+				Location normalizedLocation2 = LocationUtils.normalize(location2.clone());
+				// check if they are equal now
+				return Relation.get(normalizedLocation1.equals(normalizedLocation2));
 			}
 
 			@Override
