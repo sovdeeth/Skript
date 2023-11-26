@@ -38,11 +38,16 @@ public class LocationUtils {
 		location.setPitch(Location.normalizePitch(location.getPitch()));
 		location.setYaw(Location.normalizeYaw(location.getYaw()));
 
-		if (location.getYaw() == -0.0) location.setYaw(0);
-		if (location.getPitch() == -0.0) location.setPitch(0);
-		if (location.getX() == -0.0) location.setX(0);
-		if (location.getY() == -0.0) location.setY(0);
-		if (location.getZ() == -0.0) location.setZ(0);
+		if (location.getYaw() == -0.0)
+			location.setYaw(0);
+		if (location.getPitch() == -0.0)
+			location.setPitch(0);
+		if (location.getX() == -0.0)
+			location.setX(0);
+		if (location.getY() == -0.0)
+			location.setY(0);
+		if (location.getZ() == -0.0)
+			location.setZ(0);
 
 		return location;
 	}
