@@ -33,7 +33,6 @@ import ch.njol.skript.util.Date;
 import ch.njol.skript.util.EnchantmentType;
 import ch.njol.skript.util.Experience;
 import ch.njol.skript.util.GameruleValue;
-import ch.njol.skript.util.LocationUtils;
 import ch.njol.skript.util.StructureType;
 import ch.njol.skript.util.Time;
 import ch.njol.skript.util.Timeperiod;
@@ -636,15 +635,17 @@ public class DefaultComparators {
 		// Location - Location
 		Comparators.registerComparator(Location.class, Location.class, new Comparator<Location, Location>() {
 			@Override
-			public Relation compare(Location location1, Location location2) {
-				// check normal equality first
-				if (location1.equals(location2))
-					return Relation.EQUAL;
-				// if not, standardize values
-				Location normalizedLocation1 = LocationUtils.normalize(location1.clone());
-				Location normalizedLocation2 = LocationUtils.normalize(location2.clone());
-				// check if they are equal now
-				return Relation.get(normalizedLocation1.equals(normalizedLocation2));
+			public Relation compare(Location first, Location second) {
+				return Relation.get(
+						// compare worlds
+						Objects.equals(first.getWorld(), second.getWorld()) &&
+						// compare xyz coords
+						first.toVector().equals(second.toVector()) &&
+						// normalize yaw and pitch to [-180, 180) and [-90, 90] respectively
+						// before comparing them
+						Location.normalizeYaw(first.getYaw()) == Location.normalizeYaw(second.getYaw()) &&
+						Location.normalizePitch(first.getPitch()) == Location.normalizePitch(second.getPitch())
+				);
 			}
 
 			@Override
