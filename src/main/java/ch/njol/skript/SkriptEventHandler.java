@@ -18,17 +18,12 @@
  */
 package ch.njol.skript;
 
-import java.lang.ref.WeakReference;
-import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.stream.Collectors;
-
+import ch.njol.skript.lang.SkriptEvent;
+import ch.njol.skript.lang.Trigger;
+import ch.njol.skript.timings.SkriptTimings;
+import ch.njol.skript.util.Task;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import org.bukkit.Bukkit;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
@@ -42,13 +37,16 @@ import org.bukkit.plugin.EventExecutor;
 import org.bukkit.plugin.RegisteredListener;
 import org.eclipse.jdt.annotation.Nullable;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
-
-import ch.njol.skript.lang.SkriptEvent;
-import ch.njol.skript.lang.Trigger;
-import ch.njol.skript.timings.SkriptTimings;
-import ch.njol.skript.util.Task;
+import java.lang.ref.WeakReference;
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public final class SkriptEventHandler {
 
@@ -112,37 +110,40 @@ public final class SkriptEventHandler {
 	 * @param priority The priority of the Event.
 	 */
 	private static void check(Event event, EventPriority priority) {
+		// get all triggers for this event, return if none
 		List<Trigger> triggers = getTriggers(event.getClass());
 		if (triggers.isEmpty())
 			return;
 
-		if (Skript.logVeryHigh()) {
-			boolean hasTrigger = false;
-			for (Trigger trigger : triggers) {
-				SkriptEvent triggerEvent = trigger.getEvent();
-				if (triggerEvent.getEventPriority() == priority && Boolean.TRUE.equals(Task.callSync(() -> triggerEvent.check(event)))) {
-					hasTrigger = true;
-					break;
-				}
-			}
-			if (!hasTrigger)
-				return;
+		// This handles cancelled left/right clicks on air. Left/right clicks on air are called as cancelled,
+		// but we want to listen to them as if they are uncancelled unless they're specifically cancelled,
+		// so we can't rely on isCancelled() alone.
+		// Checking useItemInHand() is a reliable method, as it will be DENY if the event was specifically cancelled.
+		// Note that right clicks on air with nothing in hand aren't ever sent to the server.
+		boolean isResultDeny = !(event instanceof PlayerInteractEvent &&
+			(((PlayerInteractEvent) event).getAction() == Action.LEFT_CLICK_AIR || ((PlayerInteractEvent) event).getAction() == Action.RIGHT_CLICK_AIR) &&
+			((PlayerInteractEvent) event).useItemInHand() != Result.DENY);
 
-			logEventStart(event);
-		}
-		
-		boolean isCancelled = event instanceof Cancellable && ((Cancellable) event).isCancelled() && !listenCancelled.contains(event.getClass());
-		boolean isResultDeny = !(event instanceof PlayerInteractEvent && (((PlayerInteractEvent) event).getAction() == Action.LEFT_CLICK_AIR || ((PlayerInteractEvent) event).getAction() == Action.RIGHT_CLICK_AIR) && ((PlayerInteractEvent) event).useItemInHand() != Result.DENY);
+		// Check if this event should be treated as cancelled
+		// listenCancelled is deprecated and should be removed in 2.9
+		boolean isCancelled = event instanceof Cancellable &&
+			(((Cancellable) event).isCancelled() && isResultDeny) &&
+			!listenCancelled.contains(event.getClass());
 
-		if (isCancelled && isResultDeny) {
-			if (Skript.logVeryHigh())
-				Skript.info(" -x- was cancelled");
-			return;
-		}
+		// This logs events even if there isn't a trigger that's going to run at that priority.
+		// However, there should only be a priority listener IF there's a trigger at that priority.
+		// So the time will be logged even if no triggers pass check(), which is still useful information.
+		logEventStart(event, priority);
 
 		for (Trigger trigger : triggers) {
 			SkriptEvent triggerEvent = trigger.getEvent();
+
+			// check if the trigger is at the right priority
 			if (triggerEvent.getEventPriority() != priority)
+				continue;
+
+			// check if the cancel state of the event is correct
+			if (!triggerEvent.matchesListeningBehavior(isCancelled))
 				continue;
 
 			// these methods need to be run on whatever thread the trigger is
@@ -175,16 +176,35 @@ public final class SkriptEventHandler {
 	private static long startEvent;
 
 	/**
-	 * Logs that the provided Event has started.
+	 * Logs that the provided Event has started, using the default EventPriority.
 	 * Requires {@link Skript#logVeryHigh()} to be true to log anything.
 	 * @param event The Event that started.
 	 */
 	public static void logEventStart(Event event) {
+		logEventStart(event, null);
+	}
+
+	/**
+	 * Logs that the provided Event has started with a priority.
+	 * Requires {@link Skript#logVeryHigh()} to be true to log anything.
+	 * @param event The Event that started.\
+	 * @param priority The priority of the Event.
+	 */
+	public static void logEventStart(Event event, @Nullable EventPriority priority) {
 		startEvent = System.nanoTime();
 		if (!Skript.logVeryHigh())
 			return;
 		Skript.info("");
-		Skript.info("== " + event.getClass().getName() + " ==");
+
+		String message = "== " + event.getClass().getName();
+
+		if (priority != null)
+			message += " with priority " + priority;
+
+		if (event instanceof Cancellable && ((Cancellable) event).isCancelled())
+			message += " (cancelled)";
+
+		Skript.info(message + " ==");
 	}
 
 	/**
@@ -307,8 +327,10 @@ public final class SkriptEventHandler {
 	}
 
 	/**
-	 * Events which are listened even if they are cancelled.
+	 * Events which are listened even if they are cancelled. This should no longer be used.
+	 * @deprecated Users should specify the listening behavior in the event declaration. "on any %event%:", "on cancelled %event%:".
 	 */
+	@Deprecated
 	public static final Set<Class<? extends Event>> listenCancelled = new HashSet<>();
 
 	/**

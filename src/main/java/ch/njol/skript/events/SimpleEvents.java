@@ -18,9 +18,17 @@
  */
 package ch.njol.skript.events;
 
+import ch.njol.skript.Skript;
+import ch.njol.skript.lang.util.SimpleEvent;
 import com.destroystokyo.paper.event.block.AnvilDamagedEvent;
+import com.destroystokyo.paper.event.entity.EntityJumpEvent;
+import com.destroystokyo.paper.event.entity.ProjectileCollideEvent;
+import com.destroystokyo.paper.event.player.PlayerArmorChangeEvent;
+import com.destroystokyo.paper.event.player.PlayerJumpEvent;
+import com.destroystokyo.paper.event.server.PaperServerListPingEvent;
 import io.papermc.paper.event.player.PlayerDeepSleepEvent;
 import io.papermc.paper.event.player.PlayerInventorySlotChangeEvent;
+import io.papermc.paper.event.player.PlayerTradeEvent;
 import org.bukkit.event.block.BlockCanBuildEvent;
 import org.bukkit.event.block.BlockDamageEvent;
 import org.bukkit.event.block.BlockFertilizeEvent;
@@ -33,9 +41,9 @@ import org.bukkit.event.block.BlockRedstoneEvent;
 import org.bukkit.event.block.BlockSpreadEvent;
 import org.bukkit.event.block.LeavesDecayEvent;
 import org.bukkit.event.block.SignChangeEvent;
+import org.bukkit.event.block.SpongeAbsorbEvent;
 import org.bukkit.event.enchantment.EnchantItemEvent;
 import org.bukkit.event.enchantment.PrepareItemEnchantEvent;
-import org.bukkit.event.block.SpongeAbsorbEvent;
 import org.bukkit.event.entity.AreaEffectCloudApplyEvent;
 import org.bukkit.event.entity.CreeperPowerEvent;
 import org.bukkit.event.entity.EntityBreakDoorEvent;
@@ -109,16 +117,6 @@ import org.bukkit.event.world.WorldSaveEvent;
 import org.bukkit.event.world.WorldUnloadEvent;
 import org.spigotmc.event.entity.EntityDismountEvent;
 import org.spigotmc.event.entity.EntityMountEvent;
-
-import com.destroystokyo.paper.event.entity.ProjectileCollideEvent;
-import com.destroystokyo.paper.event.player.PlayerArmorChangeEvent;
-import com.destroystokyo.paper.event.player.PlayerJumpEvent;
-import com.destroystokyo.paper.event.server.PaperServerListPingEvent;
-import com.destroystokyo.paper.event.entity.EntityJumpEvent;
-import io.papermc.paper.event.player.PlayerTradeEvent;
-import ch.njol.skript.Skript;
-import ch.njol.skript.SkriptEventHandler;
-import ch.njol.skript.lang.util.SimpleEvent;
 
 /**
  * @author Peter Güttinger
@@ -473,15 +471,14 @@ public class SimpleEvents {
 				.examples("on slime split:")
 				.since("2.2-dev26");
 		Skript.registerEvent("Resurrect Attempt", SimpleEvent.class, EntityResurrectEvent.class, "[entity] resurrect[ion] [attempt]")
-				.description("Called when an entity dies, always. If they are not holding a totem, this is cancelled - you can, however, uncancel it.")
+				.description("Called when an entity dies, always. If they are not holding a totem, the event will be cancelled - you can, however, uncancel it. Remember to use \"on any\" or \"on cancelled\" to listen to cancelled events.")
 				.examples(
-						"on resurrect attempt:",
-						"\tentity is player",
-						"\tentity has permission \"admin.undying\"",
-						"\tuncancel the event"
+						"on any resurrect attempt:",
+							"\tentity is player",
+							"\tentity has permission \"admin.undying\"",
+							"\tuncancel the event"
 				)
 				.since("2.2-dev28");
-		SkriptEventHandler.listenCancelled.add(EntityResurrectEvent.class); // Listen this even when cancelled
 		Skript.registerEvent("Player World Change", SimpleEvent.class, PlayerChangedWorldEvent.class, "[player] world chang(ing|e[d])")
 				.description("Called when a player enters a world. Does not work with other entities!")
 				.examples("on player world change:",

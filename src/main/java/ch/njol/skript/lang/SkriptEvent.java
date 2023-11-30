@@ -54,6 +54,7 @@ public abstract class SkriptEvent extends Structure {
 	private String expr;
 	@Nullable
 	protected EventPriority eventPriority;
+	protected ListeningBehavior listeningBehavior;
 	private SkriptEventInfo<?> skriptEventInfo;
 
 	/**
@@ -65,7 +66,11 @@ public abstract class SkriptEvent extends Structure {
 	public final boolean init(Literal<?>[] args, int matchedPattern, ParseResult parseResult, EntryContainer entryContainer) {
 		this.expr = parseResult.expr;
 
-		EventPriority priority = getParser().getData(EventData.class).getPriority();
+		EventData eventData = getParser().getData(EventData.class);
+
+		listeningBehavior = eventData.getListenerBehavior();
+
+		EventPriority priority = eventData.getPriority();
 		if (priority != null && !isEventPrioritySupported()) {
 			Skript.error("This event doesn't support event priority");
 			return false;
@@ -200,6 +205,22 @@ public abstract class SkriptEvent extends Structure {
 	}
 
 	/**
+	 * @return the {@link ListeningBehavior} to be used for this event.
+	 */
+	public ListeningBehavior getListeningBehavior() {
+		return listeningBehavior;
+	}
+
+	/**
+	 * @return whether this SkriptEvent should be run for the given cancelled state.
+	 */
+	public boolean matchesListeningBehavior(boolean isCancelled) {
+		return listeningBehavior == ListeningBehavior.ANY
+				|| (listeningBehavior == ListeningBehavior.UNCANCELLED && !isCancelled)
+				|| (listeningBehavior == ListeningBehavior.CANCELLED && isCancelled);
+	}
+
+	/**
 	 * Override this method to allow Skript to not force synchronization.
 	 */
 	public boolean canExecuteAsynchronously() {
@@ -239,6 +260,24 @@ public abstract class SkriptEvent extends Structure {
 	@Nullable
 	public static SkriptEvent parse(String expr, SectionNode sectionNode, @Nullable String defaultError) {
 		return (SkriptEvent) Structure.parse(expr, sectionNode, defaultError, Skript.getEvents().iterator());
+	}
+
+	/**
+	 * The listening behavior of a Skript event. This determines whether the event should be run for cancelled events, uncancelled events, or both.
+	 */
+	public enum ListeningBehavior {
+		/**
+		 * This Skript event should be run for any uncancelled event.
+		 */
+		UNCANCELLED,
+		/**
+		 * This Skript event should be run for any cancelled event.
+		 */
+		CANCELLED,
+		/**
+		 * This Skript event should be run for any event, cancelled or uncancelled.
+		 */
+		ANY
 	}
 
 }
