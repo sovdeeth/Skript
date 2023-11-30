@@ -51,10 +51,11 @@ public class StructEvent extends Structure {
 		EventData data = getParser().getData(EventData.class);
 
 		data.behavior = ListeningBehavior.UNCANCELLED;
-		if (parseResult.hasTag("cancelled"))
+		if (parseResult.hasTag("cancelled")) {
 			data.behavior = ListeningBehavior.CANCELLED;
-		else if (parseResult.hasTag("any"))
+		} else if (parseResult.hasTag("any")) {
 			data.behavior = ListeningBehavior.ANY;
+		}
 
 		if (parseResult.hasTag("priority")) {
 			String lastTag = parseResult.tags.get(parseResult.tags.size() - 1);
