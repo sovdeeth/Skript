@@ -194,7 +194,7 @@ public final class SkriptEventHandler {
 	private static long startEvent;
 
 	/**
-	 * Logs that the provided Event has started, using the default {@link EventPriority}.
+	 * Logs that the provided Event has started.
 	 * Requires {@link Skript#logVeryHigh()} to be true to log anything.
 	 * @param event The Event that started.
 	 */
