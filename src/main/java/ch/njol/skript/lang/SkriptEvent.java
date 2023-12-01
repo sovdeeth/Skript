@@ -26,12 +26,14 @@ import ch.njol.skript.config.SectionNode;
 import ch.njol.skript.events.EvtClick;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.structures.StructEvent.EventData;
-import org.skriptlang.skript.lang.script.Script;
-import org.skriptlang.skript.lang.entry.EntryContainer;
-import org.skriptlang.skript.lang.structure.Structure;
+import ch.njol.skript.util.Utils;
+import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventPriority;
 import org.eclipse.jdt.annotation.Nullable;
+import org.skriptlang.skript.lang.entry.EntryContainer;
+import org.skriptlang.skript.lang.script.Script;
+import org.skriptlang.skript.lang.structure.Structure;
 
 import java.util.List;
 import java.util.Locale;
@@ -54,7 +56,9 @@ public abstract class SkriptEvent extends Structure {
 	private String expr;
 	@Nullable
 	protected EventPriority eventPriority;
+	@Nullable
 	protected ListeningBehavior listeningBehavior;
+	protected boolean supportsListeningBehavior;
 	private SkriptEventInfo<?> skriptEventInfo;
 
 	/**
@@ -68,8 +72,6 @@ public abstract class SkriptEvent extends Structure {
 
 		EventData eventData = getParser().getData(EventData.class);
 
-		listeningBehavior = eventData.getListenerBehavior();
-
 		EventPriority priority = eventData.getPriority();
 		if (priority != null && !isEventPrioritySupported()) {
 			Skript.error("This event doesn't support event priority");
@@ -81,6 +83,27 @@ public abstract class SkriptEvent extends Structure {
 		if (!(syntaxElementInfo instanceof SkriptEventInfo))
 			throw new IllegalStateException();
 		skriptEventInfo = (SkriptEventInfo<?>) syntaxElementInfo;
+
+		// evaluate whether this event supports listening to cancelled events
+		supportsListeningBehavior = true;
+		for (Class<? extends Event> eventClass : getEventClasses()) {
+			if (!Cancellable.class.isAssignableFrom(eventClass)) {
+				supportsListeningBehavior = false;
+				break;
+			}
+		}
+
+		ListeningBehavior behavior = eventData.getListenerBehavior();
+		// only set the listening behavior if it's not null,
+		// so children can know if the user has set a listening behavior or not
+		if (behavior != null) {
+			if (behavior == ListeningBehavior.CANCELLED && !isListeningBehaviorSupported()) {
+				String eventName = skriptEventInfo.name.toLowerCase(Locale.ENGLISH);
+				Skript.error(Utils.A(eventName) + " event cannot be cancelled, so listening for the cancelled event isn't allowed.");
+				return false;
+			}
+			listeningBehavior = behavior;
+		}
 
 		return init(args, matchedPattern, parseResult);
 	}
@@ -205,16 +228,24 @@ public abstract class SkriptEvent extends Structure {
 	}
 
 	/**
-	 * @return the {@link ListeningBehavior} to be used for this event.
+	 * @return the {@link ListeningBehavior} to be used for this event. If not set, the {@link ListeningBehavior#UNCANCELLED} is used.
 	 */
 	public ListeningBehavior getListeningBehavior() {
-		return listeningBehavior;
+		return listeningBehavior != null ? listeningBehavior : ListeningBehavior.UNCANCELLED;
+	}
+
+	/**
+	 * @return whether this SkriptEvent supports listening behaviors
+	 */
+	public boolean isListeningBehaviorSupported() {
+		return supportsListeningBehavior;
 	}
 
 	/**
 	 * @return whether this SkriptEvent should be run for the given cancelled state.
 	 */
 	public boolean matchesListeningBehavior(boolean isCancelled) {
+		ListeningBehavior listeningBehavior = getListeningBehavior();
 		return listeningBehavior == ListeningBehavior.ANY
 				|| (listeningBehavior == ListeningBehavior.UNCANCELLED && !isCancelled)
 				|| (listeningBehavior == ListeningBehavior.CANCELLED && isCancelled);

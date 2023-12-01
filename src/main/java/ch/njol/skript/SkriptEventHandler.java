@@ -115,20 +115,10 @@ public final class SkriptEventHandler {
 		if (triggers.isEmpty())
 			return;
 
-		// This handles cancelled left/right clicks on air. Left/right clicks on air are called as cancelled,
-		// but we want to listen to them as if they are uncancelled unless they're specifically cancelled,
-		// so we can't rely on isCancelled() alone.
-		// Checking useItemInHand() is a reliable method, as it will be DENY if the event was specifically cancelled.
-		// Note that right clicks on air with nothing in hand aren't ever sent to the server.
-		boolean isResultDeny = !(event instanceof PlayerInteractEvent &&
-			(((PlayerInteractEvent) event).getAction() == Action.LEFT_CLICK_AIR || ((PlayerInteractEvent) event).getAction() == Action.RIGHT_CLICK_AIR) &&
-			((PlayerInteractEvent) event).useItemInHand() != Result.DENY);
+
 
 		// Check if this event should be treated as cancelled
-		// listenCancelled is deprecated and should be removed in 2.9
-		boolean isCancelled = event instanceof Cancellable &&
-			(((Cancellable) event).isCancelled() && isResultDeny) &&
-			!listenCancelled.contains(event.getClass());
+		boolean isCancelled = isCancelled(event);
 
 		// This logs events even if there isn't a trigger that's going to run at that priority.
 		// However, there should only be a priority listener IF there's a trigger at that priority.
@@ -143,7 +133,7 @@ public final class SkriptEventHandler {
 				continue;
 
 			// check if the cancel state of the event is correct
-			if (!triggerEvent.matchesListeningBehavior(isCancelled))
+			if (triggerEvent.isListeningBehaviorSupported() && !triggerEvent.matchesListeningBehavior(isCancelled))
 				continue;
 
 			// these methods need to be run on whatever thread the trigger is
@@ -171,6 +161,34 @@ public final class SkriptEventHandler {
 		}
 
 		logEventEnd();
+	}
+
+	/**
+	 * Helper method to check if we should treat the provided Event as cancelled.
+	 *
+	 * @param event The event to check.
+	 * @return Whether the event should be treated as cancelled.
+	 */
+	private static boolean isCancelled(Event event) {
+		return event instanceof Cancellable &&
+			(((Cancellable) event).isCancelled() && isResultDeny(event)) &&
+			// listenCancelled is deprecated and should be removed in 2.9
+			!listenCancelled.contains(event.getClass());
+	}
+
+	/**
+	 * Helper method for when the provided Event is a {@link PlayerInteractEvent}.
+	 * These events are special in that they are called as cancelled when the player is left/right clicking on air.
+	 * We don't want to treat those as cancelled, so we need to check if the {@link PlayerInteractEvent#useItemInHand()} result is DENY.
+	 * That means the event was purposefully cancelled, and we should treat it as cancelled.
+	 *
+	 * @param event The event to check.
+	 * @return Whether the event was a PlayerInteractEvent with air and the result was DENY.
+	 */
+	private static boolean isResultDeny(Event event) {
+		return !(event instanceof PlayerInteractEvent &&
+			(((PlayerInteractEvent) event).getAction() == Action.LEFT_CLICK_AIR || ((PlayerInteractEvent) event).getAction() == Action.RIGHT_CLICK_AIR) &&
+			((PlayerInteractEvent) event).useItemInHand() != Result.DENY);
 	}
 
 	private static long startEvent;

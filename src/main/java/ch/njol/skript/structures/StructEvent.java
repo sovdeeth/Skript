@@ -38,7 +38,7 @@ public class StructEvent extends Structure {
 
 	static {
 		Skript.registerStructure(StructEvent.class,
-				"[on] [uncancelled|:cancelled|any:(any|all)] <.+> [priority:with priority (:(lowest|low|normal|high|highest|monitor))]");
+				"[on] [:uncancelled|:cancelled|any:(any|all)] <.+> [priority:with priority (:(lowest|low|normal|high|highest|monitor))]");
 	}
 
 	private SkriptEvent event;
@@ -49,9 +49,13 @@ public class StructEvent extends Structure {
 		String expr = parseResult.regexes.get(0).group();
 
 		EventData data = getParser().getData(EventData.class);
+		// clear old data values
+		data.behavior = null;
+		data.priority = null;
 
-		data.behavior = ListeningBehavior.UNCANCELLED;
-		if (parseResult.hasTag("cancelled")) {
+		if (parseResult.hasTag("uncancelled")) {
+			data.behavior = ListeningBehavior.UNCANCELLED;
+		} else if (parseResult.hasTag("cancelled")) {
 			data.behavior = ListeningBehavior.CANCELLED;
 		} else if (parseResult.hasTag("any")) {
 			data.behavior = ListeningBehavior.ANY;
@@ -129,10 +133,11 @@ public class StructEvent extends Structure {
 		}
 
 		/**
-		 * @return the listening behavior that should be used for the event. Defaults to {@link ListeningBehavior#UNCANCELLED}
+		 * @return the listening behavior that should be used for the event. Null indicates that the user did not specify a behavior.
 		 */
+		@Nullable
 		public ListeningBehavior getListenerBehavior() {
-			return behavior == null ? ListeningBehavior.UNCANCELLED : behavior;
+			return behavior;
 		}
 
 	}
