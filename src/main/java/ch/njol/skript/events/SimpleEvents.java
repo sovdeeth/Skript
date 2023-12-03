@@ -19,6 +19,7 @@
 package ch.njol.skript.events;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.lang.SkriptEvent.ListeningBehavior;
 import ch.njol.skript.lang.util.SimpleEvent;
 import com.destroystokyo.paper.event.block.AnvilDamagedEvent;
 import com.destroystokyo.paper.event.entity.EntityJumpEvent;
@@ -52,6 +53,7 @@ import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.EntityPortalEnterEvent;
 import org.bukkit.event.entity.EntityPortalEvent;
 import org.bukkit.event.entity.EntityRegainHealthEvent;
+import org.bukkit.event.entity.EntityResurrectEvent;
 import org.bukkit.event.entity.EntityTameEvent;
 import org.bukkit.event.entity.EntityToggleGlideEvent;
 import org.bukkit.event.entity.EntityToggleSwimEvent;
@@ -469,6 +471,16 @@ public class SimpleEvents {
 				.description("Called when a slime splits. Usually this happens when a big slime dies.")
 				.examples("on slime split:")
 				.since("2.2-dev26");
+		Skript.registerEvent("Resurrect Attempt", SimpleEvent.class, EntityResurrectEvent.class, "[entity] resurrect[ion] [attempt]")
+			.description("Called when an entity dies, always. If they are not holding a totem, this is cancelled - you can, however, uncancel it.")
+			.examples(
+				"on resurrect attempt:",
+				"\tentity is player",
+				"\tentity has permission \"admin.undying\"",
+				"\tuncancel the event"
+			)
+			.since("2.2-dev28")
+			.listeningBehavior(ListeningBehavior.ANY);
 		Skript.registerEvent("Player World Change", SimpleEvent.class, PlayerChangedWorldEvent.class, "[player] world chang(ing|e[d])")
 				.description("Called when a player enters a world. Does not work with other entities!")
 				.examples("on player world change:",

@@ -228,10 +228,11 @@ public abstract class SkriptEvent extends Structure {
 	}
 
 	/**
-	 * @return the {@link ListeningBehavior} to be used for this event. If not set, the {@link ListeningBehavior#UNCANCELLED} is used.
+	 * @return the {@link ListeningBehavior} to be used for this event. Defaults to the default listening behavior
+	 * of the SkriptEventInfo for this SkriptEvent.
 	 */
 	public ListeningBehavior getListeningBehavior() {
-		return listeningBehavior != null ? listeningBehavior : ListeningBehavior.UNCANCELLED;
+		return listeningBehavior != null ? listeningBehavior : skriptEventInfo.getListeningBehavior();
 	}
 
 	/**
@@ -239,16 +240,6 @@ public abstract class SkriptEvent extends Structure {
 	 */
 	public boolean isListeningBehaviorSupported() {
 		return supportsListeningBehavior;
-	}
-
-	/**
-	 * @return whether this SkriptEvent should be run for the given cancelled state.
-	 */
-	public boolean matchesListeningBehavior(boolean isCancelled) {
-		ListeningBehavior listeningBehavior = getListeningBehavior();
-		return listeningBehavior == ListeningBehavior.ANY
-				|| (listeningBehavior == ListeningBehavior.UNCANCELLED && !isCancelled)
-				|| (listeningBehavior == ListeningBehavior.CANCELLED && isCancelled);
 	}
 
 	/**
@@ -308,7 +299,26 @@ public abstract class SkriptEvent extends Structure {
 		/**
 		 * This Skript event should be run for any event, cancelled or uncancelled.
 		 */
-		ANY
+		ANY;
+
+		/**
+		 * Checks whether this listening behavior matches the given cancelled state.
+		 * @param cancelled Whether the event is cancelled.
+		 * @return Whether an event with the given cancelled state should be run for this listening behavior.
+		 */
+		public boolean matches(final boolean cancelled) {
+			switch (this) {
+				case CANCELLED:
+					return cancelled;
+				case UNCANCELLED:
+					return !cancelled;
+				case ANY:
+					return true;
+				default:
+					assert false;
+					return false;
+			}
+		}
 	}
 
 }

@@ -115,8 +115,6 @@ public final class SkriptEventHandler {
 		if (triggers.isEmpty())
 			return;
 
-
-
 		// Check if this event should be treated as cancelled
 		boolean isCancelled = isCancelled(event);
 
@@ -133,7 +131,7 @@ public final class SkriptEventHandler {
 				continue;
 
 			// check if the cancel state of the event is correct
-			if (triggerEvent.isListeningBehaviorSupported() && !triggerEvent.matchesListeningBehavior(isCancelled))
+			if (!triggerEvent.getListeningBehavior().matches(isCancelled))
 				continue;
 
 			// these methods need to be run on whatever thread the trigger is

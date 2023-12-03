@@ -18,14 +18,14 @@
  */
 package ch.njol.skript.lang;
 
-import java.util.Locale;
-
-import org.skriptlang.skript.lang.structure.StructureInfo;
+import ch.njol.skript.SkriptAPIException;
 import org.bukkit.event.Event;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.eclipse.jdt.annotation.Nullable;
+import org.skriptlang.skript.lang.structure.StructureInfo;
+import ch.njol.skript.lang.SkriptEvent.ListeningBehavior;
 
-import ch.njol.skript.SkriptAPIException;
+import java.util.Locale;
 
 public final class SkriptEventInfo<E extends SkriptEvent> extends StructureInfo<E> {
 
@@ -33,6 +33,8 @@ public final class SkriptEventInfo<E extends SkriptEvent> extends StructureInfo<
 	public final String name;
 	
 	private final String id;
+
+	private ListeningBehavior listeningBehavior;
 	
 	@Nullable
 	private String[] description;
@@ -49,16 +51,16 @@ public final class SkriptEventInfo<E extends SkriptEvent> extends StructureInfo<
 	
 	/**
 	 * @param name Capitalised name of the event without leading "On" which is added automatically (Start the name with an asterisk to prevent this).
-	 * @param patterns
-	 * @param c The SkriptEvent's class
+	 * @param patterns the skript patterns for this event
+	 * @param skriptEventClass The SkriptEvent's class
 	 * @param originClassPath The class path for the origin of this event.
 	 * @param events The Bukkit-Events this SkriptEvent listens to
 	 */
-	public SkriptEventInfo(String name, final String[] patterns, final Class<E> c, final String originClassPath, final Class<? extends Event>[] events) {
-		super(patterns, c, originClassPath);
+	public SkriptEventInfo(String name, String[] patterns, Class<E> skriptEventClass, String originClassPath, final Class<? extends Event>[] events) {
+		super(patterns, skriptEventClass, originClassPath);
 		assert name != null;
 		assert patterns != null && patterns.length > 0;
-		assert c != null;
+		assert skriptEventClass != null;
 		assert originClassPath != null;
 		assert events != null && events.length > 0;
 		
@@ -69,7 +71,7 @@ public final class SkriptEventInfo<E extends SkriptEvent> extends StructureInfo<
 							|| events[j].equals(PlayerInteractAtEntityEvent.class))
 						continue; // Spigot seems to have an exception for those two events...
 					
-					throw new SkriptAPIException("The event " + name + " (" + c.getName() + ") registers with super/subclasses " + events[i].getName() + " and " + events[j].getName());
+					throw new SkriptAPIException("The event " + name + " (" + skriptEventClass.getName() + ") registers with super/subclasses " + events[i].getName() + " and " + events[j].getName());
 				}
 			}
 		}
@@ -84,8 +86,22 @@ public final class SkriptEventInfo<E extends SkriptEvent> extends StructureInfo<
 		
 		// uses the name without 'on ' or '*'
 		this.id = "" + name.toLowerCase(Locale.ENGLISH).replaceAll("[#'\"<>/&]", "").replaceAll("\\s+", "_");
+
+		// default listening behavior should be to listen to uncancelled events
+		this.listeningBehavior = ListeningBehavior.UNCANCELLED;
 	}
-	
+
+	/**
+	 * Sets the default listening behavior for this SkriptEvent. If omitted, the default behavior is to listen to uncancelled events.
+	 *
+	 * @param listeningBehavior The listening behavior of this SkriptEvent.
+	 * @return This SkriptEventInfo object
+	 */
+	public SkriptEventInfo<E> listeningBehavior(ListeningBehavior listeningBehavior) {
+		this.listeningBehavior = listeningBehavior;
+		return this;
+	}
+
 	/**
 	 * Use this as {@link #description(String...)} to prevent warnings about missing documentation.
 	 */
@@ -94,10 +110,10 @@ public final class SkriptEventInfo<E extends SkriptEvent> extends StructureInfo<
 	/**
 	 * Only used for Skript's documentation.
 	 * 
-	 * @param description
+	 * @param description The description of this SkriptEvent for Skript's documentation.
 	 * @return This SkriptEventInfo object
 	 */
-	public SkriptEventInfo<E> description(final String... description) {
+	public SkriptEventInfo<E> description(String... description) {
 		assert this.description == null;
 		this.description = description;
 		return this;
@@ -106,10 +122,10 @@ public final class SkriptEventInfo<E extends SkriptEvent> extends StructureInfo<
 	/**
 	 * Only used for Skript's documentation.
 	 * 
-	 * @param examples
+	 * @param examples The examples of this SkriptEvent for Skript's documentation.
 	 * @return This SkriptEventInfo object
 	 */
-	public SkriptEventInfo<E> examples(final String... examples) {
+	public SkriptEventInfo<E> examples(String... examples) {
 		assert this.examples == null;
 		this.examples = examples;
 		return this;
@@ -118,10 +134,10 @@ public final class SkriptEventInfo<E extends SkriptEvent> extends StructureInfo<
 	/**
 	 * Only used for Skript's documentation.
 	 *
-	 * @param keywords
+	 * @param keywords The keywords of this SkriptEvent for searching in Skript's documentation.
 	 * @return This SkriptEventInfo object
 	 */
-	public SkriptEventInfo<E> keywords(final String... keywords) {
+	public SkriptEventInfo<E> keywords(String... keywords) {
 		assert this.keywords == null;
 		this.keywords = keywords;
 		return this;
@@ -130,10 +146,10 @@ public final class SkriptEventInfo<E extends SkriptEvent> extends StructureInfo<
 	/**
 	 * Only used for Skript's documentation.
 	 * 
-	 * @param since
+	 * @param since The version of Skript this SkriptEvent was added.
 	 * @return This SkriptEventInfo object
 	 */
-	public SkriptEventInfo<E> since(final String since) {
+	public SkriptEventInfo<E> since(String since) {
 		assert this.since == null;
 		this.since = since;
 		return this;
@@ -144,10 +160,10 @@ public final class SkriptEventInfo<E extends SkriptEvent> extends StructureInfo<
 	 *
 	 * Only used for Skript's documentation.
 	 *
-	 * @param id
+	 * @param id The ID to use for this SkriptEvent within documentation.
 	 * @return This SkriptEventInfo object
 	 */
-	public SkriptEventInfo<E> documentationID(final String id) {
+	public SkriptEventInfo<E> documentationID(String id) {
 		assert this.documentationID == null;
 		this.documentationID = id;
 		return this;
@@ -158,22 +174,26 @@ public final class SkriptEventInfo<E extends SkriptEvent> extends StructureInfo<
 	 *
 	 * Only used for Skript's documentation.
 	 *
-	 * @param pluginNames
+	 * @param pluginNames The names of the plugins this SkriptEvent depends on.
 	 * @return This SkriptEventInfo object
 	 */
-	public SkriptEventInfo<E> requiredPlugins(final String... pluginNames) {
+	public SkriptEventInfo<E> requiredPlugins(String... pluginNames) {
 		assert this.requiredPlugins == null;
 		this.requiredPlugins = pluginNames;
 		return this;
 	}
 
-	
+
 	public String getId() {
 		return id;
 	}
 	
 	public String getName() {
 		return name;
+	}
+
+	public ListeningBehavior getListeningBehavior() {
+		return listeningBehavior;
 	}
 	
 	@Nullable
