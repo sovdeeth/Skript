@@ -134,28 +134,8 @@ public final class SkriptEventHandler {
 			if (!triggerEvent.getListeningBehavior().matches(isCancelled))
 				continue;
 
-			// these methods need to be run on whatever thread the trigger is
-			Runnable execute = () -> {
-				logTriggerStart(trigger);
-				Object timing = SkriptTimings.start(trigger.getDebugLabel());
-				trigger.execute(event);
-				SkriptTimings.stop(timing);
-				logTriggerEnd(trigger);
-			};
-
-			if (trigger.getEvent().canExecuteAsynchronously()) {
-				// check should be performed on the main thread
-				if (Boolean.FALSE.equals(Task.callSync(() -> triggerEvent.check(event))))
-					continue;
-				execute.run();
-			} else { // Ensure main thread
-				Task.callSync(() -> {
-					if (!triggerEvent.check(event))
-						return null;
-					execute.run();
-					return null; // we don't care about a return value
-				});
-			}
+			// execute the trigger
+			execute(trigger, event);
 		}
 
 		logEventEnd();
@@ -188,6 +168,38 @@ public final class SkriptEventHandler {
 			(((PlayerInteractEvent) event).getAction() == Action.LEFT_CLICK_AIR || ((PlayerInteractEvent) event).getAction() == Action.RIGHT_CLICK_AIR) &&
 			((PlayerInteractEvent) event).useItemInHand() != Result.DENY);
 	}
+
+	/**
+	 * Executes the provided Trigger with the provided Event as context.
+	 *
+	 * @param trigger The Trigger to execute.
+	 * @param event The Event to execute the Trigger with.
+	 */
+	private static void execute(Trigger trigger, Event event) {
+		// these methods need to be run on whatever thread the trigger is
+		Runnable execute = () -> {
+			logTriggerStart(trigger);
+			Object timing = SkriptTimings.start(trigger.getDebugLabel());
+			trigger.execute(event);
+			SkriptTimings.stop(timing);
+			logTriggerEnd(trigger);
+		};
+
+		if (trigger.getEvent().canExecuteAsynchronously()) {
+			// check should be performed on the main thread
+			if (Boolean.FALSE.equals(Task.callSync(() -> trigger.getEvent().check(event))))
+				return;
+			execute.run();
+		} else { // Ensure main thread
+			Task.callSync(() -> {
+				if (!trigger.getEvent().check(event))
+					return null;
+				execute.run();
+				return null;
+			});
+		}
+	}
+
 
 	private static long startEvent;
 

@@ -93,16 +93,12 @@ public abstract class SkriptEvent extends Structure {
 			}
 		}
 
-		ListeningBehavior behavior = eventData.getListenerBehavior();
-		// only set the listening behavior if it's not null,
-		// so children can know if the user has set a listening behavior or not
-		if (behavior != null) {
-			if (behavior == ListeningBehavior.CANCELLED && !isListeningBehaviorSupported()) {
-				String eventName = skriptEventInfo.name.toLowerCase(Locale.ENGLISH);
-				Skript.error(Utils.A(eventName) + " event cannot be cancelled, so listening for the cancelled event isn't allowed.");
-				return false;
-			}
-			listeningBehavior = behavior;
+		listeningBehavior = eventData.getListenerBehavior();
+		// if the behavior is non-null, it was set by the user
+		if (listeningBehavior != null && !isListeningBehaviorSupported()) {
+			String eventName = skriptEventInfo.name.toLowerCase(Locale.ENGLISH);
+			Skript.error(Utils.A(eventName) + " event does not support listening for cancelled or uncancelled events.");
+			return false;
 		}
 
 		return init(args, matchedPattern, parseResult);
@@ -285,19 +281,19 @@ public abstract class SkriptEvent extends Structure {
 	}
 
 	/**
-	 * The listening behavior of a Skript event. This determines whether the event should be run for cancelled events, uncancelled events, or both.
+	 * The listening behavior of a Skript event. This determines whether the event should run for cancelled events, uncancelled events, or both.
 	 */
 	public enum ListeningBehavior {
 		/**
-		 * This Skript event should be run for any uncancelled event.
+		 * This Skript event should run for any uncancelled event.
 		 */
 		UNCANCELLED,
 		/**
-		 * This Skript event should be run for any cancelled event.
+		 * This Skript event should run for any cancelled event.
 		 */
 		CANCELLED,
 		/**
-		 * This Skript event should be run for any event, cancelled or uncancelled.
+		 * This Skript event should run for any event, cancelled or uncancelled.
 		 */
 		ANY;
 
