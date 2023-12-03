@@ -472,15 +472,15 @@ public class SimpleEvents {
 				.examples("on slime split:")
 				.since("2.2-dev26");
 		Skript.registerEvent("Resurrect Attempt", SimpleEvent.class, EntityResurrectEvent.class, "[entity] resurrect[ion] [attempt]")
-			.description("Called when an entity dies, always. If they are not holding a totem, this is cancelled - you can, however, uncancel it.")
-			.examples(
-				"on resurrect attempt:",
-				"\tentity is player",
-				"\tentity has permission \"admin.undying\"",
-				"\tuncancel the event"
-			)
-			.since("2.2-dev28")
-			.listeningBehavior(ListeningBehavior.ANY);
+				.description("Called when an entity dies, always. If they are not holding a totem, this is cancelled - you can, however, uncancel it.")
+				.examples(
+					"on resurrect attempt:",
+						"\tentity is player",
+						"\tentity has permission \"admin.undying\"",
+						"\tuncancel the event"
+				)
+				.since("2.2-dev28")
+				.listeningBehavior(ListeningBehavior.ANY);
 		Skript.registerEvent("Player World Change", SimpleEvent.class, PlayerChangedWorldEvent.class, "[player] world chang(ing|e[d])")
 				.description("Called when a player enters a world. Does not work with other entities!")
 				.examples("on player world change:",
