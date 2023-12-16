@@ -24,9 +24,9 @@ package ch.njol.skript.lang;
 public interface DefaultExpression<T> extends Expression<T> {
 
 	/**
-	 * Called when the expression gets initialized.
+	 * Called when an expression is initialized.
 	 *
-	 * @return boolean if the expression is valid in its context. Skript will error if false.
+	 * @return Whether the expression is valid in its context. Skript will error if false.
 	 */
 	boolean init();
 

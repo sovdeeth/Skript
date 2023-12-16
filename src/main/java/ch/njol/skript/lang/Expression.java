@@ -285,7 +285,7 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	 * @return A Map contains ChangeMode as the key and accepted types of that mode as the value
 	 */
 	default Map<ChangeMode, Class<?>[]> getAcceptedChangeModes() {
-		HashMap<ChangeMode, Class<?>[]> map = new HashMap<>();
+		Map<ChangeMode, Class<?>[]> map = new HashMap<>();
 		for (ChangeMode mode : ChangeMode.values()) {
 			Class<?>[] validClasses = acceptChange(mode);
 			if (validClasses != null)
