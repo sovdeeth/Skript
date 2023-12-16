@@ -115,7 +115,7 @@ public class SkriptParser {
 		this(expr, other.flags, other.context);
 	}
 
-	public final static String WILDCARD = "[^\"]*?(?:\"[^\"]*?\"[^\"])*?";
+	public static final String WILDCARD = "[^\"]*?(?:\"[^\"]*?\"[^\"])*?";
 
 	public static class ParseResult {
 		public Expression<?>[] exprs;
@@ -278,7 +278,7 @@ public class SkriptParser {
 		}
 	}
 
-	private final static Pattern VARIABLE_PATTERN = Pattern.compile("((the )?var(iable)? )?\\{.+\\}", Pattern.CASE_INSENSITIVE);
+	private static final Pattern VARIABLE_PATTERN = Pattern.compile("((the )?var(iable)? )?\\{.+\\}", Pattern.CASE_INSENSITIVE);
 
 	/**
 	 * Prints errors

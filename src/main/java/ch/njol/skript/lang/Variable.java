@@ -495,7 +495,7 @@ public class Variable<T> implements Expression<T> {
 	private void setIndex(Event event, String index, @Nullable Object value) {
 		assert list;
 		String name = this.name.toString(event);
-		assert name.endsWith("::*") : name + "; " + this.name;
+		assert name.endsWith(SEPARATOR + "*") : name + "; " + this.name;
 		Variables.setVariable(name.substring(0, name.length() - 1) + index, value, event, local);
 	}
 
