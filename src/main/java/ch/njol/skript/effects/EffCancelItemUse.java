@@ -53,25 +53,25 @@ public class EffCancelItemUse extends Effect {
 			);
 	}
 
-	private Expression<LivingEntity> entityExpression;
+	private Expression<LivingEntity> entities;
 
 	@Override
 	@SuppressWarnings("unchecked")
 	public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
-		entityExpression = (Expression<LivingEntity>) exprs[0];
+		entities = (Expression<LivingEntity>) exprs[0];
 		return true;
 	}
 
 	@Override
 	protected void execute(Event event) {
-		for (LivingEntity entity : entityExpression.getArray(event)) {
+		for (LivingEntity entity : entities.getArray(event)) {
 			entity.clearActiveItem();
 		}
 	}
 
 	@Override
 	public String toString(@Nullable Event event, boolean debug) {
-		return "cancel the usage of " + entityExpression.toString(event, debug) + "'s active item";
+		return "cancel the usage of " + entities.toString(event, debug) + "'s active item";
 	}
 
 }
