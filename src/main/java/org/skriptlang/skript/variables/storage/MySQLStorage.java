@@ -71,11 +71,10 @@ public class MySQLStorage extends JdbcStorage {
 
 	@Override
 	protected String getReplaceQuery() {
-		return "REPLACE INTO " + getTableName() + " (name, type, value, update_guid) VALUES (?, ?, ?, ?)";
+		return "REPLACE INTO " + getTableName() + " (name, type, value) VALUES (?, ?, ?)";
 	}
 
 	@Override
-	@Nullable
 	protected NonNullPair<String, String> getMonitorQueries() {
 		return new NonNullPair<>(
 				"SELECT rowid, name, type, value FROM " + getTableName() + " WHERE rowid > ?",
@@ -93,7 +92,7 @@ public class MySQLStorage extends JdbcStorage {
 		return (index, result) -> {
 			int i = 1;
 			try {
-				long rowid = result.getLong(i++);
+				result.getLong(i++); // rowid is used for monitor changes.
 				String name = result.getString(i++);
 				if (name == null) {
 					Skript.error("Variable with NULL name found in the database '" + databaseName + "', ignoring it");

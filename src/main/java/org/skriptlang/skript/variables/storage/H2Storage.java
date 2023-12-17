@@ -31,7 +31,6 @@ import ch.njol.skript.SkriptAddon;
 import ch.njol.skript.config.SectionNode;
 import ch.njol.skript.variables.JdbcStorage;
 import ch.njol.skript.variables.SerializedVariable;
-import ch.njol.util.NonNullPair;
 
 public class H2Storage extends JdbcStorage {
 
@@ -74,12 +73,6 @@ public class H2Storage extends JdbcStorage {
 	@Override
 	protected String getReplaceQuery() {
 		return "MERGE INTO " + getTableName() + " KEY(name) VALUES (?, ?, ?)";
-	}
-
-	@Override
-	@Nullable
-	protected NonNullPair<String, String> getMonitorQueries() {
-		return null;
 	}
 
 	@Override

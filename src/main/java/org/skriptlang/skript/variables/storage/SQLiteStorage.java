@@ -33,7 +33,6 @@ import ch.njol.skript.SkriptAddon;
 import ch.njol.skript.config.SectionNode;
 import ch.njol.skript.variables.JdbcStorage;
 import ch.njol.skript.variables.SerializedVariable;
-import ch.njol.util.NonNullPair;
 
 @Deprecated
 @ScheduledForRemoval
@@ -80,12 +79,6 @@ public class SQLiteStorage extends JdbcStorage {
 	@Override
 	protected String getReplaceQuery() {
 		return "REPLACE INTO " + getTableName() + " (name, type, value) VALUES (?, ?, ?)";
-	}
-
-	@Override
-	@Nullable
-	protected NonNullPair<String, String> getMonitorQueries() {
-		return null;
 	}
 
 	@Override

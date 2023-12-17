@@ -116,7 +116,7 @@ public abstract class JdbcStorage extends VariablesStorage {
 	 * Build a HikariConfig from the Skript config.sk SectionNode of this database.
 	 * 
 	 * @param config The configuration section from the config.sk that defines this database.
-	 * @return A HikariConfig implementation.
+	 * @return A HikariConfig implementation. Or null if failure.
 	 */
 	@Nullable
 	public abstract HikariConfig configuration(SectionNode config);
@@ -143,7 +143,9 @@ public abstract class JdbcStorage extends VariablesStorage {
 	 * @return The string to be used for selecting.
 	 */
 	@Nullable
-	protected abstract NonNullPair<String, String> getMonitorQueries();
+	protected NonNullPair<String, String> getMonitorQueries() {
+		return null;
+	};
 
 	/**
 	 * Must select name, 
@@ -201,7 +203,7 @@ public abstract class JdbcStorage extends VariablesStorage {
 				@Nullable NonNullPair<String, String> monitorStatement = getMonitorQueries();
 				if (monitorStatement != null) {
 					MONITOR_QUERY = connection.prepareStatement(monitorStatement.getFirst());
-					MONITOR_CLEAN_UP_QUERY = connection.prepareStatement("DELETE FROM " + getTableName() + " WHERE value IS NULL AND rowid < ?");
+					MONITOR_CLEAN_UP_QUERY = connection.prepareStatement(monitorStatement.getSecond());
 				} else {
 					monitor = false;
 				}

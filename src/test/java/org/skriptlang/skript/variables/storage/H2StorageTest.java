@@ -27,7 +27,6 @@ import java.util.concurrent.TimeoutException;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.skriptlang.skript.variables.storage.H2Storage;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.config.Config;
@@ -35,7 +34,6 @@ import ch.njol.skript.config.EntryNode;
 import ch.njol.skript.config.SectionNode;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.variables.StorageAccessor;
-import ch.njol.skript.variables.Variables;
 
 public class H2StorageTest {
 
