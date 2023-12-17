@@ -27,6 +27,7 @@ import java.util.regex.PatternSyntaxException;
 import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.SkriptAddon;
 import ch.njol.skript.config.SectionNode;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.log.ParseLogHandler;
@@ -90,6 +91,7 @@ public abstract class VariablesStorage implements Closeable {
 	 */
 	// created in the constructor, started in load()
 	private final Thread writeThread;
+	private final SkriptAddon source;
 
 	/**
 	 * Creates a new variable storage with the given name.
@@ -99,9 +101,10 @@ public abstract class VariablesStorage implements Closeable {
 	 *
 	 * @param name the name.
 	 */
-	protected VariablesStorage(String name) {
+	protected VariablesStorage(SkriptAddon source, String name) {
 		assert name != null;
 		databaseName = name;
+		this.source = source;
 
 		writeThread = Skript.newThread(() -> {
 			while (!closed) {
@@ -120,6 +123,13 @@ public abstract class VariablesStorage implements Closeable {
 				}
 			}
 		}, "Skript variable save thread for database '" + name + "'");
+	}
+
+	/**
+	 * @return The SkriptAddon instance that registered this VariableStorage.
+	 */
+	public SkriptAddon getRegisterSource() {
+		return source;
 	}
 
 	/**

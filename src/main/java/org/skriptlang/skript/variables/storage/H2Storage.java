@@ -16,7 +16,7 @@
  *
  * Copyright Peter Güttinger, SkriptLang team and contributors
  */
-package ch.njol.skript.variables;
+package org.skriptlang.skript.variables.storage;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -27,13 +27,17 @@ import org.eclipse.jdt.annotation.Nullable;
 import com.zaxxer.hikari.HikariConfig;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.SkriptAddon;
 import ch.njol.skript.config.SectionNode;
+import ch.njol.skript.variables.JdbcStorage;
+import ch.njol.skript.variables.SerializedVariable;
 import ch.njol.util.NonNullPair;
 
 public class H2Storage extends JdbcStorage {
 
-	public H2Storage(String name) {
-		super(name, "CREATE TABLE IF NOT EXISTS %s (" +
+	public H2Storage(SkriptAddon source, String name) {
+		super(source, name,
+				"CREATE TABLE IF NOT EXISTS %s (" +
 				"`name`         VARCHAR(" + MAX_VARIABLE_NAME_LENGTH + ")  NOT NULL  PRIMARY KEY," +
 				"`type`         VARCHAR(" + MAX_CLASS_CODENAME_LENGTH + ")," +
 				"`value`        BINARY LARGE OBJECT(" + MAX_VALUE_SIZE + ")" +

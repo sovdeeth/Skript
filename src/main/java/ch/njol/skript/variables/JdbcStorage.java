@@ -34,6 +34,7 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.SkriptAddon;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.config.SectionNode;
 import ch.njol.skript.log.SkriptLogger;
@@ -97,8 +98,8 @@ public abstract class JdbcStorage extends VariablesStorage {
 	 * @param name The name to be sent through this constructor when newInstance creates this class.
 	 * @param createTableQuery The create table query to send to the SQL engine.
 	 */
-	public JdbcStorage(String name, String createTableQuery) {
-		super(name);
+	public JdbcStorage(SkriptAddon source, String name, String createTableQuery) {
+		super(source, name);
 		this.createTableQuery = createTableQuery;
 		this.table = "variables21";
 	}

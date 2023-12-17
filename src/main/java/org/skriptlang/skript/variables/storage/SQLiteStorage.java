@@ -16,53 +16,64 @@
  *
  * Copyright Peter Güttinger, SkriptLang team and contributors
  */
-package ch.njol.skript.variables;
+package org.skriptlang.skript.variables.storage;
 
+import java.io.File;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.function.BiFunction;
 
 import org.eclipse.jdt.annotation.Nullable;
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 
 import com.zaxxer.hikari.HikariConfig;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.SkriptAddon;
 import ch.njol.skript.config.SectionNode;
+import ch.njol.skript.variables.JdbcStorage;
+import ch.njol.skript.variables.SerializedVariable;
 import ch.njol.util.NonNullPair;
 
-public class MySQLStorage extends JdbcStorage {
+@Deprecated
+@ScheduledForRemoval
+public class SQLiteStorage extends JdbcStorage {
 
-	MySQLStorage(String name) {
-		super(name, "CREATE TABLE IF NOT EXISTS %s (" +
-				"rowid        BIGINT  NOT NULL  AUTO_INCREMENT  PRIMARY KEY," +
-				"name         VARCHAR(" + MAX_VARIABLE_NAME_LENGTH + ")  NOT NULL  UNIQUE," +
+	SQLiteStorage(SkriptAddon source, String name) {
+		super(source, name,
+				"CREATE TABLE IF NOT EXISTS %s (" +
+				"name         VARCHAR(" + MAX_VARIABLE_NAME_LENGTH + ")  NOT NULL  PRIMARY KEY," +
 				"type         VARCHAR(" + MAX_CLASS_CODENAME_LENGTH + ")," +
 				"value        BLOB(" + MAX_VALUE_SIZE + ")" +
-				") CHARACTER SET ucs2 COLLATE ucs2_bin"
+				");"
 		);
 	}
 
 	@Override
 	@Nullable
 	public HikariConfig configuration(SectionNode config) {
-		String host = getValue(config, "host");
-		Integer port = getValue(config, "port", Integer.class);
-		String database = getValue(config, "database");
-		if (host == null || port == null || database == null)
+		File file = this.file;
+		if (file == null)
 			return null;
+		setTableName(config.get("table", DEFAULT_TABLE_NAME));
+		String name = file.getName();
+		assert name.endsWith(".db");
 
 		HikariConfig configuration = new HikariConfig();
-		configuration.setJdbcUrl("jdbc:mysql://" + host + ":" + port + "/" + database);
-		configuration.setUsername(getValue(config, "user"));
-		configuration.setPassword(getValue(config, "password"));
-
-		setTableName(config.get("table", DEFAULT_TABLE_NAME));
+		configuration.setJdbcUrl("jdbc:sqlite:" + (file == null ? ":memory:" : file.getAbsolutePath()));
 		return configuration;
 	}
 
 	@Override
 	protected boolean requiresFile() {
-		return false;
+		return true;
+	}
+
+	@Override
+	protected File getFile(String file) {
+		if (!file.endsWith(".db"))
+			file = file + ".db"; // required by SQLite
+		return new File(file);
 	}
 
 	@Override
@@ -73,15 +84,12 @@ public class MySQLStorage extends JdbcStorage {
 	@Override
 	@Nullable
 	protected NonNullPair<String, String> getMonitorQueries() {
-		return new NonNullPair<>(
-				"SELECT rowid, name, type, value FROM " + getTableName() + " WHERE rowid > ?",
-				"DELETE FROM " + getTableName() + " WHERE value IS NULL AND rowid < ?"
-		);
+		return null;
 	}
 
 	@Override
 	protected String getSelectQuery() {
-		return "SELECT rowid, name, type, value from " + getTableName();
+		return "SELECT name, type, value from " + getTableName();
 	}
 
 	@Override
@@ -89,7 +97,6 @@ public class MySQLStorage extends JdbcStorage {
 		return (index, result) -> {
 			int i = 1;
 			try {
-				long rowid = result.getLong(i++);
 				String name = result.getString(i++);
 				if (name == null) {
 					Skript.error("Variable with NULL name found in the database '" + databaseName + "', ignoring it");

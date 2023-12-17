@@ -27,6 +27,7 @@ import java.util.concurrent.TimeoutException;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.skriptlang.skript.variables.storage.H2Storage;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.config.Config;
@@ -59,7 +60,7 @@ public class H2StorageTest {
 		}
 		assertTrue(config != null);
 		Variables.STORAGES.clear();
-		database = new H2Storage("H2");
+		database = new H2Storage(Skript.getAddonInstance(), "H2");
 		SectionNode section = new SectionNode("h2", "", config.getMainNode(), 0);
 		section.add(new EntryNode("pattern", ".*", section));
 		section.add(new EntryNode("monitor interval", "30 seconds", section));
