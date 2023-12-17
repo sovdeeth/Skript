@@ -64,11 +64,6 @@ public class ExprSentCommands extends SimpleExpression<String> {
 
 	@Override
 	public boolean init(Expression<?>[] expressions, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
-		if (!getParser().isCurrentEvent(PlayerCommandSendEvent.class)) {
-			Skript.error("The 'command list' expression can only be used in a 'send command list' event");
-			return false;
-		}
-
 		Structure structure = getParser().getCurrentStructure();
 		if (!(structure instanceof EvtPlayerCommandSend)) {
 			Skript.error("The 'command list' expression can only be used in a 'send command list' event");
@@ -96,12 +91,11 @@ public class ExprSentCommands extends SimpleExpression<String> {
 	public Class<?>[] acceptChange(ChangeMode mode) {
 		switch (mode) {
 			case REMOVE:
-			case REMOVE_ALL:
 			case DELETE:
 			case SET:
 			case RESET:
 				return new Class[]{String[].class};
-			case ADD:
+			// note that ADD is not supported, as adding new commands to the commands collection is illegal behaviour
 			default:
 				return null;
 		}
@@ -156,7 +150,7 @@ public class ExprSentCommands extends SimpleExpression<String> {
 
 	@Override
 	public String toString(@Nullable Event event, boolean debug) {
-		return "sent server command list";
+		return "the sent server command list";
 	}
 
 }
