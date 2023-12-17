@@ -61,7 +61,7 @@ public class ExprMaxItemUseTime extends SimplePropertyExpression<ItemStack, Time
 
 	@Override
 	protected String getPropertyName() {
-		return "max use time";
+		return "maximum usage time";
 	}
 
 }

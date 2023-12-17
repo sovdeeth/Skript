@@ -53,7 +53,8 @@ public class CondIsHandRaised extends Condition {
 				"%livingentities%'[s] [:main] hand[s] (is|are) raised",
 				"%livingentities%'[s] [:main] hand[s] (isn't|is not|aren't|are not) raised",
 				"%livingentities%'[s] off[ |-]hand[s] (is|are) raised",
-				"%livingentities%'[s] off[ |-]hand[s] (isn't|is not|aren't|are not) raised");
+				"%livingentities%'[s] off[ |-]hand[s] (isn't|is not|aren't|are not) raised"
+		);
 	}
 
 	private Expression<LivingEntity> entities;
@@ -80,7 +81,8 @@ public class CondIsHandRaised extends Condition {
 		// True if hand is raised AND hand matches the hand we're checking for (null for both)
 		return entities.check(event, livingEntity ->
 				livingEntity.isHandRaised() && ((hand == null) || livingEntity.getHandRaised().equals(hand)),
-				isNegated());
+				isNegated()
+		);
 	}
 
 	@Override

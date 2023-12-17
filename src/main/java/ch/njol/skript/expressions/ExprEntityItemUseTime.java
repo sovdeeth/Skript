@@ -74,7 +74,7 @@ public class ExprEntityItemUseTime extends SimplePropertyExpression<LivingEntity
 
 	@Override
 	protected String getPropertyName() {
-		return (remaining ? "remaining" : "elapsed") + " item use time";
+		return (remaining ? "remaining" : "elapsed") + " item usage time";
 	}
 
 }

@@ -57,7 +57,7 @@ public class ExprReadiedArrow extends SimpleExpression<ItemStack> {
 	public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
 		isArrow = parseResult.hasTag("arrow");
 		if (!getParser().isCurrentEvent(PlayerReadyArrowEvent.class)) {
-			Skript.error("Cannot use 'the readied " + (isArrow ? "arrow" : "bow") + "' outside of a ready arrow event");
+			Skript.error("'the readied " + (isArrow ? "arrow" : "bow") + "' can only be used in a ready arrow event");
 			return false;
 		}
 		return true;
@@ -66,13 +66,9 @@ public class ExprReadiedArrow extends SimpleExpression<ItemStack> {
 	@Override
 	@Nullable
 	protected ItemStack[] get(Event event) {
-		ItemStack item;
-		if (isArrow) {
-			item = ((PlayerReadyArrowEvent) event).getArrow();
-		} else {
-			item = ((PlayerReadyArrowEvent) event).getBow();
-		}
-		return new ItemStack[] {item};
+		if (isArrow)
+			return new ItemStack[]{((PlayerReadyArrowEvent) event).getArrow()};
+		return new ItemStack[]{((PlayerReadyArrowEvent) event).getBow()};
 	}
 
 	@Override
