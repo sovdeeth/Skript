@@ -52,8 +52,13 @@ public class CondIsHandRaised extends Condition {
 		Skript.registerCondition(CondIsHandRaised.class,
 				"%livingentities%'[s] [:main] hand[s] (is|are) raised",
 				"%livingentities%'[s] [:main] hand[s] (isn't|is not|aren't|are not) raised",
+				"[:main] hand[s] of %livingentities% (is|are) raised",
+				"[:main] hand[s] of %livingentities% (isn't|is not|aren't|are not) raised",
+
 				"%livingentities%'[s] off[ |-]hand[s] (is|are) raised",
-				"%livingentities%'[s] off[ |-]hand[s] (isn't|is not|aren't|are not) raised"
+				"%livingentities%'[s] off[ |-]hand[s] (isn't|is not|aren't|are not) raised",
+				"off[ |-]hand[s] of %livingentities% (is|are) raised",
+				"off[ |-]hand[s] of %livingentities% (isn't|is not|aren't|are not) raised"
 		);
 	}
 
@@ -65,13 +70,11 @@ public class CondIsHandRaised extends Condition {
 	@SuppressWarnings("unchecked")
 	public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
 		entities = (Expression<LivingEntity>) exprs[0];
-		setNegated(matchedPattern == 1 || matchedPattern == 3);
-		if (matchedPattern >= 2) {
+		setNegated(matchedPattern % 2 == 1);
+		if (matchedPattern >= 4) {
 			hand = EquipmentSlot.OFF_HAND;
 		} else if (parseResult.hasTag("main")) {
 			hand = EquipmentSlot.HAND;
-		} else {
-			hand = null;
 		}
 		return true;
 	}

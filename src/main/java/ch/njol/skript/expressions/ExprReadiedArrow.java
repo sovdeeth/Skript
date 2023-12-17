@@ -66,6 +66,8 @@ public class ExprReadiedArrow extends SimpleExpression<ItemStack> {
 	@Override
 	@Nullable
 	protected ItemStack[] get(Event event) {
+		if (!(event instanceof PlayerReadyArrowEvent))
+			return null;
 		if (isArrow)
 			return new ItemStack[]{((PlayerReadyArrowEvent) event).getArrow()};
 		return new ItemStack[]{((PlayerReadyArrowEvent) event).getBow()};

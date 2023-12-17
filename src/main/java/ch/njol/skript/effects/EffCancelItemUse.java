@@ -49,7 +49,6 @@ public class EffCancelItemUse extends Effect {
 	static {
 		if (Skript.methodExists(LivingEntity.class, "clearActiveItem"))
 			Skript.registerEffect(EffCancelItemUse.class,
-					"(cancel|interrupt) %livingentities%'[s] [active|current] item us[ag]e",
 					"(cancel|interrupt) [the] us[ag]e of %livingentities%'[s] [active|current] item"
 			);
 	}
