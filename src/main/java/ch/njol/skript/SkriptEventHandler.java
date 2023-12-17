@@ -185,19 +185,16 @@ public final class SkriptEventHandler {
 			logTriggerEnd(trigger);
 		};
 
-		if (trigger.getEvent().canExecuteAsynchronously()) {
-			// check should be performed on the main thread
-			if (Boolean.FALSE.equals(Task.callSync(() -> trigger.getEvent().check(event))))
-				return;
-			execute.run();
-		} else { // Ensure main thread
-			Task.callSync(() -> {
-				if (!trigger.getEvent().check(event))
-					return null;
-				execute.run();
-				return null;
-			});
-		}
+			if (trigger.getEvent().canExecuteAsynchronously()) {
+				if (triggerEvent.check(event))
+					execute.run();
+			} else { // Ensure main thread
+				Task.callSync(() -> {
+					if (triggerEvent.check(event))
+						execute.run();
+					return null; // we don't care about a return value
+				});
+			}
 	}
 
 
