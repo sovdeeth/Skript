@@ -57,7 +57,8 @@ public class SQLiteStorage extends JdbcStorage {
 			return null;
 		setTableName(config.get("table", DEFAULT_TABLE_NAME));
 		String name = file.getName();
-		assert name.endsWith(".db");
+		if (!name.endsWith(".db"))
+			name = name + ".db";
 
 		HikariConfig configuration = new HikariConfig();
 		configuration.setJdbcUrl("jdbc:sqlite:" + (file == null ? ":memory:" : file.getAbsolutePath()));
@@ -78,7 +79,7 @@ public class SQLiteStorage extends JdbcStorage {
 
 	@Override
 	protected String getReplaceQuery() {
-		return "REPLACE INTO " + getTableName() + " (name, type, value, update_guid) VALUES (?, ?, ?, ?)";
+		return "REPLACE INTO " + getTableName() + " (name, type, value) VALUES (?, ?, ?)";
 	}
 
 	@Override

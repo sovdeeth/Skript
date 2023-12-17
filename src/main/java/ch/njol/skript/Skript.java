@@ -691,7 +691,8 @@ public final class Skript extends JavaPlugin implements Listener {
 									List<Class<?>> classes = Lists.newArrayList(Utils.getClasses(Skript.getInstance(), "org.skriptlang.skript.test", "tests"));
 									// Test that requires package access. This is only present when compiling with src/test.
 									classes.add(Class.forName("ch.njol.skript.variables.FlatFileStorageTest"));
-									classes.add(Class.forName("ch.njol.skript.variables.H2StorageTest"));
+									classes.add(Class.forName("org.skriptlang.skript.variables.storage.H2StorageTest"));
+									classes.add(Class.forName("org.skriptlang.skript.variables.storage.SQLiteStorageTest"));
 									size = classes.size();
 									for (Class<?> clazz : classes) {
 										// Reset class SkriptJUnitTest which stores test requirements.

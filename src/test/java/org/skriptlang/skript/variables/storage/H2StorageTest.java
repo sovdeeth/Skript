@@ -16,7 +16,7 @@
  *
  * Copyright Peter Güttinger, SkriptLang team and contributors
  */
-package ch.njol.skript.variables;
+package org.skriptlang.skript.variables.storage;
 
 import static org.junit.Assert.assertTrue;
 
@@ -34,6 +34,8 @@ import ch.njol.skript.config.Config;
 import ch.njol.skript.config.EntryNode;
 import ch.njol.skript.config.SectionNode;
 import ch.njol.skript.registrations.Classes;
+import ch.njol.skript.variables.StorageAccessor;
+import ch.njol.skript.variables.Variables;
 
 public class H2StorageTest {
 
@@ -59,7 +61,7 @@ public class H2StorageTest {
 			return;
 		}
 		assertTrue(config != null);
-		Variables.STORAGES.clear();
+		StorageAccessor.clearVariableStorages();
 		database = new H2Storage(Skript.getAddonInstance(), "H2");
 		SectionNode section = new SectionNode("h2", "", config.getMainNode(), 0);
 		section.add(new EntryNode("pattern", ".*", section));

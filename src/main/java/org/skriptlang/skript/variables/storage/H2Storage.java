@@ -35,7 +35,7 @@ import ch.njol.util.NonNullPair;
 
 public class H2Storage extends JdbcStorage {
 
-	public H2Storage(SkriptAddon source, String name) {
+	H2Storage(SkriptAddon source, String name) {
 		super(source, name,
 				"CREATE TABLE IF NOT EXISTS %s (" +
 				"`name`         VARCHAR(" + MAX_VARIABLE_NAME_LENGTH + ")  NOT NULL  PRIMARY KEY," +
