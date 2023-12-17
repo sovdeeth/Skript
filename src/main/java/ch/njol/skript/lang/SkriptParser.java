@@ -226,9 +226,9 @@ public class SkriptParser {
 						try {
 							parseResult = parse_i(pattern);
 						} catch (MalformedPatternException e) {
-							String message = "pattern compiling exception, element class: " + info.elementClass.getName();
+							String message = "pattern compiling exception, element class: " + info.getElementClass().getName();
 							try {
-								JavaPlugin providingPlugin = JavaPlugin.getProvidingPlugin(info.elementClass);
+								JavaPlugin providingPlugin = JavaPlugin.getProvidingPlugin(info.getElementClass());
 								message += " (provided by " + providingPlugin.getName() + ")";
 							} catch (IllegalArgumentException | IllegalStateException ignored) {}
 							throw new RuntimeException(message, e);
@@ -260,7 +260,7 @@ public class SkriptParser {
 								}
 								startIndex = endIndex;
 							}
-							T element = info.elementClass.newInstance();
+							T element = info.getElementClass().newInstance();
 							if (element.init(parseResult.exprs, patternIndex, getParser().getHasDelayBefore(), parseResult)) {
 								log.printLog();
 								return element;

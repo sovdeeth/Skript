@@ -26,6 +26,7 @@ import java.util.Arrays;
  */
 public class SyntaxElementInfo<E extends SyntaxElement> {
 
+	// todo: 2.9 make all fields private
 	public final Class<E> elementClass;
 	public final String[] patterns;
 	public final String originClassPath;

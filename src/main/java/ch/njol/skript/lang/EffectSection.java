@@ -78,7 +78,7 @@ public abstract class EffectSection extends Section {
 			(EffectSection) SkriptParser.parse(
 				input,
 				(Iterator) Skript.getSections().stream()
-					.filter(info -> EffectSection.class.isAssignableFrom(info.elementClass))
+					.filter(info -> EffectSection.class.isAssignableFrom(info.getElementClass()))
 					.iterator(),
 				defaultError));
 	}
