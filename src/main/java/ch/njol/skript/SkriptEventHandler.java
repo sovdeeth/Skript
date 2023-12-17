@@ -185,16 +185,16 @@ public final class SkriptEventHandler {
 			logTriggerEnd(trigger);
 		};
 
-			if (trigger.getEvent().canExecuteAsynchronously()) {
-				if (triggerEvent.check(event))
+		if (trigger.getEvent().canExecuteAsynchronously()) {
+			if (trigger.getEvent().check(event))
+				execute.run();
+		} else { // Ensure main thread
+			Task.callSync(() -> {
+				if (trigger.getEvent().check(event))
 					execute.run();
-			} else { // Ensure main thread
-				Task.callSync(() -> {
-					if (triggerEvent.check(event))
-						execute.run();
-					return null; // we don't care about a return value
-				});
-			}
+				return null; // we don't care about a return value
+			});
+		}
 	}
 
 
