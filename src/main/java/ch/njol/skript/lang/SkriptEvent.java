@@ -284,14 +284,17 @@ public abstract class SkriptEvent extends Structure {
 	 * The listening behavior of a Skript event. This determines whether the event should run for cancelled events, uncancelled events, or both.
 	 */
 	public enum ListeningBehavior {
+
 		/**
 		 * This Skript event should run for any uncancelled event.
 		 */
 		UNCANCELLED,
+
 		/**
 		 * This Skript event should run for any cancelled event.
 		 */
 		CANCELLED,
+
 		/**
 		 * This Skript event should run for any event, cancelled or uncancelled.
 		 */
