@@ -34,7 +34,7 @@ import java.util.Collection;
 public class EvtPlayerCommandSend extends SkriptEvent {
 
 	static {
-		Skript.registerEvent("Send Command List", EvtPlayerCommandSend.class, PlayerCommandSendEvent.class, "send[ing] [of] [the] [server] command[s] list", "[server] command list send")
+		Skript.registerEvent("Send Command List", EvtPlayerCommandSend.class, PlayerCommandSendEvent.class, "send[ing] [of [the]] [server] command[s] list", "[server] command list send")
 				.description(
 					"Called when the server sends a list of commands to the player. This usually happens on join. The sent commands " +
 					"can be modified via the <a href='expressions.html#ExprSentCommands'>sent commands expression</a>.",
@@ -69,7 +69,7 @@ public class EvtPlayerCommandSend extends SkriptEvent {
 
 	@Override
 	public String toString(@Nullable Event event, boolean debug) {
-		return "send server command list";
+		return "sending of the server command list";
 	}
 
 }

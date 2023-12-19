@@ -131,7 +131,6 @@ public class ExprSentCommands extends SimpleExpression<String> {
 				commands.clear();
 				commands.addAll(parent.getOriginalCommands());
 				break;
-			case ADD:
 			default:
 				assert false;
 				break;
