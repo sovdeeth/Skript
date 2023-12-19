@@ -39,8 +39,8 @@ import org.eclipse.jdt.annotation.Nullable;
 })
 @Examples({
 	"on damage of player:",
-		"\tif victim's active tool is a bow:",
-			"\t\tinterrupt player's active item use"
+		"\tif the victim's active tool is a bow:",
+			"\t\tinterrupt the usage of the player's active item"
 })
 @Since("INSERT VERSION")
 @RequiredPlugins("Paper 1.16+")
