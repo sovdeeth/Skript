@@ -85,10 +85,10 @@ public abstract class SkriptEvent extends Structure {
 		skriptEventInfo = (SkriptEventInfo<?>) syntaxElementInfo;
 
 		// evaluate whether this event supports listening to cancelled events
-		supportsListeningBehavior = true;
+		supportsListeningBehavior = false;
 		for (Class<? extends Event> eventClass : getEventClasses()) {
-			if (!Cancellable.class.isAssignableFrom(eventClass)) {
-				supportsListeningBehavior = false;
+			if (Cancellable.class.isAssignableFrom(eventClass)) {
+				supportsListeningBehavior = true;
 				break;
 			}
 		}
