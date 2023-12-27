@@ -623,20 +623,16 @@ public class VariableString implements Expression<String> {
 		return mode;
 	}
 
-	@SuppressWarnings("resource")
 	public VariableString setMode(StringMode mode) {
 		if (this.mode == mode || isSimple)
 			return this;
-		BlockingLogHandler blockLogs = new BlockingLogHandler().start();
-		try {
+		try (BlockingLogHandler ignored = new BlockingLogHandler().start()) {
 			VariableString variableString = newInstance(orig, mode);
 			if (variableString == null) {
 				assert false : this + "; " + mode;
 				return this;
 			}
 			return variableString;
-		} finally {
-			blockLogs.stop();
 		}
 	}
 
