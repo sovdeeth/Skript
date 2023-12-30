@@ -48,7 +48,8 @@ public class ExprTimeSince extends SimplePropertyExpression<Date, Timespan> {
 	static {
 		Skript.registerExpression(ExprTimeSince.class, Timespan.class, ExpressionType.PROPERTY,
 				"[the] time since %dates%",
-				"[the] (time [remaining]|remaining time) until %dates%");
+				"[the] (time [remaining]|remaining time) until %dates%"
+		);
 	}
 
 	private boolean isSince;
