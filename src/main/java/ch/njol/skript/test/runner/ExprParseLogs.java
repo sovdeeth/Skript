@@ -16,41 +16,43 @@
  *
  * Copyright Peter Güttinger, SkriptLang team and contributors
  */
-package ch.njol.skript.expressions;
+package ch.njol.skript.test.runner;
 
+import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
-import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
-import ch.njol.skript.doc.Since;
-import ch.njol.skript.expressions.base.SimplePropertyExpression;
+import ch.njol.skript.doc.NoDoc;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
-import org.bukkit.inventory.AnvilInventory;
-import org.bukkit.inventory.Inventory;
-import org.eclipse.jdt.annotation.Nullable;
+import org.bukkit.event.Event;
 
-@Name("Anvil Text Input")
-@Description("An expression to get the name to be applied to an item in an anvil inventory.")
-@Examples({
-		"on inventory click:",
-		"\ttype of event-inventory is anvil inventory",
-		"\tif the anvil input text of the event-inventory is \"FREE OP\":",
-		"\t\tban player"
-})
-@Since("2.7")
-public class ExprAnvilText extends SimplePropertyExpression<Inventory, String> {
+import javax.annotation.Nullable;
+
+@Name("Parse Logs")
+@Description("Returns the last known parse logs from a parse section, if any.")
+@NoDoc
+public class ExprParseLogs extends SimpleExpression<String> {
 
 	static {
-		register(ExprAnvilText.class, String.class, "anvil [inventory] (rename|text) input", "inventories");
+		Skript.registerExpression(ExprParseLogs.class, String.class, ExpressionType.SIMPLE, "[the] [last] parse logs");
 	}
 
 	@Override
-	@Nullable
-	public String convert(Inventory inv) {
-		if (!(inv instanceof AnvilInventory))
-			return null;
-		return ((AnvilInventory) inv).getRenameText();
+	public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
+		return true;
+	}
+
+	@Override
+	protected String[] get(Event event) {
+		return SecParse.lastLogs;
+	}
+
+	@Override
+	public boolean isSingle() {
+		return false;
 	}
 
 	@Override
@@ -59,8 +61,8 @@ public class ExprAnvilText extends SimplePropertyExpression<Inventory, String> {
 	}
 
 	@Override
-	public String getPropertyName() {
-		return "anvil text input";
+	public String toString(@Nullable Event event, boolean debug) {
+		return "last parse logs";
 	}
-	
+
 }
