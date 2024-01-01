@@ -19,6 +19,7 @@
 package ch.njol.skript.lang;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.SkriptConfig;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.expressions.ExprColoured;
@@ -42,6 +43,7 @@ import ch.njol.util.coll.CollectionUtils;
 import ch.njol.util.coll.iterator.SingleItemIterator;
 import com.google.common.collect.Lists;
 import org.bukkit.ChatColor;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.event.Event;
 import org.eclipse.jdt.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
@@ -222,7 +224,13 @@ public class VariableString implements Expression<String> {
 							log.printErrors("Can't understand this expression: " + original.substring(exprStart + 1, exprEnd));
 							return null;
 						} else {
-							strings.add(expr);
+							if (!SkriptConfig.usePlayerUUIDsInVariableNames.value() && OfflinePlayer.class.isAssignableFrom(expr.getReturnType())) {
+								Skript.warning(
+										"In the future, players in variable names will use the player's UUID instead of their name. " +
+										"For information on how to make sure your scripts won't be impacted by this change, see https://github.com/SkriptLang/Skript/discussions/6270."
+								);
+							}
+							string.add(expr);
 						}
 						log.printLog();
 					} finally {
