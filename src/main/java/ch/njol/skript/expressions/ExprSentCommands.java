@@ -109,7 +109,7 @@ public class ExprSentCommands extends SimpleExpression<String> {
 		Collection<String> commands = ((PlayerCommandSendEvent) event).getCommands();
 
 		// short circuit if we're just clearing the list
-		if (mode == ChangeMode.DELETE || mode == ChangeMode.REMOVE_ALL) {
+		if (mode == ChangeMode.DELETE) {
 			commands.clear();
 			return;
 		}
