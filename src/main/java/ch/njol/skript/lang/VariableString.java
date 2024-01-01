@@ -230,7 +230,7 @@ public class VariableString implements Expression<String> {
 										"For information on how to make sure your scripts won't be impacted by this change, see https://github.com/SkriptLang/Skript/discussions/6270."
 								);
 							}
-							string.add(expr);
+							strings.add(expr);
 						}
 						log.printLog();
 					} finally {
