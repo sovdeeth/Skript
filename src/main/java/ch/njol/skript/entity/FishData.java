@@ -18,11 +18,9 @@
  */
 package ch.njol.skript.entity;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
-
+import ch.njol.skript.Skript;
+import ch.njol.skript.lang.Literal;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
 import org.bukkit.entity.Cod;
 import org.bukkit.entity.Fish;
 import org.bukkit.entity.PufferFish;
@@ -31,9 +29,10 @@ import org.bukkit.entity.Tadpole;
 import org.bukkit.entity.TropicalFish;
 import org.eclipse.jdt.annotation.Nullable;
 
-import ch.njol.skript.Skript;
-import ch.njol.skript.lang.Literal;
-import ch.njol.skript.lang.SkriptParser.ParseResult;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class FishData extends EntityData<Fish> {
 
@@ -63,6 +62,7 @@ public class FishData extends EntityData<Fish> {
 		if (matchedPattern == 0)
 			wildcard = true;
 		pattern = (matchedPattern == 0) ? ThreadLocalRandom.current().nextInt(1, PATTERNS.size()) : matchedPattern;
+
 		return true;
 	}
 
