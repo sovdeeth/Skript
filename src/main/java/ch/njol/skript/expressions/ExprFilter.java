@@ -60,7 +60,7 @@ public class ExprFilter extends SimpleExpression<Object> {
 	}
 
 	private Condition filterCondition;
-	private String rawCond;
+	private String unparsedCondition;
 	private Expression<Object> unfilteredObjects;
 
 	private FilterData filterData;
@@ -70,10 +70,10 @@ public class ExprFilter extends SimpleExpression<Object> {
 		unfilteredObjects = LiteralUtils.defendExpression(exprs[0]);
 		if (unfilteredObjects.isSingle())
 			return false;
-		rawCond = parseResult.regexes.get(0).group();
+		unparsedCondition = parseResult.regexes.get(0).group();
 		filterData = getParser().getData(FilterData.class);
 		filterData.parentFilter = this;
-		filterCondition = Condition.parse(rawCond, "Can't understand this condition: " + rawCond);
+		filterCondition = Condition.parse(unparsedCondition, "Can't understand this condition: " + unparsedCondition);
 		filterData.parentFilter = null;
 		return filterCondition != null && LiteralUtils.canInitSafely(unfilteredObjects);
 	}
@@ -111,7 +111,7 @@ public class ExprFilter extends SimpleExpression<Object> {
 
 	@Override
 	public String toString(Event event, boolean debug) {
-		return String.format("%s where [%s]", unfilteredObjects.toString(event, debug), rawCond);
+		return unfilteredObjects.toString(event, debug) + " that match [" + unparsedCondition + "]";
 	}
 
 	private boolean matchesAnySpecifiedTypes(String candidateString) {
