@@ -42,7 +42,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.WeakHashMap;
 import java.util.regex.Pattern;
 
 @Name("Filter")
@@ -144,7 +143,7 @@ public class ExprFilter extends SimpleExpression<Object> {
 		@Nullable
 		private ExprFilter parentFilter;
 
-		private Set<ExprFilterInput<?>> dependentInputs = Collections.newSetFromMap(new WeakHashMap<>());
+		private Set<ExprFilterInput<?>> dependentInputs = new HashSet<>();
 
 		@Nullable
 		private Object currentFilterValue;
