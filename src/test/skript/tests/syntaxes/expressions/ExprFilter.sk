@@ -12,3 +12,5 @@ test "where filter":
 	assert size of ({_list::*} where [input is "foo" or "bar"]) is 2 with "ExprFilter filtered object input incorrectly"
 	assert size of ({_list::*} where [input is set]) is 3 with "ExprFilter filtered object input incorrectly"
 	assert {_list::*} where [false is true] is not set with "ExprFilter returned objects with false condition"
+	assert ({_list::*} where [input is (("foo" and "bar") where [input is "bar"])]) is "bar" with "Failed filter with filter within condition"
+	assert (({_list::*} where [input is "foo"]) where [input is "foo"]) is "foo" with "Failed chained filters"

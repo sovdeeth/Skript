@@ -45,9 +45,11 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 @Name("Filter")
-@Description("Filters a list based on a condition. " +
-		"For example, if you ran 'broadcast \"something\" and \"something else\" where [string input is \"something\"]', " +
-		"only \"something\" would be broadcast as it is the only string that matched the condition.")
+@Description({
+	"Filters a list based on a condition. ",
+	"For example, if you ran 'broadcast \"something\" and \"something else\" where [string input is \"something\"]', ",
+	"only \"something\" would be broadcast as it is the only string that matched the condition."
+})
 @Examples("send \"congrats on being staff!\" to all players where [player input has permission \"staff\"]")
 @Since("2.2-dev36")
 @SuppressWarnings({"null", "unchecked"})
@@ -55,27 +57,30 @@ public class ExprFilter extends SimpleExpression<Object> {
 
 	static {
 		Skript.registerExpression(ExprFilter.class, Object.class, ExpressionType.COMBINED,
-			"%objects% (where|that match) \\[<.+>\\]");
+				"%objects% (where|that match) \\[<.+>\\]");
 		ParserInstance.registerData(FilterData.class, FilterData::new);
 	}
 
 	private Condition filterCondition;
 	private String unparsedCondition;
-	private Expression<Object> unfilteredObjects;
+	private Expression<?> unfilteredObjects;
+	private Set<ExprFilterInput<?>> dependentInputs = new HashSet<>();
 
-	private FilterData filterData;
+	@Nullable
+	private Object currentFilterValue;
 
 	@Override
 	public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
 		unfilteredObjects = LiteralUtils.defendExpression(exprs[0]);
-		if (unfilteredObjects.isSingle())
+		if (unfilteredObjects.isSingle() || !LiteralUtils.canInitSafely(unfilteredObjects))
 			return false;
 		unparsedCondition = parseResult.regexes.get(0).group();
-		filterData = getParser().getData(FilterData.class);
+		FilterData filterData = getParser().getData(FilterData.class);
+		ExprFilter originalParentFilter = filterData.parentFilter;
 		filterData.parentFilter = this;
 		filterCondition = Condition.parse(unparsedCondition, "Can't understand this condition: " + unparsedCondition);
-		filterData.parentFilter = null;
-		return filterCondition != null && LiteralUtils.canInitSafely(unfilteredObjects);
+		filterData.parentFilter = originalParentFilter;
+		return filterCondition != null;
 	}
 
 	@NonNull
@@ -85,7 +90,7 @@ public class ExprFilter extends SimpleExpression<Object> {
 		if (unfilteredObjectIterator == null)
 			return Collections.emptyIterator();
 		return Iterators.filter(unfilteredObjectIterator, candidateObject -> {
-			filterData.setCurrentFilterValue(candidateObject);
+			currentFilterValue = candidateObject;
 			return filterCondition.check(event);
 		});
 	}
@@ -106,7 +111,7 @@ public class ExprFilter extends SimpleExpression<Object> {
 
 	@Override
 	public boolean isSingle() {
-		return unfilteredObjects.isSingle();
+		return false;
 	}
 
 	@Override
@@ -115,7 +120,7 @@ public class ExprFilter extends SimpleExpression<Object> {
 	}
 
 	private boolean matchesAnySpecifiedTypes(String candidateString) {
-		for (ExprFilterInput<?> dependentInput : filterData.getDependentInputs()) {
+		for (ExprFilterInput<?> dependentInput : dependentInputs) {
 			ClassInfo<?> specifiedType = dependentInput.getSpecifiedType();
 			if (specifiedType == null)
 				return false;
@@ -138,15 +143,19 @@ public class ExprFilter extends SimpleExpression<Object> {
 		return unfilteredObjects.isLoopOf(candidateString) || matchesAnySpecifiedTypes(candidateString);
 	}
 
+	public Set<ExprFilterInput<?>> getDependentInputs() {
+		return dependentInputs;
+	}
+
+	@Nullable
+	public Object getCurrentFilterValue() {
+		return currentFilterValue;
+	}
+
 	public static class FilterData extends ParserInstance.Data {
 
 		@Nullable
 		private ExprFilter parentFilter;
-
-		private Set<ExprFilterInput<?>> dependentInputs = new HashSet<>();
-
-		@Nullable
-		private Object currentFilterValue;
 
 		public FilterData(ParserInstance parserInstance) {
 			super(parserInstance);
@@ -157,18 +166,6 @@ public class ExprFilter extends SimpleExpression<Object> {
 			return parentFilter;
 		}
 
-		public Set<ExprFilterInput<?>> getDependentInputs() {
-			return dependentInputs;
-		}
-
-		@Nullable
-		public Object getCurrentFilterValue() {
-			return currentFilterValue;
-		}
-
-		public void setCurrentFilterValue(Object currentFilterValue) {
-			this.currentFilterValue = currentFilterValue;
-		}
 	}
 
 }

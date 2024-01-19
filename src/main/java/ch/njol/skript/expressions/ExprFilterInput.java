@@ -40,9 +40,11 @@ import java.lang.reflect.Array;
 import java.util.Set;
 
 @Name("Filter Input")
-@Description("Represents the input in a filter expression. " +
-	"For example, if you ran 'broadcast \"something\" and \"something else\" where [input is \"something\"]" +
-	"the condition would be checked twice, using \"something\" and \"something else\" as the inputs.")
+@Description({
+	"Represents the input in a filter expression.",
+	"For example, if you ran 'broadcast \"something\" and \"something else\" where [input is \"something\"]",
+	"the condition would be checked twice, using \"something\" and \"something else\" as the inputs."
+})
 @Examples("send \"congrats on being staff!\" to all players where [input has permission \"staff\"]")
 @Since("2.2-dev36")
 public class ExprFilterInput<T> extends SimpleExpression<T> {
@@ -59,7 +61,7 @@ public class ExprFilterInput<T> extends SimpleExpression<T> {
 	private final Class<? extends T>[] types;
 	private final Class<T> superType;
 
-	private ExprFilter.FilterData parentFilterData;
+	private ExprFilter parentFilter;
 
 	@Nullable
 	private ClassInfo<?> specifiedType;
@@ -72,8 +74,8 @@ public class ExprFilterInput<T> extends SimpleExpression<T> {
 		this.source = source;
 		if (source != null) {
 			specifiedType = source.specifiedType;
-			parentFilterData = source.parentFilterData;
-			Set<ExprFilterInput<?>> dependentInputs = parentFilterData.getDependentInputs();
+			parentFilter = source.parentFilter;
+			Set<ExprFilterInput<?>> dependentInputs = parentFilter.getDependentInputs();
 			dependentInputs.remove(this.source);
 			dependentInputs.add(this);
 
@@ -84,8 +86,8 @@ public class ExprFilterInput<T> extends SimpleExpression<T> {
 
 	@Override
 	public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult) {
-		parentFilterData = getParser().getData(ExprFilter.FilterData.class);
-		if (parentFilterData.getParentFilter() == null)
+		parentFilter = getParser().getData(ExprFilter.FilterData.class).getParentFilter();
+		if (parentFilter == null)
 			return false;
 		specifiedType = matchedPattern == 0 ? null : ((Literal<ClassInfo<?>>) exprs[0]).getSingle();
 		return true;
@@ -93,10 +95,9 @@ public class ExprFilterInput<T> extends SimpleExpression<T> {
 
 	@Override
 	protected T[] get(Event event) {
-		Object currentValue = parentFilterData.getCurrentFilterValue();
-		if (currentValue == null || (specifiedType != null && !specifiedType.getC().isInstance(currentValue))) {
+		Object currentValue = parentFilter.getCurrentFilterValue();
+		if (currentValue == null || (specifiedType != null && !specifiedType.getC().isInstance(currentValue)))
 			return (T[]) Array.newInstance(superType, 0);
-		}
 
 		try {
 			return Converters.convert(new Object[]{currentValue}, types, superType);
