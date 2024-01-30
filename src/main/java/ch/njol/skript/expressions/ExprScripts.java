@@ -88,7 +88,12 @@ public class ExprScripts extends SimpleExpression<String> {
 	@SuppressWarnings("null")
 	private String[] formatFiles(List<File> files) {
 		return files.stream()
-			.map(f -> noPaths ? f.getName() : f.getPath().replaceFirst(Pattern.quote(SCRIPTS_PATH), ""))
+			.map(f -> {
+				if (noPaths)
+					return f.getName();
+				String[] split = f.getPath().split(Pattern.quote(SCRIPTS_PATH), 2);
+				return split[split.length - 1];
+			})
 			.toArray(String[]::new);
 	}
 
