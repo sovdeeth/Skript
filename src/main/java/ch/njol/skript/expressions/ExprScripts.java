@@ -34,8 +34,10 @@ import ch.njol.util.Kleenean;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.bukkit.event.Event;
 
@@ -82,7 +84,10 @@ public class ExprScripts extends SimpleExpression<String> {
 				scripts.add(script.getConfig().getPath());
 		}
 		if (includeDisabled)
-			scripts.addAll(ScriptLoader.getDisabledScriptPaths());
+			scripts.addAll(ScriptLoader.getDisabledScripts()
+					.stream()
+					.map(File::toPath)
+					.collect(Collectors.toList()));
 		return formatPaths(scripts);
 	}
 

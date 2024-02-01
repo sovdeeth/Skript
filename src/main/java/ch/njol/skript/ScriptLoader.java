@@ -1008,17 +1008,6 @@ public class ScriptLoader {
 	}
 
 	/**
-	 * @return An unmodifiable set containing a snapshot of the currently disabled scripts as Paths.
-	 */
-	public static Set<Path> getDisabledScriptPaths() {
-		return Collections.unmodifiableSet(
-				disabledScripts.stream()
-						.map(File::toPath)
-						.collect(Collectors.toSet())
-				);
-	}
-
-	/**
 	 * @return A FileFilter defining the naming conditions of a loaded script.
 	 */
 	public static FileFilter getLoadedScriptsFilter() {
