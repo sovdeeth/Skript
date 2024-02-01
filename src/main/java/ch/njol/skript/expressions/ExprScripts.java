@@ -57,9 +57,9 @@ public class ExprScripts extends SimpleExpression<String> {
 
 	static {
 		Skript.registerExpression(ExprScripts.class, String.class, ExpressionType.SIMPLE,
-				"[all [of the]] scripts [1:without ([subdirectory] paths|parents)]",
-				"[all [of the]] (enabled|loaded) scripts [1:without ([subdirectory] paths|parents)]",
-				"[all [of the]] (disabled|unloaded) scripts [1:without ([subdirectory] paths|parents)]");
+				"[all [of the]|the] scripts [1:without ([subdirectory] paths|parents)]",
+				"[all [of the]|the] (enabled|loaded) scripts [1:without ([subdirectory] paths|parents)]",
+				"[all [of the]|the] (disabled|unloaded) scripts [1:without ([subdirectory] paths|parents)]");
 	}
 
 	private static final Path SCRIPTS_PATH = Skript.getInstance().getScriptsFolder().getAbsoluteFile().toPath();
