@@ -32,6 +32,7 @@ import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -54,12 +55,12 @@ public class ExprScripts extends SimpleExpression<String> {
 
 	static {
 		Skript.registerExpression(ExprScripts.class, String.class, ExpressionType.SIMPLE,
-				"[all [of the]] scripts [(1:without ([subdirectory] paths|parents))]",
-				"[all [of the]] (enabled|loaded) scripts [(1:without ([subdirectory] paths|parents))]",
-				"[all [of the]] (disabled|unloaded) scripts [(1:without ([subdirectory] paths|parents))]");
+				"[all [of the]] scripts [1:without ([subdirectory] paths|parents)]",
+				"[all [of the]] (enabled|loaded) scripts [1:without ([subdirectory] paths|parents)]",
+				"[all [of the]] (disabled|unloaded) scripts [1:without ([subdirectory] paths|parents)]");
 	}
 
-	private static final String SCRIPTS_PATH = new File(Skript.getInstance().getDataFolder(), Skript.SCRIPTSFOLDER).getPath() + File.separator;
+	private static final Path SCRIPTS_PATH = Skript.getInstance().getScriptsFolder().getAbsoluteFile().toPath();
 
 	private boolean includeEnabled;
 	private boolean includeDisabled;
@@ -75,24 +76,23 @@ public class ExprScripts extends SimpleExpression<String> {
 
 	@Override
 	protected String[] get(Event event) {
-		List<File> scripts = new ArrayList<>();
+		List<Path> scripts = new ArrayList<>();
 		if (includeEnabled) {
 			for (Script script : ScriptLoader.getLoadedScripts())
-				scripts.add(script.getConfig().getFile());
+				scripts.add(script.getConfig().getPath());
 		}
 		if (includeDisabled)
-			scripts.addAll(ScriptLoader.getDisabledScripts());
-		return formatFiles(scripts);
+			scripts.addAll(ScriptLoader.getDisabledScriptPaths());
+		return formatPaths(scripts);
 	}
 
 	@SuppressWarnings("null")
-	private String[] formatFiles(List<File> files) {
-		return files.stream()
-			.map(f -> {
+	private String[] formatPaths(List<Path> paths) {
+		return paths.stream()
+			.map(path -> {
 				if (noPaths)
-					return f.getName();
-				String[] split = f.getPath().split(Pattern.quote(SCRIPTS_PATH), 2);
-				return split[split.length - 1];
+					return path.getFileName();
+				return SCRIPTS_PATH.relativize(path.toAbsolutePath()).toString();
 			})
 			.toArray(String[]::new);
 	}
