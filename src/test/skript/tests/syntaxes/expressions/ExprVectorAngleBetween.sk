@@ -12,4 +12,5 @@ test "angle between vectors":
 	assert angle between vector(1, 0, 0) and vector(-1, 0, 0) is 180 with "angle between opposite vectors is not 180"
 	assert angle between {_x} and {_x} is 0 with "angle between same vectors is not 0"
 
-	# note: add a NaN check for zero vectors once isNaN is added
+	assert isNaN(angle between vector(0, 0, 0) and vector(0, 1, 0)) is true with "angle between zero vector is not NaN"
+
