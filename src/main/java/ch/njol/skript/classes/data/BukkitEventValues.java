@@ -719,7 +719,7 @@ public final class BukkitEventValues {
 			@Override
 			@Nullable
 			public Block get(final PlayerBucketFillEvent e) {
-				final BlockState s = e.getBlock().getState();
+				final BlockState s = e.getBlockClicked().getState();
 				s.setType(Material.AIR);
 				s.setRawData((byte) 0);
 				return new BlockStateBlock(s, true);
