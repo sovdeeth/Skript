@@ -144,9 +144,8 @@ public final class Parameter<T> {
 				// for comparing without affecting the original name, in case the config option for case insensitivity changes.
 				String lowerParamName = paramName.toLowerCase(Locale.ENGLISH);
 				for (Parameter<?> p : params) {
-					String otherName = p.name;
-					if (caseInsensitive) // only force lowercase if we don't care about case in variables
-						otherName = otherName.toLowerCase(Locale.ENGLISH);
+					// only force lowercase if we don't care about case in variables
+					String otherName = caseInsensitive ? p.name.toLowerCase(Locale.ENGLISH) : p.name;
 					if (otherName.equals(caseInsensitive ? lowerParamName : paramName)) {
 						Skript.error("Each argument's name must be unique, but the name '" + paramName + "' occurs at least twice.");
 						return null;
