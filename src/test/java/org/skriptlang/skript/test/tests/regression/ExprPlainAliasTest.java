@@ -32,6 +32,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+// https://github.com/SkriptLang/Skript/issues/5994
 public class ExprPlainAliasTest extends SkriptJUnitTest {
 	private ItemType itemType;
 	@Nullable
