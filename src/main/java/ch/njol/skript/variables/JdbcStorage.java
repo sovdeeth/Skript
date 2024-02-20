@@ -241,8 +241,13 @@ public abstract class JdbcStorage extends VariablesStorage {
 
 			SkriptLogger.setNode(null);
 
-			HikariDataSource db;
-			this.database.set(db = new HikariDataSource(configuration));
+			HikariDataSource db = null;
+			try {
+				this.database.set(db = new HikariDataSource(configuration));
+			} catch (Exception exception) { // MySQL can throw SQLSyntaxErrorException but not exposed from HikariDataSource.
+				Skript.error("Cannot connect to the database '" + databaseName + "'! Please make sure that all settings are correct.");
+				return false;
+			}
 
 			if (db == null || db.isClosed()) {
 				Skript.error("Cannot connect to the database '" + databaseName + "'! Please make sure that all settings are correct.");

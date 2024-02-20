@@ -38,29 +38,31 @@ public class MySQLStorage extends JdbcStorage {
 	MySQLStorage(SkriptAddon source, String name) {
 		super(source, name,
 				"CREATE TABLE IF NOT EXISTS %s (" +
-				"rowid        BIGINT  NOT NULL  AUTO_INCREMENT  PRIMARY KEY," +
-				"name         VARCHAR(" + MAX_VARIABLE_NAME_LENGTH + ")  NOT NULL  UNIQUE," +
+				"rowid        BIGINT  NOT NULL  AUTO_INCREMENT," +
+				"name         VARCHAR(" + MAX_VARIABLE_NAME_LENGTH + ")  NOT NULL," +
 				"type         VARCHAR(" + MAX_CLASS_CODENAME_LENGTH + ")," +
-				"value        BLOB(" + MAX_VALUE_SIZE + ")" +
-				") CHARACTER SET ucs2 COLLATE ucs2_bin"
+				"value        BLOB(" + MAX_VALUE_SIZE + ")," +
+				"PRIMARY KEY(rowid)," +
+				"UNIQUE KEY(name)" +
+				") CHARACTER SET ucs2 COLLATE ucs2_bin;"
 		);
 	}
 
 	@Override
 	@Nullable
-	public HikariConfig configuration(SectionNode config) {
-		String host = getValue(config, "host");
-		Integer port = getValue(config, "port", Integer.class);
-		String database = getValue(config, "database");
+	public HikariConfig configuration(SectionNode section) {
+		String host = getValue(section, "host");
+		Integer port = getValue(section, "port", Integer.class);
+		String database = getValue(section, "database");
 		if (host == null || port == null || database == null)
 			return null;
 
 		HikariConfig configuration = new HikariConfig();
 		configuration.setJdbcUrl("jdbc:mysql://" + host + ":" + port + "/" + database);
-		configuration.setUsername(getValue(config, "user"));
-		configuration.setPassword(getValue(config, "password"));
+		configuration.setUsername(getValue(section, "user"));
+		configuration.setPassword(getValue(section, "password"));
 
-		setTableName(config.get("table", DEFAULT_TABLE_NAME));
+		setTableName(section.get("table", DEFAULT_TABLE_NAME));
 		return configuration;
 	}
 
