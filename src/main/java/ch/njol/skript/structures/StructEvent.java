@@ -49,9 +49,8 @@ public class StructEvent extends Structure {
 		String expr = parseResult.regexes.get(0).group();
 
 		EventData data = getParser().getData(EventData.class);
-		// clear old data values
-		data.behavior = null;
-		data.priority = null;
+		// ensure there's no leftover data from previous parses
+		data.clear();
 
 		if (parseResult.hasTag("uncancelled")) {
 			data.behavior = ListeningBehavior.UNCANCELLED;
@@ -67,6 +66,9 @@ public class StructEvent extends Structure {
 		}
 
 		event = SkriptEvent.parse(expr, entryContainer.getSource(), null);
+
+		// cleanup after ourselves
+		data.clear();
 		return event != null;
 	}
 
@@ -138,6 +140,13 @@ public class StructEvent extends Structure {
 		@Nullable
 		public ListeningBehavior getListenerBehavior() {
 			return behavior;
+      
+    /**
+		 * Clears all event-specific data from this instance.
+		 */
+		public void clear() {
+			priority = null;
+      behavior = null;
 		}
 
 	}
