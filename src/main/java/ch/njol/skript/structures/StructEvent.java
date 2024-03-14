@@ -140,13 +140,14 @@ public class StructEvent extends Structure {
 		@Nullable
 		public ListeningBehavior getListenerBehavior() {
 			return behavior;
+		}
       
-    /**
+    	/**
 		 * Clears all event-specific data from this instance.
 		 */
 		public void clear() {
 			priority = null;
-      behavior = null;
+      		behavior = null;
 		}
 
 	}
