@@ -18,16 +18,12 @@
  */
 package ch.njol.skript.bukkitutil;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Stream;
-
 import io.papermc.paper.entity.TeleportFlag;
 
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A utility interface to access the Entity::teleport with TeleportFlag vararg in Paper 1.19+.
@@ -35,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 @FunctionalInterface
 public interface TeleportFlags {
 
-	public enum SkriptTeleportFlags {
+	public enum SkriptTeleportFlag {
 		RETAIN_OPEN_INVENTORY(TeleportFlag.EntityState.RETAIN_OPEN_INVENTORY),
 		RETAIN_PASSENGERS(TeleportFlag.EntityState.RETAIN_PASSENGERS),
 		RETAIN_VEHICLE(TeleportFlag.EntityState.RETAIN_VEHICLE),
@@ -46,12 +42,17 @@ public interface TeleportFlags {
 		RETAIN_Y(TeleportFlag.Relative.Y),
 		RETAIN_Z(TeleportFlag.Relative.Z);
 
-		TeleportFlag flag;
+		TeleportFlag teleportFlag;
 
-		SkriptTeleportFlags() {}
+		SkriptTeleportFlag() {}
 
-		SkriptTeleportFlags(TeleportFlag flag) {
-			this.flag = flag;
+		SkriptTeleportFlag(TeleportFlag teleportFlag) {
+			this.teleportFlag = teleportFlag;
+		}
+
+		@Nullable
+		public TeleportFlag getTeleportFlag() {
+			return teleportFlag;
 		}
 
 	}
@@ -61,19 +62,14 @@ public interface TeleportFlags {
 	);
 
 	static void teleport(
-		@NotNull TeleportFlags teleportFlag, @NotNull Entity entity, @NotNull Location location, @NotNull SkriptTeleportFlags... teleportFlags
+		@NotNull TeleportFlags teleportFlagsInterface, @NotNull Entity entity, @NotNull Location location, @NotNull TeleportFlag... teleportFlags
 	) {
 		if (location.getWorld() == null) {
 			location = location.clone();
 			location.setWorld(entity.getWorld());
 		}
 
-		List<TeleportFlag> flags = Arrays.stream(teleportFlags).flatMap(flag -> {
-			if (flag == SkriptTeleportFlags.RETAIN_DIRECTION)
-				return Stream.of(TeleportFlag.Relative.PITCH, TeleportFlag.Relative.YAW);
-			return Stream.of(flag.flag);
-		}).filter(Objects::nonNull).toList();
-		entity.teleport(location, flags.toArray(TeleportFlag[]::new));
+		teleportFlagsInterface.teleport(entity, location, teleportFlags);
 	}
 
 }

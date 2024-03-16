@@ -18,9 +18,14 @@
  */
 package ch.njol.skript.effects;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Stream;
+
 import ch.njol.skript.Skript;
 import ch.njol.skript.bukkitutil.TeleportFlags;
-import ch.njol.skript.bukkitutil.TeleportFlags.SkriptTeleportFlags;
+import ch.njol.skript.bukkitutil.TeleportFlags.SkriptTeleportFlag;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
@@ -39,6 +44,7 @@ import ch.njol.util.Kleenean;
 
 import io.papermc.lib.PaperLib;
 import io.papermc.lib.environments.PaperEnvironment;
+import io.papermc.paper.entity.TeleportFlag;
 
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
@@ -68,18 +74,18 @@ import org.jetbrains.annotations.NotNull;
 @Since("1.0, INSERT VERSION")
 public class EffTeleport extends Effect {
 
-	private static final boolean TELEPORT_FLAGS = Skript.classExists("io.papermc.paper.entity.TeleportFlag");
+	private static final boolean TELEPORT_FLAGS_SUPPORTED = Skript.classExists("io.papermc.paper.entity.TeleportFlag");
 	private static final boolean CAN_RUN_ASYNC = PaperLib.getEnvironment() instanceof PaperEnvironment;
 
 	static {
 		String extra = "";
-		if (TELEPORT_FLAGS)
-			extra = " [[retaining] %teleportflags%]";
+		if (TELEPORT_FLAGS_SUPPORTED)
+			extra = " [[[while] retaining] %teleportflags%]";
 		Skript.registerEffect(EffTeleport.class, "[:force] teleport %entities% (to|%direction%) %location%" + extra);
 	}
 
 	@Nullable
-	private Expression<SkriptTeleportFlags> teleportFlags;
+	private Expression<SkriptTeleportFlag> teleportFlags;
 
 	@SuppressWarnings("NotNullFieldNotInitialized")
 	private Expression<Entity> entities;
@@ -94,8 +100,8 @@ public class EffTeleport extends Effect {
 		entities = (Expression<Entity>) exprs[0];
 		location = Direction.combine((Expression<? extends Direction>) exprs[1], (Expression<? extends Location>) exprs[2]);
 		async = CAN_RUN_ASYNC && !parseResult.hasTag("force");
-		if (TELEPORT_FLAGS)
-			teleportFlags = (Expression<SkriptTeleportFlags>) exprs[3];
+		if (TELEPORT_FLAGS_SUPPORTED)
+			teleportFlags = (Expression<SkriptTeleportFlag>) exprs[3];
 
 		if (getParser().isCurrentEvent(SpawnEvent.class)) {
 			Skript.error("You cannot be teleporting an entity that hasn't spawned yet. Ensure you're using the location expression from the spawn section pattern.");
@@ -135,8 +141,9 @@ public class EffTeleport extends Effect {
 		}
 
 		if (!async) {
+			SkriptTeleportFlag[] teleportFlags = this.teleportFlags == null ? null : this.teleportFlags.getArray(event);
 			for (Entity entity : entityArray) {
-				teleport(Entity::teleport, TELEPORT_FLAGS ? Entity::teleport : null, entity, location, teleportFlags == null ? null : teleportFlags.getArray(event));
+				teleport(Entity::teleport, TELEPORT_FLAGS_SUPPORTED ? Entity::teleport : null, entity, location, teleportFlags);
 			}
 			return next;
 		}
@@ -147,8 +154,9 @@ public class EffTeleport extends Effect {
 		// This will either fetch the chunk instantly if on Spigot or already loaded or fetch it async if on Paper.
 		PaperLib.getChunkAtAsync(location).thenAccept(chunk -> {
 			// The following is now on the main thread
+			SkriptTeleportFlag[] teleportFlags = this.teleportFlags == null ? null : this.teleportFlags.getArray(event);
 			for (Entity entity : entityArray) {
-				teleport(Entity::teleport, TELEPORT_FLAGS ? Entity::teleport : null, entity, location, teleportFlags == null ? null : teleportFlags.getArray(event));
+				teleport(Entity::teleport, TELEPORT_FLAGS_SUPPORTED ? Entity::teleport : null, entity, location, teleportFlags);
 			}
 
 			// Re-set local variables
@@ -180,15 +188,22 @@ public class EffTeleport extends Effect {
 
 	@Override
 	public String toString(@Nullable Event event, boolean debug) {
-		return "teleport " + entities.toString(event, debug) + " to " + location.toString(event, debug);
+		return "teleport " + entities.toString(event, debug) + " to " + location.toString(event, debug) +
+				teleportFlags == null ? "" : " retaining " + teleportFlags.toString(event, debug);
 	}
 
-	private void teleport(@NotNull Teleport teleport, @Nullable TeleportFlags paperTeleportFlags, @NotNull Entity entity, @NotNull Location location, SkriptTeleportFlags... teleportFlags) {
-		if (!TELEPORT_FLAGS || paperTeleportFlags == null || teleportFlags == null) {
-			Teleport.teleport(teleport, entity, location);
+	private void teleport(@NotNull Teleport teleport, @Nullable TeleportFlags paperTeleportFlags, @NotNull Entity entity, @NotNull Location location, SkriptTeleportFlag... skriptTeleportFlags) {
+		if (!TELEPORT_FLAGS_SUPPORTED || paperTeleportFlags == null || skriptTeleportFlags == null) {
+			teleport.teleport(entity, location);
 			return;
 		}
-		TeleportFlags.teleport(paperTeleportFlags, entity, location, teleportFlags);
+		Stream<TeleportFlag> teleportFlags = Arrays.stream(skriptTeleportFlags).flatMap(teleportFlag -> {
+			if (teleportFlag == SkriptTeleportFlag.RETAIN_DIRECTION)
+				return Stream.of(TeleportFlag.Relative.PITCH, TeleportFlag.Relative.YAW);
+			return Stream.of(teleportFlag.getTeleportFlag());
+		}).filter(Objects::nonNull);
+
+		paperTeleportFlags.teleport(entity, location, teleportFlags.toArray(TeleportFlag[]::new));
 	}
 
 	@FunctionalInterface
@@ -206,7 +221,7 @@ public class EffTeleport extends Effect {
 				location.setWorld(entity.getWorld());
 			}
 
-			entity.teleport(location);
+			teleport.teleport(entity, location);
 		}
 	}
 

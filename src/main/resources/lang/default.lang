@@ -1988,9 +1988,9 @@ teleport flags:
 	retain_direction: retain direction, direction
 	retain_pitch: retain pitch, pitch
 	retain_yaw: retain yaw, yaw
-	retain_x: retain x, x
-	retain_y: retain y, y
-	retain_z: retain z, z
+	retain_x: retain x-coordinate, x-coordinate
+	retain_y: retain y-coordinate, y-coordinate
+	retain_z: retain z-coordinate, z-coordinate
 
 # -- Boolean --
 boolean:
