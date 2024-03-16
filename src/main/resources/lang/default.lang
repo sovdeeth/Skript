@@ -1988,11 +1988,9 @@ teleport flags:
 	retain_direction: retain direction, direction
 	retain_pitch: retain pitch, pitch
 	retain_yaw: retain yaw, yaw
-		PITCH(TeleportFlag.Relative.PITCH),
-		YAW(TeleportFlag.Relative.YAW),
-		X(TeleportFlag.Relative.X),
-		Y(TeleportFlag.Relative.Y),
-		Z(TeleportFlag.Relative.Z);
+	retain_x: retain x, x
+	retain_y: retain y, y
+	retain_z: retain z, z
 
 # -- Boolean --
 boolean:
