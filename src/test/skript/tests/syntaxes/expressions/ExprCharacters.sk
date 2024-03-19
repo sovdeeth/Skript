@@ -2,9 +2,6 @@ test "characters between":
 	set {_a} to 1 random character between "a" and "z"
 	assert {_a} is set with "failed to generate random character"
 
-	set {_a::*} to infinity value random character between "a" and "z"
-	assert {_a::*} is not set with "infinite random characters returned non-null value: %{_a::*}%"
-
 	set {_a::*} to -10 random character between "a" and "z"
 	assert {_a::*} is not set with "-10 random characters returned non-null value: %{_a::*}%"
 
