@@ -70,7 +70,11 @@ public class ExprRandomCharacter extends SimpleExpression<String> {
 	@Override
 	@Nullable
 	protected String[] get(Event event) {
-		int amount = this.amount == null ? 1 : this.amount.getOptionalSingle(event).orElse(1).intValue();
+		Number amountNumber = this.amount == null ? 1 : this.amount.getSingle(event);
+		if (amountNumber == null || amountNumber.intValue() <= 0 || !Double.isFinite(amountNumber.doubleValue()))
+			return new String[0];
+		int amount = amountNumber.intValue();
+
 		String from = this.from.getSingle(event);
 		String to = this.to.getSingle(event);
 		if (from == null || to == null)
