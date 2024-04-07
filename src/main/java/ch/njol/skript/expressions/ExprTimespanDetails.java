@@ -25,42 +25,49 @@ import ch.njol.skript.doc.Since;
 import ch.njol.skript.expressions.base.SimplePropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.util.Timespan;
+import ch.njol.skript.util.Timespan.TimePeriod;
 import ch.njol.util.Kleenean;
-import org.bukkit.inventory.AnvilInventory;
-import org.bukkit.inventory.Inventory;
 import org.eclipse.jdt.annotation.Nullable;
 
-@Name("Anvil Text Input")
-@Description("An expression to get the name to be applied to an item in an anvil inventory.")
+import java.util.Locale;
+
+@Name("Timespan Details")
+@Description("Retrieve specific information of a <a href=\"/classes.html#timespan\">timespan</a> such as hours/minutes/etc.")
 @Examples({
-		"on inventory click:",
-		"\ttype of event-inventory is anvil inventory",
-		"\tif the anvil text input of the event-inventory is \"FREE OP\":",
-		"\t\tban player"
+	"set {_t} to difference between now and {Payouts::players::%uuid of player%::last-date}",
+	"send \"It has been %days of {_t}% day(s) since last payout.\""
 })
-@Since("2.7")
-public class ExprAnvilText extends SimplePropertyExpression<Inventory, String> {
+@Since("INSERT VERSION")
+public class ExprTimespanDetails extends SimplePropertyExpression<Timespan, Long> {
 
 	static {
-		register(ExprAnvilText.class, String.class, "anvil [inventory] (rename|text) input", "inventories");
+		register(ExprTimespanDetails.class, Long.class, "(:(tick|second|minute|hour|day|week|month|year))s", "timespans");
+	}
+
+	@SuppressWarnings("NotNullFieldNotInitialized")
+	private TimePeriod type;
+
+	@Override
+	public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
+		type = TimePeriod.valueOf(parseResult.tags.get(0).toUpperCase(Locale.ENGLISH));
+		return super.init(exprs, matchedPattern, isDelayed, parseResult);
 	}
 
 	@Override
 	@Nullable
-	public String convert(Inventory inv) {
-		if (!(inv instanceof AnvilInventory))
-			return null;
-		return ((AnvilInventory) inv).getRenameText();
+	public Long convert(Timespan time) {
+		return time.getMilliSeconds() / type.getTime();
 	}
 
 	@Override
-	public Class<? extends String> getReturnType() {
-		return String.class;
+	public Class<? extends Long> getReturnType() {
+		return Long.class;
 	}
 
 	@Override
-	public String getPropertyName() {
-		return "anvil text input";
+	protected String getPropertyName() {
+		return type.name().toLowerCase(Locale.ENGLISH);
 	}
-	
+
 }
