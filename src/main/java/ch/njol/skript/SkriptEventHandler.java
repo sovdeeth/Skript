@@ -150,7 +150,7 @@ public final class SkriptEventHandler {
 	private static boolean isCancelled(Event event) {
 		return event instanceof Cancellable &&
 			(((Cancellable) event).isCancelled() && isResultDeny(event)) &&
-			// listenCancelled is deprecated and should be removed in 2.9
+			// TODO: listenCancelled is deprecated and should be removed in 2.10
 			!listenCancelled.contains(event.getClass());
 	}
 
