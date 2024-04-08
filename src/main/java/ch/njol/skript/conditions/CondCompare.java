@@ -26,6 +26,7 @@ import org.eclipse.jdt.annotation.Nullable;
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.ClassInfo;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.skriptlang.skript.lang.comparator.Comparator;
 import org.skriptlang.skript.lang.comparator.ComparatorInfo;
 import org.skriptlang.skript.lang.comparator.Relation;
@@ -381,7 +382,44 @@ public class CondCompare extends Condition {
 			}
 		), isNegated());
 	}
-	
+
+	/**
+	 * For internal use. Callers should not modify the results.
+	 * @return the first expression in the comparison.
+	 */
+	@ApiStatus.Internal
+	public Expression<?> getFirst() {
+		return first;
+	}
+
+	/**
+	 * For internal use. Callers should not modify the results.
+	 * @return the second expression in the comparison.
+	 */
+	@ApiStatus.Internal
+	public Expression<?> getSecond() {
+		return second;
+	}
+	/**
+	 * For internal use. Callers should not modify the results.
+	 * @return the third expression in the comparison.
+	 */
+	@ApiStatus.Internal
+	@Nullable
+	public Expression<?> getThird() {
+		return third;
+	}
+
+
+	/**
+	 * For internal use.
+	 * @return the relation used to compare the expressions.
+	 */
+	@ApiStatus.Internal
+	public Relation getRelation() {
+		return relation;
+	}
+
 	@Override
 	public String toString(final @Nullable Event e, final boolean debug) {
 		String s;
