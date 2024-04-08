@@ -531,6 +531,9 @@ public class SkriptParser {
 				Expression<?> parsedExpression = parseExpression(types, expr);
 				if (parsedExpression != null) { // Expression/VariableString parsing success
 					Class<?> returnType = parsedExpression.getReturnType(); // Sometimes getReturnType does non-trivial costly operations
+					if (returnType == null)
+						throw new SkriptAPIException("Expression '" + expr + "' returned null for method Expression#getReturnType. Null is not a valid return.");
+
 					for (int i = 0; i < types.length; i++) {
 						Class<?> type = types[i];
 						if (type == null) // Ignore invalid (null) types
@@ -1075,10 +1078,11 @@ public class SkriptParser {
 	 */
 	private static int nextQuote(String string, int start) {
 		boolean inExpression = false;
-		for (int i = start; i < string.length(); i++) {
+		int length = string.length();
+		for (int i = start; i < length; i++) {
 			char character = string.charAt(i);
 			if (character == '"' && !inExpression) {
-				if (i == string.length() - 1 || string.charAt(i + 1) != '"')
+				if (i == length - 1 || string.charAt(i + 1) != '"')
 					return i;
 				i++;
 			} else if (character == '%') {
@@ -1200,10 +1204,7 @@ public class SkriptParser {
 		if (startIndex >= haystackLength)
 			return -1;
 
-		if (!caseSensitive) {
-			haystack = haystack.toLowerCase(Locale.ENGLISH);
-			needle = needle.toLowerCase(Locale.ENGLISH);
-		}
+		int needleLength = needle.length();
 
 		char firstChar = needle.charAt(0);
 		boolean startsWithSpecialChar = firstChar == '"' || firstChar == '{' || firstChar == '(';
@@ -1212,9 +1213,11 @@ public class SkriptParser {
 
 			char character = haystack.charAt(startIndex);
 
-			if (startsWithSpecialChar) { // Early check before special character handling
-				if (haystack.startsWith(needle, startIndex))
-					return startIndex;
+			if ( // Early check before special character handling
+				startsWithSpecialChar &&
+				haystack.regionMatches(!caseSensitive, startIndex, needle, 0, needleLength)
+			) {
+				return startIndex;
 			}
 
 			switch (character) {
@@ -1235,7 +1238,7 @@ public class SkriptParser {
 					break;
 			}
 
-			if (haystack.startsWith(needle, startIndex))
+			if (haystack.regionMatches(!caseSensitive, startIndex, needle, 0, needleLength))
 				return startIndex;
 
 			startIndex++;
