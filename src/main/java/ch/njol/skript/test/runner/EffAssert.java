@@ -19,6 +19,8 @@
 package ch.njol.skript.test.runner;
 
 import ch.njol.skript.conditions.CondCompare;
+import ch.njol.skript.config.Node;
+import ch.njol.skript.lang.VerboseAssert;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.LiteralUtils;
 import org.bukkit.event.Event;
@@ -54,6 +56,7 @@ public class EffAssert extends Effect  {
 	@Nullable
 	private Condition condition;
 	private Script script;
+	private int line;
 
 	private Expression<String> errorMsg;
 	@Nullable
@@ -75,6 +78,8 @@ public class EffAssert extends Effect  {
 		}
 		shouldFail = parseResult.mark != 0;
 		script = getParser().getCurrentScript();
+		Node node = getParser().getNode();
+		line = node != null ? node.getLine() : -1;
 		
 		ParseLogHandler logHandler = SkriptLogger.startParseLogHandler();
 		try {
@@ -112,53 +117,32 @@ public class EffAssert extends Effect  {
 			String expectedMessage = "";
 			String gotMessage = "";
 			if (expected != null)
-				expectedMessage = getValue(expected, event);
+				expectedMessage = VerboseAssert.getExpressionValue(expected, event);
 			if (got != null)
-				gotMessage = getValue(got, event);
+				gotMessage = VerboseAssert.getExpressionValue(got, event);
 
-			if (condition instanceof CondCompare) {
+			if (condition instanceof VerboseAssert) {
 				if (expectedMessage.isEmpty())
-					expectedMessage = getExpectedMessage(event);
+					expectedMessage = ((VerboseAssert) condition).getExpectedMessage(event);
 				if (gotMessage.isEmpty())
-					gotMessage = getGotMessage(event);
+					gotMessage = ((VerboseAssert) condition).getReceivedMessage(event);
 			}
 
-			message += " (Expected " + expectedMessage + ", but got " + gotMessage + ").";
+			if (!expectedMessage.isEmpty() && !gotMessage.isEmpty())
+				message += " (Expected " + expectedMessage + ", but got " + gotMessage + ")";
 
 			if (SkriptJUnitTest.getCurrentJUnitTest() != null) {
 				TestTracker.junitTestFailed(SkriptJUnitTest.getCurrentJUnitTest(), message);
 			} else {
-				TestTracker.testFailed(message, script);
+				if (line >= 0) {
+					TestTracker.testFailed(message, script, line);
+				} else {
+					TestTracker.testFailed(message, script);
+				}
 			}
 			return null;
 		}
 		return getNext();
-	}
-
-	public String getExpectedMessage(Event event) {
-		String message = "a value ";
-		assert condition != null;
-		CondCompare condCompare = (CondCompare) condition;
-
-		if (condCompare.getThird() == null)
-			return message + (condCompare.isNegated() ? "not " : "") + condCompare.getRelation() + " " + getValue(condCompare.getSecond(), event);
-
-		// handle between
-		if (condCompare.isNegated())
-			message += "not ";
-		message += "between " + getValue(condCompare.getSecond(), event) + " and " + getValue(condCompare.getThird(), event);
-		return message;
-	}
-
-
-	public String getGotMessage(Event event) {
-		assert condition != null;
-		CondCompare condCompare = (CondCompare) condition;
-		return getValue(condCompare.getFirst(), event);
-	}
-
-	public String getValue(Expression<?> expression, Event event) {
-		return Classes.toString(expression.getAll(event), expression.getAnd());
 	}
 
 	@Override
