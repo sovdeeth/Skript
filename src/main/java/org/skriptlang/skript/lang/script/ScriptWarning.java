@@ -52,6 +52,7 @@ public enum ScriptWarning {
 	/**
 	 * Prints the given message using {@link Skript#warning(String)} iff the current script does not suppress deprecation warnings.
 	 * Intended for use in {@link ch.njol.skript.lang.SyntaxElement#init(Expression[], int, Kleenean, SkriptParser.ParseResult)}.
+	 * The given message is prefixed with {@code "[Deprecated] "} to provide a common link between deprecation warnings.
 	 *
 	 * @param message the warning message to print.
 	 */
@@ -60,7 +61,7 @@ public enum ScriptWarning {
 		Script currentScript = parser.isActive() ? parser.getCurrentScript() : null;
 		if (currentScript != null && currentScript.suppressesWarning(ScriptWarning.DEPRECATED_SYNTAX))
 			return;
-		Skript.warning(message);
+		Skript.warning("[Deprecated] " + message);
 	}
 
 }
