@@ -401,15 +401,14 @@ public class CondCompare extends Condition {
 	private boolean compareLists(Event event) {
 		Object[] first = this.first.getArray(event);
 		Object[] second = this.second.getArray(event);
-		boolean notMatch = isNegated();
-		// read 'notMatch' as false and '!notMatch' as true
+		boolean shouldMatch = !isNegated(); // for readability
 		if (first.length != second.length)
-			return notMatch;
+			return !shouldMatch;
 		for (int i = 0; i < first.length; i++) {
 			if (!relation.isImpliedBy(comparator != null ? comparator.compare(first[i], second[i]) : Comparators.compare(first[i], second[i])))
-				return notMatch;
+				return !shouldMatch;
 		}
-		return !notMatch;
+		return shouldMatch;
 	}
 
 	@Override
