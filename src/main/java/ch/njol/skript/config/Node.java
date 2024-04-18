@@ -22,6 +22,7 @@ import java.io.PrintWriter;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import ch.njol.skript.SkriptConfig;
 import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
@@ -115,36 +116,48 @@ public abstract class Node {
 		newParent.add(this);
 	}
 	
-	@SuppressWarnings("null")
-	private final static Pattern linePattern = Pattern.compile("^((?:[^#]|##)*)(\\s*#(?!#).*)$");
-	
 	/**
 	 * Splits a line into value and comment.
 	 * <p>
-	 * Whitespace is preserved (whitespace in front of the comment is added to the value), and any ## in the value are replaced by a single #. The comment is returned with a
+	 * Whitespace is preserved (whitespace in front of the comment is added to the value). The comment is returned with a
 	 * leading #, except if there is no comment in which case it will be the empty string.
 	 * 
 	 * @param line
 	 * @return A pair (value, comment).
 	 */
-	public static NonNullPair<String, String> splitLine(final String line) {
+	public static NonNullPair<String, String> splitLine(String line) {
 		if (line.trim().startsWith("#"))
 			return new NonNullPair<>("", line.substring(line.indexOf('#')));
-		final Matcher m = linePattern.matcher(line);
-		boolean matches = false;
-		try {
-			matches = line.contains("#") && m.matches();
-		} catch (StackOverflowError e) { // Probably a very long line
-			handleNodeStackOverflow(e, line);
+
+		// idea: find first # that is not within a string. Use " and % to determine string state.
+		int length = line.length();
+		boolean inString = false;
+		// find next " or %
+		for(int i = 0; i < length; i++) {
+			char c = line.charAt(i);
+			// check for " and % which change the inString state
+			if (c == '%' || c == '"') {
+				// skip if doubled
+				if (i + 1 < length && line.charAt(i+1) == c) {
+					i++;
+					continue;
+				}
+				// just % indicates expression start/end
+				// just " indicates quote start/end
+				// (inString -> exiting string and entering expression and vice versa)
+				inString = !inString;
+			// looking for # outside of strings
+			} else if (c == '#' && !inString) {
+				return new NonNullPair<>(line.substring(0,i), line.substring(i));
+			}
 		}
-		if (matches)
-			return new NonNullPair<>("" + m.group(1).replace("##", "#"), "" + m.group(2));
-		return new NonNullPair<>("" + line.replace("##", "#"), "");
+		return new NonNullPair<>(line, "");
 	}
+
 	
 	static void handleNodeStackOverflow(StackOverflowError e, String line) {
 		Node n = SkriptLogger.getNode();
-		SkriptLogger.setNode(null); // Avoid duplicating the which node error occurred in paranthesis on every error message
+		SkriptLogger.setNode(null); // Avoid duplicating the which node error occurred in parentheses on every error message
 		
 		Skript.error("There was a StackOverFlowError occurred when loading a node. This maybe from your scripts, aliases or Skript configuration.");
 		Skript.error("Please make your script lines shorter! Do NOT report this to SkriptLang unless it occurs with a short script line or built-in aliases!");
@@ -193,7 +206,7 @@ public abstract class Node {
 	abstract String save_i();
 	
 	public final String save() {
-		return getIndentation() + save_i().replace("#", "##") + comment;
+		return getIndentation() + save_i() + comment;
 	}
 	
 	public void save(final PrintWriter w) {

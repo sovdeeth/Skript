@@ -1,0 +1,30 @@
+test "comments":
+	parse:
+		set {_a} to {_b} # test
+		set {_a} to {_b} ## test
+		set {_a} to {_b} ### test
+	assert last parse logs is not set with "skript should be able to handle inline comments with multiple hashtags but did not"
+
+
+	parse:
+		set {_a} to "a"
+		set {_a} to "#a"
+		set {_a} to "##a"
+		set {_a} to "###a"
+	assert last parse logs is not set with "skript should be able to handle strings any number of hashtags but did not"
+
+
+	parse:
+		set {_a} to "a%"#"%"
+		set {_a} to "#a%"#"%"
+		set {_a} to "##a%"#"%"
+		set {_a} to "###a%"#"%"
+	assert last parse logs is not set with "skript should be able to handle complex strings any number of hashtags but did not"
+
+
+	parse:
+		set {_a} to "<#abcdef>test"
+		set {_b} to "<##abcdef>test"
+		assert uncoloured {_a} is "test" with "failed to parse single hashtag colour code"
+		assert uncoloured {_b} is "test" with "failed to parse double hashtag colour code"
+	assert last parse logs is not set with "skript should be able to handle hex colour codes but did not"
