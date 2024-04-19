@@ -43,9 +43,3 @@ test "comments":
 	parse:
 		set {##_b::%"{}"#%} to "test"
 	assert last parse logs is set with "skript should not be able to handle hashtags in an expression in a variable name but did"
-
-
-command /t##est ## test ##: #test
-	usage: "test#2" # test
-	trigger:
-		broadcast "#test"

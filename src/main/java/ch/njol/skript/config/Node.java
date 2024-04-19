@@ -119,7 +119,7 @@ public abstract class Node {
 	/**
 	 * Splits a line into value and comment.
 	 * <p>
-	 * Whitespace is preserved (whitespace in front of the comment is added to the value). The comment is returned with a
+	 * Whitespace is preserved (whitespace in front of the comment is added to the value), and any ## not in quoted strings in the value are replaced by a single #. The comment is returned with a
 	 * leading #, except if there is no comment in which case it will be the empty string.
 	 * 
 	 * @param line
@@ -268,12 +268,45 @@ public abstract class Node {
 	abstract String save_i();
 	
 	public final String save() {
-		return getIndentation() + save_i() + comment;
+		return getIndentation() + escapeUnquotedHashtags(save_i()) + comment;
 	}
 	
 	public void save(final PrintWriter w) {
 		w.println(save());
 	}
+
+	private static String escapeUnquotedHashtags(String input) {
+		int length = input.length();
+		StringBuilder output = new StringBuilder(input);
+		int numAdded = 0;
+		SplitLineState state = SplitLineState.CODE;
+		SplitLineState previousState = SplitLineState.CODE;
+		// find next " or %
+		for (int i = 0; i < length; i++) {
+			char c = input.charAt(i);
+			// check for things that can be escaped by doubling
+			if (c == '%' || c == '"' || c == '#') {
+				// escaped #s outside of strings
+				if (c == '#' && state != SplitLineState.STRING) {
+					output.insert(i + numAdded, "#");
+					numAdded++;
+					continue;
+				}
+				// skip if doubled (not #s)
+				if (i + 1 < length && input.charAt(i + 1) == c) {
+					i++;
+					continue;
+				}
+				SplitLineState tmp = state;
+				state = SplitLineState.update(c, state, previousState);
+				if (state == SplitLineState.HALT)
+					return output.toString();
+				previousState = tmp;
+			}
+		}
+		return output.toString();
+	}
+
 	
 	@Nullable
 	public SectionNode getParent() {
