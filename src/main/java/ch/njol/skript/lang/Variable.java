@@ -547,7 +547,11 @@ public class Variable<T> implements Expression<T> {
 						i++;
 					}
 				} else {
-					set(event, delta[0]);
+					if (delta.length == 0) {
+						set(event, null);
+					} else {
+						set(event, delta[0]);
+					}
 				}
 				break;
 			case RESET:
