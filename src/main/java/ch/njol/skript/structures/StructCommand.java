@@ -265,8 +265,11 @@ public class StructCommand extends Structure {
 
 		VariableString usageMessage = entryContainer.getOptional("usage", VariableString.class, false);
 		String defaultUsageMessage = Commands.m_correct_usage + " " + desc;
-		if (usageMessage == null)
+		if (usageMessage == null) {
 			usageMessage = VariableString.newInstance(defaultUsageMessage);
+		} else if (usageMessage.isSimple()) {
+			defaultUsageMessage = usageMessage.toString();
+		}
 		assert usageMessage != null;
 		CommandUsage usage = new CommandUsage(usageMessage, defaultUsageMessage);
 
