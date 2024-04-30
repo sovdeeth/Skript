@@ -20,9 +20,7 @@ package ch.njol.skript.command;
 
 import ch.njol.skript.lang.VariableString;
 import ch.njol.skript.util.Utils;
-import com.google.errorprone.annotations.Var;
 import org.bukkit.event.Event;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -77,6 +75,11 @@ public class CommandUsage {
 		if (event != null || usage.isSimple())
 			return usage.toString(event);
 		return defaultUsage;
+	}
+
+	@Override
+	public String toString() {
+		return getUsage();
 	}
 
 }

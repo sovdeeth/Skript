@@ -116,10 +116,38 @@ public class ScriptCommand implements TabExecutor {
 	private Map<UUID,Date> lastUsageMap = new HashMap<>();
 
 	/**
-	 * Creates a new SkriptCommand.
+	 * Creates a new ScriptCommand.
+	 * Deprecated in favor of using the new CommandUsage class for the usage parameter.
 	 *
 	 * @param name /name
 	 * @param pattern
+	 * @param arguments the list of Arguments this command takes
+	 * @param description description to display in /help
+	 * @param prefix the prefix of the command
+	 * @param usage message to display if the command was used incorrectly
+	 * @param aliases /alias1, /alias2, ...
+	 * @param permission permission or null if none
+	 * @param permissionMessage message to display if the player doesn't have the given permission
+	 * @param node the node to parse and load into a Trigger
+	 */
+	@Deprecated(forRemoval = true)
+	public ScriptCommand(
+		Script script, String name, String pattern, List<Argument<?>> arguments,
+		String description, @Nullable String prefix, String usage, List<String> aliases,
+		String permission, @Nullable VariableString permissionMessage, @Nullable Timespan cooldown,
+		@Nullable VariableString cooldownMessage, String cooldownBypass,
+		@Nullable VariableString cooldownStorage, int executableBy, SectionNode node
+	) {
+		this(script, name, pattern, arguments, description, prefix, new CommandUsage(null, usage),
+				aliases, permission, permissionMessage, cooldown, cooldownMessage, cooldownBypass,
+				cooldownStorage, executableBy, node);
+	}
+
+	/**
+	 * Creates a new ScriptCommand.
+	 *
+	 * @param name /name
+	 * @param pattern the Skript pattern used to parse the input into arguments.
 	 * @param arguments the list of Arguments this command takes
 	 * @param description description to display in /help
 	 * @param prefix the prefix of the command
