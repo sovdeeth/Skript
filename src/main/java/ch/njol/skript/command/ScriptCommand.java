@@ -205,7 +205,7 @@ public class ScriptCommand implements TabExecutor {
 			// We can only set the message if it's simple (doesn't contains expressions)
 			if (permissionMessage.isSimple())
 				bukkitCommand.setPermissionMessage(permissionMessage.toString(null));
-			bukkitCommand.setUsage(usage.getDefaultUsage());
+			bukkitCommand.setUsage(usage.getUsage());
 			bukkitCommand.setExecutor(this);
 			return bukkitCommand;
 		} catch (final Exception e) {
@@ -342,7 +342,7 @@ public class ScriptCommand implements TabExecutor {
 	public void sendHelp(final CommandSender sender) {
 		if (!description.isEmpty())
 			sender.sendMessage(description);
-		sender.sendMessage(ChatColor.GOLD + "Usage" + ChatColor.RESET + ": " + usage);
+		sender.sendMessage(ChatColor.GOLD + "Usage" + ChatColor.RESET + ": " + usage.getUsage());
 	}
 
 	/**

@@ -46,30 +46,37 @@ public class CommandUsage {
 	 * @param usage The dynamic usage message, can contain expressions.
 	 * @param defaultUsage A fallback usage message for use in non-event environments.
 	 */
-	public CommandUsage(VariableString usage, String defaultUsage) {
+	public CommandUsage(@Nullable VariableString usage, String defaultUsage) {
+		if (usage == null) {
+			usage = VariableString.newInstance(defaultUsage);
+			assert usage != null;
+		}
 		this.usage = usage;
 		this.defaultUsage = Utils.replaceChatStyles(defaultUsage);
 	}
 
 	/**
-	 * @return The usage message as a {@link VariableString}
+	 * @return The usage message as a {@link VariableString}.
 	 */
 	public VariableString getRawUsage() {
 		return usage;
+	}
+	/**
+	 * Get the usage message without an event to evaluate it.
+	 * @return The evaluated usage message.
+	 */
+	public String getUsage() {
+		return getUsage(null);
 	}
 
 	/**
 	 * @param event The event used to evaluate the usage message.
 	 * @return The evaluated usage message.
 	 */
-	public String getUsage(Event event) {
-		return usage.getSingle(event);
-	}
-
-	/**
-	 * @return The fallback usage message, only for use in environments without access to an event.
-	 */
-	public String getDefaultUsage() {
+	public String getUsage(@Nullable Event event) {
+		if (event != null || usage.isSimple())
+			return usage.toString(event);
 		return defaultUsage;
 	}
+
 }
