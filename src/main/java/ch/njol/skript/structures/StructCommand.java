@@ -24,6 +24,7 @@ import ch.njol.skript.bukkitutil.CommandReloader;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.Parser;
 import ch.njol.skript.command.Argument;
+import ch.njol.skript.command.CommandUsage;
 import ch.njol.skript.command.Commands;
 import ch.njol.skript.command.ScriptCommand;
 import ch.njol.skript.command.ScriptCommandEvent;
@@ -34,6 +35,7 @@ import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.ParseContext;
+import org.bukkit.command.Command;
 import org.skriptlang.skript.lang.script.Script;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -92,10 +94,10 @@ public class StructCommand extends Structure {
 		Skript.registerStructure(
 			StructCommand.class,
 			EntryValidator.builder()
-				.addEntry("usage", null, true)
 				.addEntry("description", "", true)
 				.addEntry("prefix", null, true)
 				.addEntry("permission", "", true)
+				.addEntryData(new VariableStringEntryData("usage", null, true))
 				.addEntryData(new VariableStringEntryData("permission message", null, true))
 				.addEntryData(new KeyValueEntryData<List<String>>("aliases", new ArrayList<>(), true) {
 					private final Pattern pattern = Pattern.compile("\\s*,\\s*/?");
@@ -261,10 +263,12 @@ public class StructCommand extends Structure {
 		});
 		desc = Commands.unescape(desc).trim();
 
-		String usage = entryContainer.getOptional("usage", String.class, false);
-		if (usage == null) {
-			usage = Commands.m_correct_usage + " " + desc;
-		}
+		VariableString usageMessage = entryContainer.getOptional("usage", VariableString.class, false);
+		String defaultUsageMessage = Commands.m_correct_usage + " " + desc;
+		if (usageMessage == null)
+			usageMessage = VariableString.newInstance(defaultUsageMessage);
+		assert usageMessage != null;
+		CommandUsage usage = new CommandUsage(usageMessage, defaultUsageMessage);
 
 		String description = entryContainer.get("description", String.class, true);
 		String prefix = entryContainer.getOptional("prefix", String.class, false);
