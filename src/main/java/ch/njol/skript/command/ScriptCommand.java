@@ -115,12 +115,13 @@ public class ScriptCommand implements TabExecutor {
 
 	private Map<UUID,Date> lastUsageMap = new HashMap<>();
 
+	//<editor-fold default-state="collapsed" desc="public ScriptCommand(... String usage ...)">
 	/**
 	 * Creates a new ScriptCommand.
-	 * Deprecated in favor of using the new CommandUsage class for the usage parameter.
+	 * Prefer using the CommandUsage class for the usage parameter.
 	 *
 	 * @param name /name
-	 * @param pattern
+	 * @param pattern the Skript pattern used to parse the input into arguments.
 	 * @param arguments the list of Arguments this command takes
 	 * @param description description to display in /help
 	 * @param prefix the prefix of the command
@@ -130,7 +131,6 @@ public class ScriptCommand implements TabExecutor {
 	 * @param permissionMessage message to display if the player doesn't have the given permission
 	 * @param node the node to parse and load into a Trigger
 	 */
-	@Deprecated(forRemoval = true)
 	public ScriptCommand(
 		Script script, String name, String pattern, List<Argument<?>> arguments,
 		String description, @Nullable String prefix, String usage, List<String> aliases,
@@ -142,6 +142,7 @@ public class ScriptCommand implements TabExecutor {
 				aliases, permission, permissionMessage, cooldown, cooldownMessage, cooldownBypass,
 				cooldownStorage, executableBy, node);
 	}
+	//</editor-fold>
 
 	/**
 	 * Creates a new ScriptCommand.
