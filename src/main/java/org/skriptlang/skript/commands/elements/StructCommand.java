@@ -157,6 +157,9 @@ public class StructCommand extends Structure {
 		);
 	}
 
+	@SuppressWarnings("NotNullFieldNotInitialized")
+	private EntryContainer entryContainer;
+
 	@Nullable
 	private ScriptCommand command;
 
@@ -170,8 +173,10 @@ public class StructCommand extends Structure {
 	private MatchResult matchResult;
 
 	@Override
-	public boolean init(Literal<?>[] args, int matchedPattern, ParseResult parseResult, EntryContainer entryContainer) {
-		matchResult = parseResult.regexes.get(0);
+	public boolean init(Literal<?>[] args, int matchedPattern, ParseResult parseResult, @Nullable EntryContainer entryContainer) {
+		assert entryContainer != null; // cannot be null for non-simple structures
+		this.entryContainer = entryContainer;
+			matchResult = parseResult.regexes.get(0);
 		return true;
 	}
 
@@ -179,10 +184,37 @@ public class StructCommand extends Structure {
 	@Override
 	public boolean load() {
 		getParser().setCurrentEvent("command", ScriptCommandEvent.class);
+		String fullCommand = entryContainer.getSource().getKey();
+		assert fullCommand != null;
+		fullCommand = ScriptLoader.replaceOptions(fullCommand);
 
-		String command = matchResult.group(1).toLowerCase(Locale.ENGLISH);
+		int level = 0;
+		for (int i = 0; i < fullCommand.length(); i++) {
+			if (fullCommand.charAt(i) == '[') {
+				level++;
+			} else if (fullCommand.charAt(i) == ']') {
+				if (level == 0) {
+					Skript.error("Invalid placement of [optional brackets]");
+					getParser().deleteCurrentEvent();
+					return false;
+				}
+				level--;
+			}
+		}
+		if (level > 0) {
+			Skript.error("Invalid amount of [optional brackets]");
+			getParser().deleteCurrentEvent();
+			return false;
+		}
 
-		// check whether this command already exists
+		Matcher commandMatcher = COMMAND_PATTERN.matcher(fullCommand);
+		boolean matches = commandMatcher.matches();
+		if (!matches) {
+			Skript.error("Invalid command structure pattern");
+			return false;
+		}
+
+		String command = commandMatcher.group(1).toLowerCase();
 		ScriptCommand existingCommand = CommandModule.getCommandHandler().getScriptCommand(command);
 		if (existingCommand != null && existingCommand.getLabel().equals(command)) {
 			Script script = existingCommand.getTrigger().getScript();
@@ -198,14 +230,14 @@ public class StructCommand extends Structure {
 		if (rawArguments == null)
 			rawArguments = "";
 
-		Matcher matcher = ARGUMENT_PATTERN.matcher(rawArguments);
+		Matcher argumentMatcher = ARGUMENT_PATTERN.matcher(rawArguments);
 		arguments = new ArrayList<>();
 		// arguments are converted into a SkriptPattern
 		StringBuilder pattern = new StringBuilder();
 		int lastEnd = 0;
 		int optionals = 0; // special bracket tracking to avoid counting any within arguments
-		while (matcher.find()) {
-			int start = matcher.start();
+		while (argumentMatcher.find()) {
+			int start = argumentMatcher.start();
 
 			// append all the stuff between the end of the last argument and the beginning of this one
 			pattern.append(escape(rawArguments.substring(lastEnd, start)));
@@ -214,9 +246,9 @@ public class StructCommand extends Structure {
 			optionals += StringUtils.count(rawArguments, '[', lastEnd, start);
 			optionals -= StringUtils.count(rawArguments, ']', lastEnd, start);
 
-			lastEnd = matcher.end();
+			lastEnd = argumentMatcher.end();
 
-			String rawType = matcher.group(2);
+			String rawType = argumentMatcher.group(2);
 			ClassInfo<?> classInfo = Classes.getClassInfoFromUserInput(rawType);
 			NonNullPair<String, Boolean> pluralPair = Utils.getEnglishPlural(rawType);
 			if (classInfo == null) { // Attempt parsing the singular version as a backup
@@ -238,7 +270,7 @@ public class StructCommand extends Structure {
 			// parse argument
 
 			Argument<?> argument = Argument.of(
-				matcher.group(1), classInfo.getC(), optionals > 0, !pluralPair.getSecond(), matcher.group(3)
+				argumentMatcher.group(1), classInfo.getC(), optionals > 0, !pluralPair.getSecond(), argumentMatcher.group(3)
 			);
 
 			if (argument == null) { // Our argument parsing method should've printed an error

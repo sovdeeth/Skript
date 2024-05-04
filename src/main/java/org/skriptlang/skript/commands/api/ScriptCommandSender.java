@@ -68,7 +68,7 @@ public interface ScriptCommandSender {
 		/**
 		 * The server, or console.
 		 */
-		SERVER(new Message("commands.not executable by players")),
+		SERVER(new Message("commands.not executable by server")),
 		/**
 		 * A block, like a command block.
 		 */
