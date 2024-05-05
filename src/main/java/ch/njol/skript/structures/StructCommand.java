@@ -93,10 +93,10 @@ public class StructCommand extends Structure {
 		Skript.registerStructure(
 			StructCommand.class,
 			EntryValidator.builder()
+				.addEntryData(new VariableStringEntryData("usage", null, true))
 				.addEntry("description", "", true)
 				.addEntry("prefix", null, true)
 				.addEntry("permission", "", true)
-				.addEntryData(new VariableStringEntryData("usage", null, true))
 				.addEntryData(new VariableStringEntryData("permission message", null, true))
 				.addEntryData(new KeyValueEntryData<List<String>>("aliases", new ArrayList<>(), true) {
 					private final Pattern pattern = Pattern.compile("\\s*,\\s*/?");
