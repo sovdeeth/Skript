@@ -123,7 +123,7 @@ plugin priority: high
 #                                                  Skript removes drops it shouldn't => decrease priority or specify which item types to remove
 
 listen to cancelled events by default: false
-# Determines whether `on <event>` will be triggered by all events (true) or only cancelled events (false).
+# Determines whether `on <event>` will be triggered by all events (true) or only uncancelled events (false).
 # The default is false, which maintains traditional Skript behavior.
 
 number accuracy: 2
