@@ -42,7 +42,6 @@ public class SQLiteStorage extends JdbcStorage {
 	SQLiteStorage(SkriptAddon source, String name) {
 		super(source, name,
 				"CREATE TABLE IF NOT EXISTS %s (" +
-				"rowid        INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT," +
 				"name         VARCHAR(" + MAX_VARIABLE_NAME_LENGTH + ")  NOT NULL," +
 				"type         VARCHAR(" + MAX_CLASS_CODENAME_LENGTH + ")," +
 				"value        BLOB(" + MAX_VALUE_SIZE + ")" +
