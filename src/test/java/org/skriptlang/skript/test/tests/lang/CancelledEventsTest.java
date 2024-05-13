@@ -20,12 +20,8 @@ package org.skriptlang.skript.test.tests.lang;
 
 import ch.njol.skript.test.runner.SkriptJUnitTest;
 import org.bukkit.Bukkit;
-import org.bukkit.entity.Pig;
 import org.bukkit.event.block.BlockFormEvent;
-import org.bukkit.event.entity.EntityDeathEvent;
 import org.junit.Test;
-
-import java.util.ArrayList;
 
 public class CancelledEventsTest extends SkriptJUnitTest {
 
