@@ -21,18 +21,19 @@ package org.skriptlang.skript.variables.storage;
 import java.io.File;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.function.BiFunction;
-
-import org.eclipse.jdt.annotation.Nullable;
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
-
-import com.zaxxer.hikari.HikariConfig;
+import java.util.function.Function;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptAddon;
 import ch.njol.skript.config.SectionNode;
 import ch.njol.skript.variables.JdbcStorage;
 import ch.njol.skript.variables.SerializedVariable;
+import ch.njol.util.NonNullPair;
+
+import com.zaxxer.hikari.HikariConfig;
+
+import org.eclipse.jdt.annotation.Nullable;
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 
 @Deprecated
 @ScheduledForRemoval
@@ -41,7 +42,8 @@ public class SQLiteStorage extends JdbcStorage {
 	SQLiteStorage(SkriptAddon source, String name) {
 		super(source, name,
 				"CREATE TABLE IF NOT EXISTS %s (" +
-				"name         VARCHAR(" + MAX_VARIABLE_NAME_LENGTH + ")  NOT NULL  PRIMARY KEY," +
+				"rowid        INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT," +
+				"name         VARCHAR(" + MAX_VARIABLE_NAME_LENGTH + ")  NOT NULL," +
 				"type         VARCHAR(" + MAX_CLASS_CODENAME_LENGTH + ")," +
 				"value        BLOB(" + MAX_VALUE_SIZE + ")" +
 				");"
@@ -87,8 +89,10 @@ public class SQLiteStorage extends JdbcStorage {
 	}
 
 	@Override
-	protected BiFunction<Integer, ResultSet, SerializedVariable> get() {
-		return (index, result) -> {
+	protected @Nullable Function<@Nullable ResultSet, NonNullPair<Long, SerializedVariable>> get(boolean testOperation) {
+		return result -> {
+			if (result == null)
+				return null;
 			int i = 1;
 			try {
 				String name = result.getString(i++);
@@ -98,7 +102,7 @@ public class SQLiteStorage extends JdbcStorage {
 				}
 				String type = result.getString(i++);
 				byte[] value = result.getBytes(i++);
-				return new SerializedVariable(name, type, value);
+				return new NonNullPair<>(-1L, new SerializedVariable(name, type, value));
 			} catch (SQLException e) {
 				Skript.exception(e, "Failed to collect variable from database.");
 				return null;

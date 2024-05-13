@@ -66,7 +66,7 @@ public class H2StorageTest {
 		section.add(new EntryNode("monitor interval", "30 seconds", section));
 		section.add(new EntryNode("file", "./plugins/Skript/variables", section));
 		section.add(new EntryNode("backup interval", "0", section));
-		assertTrue(database.load(section));
+		assertTrue(database.load_i(section));
 	}
 
 	@Test

@@ -141,7 +141,7 @@ public class FlatFileStorage extends VariablesStorage {
 	 */
 	@SuppressWarnings("deprecation")
 	@Override
-	protected boolean load_i(SectionNode sectionNode) {
+	protected boolean load(SectionNode sectionNode) {
 		SkriptLogger.setNode(null);
 
 		if (file == null) {

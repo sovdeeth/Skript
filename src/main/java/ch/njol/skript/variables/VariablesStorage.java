@@ -97,7 +97,7 @@ public abstract class VariablesStorage implements Closeable {
 	 * Creates a new variable storage with the given name.
 	 * <p>
 	 * This will also create the {@link #writeThread}, but it must be started
-	 * with {@link #load(SectionNode)}.
+	 * with {@link #load_i(SectionNode)}.
 	 *
 	 * @param name the name.
 	 */
@@ -215,12 +215,13 @@ public abstract class VariablesStorage implements Closeable {
 
 	/**
 	 * Loads the configuration for this variable storage
-	 * from the given section node.
+	 * from the given section node. Loads internal required values first in load_i.
+	 * {@link #load(SectionNode)} is for extending classes.
 	 *
 	 * @param sectionNode the section node.
 	 * @return whether the loading succeeded.
 	 */
-	public final boolean load(SectionNode sectionNode) {
+	public final boolean load_i(SectionNode sectionNode) {
 		String pattern = getValue(sectionNode, "pattern");
 		if (pattern == null)
 			return false;
@@ -275,7 +276,7 @@ public abstract class VariablesStorage implements Closeable {
 		}
 
 		// Load the entries custom to the variable storage
-		if (!load_i(sectionNode))
+		if (!load(sectionNode))
 			return false;
 
 		writeThread.start();
@@ -290,7 +291,7 @@ public abstract class VariablesStorage implements Closeable {
 	 * @return Whether the database could be loaded successfully,
 	 * i.e. whether the config is correct and all variables could be loaded.
 	 */
-	protected abstract boolean load_i(SectionNode n);
+	protected abstract boolean load(SectionNode n);
 
 	/**
 	 * Called after all storages have been loaded, and variables
@@ -327,7 +328,7 @@ public abstract class VariablesStorage implements Closeable {
 	/**
 	 * (Re)connects to the database.
 	 * <p>
-	 * Not called on the first connect: do this in {@link #load_i(SectionNode)}.
+	 * Not called on the first connect: do this in {@link #load(SectionNode)}.
 	 * An error should be printed by this method
 	 * prior to returning {@code false}.
 	 *

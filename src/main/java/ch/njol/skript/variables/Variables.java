@@ -274,10 +274,11 @@ public class Variables {
 						Skript.info("Loading database '" + node.getKey() + "'...");
 
 					// Load the variables
-					if (variablesStorage.load(sectionNode))
+					if (variablesStorage.load_i(sectionNode)) {
 						STORAGES.add(variablesStorage);
-					else
+					} else {
 						successful = false;
+					}
 
 					// Get the amount of variables loaded by this variables storage object
 					int newVariablesLoaded;
@@ -317,7 +318,6 @@ public class Variables {
 
 			// Interrupt the loading logger thread to make it exit earlier
 			loadingLoggerThread.interrupt();
-
 			saveThread.start();
 		}
 		return true;

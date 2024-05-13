@@ -20,11 +20,7 @@ package org.skriptlang.skript.variables.storage;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.function.BiFunction;
-
-import org.eclipse.jdt.annotation.Nullable;
-
-import com.zaxxer.hikari.HikariConfig;
+import java.util.function.Function;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptAddon;
@@ -32,6 +28,10 @@ import ch.njol.skript.config.SectionNode;
 import ch.njol.skript.variables.JdbcStorage;
 import ch.njol.skript.variables.SerializedVariable;
 import ch.njol.util.NonNullPair;
+
+import com.zaxxer.hikari.HikariConfig;
+
+import org.eclipse.jdt.annotation.Nullable;
 
 public class MySQLStorage extends JdbcStorage {
 
@@ -90,11 +90,13 @@ public class MySQLStorage extends JdbcStorage {
 	}
 
 	@Override
-	protected BiFunction<Integer, ResultSet, SerializedVariable> get() {
-		return (index, result) -> {
+	protected @Nullable Function<@Nullable ResultSet, NonNullPair<Long, SerializedVariable>> get(boolean testOperation) {
+		return result -> {
+			if (result == null)
+				return null;
 			int i = 1;
 			try {
-				result.getLong(i++); // rowid is used for monitor changes.
+				long rowid = result.getLong(i++); // rowid is used for monitor changes.
 				String name = result.getString(i++);
 				if (name == null) {
 					Skript.error("Variable with NULL name found in the database '" + databaseName + "', ignoring it");
@@ -102,7 +104,7 @@ public class MySQLStorage extends JdbcStorage {
 				}
 				String type = result.getString(i++);
 				byte[] value = result.getBytes(i++);
-				return new SerializedVariable(name, type, value);
+				return new NonNullPair<>(rowid, new SerializedVariable(name, type, value));
 			} catch (SQLException e) {
 				Skript.exception(e, "Failed to collect variable from database.");
 				return null;

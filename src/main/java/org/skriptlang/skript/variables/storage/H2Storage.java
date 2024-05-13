@@ -21,6 +21,7 @@ package org.skriptlang.skript.variables.storage;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import org.eclipse.jdt.annotation.Nullable;
 
@@ -31,6 +32,7 @@ import ch.njol.skript.SkriptAddon;
 import ch.njol.skript.config.SectionNode;
 import ch.njol.skript.variables.JdbcStorage;
 import ch.njol.skript.variables.SerializedVariable;
+import ch.njol.util.NonNullPair;
 
 public class H2Storage extends JdbcStorage {
 
@@ -81,8 +83,10 @@ public class H2Storage extends JdbcStorage {
 	}
 
 	@Override
-	protected BiFunction<Integer, ResultSet, SerializedVariable> get() {
-		return (index, result) -> {
+	protected @Nullable Function<@Nullable ResultSet, NonNullPair<Long, SerializedVariable>> get(boolean testOperation) {
+		return result -> {
+			if (result == null)
+				return null;
 			int i = 1;
 			try {
 				String name = result.getString(i++);
@@ -92,7 +96,7 @@ public class H2Storage extends JdbcStorage {
 				}
 				String type = result.getString(i++);
 				byte[] value = result.getBytes(i++);
-				return new SerializedVariable(name, type, value);
+				return new NonNullPair<>(-1L, new SerializedVariable(name, type, value));
 			} catch (SQLException e) {
 				Skript.exception(e, "Failed to collect variable from database.");
 				return null;

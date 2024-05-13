@@ -27,6 +27,7 @@ import java.sql.Statement;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import org.eclipse.jdt.annotation.Nullable;
 
@@ -155,16 +156,16 @@ public abstract class JdbcStorage extends VariablesStorage {
 	protected abstract String getSelectQuery();
 
 	/**
-	 * Construct a VariableResult from the SQL ResultSet based on your getSelectQuery.
-	 * The integer is the index of the entire result set, ResultSet is the current iteration and a VariableResult should be return.
-	 * If the integer is -1, it's a test query.
+	 * Construct a VariableResult from the SQL ResultSet based on the extending class getSelectQuery.
+	 * ResultSet is the current iteration and a NonNullPair<Long, SerializedVariable> should be return, long represents the rowid.
 	 * 
 	 * Null if exception happened.
 	 * 
+	 * @param testOperation if the request is a test operation.
 	 * @return a VariableResult from the SQL ResultSet based on your getSelectQuery.
 	 */
 	@Nullable
-	protected abstract BiFunction<Integer, ResultSet, SerializedVariable> get();
+	protected abstract Function<@Nullable ResultSet, NonNullPair<Long, SerializedVariable>> get(boolean testOperation);
 
 	private ResultSet query(HikariDataSource source, String query) throws SQLException {
 		Statement statement = source.getConnection().createStatement();
@@ -220,13 +221,12 @@ public abstract class JdbcStorage extends VariablesStorage {
 	 * {@link Variables#variableLoaded(String, Object, VariablesStorage)}).
 	 */
 	@Override
-	protected boolean load_i(SectionNode section) {
+	protected final boolean load(SectionNode section) {
 		synchronized (database) {
 			Timespan monitor_interval = getValue(section, "monitor interval", Timespan.class);
-			if (monitor_interval == null)
-				return false;
 			this.monitor = monitor_interval != null;
-			this.monitor_interval = monitor_interval.getMilliSeconds();
+			if (monitor)
+				this.monitor_interval = monitor_interval.getMilliSeconds();
 
 			HikariConfig configuration = configuration(section);
 			if (configuration == null)
@@ -284,8 +284,23 @@ public abstract class JdbcStorage extends VariablesStorage {
 				sqlException(e);
 				return false;
 			}
-			return true;
+			return loadJdbcConfiguration(section);
 		}
+	}
+
+	/**
+	 * Override for custom configuration nodes.
+	 * <p>
+	 * Loads any custom configurations from the section node
+	 * after internal Skript has loaded required nodes for Jdbc databases.
+	 * 
+	 * @param section The section node from the config.sk database type this class reflects.
+	 * @return true if this configuration was successfully loaded and passed all required nodes.
+	 */
+	// Since load_i(SectionNode) is final and load(SectionNode) needs to be final,
+	// this method is for extending JdbcStorage classes.
+	protected boolean loadJdbcConfiguration(SectionNode section) {
+		return true;
 	}
 
 	/**
@@ -297,13 +312,14 @@ public abstract class JdbcStorage extends VariablesStorage {
 			@Nullable
 			public SQLException call() throws Exception {
 				try {
-					BiFunction<Integer, ResultSet, SerializedVariable> handle = get();
-					int index = 0;
+					@Nullable Function<ResultSet, NonNullPair<Long, SerializedVariable>> handle = get(false);
 					while (result.next()) {
-						SerializedVariable variable = handle.apply(index, result);
-						index++;
-						if (variable == null)
+						@Nullable NonNullPair<Long, SerializedVariable> returnPair = handle.apply(result);
+						if (returnPair == null)
 							continue;
+						SerializedVariable variable = returnPair.getSecond();
+						lastRowID = returnPair.getFirst();
+
 						if (variable.getValue() == null) {
 							Variables.variableLoaded(variable.getName(), null, JdbcStorage.this);
 						} else {
@@ -369,32 +385,34 @@ public abstract class JdbcStorage extends VariablesStorage {
 		Skript.debug("Database " + databaseName + " loaded. Queue size = " + changesQueue.size());
 		if (!monitor)
 			return;
-		Skript.newThread(new Runnable() {
-			@Override
-			public void run() {
-				try { // variables were just downloaded, not need to check for modifications straight away
-					Thread.sleep(monitor_interval);
-				} catch (final InterruptedException e1) {}
+		Skript.newThread(() -> {
+			try { // variables were just downloaded, no need to check for modifications straight away.
+				Thread.sleep(monitor_interval);
+			} catch (final InterruptedException e1) {}
 
-				long lastWarning = Long.MIN_VALUE;
-				int WARING_INTERVAL = 10;
+			long lastWarning = Long.MIN_VALUE;
+			int WARING_INTERVAL = 10;
 
-				while (!closed) {
-					long next = System.currentTimeMillis() + monitor_interval;
-					checkDatabase();
-					long now = System.currentTimeMillis();
-					if (next < now && lastWarning + WARING_INTERVAL * 1000 < now) {
-						// TODO don't print this message when Skript loads (because scripts are loaded after variables and take some time)
+			// Ignore printing error on first load due to possible large loading times.
+			boolean ignoreFirstIteration = true;
+			while (!closed) {
+				long next = System.currentTimeMillis() + monitor_interval;
+				checkDatabase();
+				long now = System.currentTimeMillis();
+				if (next < now && lastWarning + WARING_INTERVAL * 1000 < now) {
+					if (ignoreFirstIteration) {
+						ignoreFirstIteration = false;
+					} else {
 						Skript.warning("Cannot load variables from the database fast enough (loading took " + ((now - next + monitor_interval) / 1000.) + "s, monitor interval = " + (monitor_interval / 1000.) + "s). " +
 								"Please increase your monitor interval or reduce usage of variables. " +
 								"(this warning will be repeated at most once every " + WARING_INTERVAL + " seconds)");
 						lastWarning = now;
 					}
-					while (System.currentTimeMillis() < next) {
-						try {
-							Thread.sleep(next - System.currentTimeMillis());
-						} catch (final InterruptedException e) {}
-					}
+				}
+				while (System.currentTimeMillis() < next) {
+					try {
+						Thread.sleep(next - System.currentTimeMillis());
+					} catch (final InterruptedException e) {}
 				}
 			}
 		}, "Skript database '" + databaseName + "' monitor thread").start();
@@ -473,10 +491,10 @@ public abstract class JdbcStorage extends VariablesStorage {
 		}
 	}
 
-	long lastRowID = -1;
+	private long lastRowID = -1;
 
 	protected void checkDatabase() {
-		if (!monitor)
+		if (!monitor || this.lastRowID == -1)
 			return;
 		try {
 			long lastRowID; // local variable as this is used to clean the database below
@@ -491,6 +509,9 @@ public abstract class JdbcStorage extends VariablesStorage {
 					MONITOR_QUERY.execute();
 					result = MONITOR_QUERY.getResultSet();
 					assert result != null;
+					@Nullable HikariDataSource source = database.get();
+					if (source != null && !source.isAutoCommit())
+						source.getConnection().commit();
 				}
 				if (!closed)
 					loadVariables(result);
@@ -510,6 +531,9 @@ public abstract class JdbcStorage extends VariablesStorage {
 								assert MONITOR_CLEAN_UP_QUERY != null;
 								MONITOR_CLEAN_UP_QUERY.setLong(1, lastRowID);
 								MONITOR_CLEAN_UP_QUERY.executeUpdate();
+								@Nullable HikariDataSource source = database.get();
+								if (source != null && !source.isAutoCommit())
+									source.getConnection().commit();
 							}
 						} catch (SQLException e) {
 							sqlException(e);
@@ -522,12 +546,12 @@ public abstract class JdbcStorage extends VariablesStorage {
 		}
 	}
 
-	SerializedVariable executeTestQuery() throws SQLException {
+	NonNullPair<Long, SerializedVariable> executeTestQuery() throws SQLException {
 		synchronized (database) {
 			database.get().getConnection().commit();
 		}
 		ResultSet result = query(database.get(), getSelectQuery());
-		return get().apply(-1, result);
+		return get(true).apply(result);
 	}
 
 	void sqlException(SQLException exception) {
