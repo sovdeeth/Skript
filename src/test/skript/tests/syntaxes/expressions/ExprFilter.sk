@@ -14,3 +14,4 @@ test "where filter":
 	assert {_list::*} where [false is true] is not set with "ExprFilter returned objects with false condition"
 	assert ({_list::*} where [input is (("foo" and "bar") where [input is "bar"])]) is "bar" with "Failed filter with filter within condition"
 	assert (({_list::*} where [input is "foo"]) where [input is "foo"]) is "foo" with "Failed chained filters"
+	assert {_list::*} where [input index is "2" or "3"] is "bar" and "foobar" with "Failed input index filter"

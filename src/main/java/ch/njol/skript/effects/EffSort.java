@@ -48,7 +48,8 @@ import java.util.Set;
 
 @Name("Sort")
 @Description({
-	"Sorts a list variable using either the natural ordering of the contents or the results of the given expression."
+	"Sorts a list variable using either the natural ordering of the contents or the results of the given expression.",
+	"Be warned, this will overwrite the indices of the list variable."
 })
 @Examples({
 	"set {_words::*} to \"pineapple\", \"banana\", \"yoghurt\", and \"apple\"",

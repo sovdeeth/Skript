@@ -41,14 +41,18 @@ import org.skriptlang.skript.lang.converter.Converters;
 import java.lang.reflect.Array;
 import java.util.Set;
 
-@Name("Filter Input")
+@Name("Input")
 @Description({
-	"Represents the input in a filter expression.",
+	"Represents the input in a filter expression or sort effect.",
 	"For example, if you ran 'broadcast \"something\" and \"something else\" where [input is \"something\"]",
-	"the condition would be checked twice, using \"something\" and \"something else\" as the inputs."
+	"the condition would be checked twice, using \"something\" and \"something else\" as the inputs.",
+	"The 'input index' pattern can be used when acting on a variable to access the index of the input."
 })
-@Examples("send \"congrats on being staff!\" to all players where [input has permission \"staff\"]")
-@Since("2.2-dev36")
+@Examples({
+	"send \"congrats on being staff!\" to all players where [input has permission \"staff\"]",
+	"sort {_list::*} based on length of input index"
+})
+@Since("2.2-dev36, INSERT_VERSION (input index)")
 public class ExprInput<T> extends SimpleExpression<T> {
 
 	static {
@@ -151,6 +155,8 @@ public class ExprInput<T> extends SimpleExpression<T> {
 
 	@Override
 	public String toString(Event event, boolean debug) {
+		if (isIndex)
+			return "input index";
 		return specifiedType == null ? "input" : specifiedType.getCodeName() + " input";
 	}
 
