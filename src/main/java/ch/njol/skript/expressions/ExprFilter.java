@@ -27,9 +27,12 @@ import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
+import ch.njol.skript.lang.InputSource;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.lang.Variable;
 import ch.njol.skript.lang.parser.ParserInstance;
 import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.util.Pair;
 import org.skriptlang.skript.lang.converter.Converters;
 import ch.njol.skript.util.LiteralUtils;
 import ch.njol.util.Kleenean;
@@ -42,7 +45,10 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.regex.Pattern;
+import java.util.stream.StreamSupport;
 
 @Name("Filter")
 @Description({
@@ -53,21 +59,24 @@ import java.util.regex.Pattern;
 @Examples("send \"congrats on being staff!\" to all players where [player input has permission \"staff\"]")
 @Since("2.2-dev36")
 @SuppressWarnings({"null", "unchecked"})
-public class ExprFilter extends SimpleExpression<Object> {
+public class ExprFilter extends SimpleExpression<Object> implements InputSource {
 
 	static {
 		Skript.registerExpression(ExprFilter.class, Object.class, ExpressionType.COMBINED,
 				"%objects% (where|that match) \\[<.+>\\]");
-		ParserInstance.registerData(FilterData.class, FilterData::new);
+		if (!ParserInstance.isRegistered(InputData.class))
+			ParserInstance.registerData(InputData.class, InputData::new);
 	}
 
 	private Condition filterCondition;
 	private String unparsedCondition;
 	private Expression<?> unfilteredObjects;
-	private Set<ExprFilterInput<?>> dependentInputs = new HashSet<>();
+	private Set<ExprInput<?>> dependentInputs = new HashSet<>();
 
 	@Nullable
 	private Object currentFilterValue;
+	@Nullable
+	private String currentFilterIndex;
 
 	@Override
 	public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
@@ -75,17 +84,32 @@ public class ExprFilter extends SimpleExpression<Object> {
 		if (unfilteredObjects.isSingle() || !LiteralUtils.canInitSafely(unfilteredObjects))
 			return false;
 		unparsedCondition = parseResult.regexes.get(0).group();
-		FilterData filterData = getParser().getData(FilterData.class);
-		ExprFilter originalParentFilter = filterData.parentFilter;
-		filterData.parentFilter = this;
+		InputData inputData = getParser().getData(InputData.class);
+		InputSource originalSource = inputData.getSource();
+		inputData.setSource(this);
 		filterCondition = Condition.parse(unparsedCondition, "Can't understand this condition: " + unparsedCondition);
-		filterData.parentFilter = originalParentFilter;
+		inputData.setSource(originalSource);
 		return filterCondition != null;
 	}
 
 	@NonNull
 	@Override
 	public Iterator<?> iterator(Event event) {
+		if (unfilteredObjects instanceof Variable<?>) {
+			Iterator<Pair<String, Object>> variableIterator = ((Variable<?>) unfilteredObjects).variablesIterator(event);
+			return StreamSupport.stream(Spliterators.spliteratorUnknownSize(variableIterator, Spliterator.ORDERED), false)
+				.filter(pair -> {
+					currentFilterValue = pair.getValue();
+					currentFilterIndex = pair.getKey();
+					return filterCondition.check(event);
+				})
+				.map(Pair::getValue)
+				.iterator();
+		}
+
+		// clear current index just to be safe
+		currentFilterIndex = null;
+
 		Iterator<?> unfilteredObjectIterator = unfilteredObjects.iterator(event);
 		if (unfilteredObjectIterator == null)
 			return Collections.emptyIterator();
@@ -120,7 +144,7 @@ public class ExprFilter extends SimpleExpression<Object> {
 	}
 
 	private boolean matchesAnySpecifiedTypes(String candidateString) {
-		for (ExprFilterInput<?> dependentInput : dependentInputs) {
+		for (ExprInput<?> dependentInput : dependentInputs) {
 			ClassInfo<?> specifiedType = dependentInput.getSpecifiedType();
 			if (specifiedType == null)
 				return false;
@@ -143,29 +167,22 @@ public class ExprFilter extends SimpleExpression<Object> {
 		return unfilteredObjects.isLoopOf(candidateString) || matchesAnySpecifiedTypes(candidateString);
 	}
 
-	public Set<ExprFilterInput<?>> getDependentInputs() {
+	public Set<ExprInput<?>> getDependentInputs() {
 		return dependentInputs;
 	}
 
 	@Nullable
-	public Object getCurrentFilterValue() {
+	public Object getCurrentValue() {
 		return currentFilterValue;
 	}
 
-	public static class FilterData extends ParserInstance.Data {
-
-		@Nullable
-		private ExprFilter parentFilter;
-
-		public FilterData(ParserInstance parserInstance) {
-			super(parserInstance);
-		}
-
-		@Nullable
-		public ExprFilter getParentFilter() {
-			return parentFilter;
-		}
-
+	@Override
+	public boolean hasIndices() {
+		return unfilteredObjects instanceof Variable<?>;
 	}
 
+	@Override
+	public String getCurrentIndex() {
+		return currentFilterIndex;
+	}
 }

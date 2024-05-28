@@ -26,14 +26,16 @@ import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
+import ch.njol.skript.lang.InputSource;
+import ch.njol.skript.lang.InputSource.InputData;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Kleenean;
 import org.bukkit.event.Event;
 import org.eclipse.jdt.annotation.Nullable;
-import org.jaxen.expr.Expr;
 import org.skriptlang.skript.lang.converter.Converters;
 
 import java.lang.reflect.Array;
@@ -47,38 +49,40 @@ import java.util.Set;
 })
 @Examples("send \"congrats on being staff!\" to all players where [input has permission \"staff\"]")
 @Since("2.2-dev36")
-public class ExprFilterInput<T> extends SimpleExpression<T> {
+public class ExprInput<T> extends SimpleExpression<T> {
 
 	static {
-		Skript.registerExpression(ExprFilterInput.class, Object.class, ExpressionType.COMBINED,
+		Skript.registerExpression(ExprInput.class, Object.class, ExpressionType.COMBINED,
 			"input",
-			"%*classinfo% input"
+			"%*classinfo% input",
+			"input index"
 		);
 	}
 
 	@Nullable
-	private final ExprFilterInput<?> source;
+	private final ExprInput<?> source;
 	private final Class<? extends T>[] types;
 	private final Class<T> superType;
 
-	private ExprFilter parentFilter;
+	private InputSource inputSource;
 
 	@Nullable
 	private ClassInfo<?> specifiedType;
+	private boolean isIndex = false;
 
-	public ExprFilterInput() {
+	public ExprInput() {
 		this(null, (Class<? extends T>) Object.class);
 	}
 
-	public ExprFilterInput(@Nullable ExprFilterInput<?> source, Class<? extends T>... types) {
+	public ExprInput(@Nullable ExprInput<?> source, Class<? extends T>... types) {
 		this.source = source;
 		if (source != null) {
+			isIndex = source.isIndex;
 			specifiedType = source.specifiedType;
-			parentFilter = source.parentFilter;
-			Set<ExprFilterInput<?>> dependentInputs = parentFilter.getDependentInputs();
+			inputSource = source.inputSource;
+			Set<ExprInput<?>> dependentInputs = inputSource.getDependentInputs();
 			dependentInputs.remove(this.source);
 			dependentInputs.add(this);
-
 		}
 		this.types = types;
 		this.superType = (Class<T>) Utils.getSuperType(types);
@@ -86,16 +90,30 @@ public class ExprFilterInput<T> extends SimpleExpression<T> {
 
 	@Override
 	public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult) {
-		parentFilter = getParser().getData(ExprFilter.FilterData.class).getParentFilter();
-		if (parentFilter == null)
+		inputSource = getParser().getData(InputData.class).getSource();
+		if (inputSource == null)
 			return false;
-		specifiedType = matchedPattern == 0 ? null : ((Literal<ClassInfo<?>>) exprs[0]).getSingle();
+		switch (matchedPattern) {
+			case 1:
+				specifiedType = ((Literal<ClassInfo<?>>) exprs[0]).getSingle();
+				break;
+			case 2:
+				if (!inputSource.hasIndices()) {
+					Skript.error("You cannot use 'input index' on lists without indices!");
+					return false;
+				}
+				specifiedType = Classes.getExactClassInfo(String.class);
+				isIndex = true;
+				break;
+			default:
+				specifiedType = null;
+		}
 		return true;
 	}
 
 	@Override
 	protected T[] get(Event event) {
-		Object currentValue = parentFilter.getCurrentFilterValue();
+		Object currentValue = isIndex ? inputSource.getCurrentIndex() : inputSource.getCurrentValue();
 		if (currentValue == null || (specifiedType != null && !specifiedType.getC().isInstance(currentValue)))
 			return (T[]) Array.newInstance(superType, 0);
 
@@ -108,7 +126,7 @@ public class ExprFilterInput<T> extends SimpleExpression<T> {
 
 	@Override
 	public <R> Expression<? extends R> getConvertedExpression(Class<R>... to) {
-		return new ExprFilterInput<>(this, to);
+		return new ExprInput<>(this, to);
 	}
 
 	@Override
