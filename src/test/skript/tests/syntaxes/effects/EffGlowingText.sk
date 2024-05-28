@@ -11,11 +11,11 @@ test "glowing sign blocks" when running minecraft "1.17.1":
 
 ###
 # TODO: re-enable once Paper fixes ItemMeta or we find a fix ourselves.
-test "glowing sign items" when running minecraft "1.17.1":
-	set {_sign} to sign
-	assert {_sign} doesn't have glowing text with "Sign had glowing text erroneously (1)"
-	make {_sign} have glowing text
-	assert {_sign} has glowing text with "Sign had normal text erroneously"
-	make {_sign} have normal text
-	assert {_sign} doesn't have glowing text with "Sign had glowing text erroneously (2)"
+#test "glowing sign items" when running minecraft "1.17.1":
+#	set {_sign} to sign
+#	assert {_sign} doesn't have glowing text with "Sign had glowing text erroneously (1)"
+#	make {_sign} have glowing text
+#	assert {_sign} has glowing text with "Sign had normal text erroneously"
+#	make {_sign} have normal text
+#	assert {_sign} doesn't have glowing text with "Sign had glowing text erroneously (2)"
 ###
