@@ -28,7 +28,8 @@ import java.util.Set;
  * An InputSource represents a syntax that can provide a
  * value for {@link ExprInput} to use.
  * <br>
- * See {@link ch.njol.skript.expressions.ExprFilter}, {@link ch.njol.skript.effects.EffSort}.
+ * @see ch.njol.skript.expressions.ExprFilter
+ * @see ch.njol.skript.effects.EffSort
  */
 public interface InputSource {
 
