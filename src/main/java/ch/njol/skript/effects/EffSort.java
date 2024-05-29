@@ -125,10 +125,10 @@ public class EffSort extends Effect implements InputSource {
 				valueToMappedValue.put(currentValue, mappedValue);
 			}
 			try {
-			sorted = valueToMappedValue.entrySet().stream()
-				.sorted(Map.Entry.comparingByValue(ExprSortedList::compare))
-				.map(Map.Entry::getKey)
-				.toArray();
+				sorted = valueToMappedValue.entrySet().stream()
+					.sorted(Map.Entry.comparingByValue(ExprSortedList::compare))
+					.map(Map.Entry::getKey)
+					.toArray();
 			} catch (IllegalArgumentException | ClassCastException e) {
 				return;
 			}
