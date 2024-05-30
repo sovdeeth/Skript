@@ -1,8 +1,7 @@
 test "spawn dropped item":
 	spawn dropped stone at spawn of world "world":
 		set {_e} to entity
-	if running minecraft "1.17.1":
-		assert {_e} is set with "failed to spawn dropped stone"
+	assert {_e} is set with "failed to spawn dropped stone"
 	delete entity within {_e}
 
 

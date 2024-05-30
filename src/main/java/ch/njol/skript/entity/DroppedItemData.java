@@ -24,14 +24,10 @@ import java.util.Arrays;
 import java.util.function.Consumer;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.lang.Condition;
 import org.bukkit.Location;
-import org.bukkit.RegionAccessor;
 import org.bukkit.World;
 import org.bukkit.entity.Item;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.util.Vector;
-import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.lang.Literal;
@@ -41,6 +37,7 @@ import ch.njol.skript.localization.Language;
 import ch.njol.skript.localization.Noun;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.util.coll.CollectionUtils;
+import org.jetbrains.annotations.Nullable;
 
 public class DroppedItemData extends EntityData<Item> {
 
@@ -152,11 +149,10 @@ public class DroppedItemData extends EntityData<Item> {
 
 	@Override
 	public boolean canSpawn(@Nullable World world) {
-		return (HAS_JAVA_CONSUMER_DROP || HAS_BUKKIT_CONSUMER_DROP) && types != null && types.length > 0 && world != null;
+		return types != null && types.length > 0 && world != null;
 	}
 
 	@Override
-	@SuppressWarnings({"deprecation"})
 	public @Nullable Item spawn(Location location, @Nullable Consumer<Item> consumer) {
 		World world = location.getWorld();
 		if (!canSpawn(world))
@@ -175,6 +171,7 @@ public class DroppedItemData extends EntityData<Item> {
 		} else if (HAS_BUKKIT_CONSUMER_DROP) {
 			try {
 				assert BUKKIT_CONSUMER_DROP != null;
+				// noinspection deprecation
 				item = (Item) BUKKIT_CONSUMER_DROP.invoke(world, location, stack, (org.bukkit.util.Consumer<Item>) consumer::accept);
 			} catch (InvocationTargetException | IllegalAccessException e) {
 				if (Skript.testing())
@@ -182,10 +179,9 @@ public class DroppedItemData extends EntityData<Item> {
 				return null;
 			}
 		} else {
-			return null;
+			item = world.dropItem(location, stack);
+			consumer.accept(item);
 		}
-		item.teleport(location);
-		item.setVelocity(new Vector(0, 0, 0));
 		return item;
 	}
 
