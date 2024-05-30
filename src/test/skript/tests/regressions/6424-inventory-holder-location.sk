@@ -7,6 +7,10 @@ test "inventory holder location":
 	set {_inv} to inventory of {_b}
 	set {_holder} to holder of {_inv}
 
-	assert location of {_holder} is location of {_b} with "holder location differs from block location"
+	set {_a-loc} to location of {_holder}
+	set {_b-loc} to location of {_b}
 
+	# clean up first in case assert fails
 	set block at {_b} to {_prev}
+
+	assert {_a-loc} is {_b-loc} with "holder location differs from block location"
