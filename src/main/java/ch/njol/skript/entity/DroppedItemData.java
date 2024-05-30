@@ -42,17 +42,14 @@ import org.jetbrains.annotations.Nullable;
 public class DroppedItemData extends EntityData<Item> {
 
 	private static final boolean HAS_JAVA_CONSUMER_DROP = Skript.methodExists(World.class, "dropItem", Location.class, ItemStack.class, Consumer.class);
-	private static final boolean HAS_BUKKIT_CONSUMER_DROP = Skript.methodExists(World.class, "dropItem", Location.class, ItemStack.class, org.bukkit.util.Consumer.class);
 	private static @Nullable Method BUKKIT_CONSUMER_DROP;
 
 	static {
 		EntityData.register(DroppedItemData.class, "dropped item", Item.class, "dropped item");
 
 		try {
-			if (HAS_BUKKIT_CONSUMER_DROP) {
-				BUKKIT_CONSUMER_DROP = World.class.getDeclaredMethod("dropItem", Location.class, ItemStack.class, org.bukkit.util.Consumer.class);
-			}
-		} catch (NoSuchMethodException | SecurityException ignored) { /* We already checked if the method exists */ }
+			BUKKIT_CONSUMER_DROP = World.class.getDeclaredMethod("dropItem", Location.class, ItemStack.class, org.bukkit.util.Consumer.class);
+		} catch (NoSuchMethodException | SecurityException ignored) {}
 	}
 	
 	private final static Adjective m_adjective = new Adjective("entities.dropped item.adjective");
@@ -168,9 +165,8 @@ public class DroppedItemData extends EntityData<Item> {
 			item = world.dropItem(location, stack);
 		} else if (HAS_JAVA_CONSUMER_DROP) {
 			item = world.dropItem(location, stack, consumer);
-		} else if (HAS_BUKKIT_CONSUMER_DROP) {
+		} else if (BUKKIT_CONSUMER_DROP != null) {
 			try {
-				assert BUKKIT_CONSUMER_DROP != null;
 				// noinspection deprecation
 				item = (Item) BUKKIT_CONSUMER_DROP.invoke(world, location, stack, (org.bukkit.util.Consumer<Item>) consumer::accept);
 			} catch (InvocationTargetException | IllegalAccessException e) {
