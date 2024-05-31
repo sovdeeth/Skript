@@ -19,6 +19,7 @@
 package ch.njol.skript.config;
 
 import java.io.PrintWriter;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -74,7 +75,6 @@ public abstract class Node {
 	
 	protected Node(final String key, final String comment, final SectionNode parent, final int lineNum) {
 		this.key = key;
-		assert comment.isEmpty() || comment.startsWith("#") : comment;
 		this.comment = comment;
 		debug = comment.equals("#DEBUG#");
 		this.lineNum = lineNum;
@@ -119,15 +119,36 @@ public abstract class Node {
 	/**
 	 * Splits a line into value and comment.
 	 * <p>
-	 * Whitespace is preserved (whitespace in front of the comment is added to the value), and any ## not in quoted strings in the value are replaced by a single #. The comment is returned with a
+	 * Whitespace is preserved (whitespace in front of the comment is added to the value), and any ## in the value are replaced by a single #. The comment is returned with a
 	 * leading #, except if there is no comment in which case it will be the empty string.
-	 * 
-	 * @param line
+	 *
+	 * @param line the line to split
 	 * @return A pair (value, comment).
 	 */
 	public static NonNullPair<String, String> splitLine(String line) {
-		if (line.trim().startsWith("#"))
+		return splitLine(line, new AtomicBoolean(false));
+	}
+
+	/**
+	 * Splits a line into value and comment.
+	 * <p>
+	 * Whitespace is preserved (whitespace in front of the comment is added to the value), and any ## not in quoted strings in the value are replaced by a single #. The comment is returned with a
+	 * leading #, except if there is no comment in which case it will be the empty string.
+	 * 
+	 * @param line the line to split
+	 * @param inBlockComment Whether we are currently inside a block comment
+	 * @return A pair (value, comment).
+	 */
+	public static NonNullPair<String, String> splitLine(String line, AtomicBoolean inBlockComment) {
+		String trimmed = line.trim();
+		if (trimmed.equals("###")) { // we start or terminate a BLOCK comment
+			inBlockComment.set(!inBlockComment.get());
+			return new NonNullPair<>("", line);
+		} else if (trimmed.startsWith("#")) {
 			return new NonNullPair<>("", line.substring(line.indexOf('#')));
+		} else if (inBlockComment.get()) { // we're inside a comment, all text is a comment
+			return new NonNullPair<>("", line);
+		}
 
 		// idea: find first # that is not within a string or variable name. Use state machine to determine whether a # is a comment or not.
 		int length = line.length();
@@ -217,7 +238,6 @@ public abstract class Node {
 			return state;
 		}
 	}
-
 	
 	static void handleNodeStackOverflow(StackOverflowError e, String line) {
 		Node n = SkriptLogger.getNode();
