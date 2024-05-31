@@ -62,7 +62,6 @@ import ch.njol.util.Kleenean;
 		"\tset name of the zombie to \"\""
 })
 @Since("1.0, 2.6.1 (with section), INSERT_VERSION (dropped items)")
-@RequiredPlugins("Minecraft 1.17.1+ (dropped items)")
 public class EffSecSpawn extends EffectSection {
 
 	public static class SpawnEvent extends Event {

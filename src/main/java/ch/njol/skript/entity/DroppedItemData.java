@@ -156,9 +156,9 @@ public class DroppedItemData extends EntityData<Item> {
 			return null;
 		assert types != null && types.length > 0;
 
-		final ItemType t = CollectionUtils.getRandom(types);
-		assert t != null;
-		ItemStack stack = t.getItem().getRandom();
+		final ItemType itemType = CollectionUtils.getRandom(types);
+		assert itemType != null;
+		ItemStack stack = itemType.getItem().getRandom();
 
 		Item item;
 		if (consumer == null) {
