@@ -134,7 +134,7 @@ public abstract class Node {
 		StringBuilder finalLine = new StringBuilder(line);
 		int numRemoved = 0;
 		SplitLineState state = SplitLineState.CODE;
-		SplitLineState previousState = SplitLineState.CODE;
+		SplitLineState previousState = SplitLineState.CODE; // stores the state prior to entering %, so it can be re-set when leaving
 		// find next " or %
 		for (int i = 0; i < length; i++) {
 			char c = line.charAt(i);
@@ -153,7 +153,9 @@ public abstract class Node {
 				state = SplitLineState.update(c, state, previousState);
 				if (state == SplitLineState.HALT)
 					return new NonNullPair<>(finalLine.substring(0, i - numRemoved), line.substring(i));
-				previousState = tmp;
+				// only update previous state when we go from !CODE -> CODE due to %
+				if (c == '%' && state == SplitLineState.CODE)
+					previousState = tmp;
 			}
 		}
 		return new NonNullPair<>(finalLine.toString(), "");
@@ -178,7 +180,7 @@ public abstract class Node {
 		 * Updates the state given a character input.
 		 * @param c character input. '"', '%', '{', '}', and '#' are valid.
 		 * @param state the current state of the machine
-		 * @param previousState the previous state of the machine
+		 * @param previousState the state of the machine when it last entered a % CODE % section
 		 * @return the new state of the machine
 		 */
 		private static SplitLineState update(char c, SplitLineState state, SplitLineState previousState) {

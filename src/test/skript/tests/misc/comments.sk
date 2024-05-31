@@ -36,10 +36,11 @@ test "comments":
 		set {_a##} to "test"
 		set {##_b} to "test"
 		set {##_b::%"{}"%} to "test"
-		set {##_b::%"{}#"%} to "test"
+		set {##_b::%"{}#"%} to "#test"
+		assert {##_b::%"{}#"%} is join "#" and "test" with "failed state machine check"
 	assert last parse logs is not set with "skript should be able to handle hashtags in variable names but did not"
 
 
 	parse:
-		set {##_b::%"{}"#%} to "test"
+		set {##_b::%"{}"#%} to "#test"
 	assert last parse logs is set with "skript should not be able to handle hashtags in an expression in a variable name but did"
