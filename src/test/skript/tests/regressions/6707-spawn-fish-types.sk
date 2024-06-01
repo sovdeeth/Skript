@@ -19,7 +19,7 @@ test "spawn fish types":
 	assert {_e} is a tropical fish with "failed to spawn a tropical fish"
 	delete entity within {_e}
 
-	if running minecraft "1.19":
+	parse if running minecraft "1.19":
 		spawn a tadpole at spawn of world "world":
 			set {_e} to entity
 		assert {_e} is a tadpole with "failed to spawn a tadpole"
