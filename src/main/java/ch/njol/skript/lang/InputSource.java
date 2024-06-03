@@ -35,7 +35,7 @@ import java.util.Set;
 public interface InputSource {
 
 	/**
-	 * @return A {@link Set} of {@link ExprInput}s that depend on this source.
+	 * @return A mutable {@link Set} of {@link ExprInput}s that depend on this source.
 	 */
 	Set<ExprInput<?>> getDependentInputs();
 
