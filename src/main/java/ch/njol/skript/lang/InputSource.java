@@ -21,6 +21,7 @@ package ch.njol.skript.lang;
 import ch.njol.skript.expressions.ExprInput;
 import ch.njol.skript.lang.parser.ParserInstance;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnknownNullability;
 
 import java.util.Set;
 
@@ -58,7 +59,7 @@ public interface InputSource {
 	 *
 	 * @return The current value's index.
 	 */
-	default String getCurrentIndex() {
+	default @UnknownNullability String getCurrentIndex() {
 		return null;
 	}
 

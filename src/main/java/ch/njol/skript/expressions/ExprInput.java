@@ -31,7 +31,8 @@ import ch.njol.skript.lang.InputSource.InputData;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.util.SimpleExpression;
-import ch.njol.skript.registrations.Classes;
+import ch.njol.skript.registrations.DefaultClasses;
+import ch.njol.skript.util.ClassInfoReference;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Kleenean;
 import org.bukkit.event.Event;
@@ -99,14 +100,19 @@ public class ExprInput<T> extends SimpleExpression<T> {
 			return false;
 		switch (matchedPattern) {
 			case 1:
-				specifiedType = ((Literal<ClassInfo<?>>) exprs[0]).getSingle();
+				ClassInfoReference classInfoReference = ((Literal<ClassInfoReference>) ClassInfoReference.wrap((Expression<ClassInfo<?>>) exprs[0])).getSingle();
+				if (classInfoReference.isPlural().isTrue()) {
+					Skript.error("An input can only be a single value! Please use a singular type (for example: players input -> player input).");
+					return false;
+				}
+				specifiedType = classInfoReference.getClassInfo();
 				break;
 			case 2:
 				if (!inputSource.hasIndices()) {
 					Skript.error("You cannot use 'input index' on lists without indices!");
 					return false;
 				}
-				specifiedType = Classes.getExactClassInfo(String.class);
+				specifiedType = DefaultClasses.STRING;
 				isIndex = true;
 				break;
 			default:

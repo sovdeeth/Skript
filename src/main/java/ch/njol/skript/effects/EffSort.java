@@ -39,6 +39,7 @@ import ch.njol.util.Kleenean;
 import ch.njol.util.Pair;
 import org.bukkit.event.Event;
 import org.eclipse.jdt.annotation.Nullable;
+import org.jetbrains.annotations.UnknownNullability;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -77,7 +78,7 @@ public class EffSort extends Effect implements InputSource {
 
 	@Nullable
 	private Object currentValue;
-	@Nullable
+	@UnknownNullability
 	private String currentIndex;
 
 	@Override
@@ -153,8 +154,7 @@ public class EffSort extends Effect implements InputSource {
 	}
 
 	@Override
-	public String getCurrentIndex() {
-		assert currentIndex != null;
+	public @UnknownNullability String getCurrentIndex() {
 		return currentIndex;
 	}
 
