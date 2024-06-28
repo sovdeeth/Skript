@@ -321,8 +321,6 @@ public abstract class Node {
 				}
 				SplitLineState tmp = state;
 				state = SplitLineState.update(c, state, previousState);
-				if (state == SplitLineState.HALT)
-					return output.toString();
 				previousState = tmp;
 			}
 		}
