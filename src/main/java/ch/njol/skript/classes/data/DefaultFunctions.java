@@ -597,7 +597,7 @@ public class DefaultFunctions {
 			}).description(
 				"Returns a offline player from their name or UUID. This function will still return the player if they're online. " +
 				"If Paper 1.16.5+ is used, the 'allowLookup' parameter can be set to false to prevent this function from doing a " +
-				"UUID lookup for players who have not joined before. Lookups can cause lag spikes of up to multiple seconds, so " +
+				"web lookup for players who have not joined before. Lookups can cause lag spikes of up to multiple seconds, so " +
 				"use offline players with caution."
 			)
 			.examples(
