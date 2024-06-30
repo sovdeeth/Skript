@@ -1,0 +1,5 @@
+test "remove air from air slot":
+	set {a} to chest inventory with 3 rows
+	# throws exception if not fixed
+	remove 1 of (slot 0 of {a}) from (slot 0 of {a})
+	delete {a}
