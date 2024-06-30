@@ -33,27 +33,8 @@ import java.util.Random;
 
 public class BoatChestData extends EntityData<ChestBoat> {
 
-	private static Material oakBoat = null;
-	private static Material spruceBoat = null;
-	private static Material birchBoat = null;
-	private static Material jungleBoat = null;
-	private static Material acaciaBoat = null;
-	private static Material darkOakBoat = null;
-
 	static {
 		if (Skript.classExists("org.bukkit.entity.ChestBoat")) {
-			//noinspection ConstantConditions
-			oakBoat = Material.getMaterial("OAK_CHEST_BOAT");
-			//noinspection ConstantConditions
-			spruceBoat = Material.getMaterial("SPRUCE_CHEST_BOAT");
-			//noinspection ConstantConditions
-			birchBoat = Material.getMaterial("BIRCH_CHEST_BOAT");
-			//noinspection ConstantConditions
-			jungleBoat = Material.getMaterial("JUNGLE_CHEST_BOAT");
-			//noinspection ConstantConditions
-			acaciaBoat = Material.getMaterial("ACACIA_CHEST_BOAT");
-			//noinspection ConstantConditions
-			darkOakBoat = Material.getMaterial("DARK_OAK_CHEST_BOAT");
 			EntityData.register(BoatChestData.class, "chest boat", ChestBoat.class, 0,
 				"chest boat", "any chest boat", "oak chest boat", "spruce chest boat", "birch chest boat",
 				"jungle chest boat", "acacia chest boat", "dark oak chest boat");
@@ -131,17 +112,17 @@ public class BoatChestData extends EntityData<ChestBoat> {
 
 		ItemStack stack = itemType.getRandom();
 		Material type = stack.getType();
-		if (oakBoat == type)
+		if (type == Material.OAK_CHEST_BOAT)
 			ordinal = 0;
-		else if (spruceBoat == type)
+		else if (type == Material.SPRUCE_CHEST_BOAT)
 			ordinal = TreeSpecies.REDWOOD.ordinal();
-		else if (birchBoat == type)
+		else if (type == Material.BIRCH_CHEST_BOAT)
 			ordinal = TreeSpecies.BIRCH.ordinal();
-		else if (jungleBoat == type)
+		else if (type == Material.JUNGLE_CHEST_BOAT)
 			ordinal = TreeSpecies.JUNGLE.ordinal();
-		else if (acaciaBoat == type)
+		else if (type == Material.ACACIA_CHEST_BOAT)
 			ordinal = TreeSpecies.ACACIA.ordinal();
-		else if (darkOakBoat == type)
+		else if (type == Material.DARK_OAK_CHEST_BOAT)
 			ordinal = TreeSpecies.DARK_OAK.ordinal();
 		return hashCode_i() == ordinal + 2 || (matchedPattern + ordinal == 0) || ordinal == 0;
 	}

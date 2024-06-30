@@ -22,6 +22,7 @@ import ch.njol.skript.bukkitutil.EntityUtils;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.CreatureSpawner;
+import org.bukkit.entity.EntityType;
 import org.bukkit.event.Event;
 import org.eclipse.jdt.annotation.Nullable;
 
@@ -51,9 +52,12 @@ public class ExprSpawnerType extends SimplePropertyExpression<Block, EntityData>
 	@Override
 	@Nullable
 	public EntityData convert(Block block) {
-		if (block.getType() != Material.SPAWNER)
+		if (!(block.getState() instanceof CreatureSpawner))
 			return null;
-		return EntityUtils.toSkriptEntityData(((CreatureSpawner) block.getState()).getSpawnedType());
+		EntityType type = ((CreatureSpawner) block.getState()).getSpawnedType();
+		if (type == null)
+			return null;
+		return EntityUtils.toSkriptEntityData(type);
 	}
 	
 	@Nullable

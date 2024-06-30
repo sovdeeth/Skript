@@ -557,6 +557,11 @@ public abstract class Aliases {
 	 * <p>Item types provided by this method are updated when aliases are
 	 * reloaded. However, this also means they are tracked by aliases system
 	 * and NOT necessarily garbage-collected.
+	 *
+	 * <p>Relying on this method to create item types is not safe,
+	 * as users can change aliases at any point. ItemTypes should instead be created
+	 * via {@link Material}s, {@link org.bukkit.Tag}s, or any other manual method.
+	 *
 	 * @param name Name of item to search from aliases.
 	 * @return An item.
 	 * @throws IllegalArgumentException When item is not found.
