@@ -185,7 +185,7 @@ public class NewBlockCompat implements BlockCompat {
 							placed = true;
 						}
 					}
-				} else if (Material.WALL_TORCH == type) {
+				} else if (type == Material.WALL_TORCH) {
 					Directional data;
 					if (ourValues != null)
 						data = (Directional) ourValues.data;
