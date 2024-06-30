@@ -44,18 +44,16 @@ import ch.njol.util.coll.CollectionUtils;
 @Since("2.4")
 public class ExprSpawnerType extends SimplePropertyExpression<Block, EntityData> {
 	
-	private static final Material MATERIAL_SPAWNER = Aliases.javaItemType("spawner").getMaterial();
-	
 	static {
 		register(ExprSpawnerType.class, EntityData.class, "(spawner|entity|creature) type[s]", "blocks");
 	}
 	
 	@Override
 	@Nullable
-	public EntityData convert(final Block b) {
-		if (b.getType() != MATERIAL_SPAWNER)
+	public EntityData convert(Block block) {
+		if (block.getType() != Material.SPAWNER)
 			return null;
-		return EntityUtils.toSkriptEntityData(((CreatureSpawner) b.getState()).getSpawnedType());
+		return EntityUtils.toSkriptEntityData(((CreatureSpawner) block.getState()).getSpawnedType());
 	}
 	
 	@Nullable
@@ -68,13 +66,14 @@ public class ExprSpawnerType extends SimplePropertyExpression<Block, EntityData>
 	
 	@SuppressWarnings("null")
 	@Override
-	public void change(final Event e, final @Nullable Object[] delta, final ChangeMode mode) {
-		for (Block b : getExpr().getArray(e)) {
-			if (b.getType() != MATERIAL_SPAWNER)
+	public void change(Event event, Object @Nullable [] delta, ChangeMode mode) {
+		for (Block b : getExpr().getArray(event)) {
+			if (b.getType() != Material.SPAWNER)
 				continue;
 			CreatureSpawner s = (CreatureSpawner) b.getState();
 			switch (mode) {
 				case SET:
+					assert delta != null;
 					s.setSpawnedType(EntityUtils.toBukkitEntityType((EntityData) delta[0]));
 					break;
 				case RESET:

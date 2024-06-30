@@ -23,6 +23,7 @@ import ch.njol.skript.aliases.Aliases;
 import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser;
+import org.bukkit.Material;
 import org.bukkit.TreeSpecies;
 import org.bukkit.entity.ChestBoat;
 import org.bukkit.inventory.ItemStack;
@@ -32,21 +33,27 @@ import java.util.Random;
 
 public class BoatChestData extends EntityData<ChestBoat> {
 
-	private static ItemType oakBoat = null;
-	private static ItemType spruceBoat = null;
-	private static ItemType birchBoat = null;
-	private static ItemType jungleBoat = null;
-	private static ItemType acaciaBoat = null;
-	private static ItemType darkOakBoat = null;
+	private static Material oakBoat = null;
+	private static Material spruceBoat = null;
+	private static Material birchBoat = null;
+	private static Material jungleBoat = null;
+	private static Material acaciaBoat = null;
+	private static Material darkOakBoat = null;
 
 	static {
 		if (Skript.classExists("org.bukkit.entity.ChestBoat")) {
-			oakBoat = Aliases.javaItemType("oak chest boat");
-			spruceBoat = Aliases.javaItemType("spruce chest boat");
-			birchBoat = Aliases.javaItemType("birch chest boat");
-			jungleBoat = Aliases.javaItemType("jungle chest boat");
-			acaciaBoat = Aliases.javaItemType("acacia chest boat");
-			darkOakBoat = Aliases.javaItemType("dark oak chest boat");
+			//noinspection ConstantConditions
+			oakBoat = Material.getMaterial("OAK_CHEST_BOAT");
+			//noinspection ConstantConditions
+			spruceBoat = Material.getMaterial("SPRUCE_CHEST_BOAT");
+			//noinspection ConstantConditions
+			birchBoat = Material.getMaterial("BIRCH_CHEST_BOAT");
+			//noinspection ConstantConditions
+			jungleBoat = Material.getMaterial("JUNGLE_CHEST_BOAT");
+			//noinspection ConstantConditions
+			acaciaBoat = Material.getMaterial("ACACIA_CHEST_BOAT");
+			//noinspection ConstantConditions
+			darkOakBoat = Material.getMaterial("DARK_OAK_CHEST_BOAT");
 			EntityData.register(BoatChestData.class, "chest boat", ChestBoat.class, 0,
 				"chest boat", "any chest boat", "oak chest boat", "spruce chest boat", "birch chest boat",
 				"jungle chest boat", "acacia chest boat", "dark oak chest boat");
@@ -120,22 +127,21 @@ public class BoatChestData extends EntityData<ChestBoat> {
 	}
 
 	public boolean isOfItemType(ItemType itemType) {
-		if (itemType.getRandom() == null)
-			return false;
 		int ordinal = -1;
 
 		ItemStack stack = itemType.getRandom();
-		if (oakBoat.isOfType(stack))
+		Material type = stack.getType();
+		if (oakBoat == type)
 			ordinal = 0;
-		else if (spruceBoat.isOfType(stack))
+		else if (spruceBoat == type)
 			ordinal = TreeSpecies.REDWOOD.ordinal();
-		else if (birchBoat.isOfType(stack))
+		else if (birchBoat == type)
 			ordinal = TreeSpecies.BIRCH.ordinal();
-		else if (jungleBoat.isOfType(stack))
+		else if (jungleBoat == type)
 			ordinal = TreeSpecies.JUNGLE.ordinal();
-		else if (acaciaBoat.isOfType(stack))
+		else if (acaciaBoat == type)
 			ordinal = TreeSpecies.ACACIA.ordinal();
-		else if (darkOakBoat.isOfType(stack))
+		else if (darkOakBoat == type)
 			ordinal = TreeSpecies.DARK_OAK.ordinal();
 		return hashCode_i() == ordinal + 2 || (matchedPattern + ordinal == 0) || ordinal == 0;
 	}
