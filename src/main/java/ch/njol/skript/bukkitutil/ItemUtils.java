@@ -24,7 +24,9 @@ import org.bukkit.Material;
 import org.bukkit.Tag;
 import org.bukkit.TreeType;
 import org.bukkit.block.Block;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.type.Fence;
+import org.bukkit.block.data.type.Gate;
 import org.bukkit.block.data.type.Wall;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
@@ -234,8 +236,12 @@ public class ItemUtils {
 	 */
 	public static boolean isFence(Block block) {
 		// TODO: 1.13 only, so remove in 2.10
-		if (!HAS_FENCE_TAGS)
-			return block.getBlockData() instanceof Fence || block.getBlockData() instanceof Wall;
+		if (!HAS_FENCE_TAGS) {
+			BlockData data = block.getBlockData();
+			return data instanceof Fence
+				|| data instanceof Wall
+				|| data instanceof Gate;
+		}
 
 		Material type = block.getType();
 		return Tag.FENCES.isTagged(type)
