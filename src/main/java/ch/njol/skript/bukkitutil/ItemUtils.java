@@ -227,7 +227,7 @@ public class ItemUtils {
 	}
 
 
-	private static final boolean HAS_FENCE_TAGS = !Skript.isRunningMinecraft(1,14);
+	private static final boolean HAS_FENCE_TAGS = !Skript.isRunningMinecraft(1, 14);
 
 	/**
 	 * Whether the block is a fence or a wall.

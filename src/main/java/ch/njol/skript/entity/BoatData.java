@@ -117,7 +117,7 @@ public class BoatData extends EntityData<Boat> {
 		Material type = stack.getType();
 		if (Material.OAK_BOAT == type)
 			ordinal = 0;
-		else if (Material.SPRUCE_BOAT == type)
+		else if (type == Material.SPRUCE_BOAT)
 			ordinal = TreeSpecies.REDWOOD.ordinal();
 		else if (Material.BIRCH_BOAT == type)
 			ordinal = TreeSpecies.BIRCH.ordinal();
