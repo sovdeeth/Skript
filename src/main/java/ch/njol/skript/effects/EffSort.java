@@ -89,7 +89,7 @@ public class EffSort extends Effect implements InputSource {
 		}
 		unsortedObjects = (Variable<?>) expressions[0];
 
-		if (parseResult.regexes.size() > 0) {
+		if (!parseResult.regexes.isEmpty()) {
 			unparsedExpression = parseResult.regexes.get(0).group();
 			assert unparsedExpression != null;
 			InputData inputData = getParser().getData(InputData.class);
