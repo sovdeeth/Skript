@@ -193,7 +193,7 @@ public class NewBlockCompat implements BlockCompat {
 						data = (Directional) Bukkit.createBlockData(type);
 					
 					Block relative = block.getRelative(data.getFacing());
-					if ((!relative.getType().isOccluding() && !canSupportWallTorch(relative, data.getFacing().getOppositeFace())) || rotateForce) {
+					if ((!canSupportWallTorch(relative, data.getFacing().getOppositeFace())) || rotateForce) {
 						// Attempt to figure out a better rotation
 						BlockFace face = findWallTorchSide(block);
 						if (face != null) { // Found better torch spot
@@ -292,7 +292,8 @@ public class NewBlockCompat implements BlockCompat {
 				return block.getBlockData().isFaceSturdy(BlockFace.UP, BlockSupport.CENTER);
 
 			Material material = block.getType();
-			return (canSupportWallTorch(block, null)
+			return (material.isOccluding()
+				|| canSupportWallTorch(block, null)
 				|| ItemUtils.isFence(block)
 				|| ItemUtils.isGlass(material)
 				|| material == Material.HOPPER
@@ -311,7 +312,7 @@ public class NewBlockCompat implements BlockCompat {
 				return block.getBlockData().isFaceSturdy(face, BlockSupport.FULL);
 
 			Material material = block.getType();
-			return material == Material.SOUL_SAND || material == Material.SPAWNER;
+			return material.isOccluding() || material == Material.SOUL_SAND || material == Material.SPAWNER;
 		}
 
 		@Nullable

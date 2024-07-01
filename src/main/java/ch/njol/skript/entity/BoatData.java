@@ -115,17 +115,17 @@ public class BoatData extends EntityData<Boat> {
 		
 		ItemStack stack = i.getRandom();
 		Material type = stack.getType();
-		if (Material.OAK_BOAT == type)
+		if (type == Material.OAK_BOAT)
 			ordinal = 0;
 		else if (type == Material.SPRUCE_BOAT)
 			ordinal = TreeSpecies.REDWOOD.ordinal();
-		else if (Material.BIRCH_BOAT == type)
+		else if (type == Material.BIRCH_BOAT)
 			ordinal = TreeSpecies.BIRCH.ordinal();
-		else if (Material.JUNGLE_BOAT == type)
+		else if (type == Material.JUNGLE_BOAT)
 			ordinal = TreeSpecies.JUNGLE.ordinal();
-		else if (Material.ACACIA_BOAT == type)
+		else if (type == Material.ACACIA_BOAT)
 			ordinal = TreeSpecies.ACACIA.ordinal();
-		else if (Material.DARK_OAK_BOAT == type)
+		else if (type == Material.DARK_OAK_BOAT)
 			ordinal = TreeSpecies.DARK_OAK.ordinal();
 		return hashCode_i() == ordinal + 2 || (matchedPattern + ordinal == 0) || ordinal == 0;
 		
