@@ -145,6 +145,11 @@ public class ExprInput<T> extends SimpleExpression<T> {
 	}
 
 	@Override
+	public boolean isSingle() {
+		return true;
+	}
+
+	@Override
 	public Class<? extends T> getReturnType() {
 		return superType;
 	}
@@ -154,10 +159,6 @@ public class ExprInput<T> extends SimpleExpression<T> {
 		return specifiedType;
 	}
 
-	@Override
-	public boolean isSingle() {
-		return true;
-	}
 
 	@Override
 	public String toString(Event event, boolean debug) {

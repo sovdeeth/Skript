@@ -33,13 +33,14 @@ import ch.njol.skript.lang.Variable;
 import ch.njol.skript.lang.parser.ParserInstance;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Pair;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnknownNullability;
 import org.skriptlang.skript.lang.converter.Converters;
 import ch.njol.skript.util.LiteralUtils;
 import ch.njol.util.Kleenean;
 import com.google.common.collect.Iterators;
 import org.bukkit.event.Event;
-import org.eclipse.jdt.annotation.NonNull;
-import org.eclipse.jdt.annotation.Nullable;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -92,7 +93,7 @@ public class ExprFilter extends SimpleExpression<Object> implements InputSource 
 		return filterCondition != null;
 	}
 
-	@NonNull
+	@NotNull
 	@Override
 	public Iterator<?> iterator(Event event) {
 		if (unfilteredObjects instanceof Variable<?>) {
@@ -129,14 +130,15 @@ public class ExprFilter extends SimpleExpression<Object> implements InputSource 
 	}
 
 	@Override
+	public boolean isSingle() {
+		return false;
+	}
+
+	@Override
 	public Class<?> getReturnType() {
 		return unfilteredObjects.getReturnType();
 	}
 
-	@Override
-	public boolean isSingle() {
-		return false;
-	}
 
 	@Override
 	public String toString(Event event, boolean debug) {
@@ -182,6 +184,7 @@ public class ExprFilter extends SimpleExpression<Object> implements InputSource 
 	}
 
 	@Override
+	@UnknownNullability
 	public String getCurrentIndex() {
 		return currentFilterIndex;
 	}
