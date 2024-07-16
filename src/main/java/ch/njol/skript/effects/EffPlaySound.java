@@ -74,7 +74,7 @@ public class EffPlaySound extends Effect {
 
 	private static final boolean ADVENTURE_API = Skript.classExists("net.kyori.adventure.sound.Sound$Builder");
 	private static final boolean PLAYER_ENTITY_EMITTER = Skript.methodExists(Player.class, "playSound", Entity.class, Sound.class, SoundCategory.class, float.class, float.class);
-	private static final boolean WORLD_ENTITY_EMITTER = Skript.methodExists(World.class, "playSound", Entity.class, Sound.class, SoundCategory.class, float.class, float.class);
+	private static final boolean WORLD_ENTITY_EMITTER = Skript.methodExists(World.class, "playSound", Entity.class, String.class, SoundCategory.class, float.class, float.class);
 	public static final Pattern KEY_PATTERN = Pattern.compile("([a-z0-9._-]+:)?[a-z0-9/._-]+");
 
 	static {
