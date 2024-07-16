@@ -248,7 +248,7 @@ public class EffPlaySound extends Effect {
 					try {
 						String namespace = keyMatcher.group(1);
 						String keyValue = keyMatcher.group(2);
-						if (namespace.isEmpty()) {
+						if (namespace == null) {
 							key = NamespacedKey.minecraft(keyValue);
 						} else {
 							namespace = namespace.substring(0, namespace.length() - 1);
