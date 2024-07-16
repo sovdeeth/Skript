@@ -53,7 +53,7 @@ import java.util.regex.Pattern;
 	"<a href=\"https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Sound.html\">Spigot sound names</a> " +
 	"are supported. Playing resource pack sounds are supported too. The sound category is 'master' by default. ",
 	"",
-	"Playing a sound from an entity directly will result in the sound coming from said entity, even while moving.",
+	"When running 1.18+, playing a sound from an entity directly will result in the sound coming from said entity, even while moving.",
 	"If the sound is custom, a location emitter will follow the entity. Do note that pitch and volume ",
 	"are reflected based on the entity, and Minecraft may not use the values from this syntax.",
 	"",
@@ -68,22 +68,26 @@ import java.util.regex.Pattern;
 	"play sound \"custom.music.1\" in jukebox category at {speakerBlock}",
 	"play sound \"BLOCK_AMETHYST_BLOCK_RESONATE\" with seed 1 on target entity for the player #1.20.1+"
 })
-@RequiredPlugins("Paper 1.19.4+ or Adventure API 4.12.0+ (sound seed)")
+@RequiredPlugins("Minecraft 1.18.1+ (entity emitters), Paper 1.19.4+ or Adventure API 4.12.0+ (sound seed)")
 @Since("2.2-dev28, 2.4 (sound categories), 2.9.0 (sound seed & entity emitter)")
 public class EffPlaySound extends Effect {
 
 	private static final boolean ADVENTURE_API = Skript.classExists("net.kyori.adventure.sound.Sound$Builder");
+	private static final boolean ENTITY_EMITTER = Skript.methodExists(Player.class, "playSound", Entity.class, Sound.class, SoundCategory.class, float.class, float.class);
 	public static final Pattern KEY_PATTERN = Pattern.compile("([a-z0-9._-]+:)?[a-z0-9/._-]+");
 
 	static {
 		String additional = "";
 		if (ADVENTURE_API)
 			additional = "[[with] seed %-number%] ";
+		String emitterTypes = "locations";
+		if (ENTITY_EMITTER)
+			emitterTypes += "/entities";
 		Skript.registerEffect(EffPlaySound.class,
 				"play sound[s] %strings% " + additional + "[(in|from) %-soundcategory%] " +
-						"[(at|with) volume %-number%] [(and|at|with) pitch %-number%] (at|on|from) %locations/entities% [(to|for) %-players%]",
+						"[(at|with) volume %-number%] [(and|at|with) pitch %-number%] (at|on|from) %" + emitterTypes + "% [(to|for) %-players%]",
 				"play sound[s] %strings% " + additional + "[(in|from) %-soundcategory%] " +
-						"[(at|with) volume %-number%] [(and|at|with) pitch %-number%] [(to|for) %players%] [(at|on|from) %-locations/entities%]"
+						"[(at|with) volume %-number%] [(and|at|with) pitch %-number%] [(to|for) %players%] [(at|on|from) %-" + emitterTypes + "%]"
 		);
 	}
 
@@ -148,19 +152,19 @@ public class EffPlaySound extends Effect {
 		if (players != null) {
 			if (emitters == null) {
 				for (Player player : players.getArray(event)) {
-					play(Player::playSound, Player::playSound, ADVENTURE_API ? Player::playSound : null, ADVENTURE_API ? Player::playSound : null,
+					play(ENTITY_EMITTER ? Player::playSound : null, Player::playSound, ADVENTURE_API ? Player::playSound : null, ADVENTURE_API ? Player::playSound : null,
 							player,	player.getLocation(), sounds.getArray(event), category, volume, pitch, seed);
 				}
 			} else {
 				for (Player player : players.getArray(event)) {
 					for (Object emitter : emitters.getArray(event)) {
-						if (emitter instanceof Entity) {
+						if (emitter instanceof Entity && ENTITY_EMITTER) {
 							Entity entity = (Entity) emitter;
 							play(Player::playSound, Player::playSound, ADVENTURE_API ? Player::playSound : null, ADVENTURE_API ? Player::playSound : null,
 									player,	entity, sounds.getArray(event), category, volume, pitch, seed);
 						} else if (emitter instanceof Location) {
 							Location location = (Location) emitter;
-							play(Player::playSound, Player::playSound, ADVENTURE_API ? Player::playSound : null, ADVENTURE_API ? Player::playSound : null,
+							play(ENTITY_EMITTER ? Player::playSound : null, Player::playSound, ADVENTURE_API ? Player::playSound : null, ADVENTURE_API ? Player::playSound : null,
 									player, location, sounds.getArray(event), category, volume, pitch, seed);
 						}
 					}
@@ -168,13 +172,13 @@ public class EffPlaySound extends Effect {
 			}
 		} else if (emitters != null) {
 			for (Object emitter : emitters.getArray(event)) {
-				if (emitter instanceof Entity) {
+				if (emitter instanceof Entity && ENTITY_EMITTER) {
 					Entity entity = (Entity) emitter;
 					play(World::playSound, World::playSound, ADVENTURE_API ? World::playSound : null, ADVENTURE_API ? World::playSound : null,
 							entity.getWorld(), entity, sounds.getArray(event), category, volume, pitch, seed);
 				} else if (emitter instanceof Location) {
 					Location location = (Location) emitter;
-					play(World::playSound, World::playSound, ADVENTURE_API ? World::playSound : null, ADVENTURE_API ? World::playSound : null,
+					play(ENTITY_EMITTER ? World::playSound : null, World::playSound, ADVENTURE_API ? World::playSound : null, ADVENTURE_API ? World::playSound : null,
 							location.getWorld(), location, sounds.getArray(event), category, volume, pitch, seed);
 				}
 			}
@@ -203,7 +207,7 @@ public class EffPlaySound extends Effect {
 		return builder.toString();
 	}
 
-	private <T, E> void play(@NotNull SoundReceiver<T, Entity> entityReceiver,
+	private <T, E> void play(@Nullable SoundReceiver<T, Entity> entityReceiver,
 			@NotNull SoundReceiver<T, Location> locationReceiver,
 			@Nullable AdventureEmitterSoundReceiver<T> adventureLocationReceiver,
 			@Nullable AdventureEntitySoundReceiver<T> adventureEmitterReceiver,
@@ -224,7 +228,7 @@ public class EffPlaySound extends Effect {
 		);
 
 		static <T, E> void play(
-			@NotNull SoundReceiver<T, Entity> entityReceiver,
+			@Nullable SoundReceiver<T, Entity> entityReceiver,
 			@NotNull SoundReceiver<T, Location> locationReceiver,
 			@NotNull T receiver, @NotNull E emitter, @NotNull String[] sounds,
 			@NotNull SoundCategory category, float volume, float pitch, OptionalLong seed
@@ -249,7 +253,7 @@ public class EffPlaySound extends Effect {
 					continue;
 				if (emitter instanceof Location) {
 					locationReceiver.play(receiver, (Location) emitter, key.getKey(), category, volume, pitch);
-				} else if (emitter instanceof Entity) {
+				} else if (emitter instanceof Entity && entityReceiver != null) {
 					entityReceiver.play(receiver, (Entity) emitter, key.getKey(), category, volume, pitch);
 				}
 				return;
