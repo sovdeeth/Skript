@@ -44,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
 import java.util.OptionalLong;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Name("Play Sound")
@@ -75,8 +76,7 @@ public class EffPlaySound extends Effect {
 	private static final boolean ADVENTURE_API = Skript.classExists("net.kyori.adventure.sound.Sound$Builder");
 	private static final boolean PLAYER_ENTITY_EMITTER = Skript.methodExists(Player.class, "playSound", Entity.class, Sound.class, SoundCategory.class, float.class, float.class);
 	private static final boolean WORLD_ENTITY_EMITTER = Skript.methodExists(World.class, "playSound", Entity.class, String.class, SoundCategory.class, float.class, float.class);
-	private static final boolean KEY_FROM_STRING = Skript.methodExists(NamespacedKey.class, "fromString", new Class[]{String.class}, NamespacedKey.class);
-	public static final Pattern KEY_PATTERN = Pattern.compile("([a-z0-9._-]+:)?[a-z0-9/._-]+");
+	public static final Pattern KEY_PATTERN = Pattern.compile("([a-z0-9._-]+:)?([a-z0-9/._-]+)");
 
 	static {
 		String additional = "";
@@ -242,11 +242,13 @@ public class EffPlaySound extends Effect {
 					key = enumSound.getKey();
 				} catch (IllegalArgumentException alternative) {
 					sound = sound.toLowerCase(Locale.ENGLISH);
-					if (!KEY_PATTERN.matcher(sound).matches())
+					Matcher keyMatcher = KEY_PATTERN.matcher(sound);
+					if (!keyMatcher.matches())
 						continue;
 					try {
-						if (KEY_FROM_STRING)
-							key = NamespacedKey.fromString(sound);
+						String namespace = keyMatcher.group(1).substring(0, keyMatcher.group(1).length() - 1);
+						String keyValue = keyMatcher.group(2);
+						key = new NamespacedKey(namespace, keyValue);
 					} catch (IllegalArgumentException argument) {
 						// The user input invalid characters
 					}
