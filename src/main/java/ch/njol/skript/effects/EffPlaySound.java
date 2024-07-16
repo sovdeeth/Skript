@@ -75,6 +75,7 @@ public class EffPlaySound extends Effect {
 	private static final boolean ADVENTURE_API = Skript.classExists("net.kyori.adventure.sound.Sound$Builder");
 	private static final boolean PLAYER_ENTITY_EMITTER = Skript.methodExists(Player.class, "playSound", Entity.class, Sound.class, SoundCategory.class, float.class, float.class);
 	private static final boolean WORLD_ENTITY_EMITTER = Skript.methodExists(World.class, "playSound", Entity.class, String.class, SoundCategory.class, float.class, float.class);
+	private static final boolean KEY_FROM_STRING = Skript.methodExists(NamespacedKey.class, "fromString", new Class[]{String.class}, NamespacedKey.class);
 	public static final Pattern KEY_PATTERN = Pattern.compile("([a-z0-9._-]+:)?[a-z0-9/._-]+");
 
 	static {
@@ -244,7 +245,8 @@ public class EffPlaySound extends Effect {
 					if (!KEY_PATTERN.matcher(sound).matches())
 						continue;
 					try {
-						key = NamespacedKey.fromString(sound);
+						if (KEY_FROM_STRING)
+							key = NamespacedKey.fromString(sound);
 					} catch (IllegalArgumentException argument) {
 						// The user input invalid characters
 					}
