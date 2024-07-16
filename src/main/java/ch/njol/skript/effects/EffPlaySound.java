@@ -246,9 +246,14 @@ public class EffPlaySound extends Effect {
 					if (!keyMatcher.matches())
 						continue;
 					try {
-						String namespace = keyMatcher.group(1).substring(0, keyMatcher.group(1).length() - 1);
+						String namespace = keyMatcher.group(1);
 						String keyValue = keyMatcher.group(2);
-						key = new NamespacedKey(namespace, keyValue);
+						if (namespace.isEmpty()) {
+							key = NamespacedKey.minecraft(keyValue);
+						} else {
+							namespace = namespace.substring(0, namespace.length() - 1);
+							key = new NamespacedKey(namespace, keyValue);
+						}
 					} catch (IllegalArgumentException argument) {
 						// The user input invalid characters
 					}
