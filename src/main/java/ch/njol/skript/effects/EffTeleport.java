@@ -19,7 +19,6 @@
 package ch.njol.skript.effects;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -123,6 +122,7 @@ public class EffTeleport extends Effect {
 		Location location = this.location.getSingle(event);
 		if (location == null)
 			return next;
+		boolean unknownWorld = !location.isWorldLoaded();
 
 		Entity[] entityArray = entities.getArray(event); // We have to fetch this before possible async execution to avoid async local variable access.
 		if (entityArray.length == 0)
@@ -130,13 +130,31 @@ public class EffTeleport extends Effect {
 
 		if (!delayed) {
 			if (event instanceof PlayerRespawnEvent && entityArray.length == 1 && entityArray[0].equals(((PlayerRespawnEvent) event).getPlayer())) {
+				if (unknownWorld)
+					return next;
 				((PlayerRespawnEvent) event).setRespawnLocation(location);
 				return next;
 			}
 
 			if (event instanceof PlayerMoveEvent && entityArray.length == 1 && entityArray[0].equals(((PlayerMoveEvent) event).getPlayer())) {
+				if (unknownWorld) { // we can approximate the world
+					location = location.clone();
+					location.setWorld(((PlayerMoveEvent) event).getFrom().getWorld());
+				}
 				((PlayerMoveEvent) event).setTo(location);
 				return next;
+			}
+		}
+		if (unknownWorld) { // we can't fetch the chunk without a world
+			if (entityArray.length == 1) { // if there's 1 thing we can borrow its world
+				Entity entity = entityArray[0];
+				if (entity == null)
+					return next;
+				// assume it's a local teleport, use the first entity we find as a reference
+				location = location.clone();
+				location.setWorld(entity.getWorld());
+			} else {
+				return next; // no entities = no chunk = nobody teleporting
 			}
 		}
 
@@ -148,15 +166,16 @@ public class EffTeleport extends Effect {
 			return next;
 		}
 
+		final Location fixed = location;
 		Delay.addDelayedEvent(event);
 		Object localVars = Variables.removeLocals(event);
-		
+
 		// This will either fetch the chunk instantly if on Spigot or already loaded or fetch it async if on Paper.
 		PaperLib.getChunkAtAsync(location).thenAccept(chunk -> {
 			// The following is now on the main thread
 			SkriptTeleportFlag[] teleportFlags = this.teleportFlags == null ? null : this.teleportFlags.getArray(event);
 			for (Entity entity : entityArray) {
-				teleport(Entity::teleport, TELEPORT_FLAGS_SUPPORTED ? Entity::teleport : null, entity, location, teleportFlags);
+				teleport(Entity::teleport, TELEPORT_FLAGS_SUPPORTED ? Entity::teleport : null, entity, fixed, teleportFlags);
 			}
 
 			// Re-set local variables
