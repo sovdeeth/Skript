@@ -54,8 +54,8 @@ public class EffFunctionCall extends Effect {
 	}
 	
 	@Override
-	public String toString(@Nullable final Event e, final boolean debug) {
-		return function.toString(e, debug);
+	public String toString(@Nullable final Event event, final boolean debug) {
+		return function.toString(event, debug);
 	}
 	
 	@Override

@@ -18,14 +18,13 @@
  */
 package ch.njol.skript.lang.function;
 
-import java.util.Arrays;
-
-import org.bukkit.Bukkit;
-import org.eclipse.jdt.annotation.Nullable;
-
 import ch.njol.skript.SkriptConfig;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.util.coll.CollectionUtils;
+import org.bukkit.Bukkit;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
 
 /**
  * Functions can be called using arguments.
@@ -68,9 +67,8 @@ public abstract class Function<T> {
 	public boolean isSingle() {
 		return sign.isSingle();
 	}
-	
-	@Nullable
-	public ClassInfo<T> getReturnType() {
+
+	public @Nullable ClassInfo<T> getReturnType() {
 		return sign.getReturnType();
 	}
 	
@@ -83,9 +81,7 @@ public abstract class Function<T> {
 	 * {@link Signature#getMaxParameters()} elements.
 	 * @return The result(s) of this function
 	 */
-	@SuppressWarnings("null")
-	@Nullable
-	public final T[] execute(Object[][] params) {
+	public final T @Nullable [] execute(Object[][] params) {
 		FunctionEvent<? extends T> e = new FunctionEvent<>(this);
 		
 		// Call function event only if requested by addon
@@ -148,8 +144,7 @@ public abstract class Function<T> {
 	 * you need to manually handle default values.
 	 * @return Function return value(s).
 	 */
-	@Nullable
-	public abstract T[] execute(FunctionEvent<?> e, Object[][] params);
+	public abstract T @Nullable [] execute(FunctionEvent<?> e, Object[][] params);
 
 	/**
 	 * Resets the return value of the {@code Function}.
