@@ -210,7 +210,7 @@ public class Timespan implements YggdrasilSerializable, Comparable<Timespan> { /
 	/**
 	 * Builds a Timespan from the given long parameter.
 	 *
-	 * @deprecated Use {@link Timespan#Timespan(TimePeriod, long)}
+	 * @deprecated Use {@link #Timespan(TimePeriod, long)}
 	 * 
 	 * @param ticks The amount of Minecraft ticks to convert to a timespan.
 	 * @return Timespan based on the provided long.
