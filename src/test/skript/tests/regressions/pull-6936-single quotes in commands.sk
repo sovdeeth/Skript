@@ -1,0 +1,7 @@
+command single-quotes-in-commands ["<text="success 2">"]:
+	trigger:
+		broadcast arg
+
+test "single-quotes-in-commands":
+	execute console command "single-quotes-in-commands ""success 1"""
+	execute console command "single-quotes-in-commands"
