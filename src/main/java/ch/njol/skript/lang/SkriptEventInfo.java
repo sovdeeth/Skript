@@ -176,15 +176,15 @@ public final class SkriptEventInfo<E extends SkriptEvent> extends StructureInfo<
 		return listeningBehavior;
 	}
   
-	public String @Nullable[] getDescription() {
+	public String @Nullable [] getDescription() {
 		return description;
 	}
 
-	public String @Nullable[] getExamples() {
+	public String @Nullable [] getExamples() {
 		return examples;
 	}
 
-	public String @Nullable[] getKeywords() {
+	public String @Nullable [] getKeywords() {
 		return keywords;
 	}
 
@@ -192,7 +192,7 @@ public final class SkriptEventInfo<E extends SkriptEvent> extends StructureInfo<
 		return since;
 	}
 
-	public String @Nullable[] getRequiredPlugins() {
+	public String @Nullable [] getRequiredPlugins() {
 		return requiredPlugins;
 	}
 
