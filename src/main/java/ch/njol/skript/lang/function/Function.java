@@ -138,13 +138,13 @@ public abstract class Function<T> {
 	 * Executes this function with given parameters. Usually, using
 	 * {@link #execute(Object[][])} is better; it handles optional arguments
 	 * and function event creation automatically.
-	 * @param e Associated function event. This is usually created by Skript.
+	 * @param event Associated function event. This is usually created by Skript.
 	 * @param params Function parameters.
 	 * There must be {@link Signature#getMaxParameters()} amount of them, and
 	 * you need to manually handle default values.
 	 * @return Function return value(s).
 	 */
-	public abstract T @Nullable [] execute(FunctionEvent<?> e, Object[][] params);
+	public abstract T @Nullable [] execute(FunctionEvent<?> event, Object[][] params);
 
 	/**
 	 * Resets the return value of the {@code Function}.

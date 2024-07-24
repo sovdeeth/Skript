@@ -40,7 +40,7 @@ public abstract class JavaFunction<T> extends Function<T> {
 	}
 	
 	@Override
-	public abstract T @Nullable [] execute(FunctionEvent<?> e, Object[][] params);
+	public abstract T @Nullable [] execute(FunctionEvent<?> event, Object[][] params);
 
 	private String @Nullable [] description = null;
 	private String @Nullable [] examples = null;

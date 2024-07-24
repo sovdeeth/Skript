@@ -882,7 +882,6 @@ public class SkriptParser {
 	 * @param types The required return type or null if it is not used (e.g. when calling a void function)
 	 * @return The parsed function, or null if the given expression is not a function call or is an invalid function call (check for an error to differentiate these two)
 	 */
-
 	@SuppressWarnings("unchecked")
 	public <T> @Nullable FunctionReference<T> parseFunction(@Nullable Class<? extends T>... types) {
 		if (context != ParseContext.DEFAULT && context != ParseContext.EVENT)

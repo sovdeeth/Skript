@@ -43,7 +43,7 @@ public abstract class SimpleJavaFunction<T> extends JavaFunction<T> {
 	}
 
 	@Override
-	public final T @Nullable [] execute(FunctionEvent<?> e, Object[][] params) {
+	public final T @Nullable [] execute(FunctionEvent<?> event, Object[][] params) {
 		for (Object[] param : params) {
 			if (param == null || param.length == 0 || param[0] == null)
 				return null;
