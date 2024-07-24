@@ -45,7 +45,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
-import org.eclipse.jdt.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import org.skriptlang.skript.lang.arithmetic.Arithmetics;
 import org.skriptlang.skript.lang.arithmetic.OperationInfo;
 import org.skriptlang.skript.lang.arithmetic.Operator;
@@ -74,8 +74,7 @@ public class Variable<T> implements Expression<T> {
 	/**
 	 * Script this variable was created in.
 	 */
-	@Nullable
-	private final Script script;
+	private final @Nullable Script script;
 
 	/**
 	 * The name of this variable, excluding the local variable token, but including the list variable token '::*'.
@@ -88,8 +87,7 @@ public class Variable<T> implements Expression<T> {
 	private final boolean local;
 	private final boolean list;
 
-	@Nullable
-	private final Variable<?> source;
+	private final @Nullable Variable<?> source;
 
 	@SuppressWarnings("unchecked")
 	private Variable(VariableString name, Class<? extends T>[] types, boolean local, boolean list, @Nullable Variable<?> source) {
@@ -173,8 +171,7 @@ public class Variable<T> implements Expression<T> {
 	/**
 	 * Prints errors
 	 */
-	@Nullable
-	public static <T> Variable<T> newInstance(String name, Class<? extends T>[] types) {
+	public static <T> @Nullable Variable<T> newInstance(String name, Class<? extends T>[] types) {
 		name = "" + name.trim();
 		if (!isValidVariableName(name, true, true))
 			return null;
@@ -301,8 +298,7 @@ public class Variable<T> implements Expression<T> {
 	 * Gets the value of this variable as stored in the variables map.
 	 * This method also checks against default variables.
 	 */
-	@Nullable
-	public Object getRaw(Event event) {
+	public @Nullable Object getRaw(Event event) {
 		DefaultVariables data = script == null ? null : script.getData(DefaultVariables.class);
 		if (data != null)
 			data.enterScope();
@@ -332,9 +328,7 @@ public class Variable<T> implements Expression<T> {
 		return null;
 	}
 
-	@Nullable
-	@SuppressWarnings("unchecked")
-	private Object get(Event event) {
+	private @Nullable Object get(Event event) {
 		Object rawValue = getRaw(event);
 		if (!list)
 			return rawValue;
@@ -342,10 +336,12 @@ public class Variable<T> implements Expression<T> {
 			return Array.newInstance(types[0], 0);
 		List<Object> convertedValues = new ArrayList<>();
 		String name = StringUtils.substring(this.name.toString(event), 0, -1);
+		//noinspection unchecked
 		for (Entry<String, ?> variable : ((Map<String, ?>) rawValue).entrySet()) {
 			if (variable.getKey() != null && variable.getValue() != null) {
 				Object value;
 				if (variable.getValue() instanceof Map)
+					//noinspection unchecked
 					value = ((Map<String, ?>) variable.getValue()).get(null);
 				else
 					value = variable.getValue();
@@ -361,8 +357,7 @@ public class Variable<T> implements Expression<T> {
 	 * because the player object inside the variable will be a (kinda) dead variable
 	 * as a new player object has been created by the server.
 	 */
-	@Nullable
-	public static Object convertIfOldPlayer(String key, boolean local, @Nullable Event event, @Nullable Object object) {
+	@Nullable Object convertIfOldPlayer(String key, Event event, @Nullable Object object) {
 		if (SkriptConfig.enablePlayerVariableFix.value() && object instanceof Player) {
 			Player oldPlayer = (Player) object;
 			if (!oldPlayer.isValid() && oldPlayer.isOnline()) {
@@ -381,9 +376,7 @@ public class Variable<T> implements Expression<T> {
 	}
 
 	@Override
-	@Nullable
-	@SuppressWarnings("unchecked")
-	public Iterator<T> iterator(Event event) {
+	public @Nullable Iterator<T> iterator(Event event) {
 		if (!list) {
 			T value = getSingle(event);
 			return value != null ? new SingleItemIterator<>(value) : null;
@@ -394,23 +387,22 @@ public class Variable<T> implements Expression<T> {
 			return new EmptyIterator<>();
 		assert value instanceof TreeMap;
 		// temporary list to prevent CMEs
+		//noinspection unchecked
 		Iterator<String> keys = new ArrayList<>(((Map<String, Object>) value).keySet()).iterator();
-		return new Iterator<T>() {
-			@Nullable
-			private String key;
-			@Nullable
-			private T next = null;
+		return new Iterator<>() {
+			private @Nullable T next = null;
 
 			@Override
-			@SuppressWarnings({"unchecked"})
 			public boolean hasNext() {
 				if (next != null)
 					return true;
 				while (keys.hasNext()) {
-					key = keys.next();
+					@Nullable String key = keys.next();
 					if (key != null) {
 						next = Converters.convert(Variables.getVariable(name + key, event, local), types);
-						next = (T) convertIfOldPlayer(name + key, local, event, next);
+
+						//noinspection unchecked
+						next = (T) convertIfOldPlayer(name + key, event, next);
 						if (next != null && !(next instanceof TreeMap))
 							return true;
 					}
@@ -436,8 +428,7 @@ public class Variable<T> implements Expression<T> {
 		};
 	}
 
-	@Nullable
-	private T getConverted(Event event) {
+	private @Nullable T getConverted(Event event) {
 		assert !list;
 		return Converters.convert(get(event), types);
 	}
@@ -459,7 +450,7 @@ public class Variable<T> implements Expression<T> {
 	}
 
 	@Override
-	public Class<?>[] acceptChange(ChangeMode mode) {
+	public Class<?> @Nullable [] acceptChange(ChangeMode mode) {
 		if (!list && mode == ChangeMode.SET)
 			return CollectionUtils.array(Object.class);
 		return CollectionUtils.array(Object[].class);
@@ -467,7 +458,7 @@ public class Variable<T> implements Expression<T> {
 
 	@Override
 	@SuppressWarnings({"unchecked", "rawtypes"})
-	public void change(Event event, @Nullable Object[] delta, ChangeMode mode) throws UnsupportedOperationException {
+	public void change(Event event, Object @Nullable [] delta, ChangeMode mode) throws UnsupportedOperationException {
 		switch (mode) {
 			case DELETE:
 				if (list) {
@@ -624,8 +615,7 @@ public class Variable<T> implements Expression<T> {
 	}
 
 	@Override
-	@Nullable
-	public T getSingle(Event event) {
+	public @Nullable T getSingle(Event event) {
 		if (list)
 			throw new SkriptAPIException("Invalid call to getSingle");
 		return getConverted(event);
