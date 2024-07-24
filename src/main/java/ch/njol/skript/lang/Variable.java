@@ -357,7 +357,7 @@ public class Variable<T> implements Expression<T> {
 	 * because the player object inside the variable will be a (kinda) dead variable
 	 * as a new player object has been created by the server.
 	 */
-	@Nullable Object convertIfOldPlayer(String key, boolean local, Event event, @Nullable Object object) {
+	public static @Nullable Object convertIfOldPlayer(String key, boolean local, Event event, @Nullable Object object) {
 		if (SkriptConfig.enablePlayerVariableFix.value() && object instanceof Player) {
 			Player oldPlayer = (Player) object;
 			if (!oldPlayer.isValid() && oldPlayer.isOnline()) {
@@ -402,7 +402,7 @@ public class Variable<T> implements Expression<T> {
 						next = Converters.convert(Variables.getVariable(name + key, event, local), types);
 
 						//noinspection unchecked
-						next = (T) convertIfOldPlayer(name + key, event, next);
+						next = (T) convertIfOldPlayer(name + key, local, event, next);
 						if (next != null && !(next instanceof TreeMap))
 							return true;
 					}
