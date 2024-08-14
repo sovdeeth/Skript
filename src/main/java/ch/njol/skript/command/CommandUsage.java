@@ -49,7 +49,7 @@ public class CommandUsage {
 			// Manually escape quotes. This is not a good solution, as it doesn't handle many other issues, like % in
 			// commands, but in lieu of re-writing the argument parser and command logic completely, I believe this is
 			// a decent stop-gap measure for using " in commands.
-			defaultUsage = defaultUsage.replaceAll("\"", "\"\"");
+			defaultUsage = VariableString.quote(defaultUsage);
 			usage = VariableString.newInstance(defaultUsage);
 			assert usage != null;
 		}
