@@ -21,7 +21,6 @@ import ch.njol.skript.variables.Variables;
 import ch.njol.util.Kleenean;
 import ch.njol.util.Pair;
 import ch.njol.util.StringUtils;
-import com.google.common.collect.Iterables;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
@@ -83,9 +82,7 @@ public class SecFilter extends Section implements InputSource {
 
 		// Code pulled from SecConditional
 		ParserInstance parser = getParser();
-		// we have to get the size of the iterator here as SectionNode#size includes empty/void nodes
-		int nonEmptyNodeCount = Iterables.size(sectionNode);
-		if (nonEmptyNodeCount < 1) {
+		if (sectionNode.isEmpty()) {
 			Skript.error("filter sections must contain at least one condition");
 			return false;
 		}
