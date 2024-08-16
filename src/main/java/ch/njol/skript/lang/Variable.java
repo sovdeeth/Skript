@@ -357,13 +357,13 @@ public class Variable<T> implements Expression<T> {
 	 * because the player object inside the variable will be a (kinda) dead variable
 	 * as a new player object has been created by the server.
 	 */
-	public static @Nullable Object convertIfOldPlayer(String key, boolean local, Event event, @Nullable Object object) {
-		if (SkriptConfig.enablePlayerVariableFix.value() && object instanceof Player) {
-			Player oldPlayer = (Player) object;
+	public static <T> @Nullable T convertIfOldPlayer(String key, boolean local, Event event, @Nullable T object) {
+		if (SkriptConfig.enablePlayerVariableFix.value() && object instanceof Player oldPlayer) {
 			if (!oldPlayer.isValid() && oldPlayer.isOnline()) {
 				Player newPlayer = Bukkit.getPlayer(oldPlayer.getUniqueId());
 				Variables.setVariable(key, newPlayer, event, local);
-				return newPlayer;
+				//noinspection unchecked
+				return (T) newPlayer;
 			}
 		}
 		return object;
