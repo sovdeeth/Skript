@@ -532,7 +532,9 @@ public class Variables {
 
 			@Override
 			public void remove() {
-				throw new UnsupportedOperationException();
+				if (key == null)
+					throw new IllegalStateException();
+				Variables.deleteVariable(key, event, local);
 			}
 		};
 	}

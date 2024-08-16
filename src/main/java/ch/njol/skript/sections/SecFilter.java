@@ -126,7 +126,7 @@ public class SecFilter extends Section implements InputSource {
 		var rawVariable = ((Map<String, Object>) unfilteredObjects.getRaw(event));
 		if (rawVariable == null)
 			return getNext();
-		var initialSize = rawVariable.size();
+		int initialSize = rawVariable.size();
 
 		// we save both because we don't yet know which will be cheaper to use.
 		List<Pair<String, Object>> toKeep = new ArrayList<>();
@@ -134,28 +134,26 @@ public class SecFilter extends Section implements InputSource {
 
 		var variableIterator = Variables.getVariableIterator(varName, local, event);
 		var stream = StreamSupport.stream(Spliterators.spliteratorUnknownSize(variableIterator, Spliterator.ORDERED), false);
-		if (!conditions.isEmpty()) {
-			if (isAny) {
-				stream.forEach(pair -> {
-					currentValue = pair.getValue();
-					currentIndex = pair.getKey();
-					if (conditions.stream().anyMatch(c -> c.check(event))) {
-						toKeep.add(pair);
-					} else {
-						toRemove.add(pair.getKey());
-					}
-				});
-			} else {
-				stream.forEach(pair -> {
-					currentValue = pair.getValue();
-					currentIndex = pair.getKey();
-					if (conditions.stream().allMatch(c -> c.check(event))) {
-						toKeep.add(pair);
-					} else {
-						toRemove.add(pair.getKey());
-					}
-				});
-			}
+		if (isAny) {
+			stream.forEach(pair -> {
+				currentValue = pair.getValue();
+				currentIndex = pair.getKey();
+				if (conditions.stream().anyMatch(c -> c.check(event))) {
+					toKeep.add(pair);
+				} else {
+					toRemove.add(pair.getKey());
+				}
+			});
+		} else {
+			stream.forEach(pair -> {
+				currentValue = pair.getValue();
+				currentIndex = pair.getKey();
+				if (conditions.stream().allMatch(c -> c.check(event))) {
+					toKeep.add(pair);
+				} else {
+					toRemove.add(pair.getKey());
+				}
+			});
 		}
 
 		// optimize by either removing or clearing + adding depending on which is fewer operations
