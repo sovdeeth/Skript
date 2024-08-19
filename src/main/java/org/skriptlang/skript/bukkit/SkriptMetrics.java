@@ -119,16 +119,9 @@ public class SkriptMetrics {
 		));
 
 		metrics.addCustomChart(new DrilldownPie("drilldownDateFormat", () -> {
-			SimpleDateFormat dateFormat = (SimpleDateFormat) SkriptConfig.dateFormat.value();
-			boolean isDefault = dateFormat.equals(SkriptConfig.dateFormat.defaultValue());
-
-			Map<String, Integer> valueEntry = new HashMap<>(1);
-			valueEntry.put(dateFormat.toPattern(),  1);
-
-			Map<String, Map<String, Integer>> isDefaultEntry = new HashMap<>(1);
-			isDefaultEntry.put(isDefault ? "default" : "other", valueEntry);
-
-			return isDefaultEntry;
+			String value = ((SimpleDateFormat) SkriptConfig.dateFormat.value()).toPattern();
+			String defaultValue = ((SimpleDateFormat) SkriptConfig.dateFormat.defaultValue()).toPattern();
+			return isDefaultMap(value, defaultValue, "default");
 		}));
 
 		metrics.addCustomChart(new DrilldownPie("drilldownLogVerbosity", () -> {
