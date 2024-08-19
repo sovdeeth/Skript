@@ -137,9 +137,13 @@ public class SkriptMetrics {
 			SkriptConfig.listenCancelledByDefault.value().toString()
 		));
 
-		metrics.addCustomChart(new DrilldownPie("drilldownNumberAccuracy", () -> isDefaultMap(SkriptConfig.numberAccuracy)));
+		metrics.addCustomChart(new DrilldownPie("drilldownNumberAccuracy", () ->
+			isDefaultMap(SkriptConfig.numberAccuracy)
+		));
 
-		metrics.addCustomChart(new DrilldownPie("drilldownMaxTargetDistance", () -> isDefaultMap(SkriptConfig.maxTargetBlockDistance)));
+		metrics.addCustomChart(new DrilldownPie("drilldownMaxTargetDistance", () ->
+			isDefaultMap(SkriptConfig.maxTargetBlockDistance)
+		));
 
 		metrics.addCustomChart(new SimplePie("caseSensitiveFunctions", () ->
 			SkriptConfig.caseSensitive.value().toString()
@@ -183,7 +187,9 @@ public class SkriptMetrics {
 			SkriptConfig.keepLastUsageDates.value().toString()
 		));
 
-		metrics.addCustomChart(new DrilldownPie("drilldownParsetimeWarningThreshold", () -> isDefaultMap(SkriptConfig.longParseTimeWarningThreshold, "disabled")));
+		metrics.addCustomChart(new DrilldownPie("drilldownParsetimeWarningThreshold", () ->
+			isDefaultMap(SkriptConfig.longParseTimeWarningThreshold, "disabled")
+		));
 	}
 
 	/**
