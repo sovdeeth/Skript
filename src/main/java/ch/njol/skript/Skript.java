@@ -59,6 +59,7 @@ import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.log.Verbosity;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.registrations.EventValues;
+import ch.njol.skript.registrations.Feature;
 import ch.njol.skript.test.runner.EffObjectives;
 import ch.njol.skript.test.runner.SkriptJUnitTest;
 import ch.njol.skript.test.runner.SkriptTestEvent;
@@ -88,7 +89,6 @@ import ch.njol.util.coll.iterator.EnumerationIterable;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import org.bstats.bukkit.Metrics;
-import org.bstats.charts.SimplePie;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -106,18 +106,18 @@ import org.bukkit.event.server.ServerCommandEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.eclipse.jdt.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
 import org.junit.After;
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Result;
+import org.skriptlang.skript.SkriptMetrics;
 import org.skriptlang.skript.lang.comparator.Comparator;
 import org.skriptlang.skript.lang.comparator.Comparators;
 import org.skriptlang.skript.lang.converter.Converter;
 import org.skriptlang.skript.lang.converter.Converters;
 import org.skriptlang.skript.lang.entry.EntryValidator;
 import org.skriptlang.skript.lang.experiment.ExperimentRegistry;
-import ch.njol.skript.registrations.Feature;
 import org.skriptlang.skript.lang.script.Script;
 import org.skriptlang.skript.lang.structure.Structure;
 import org.skriptlang.skript.lang.structure.StructureInfo;
@@ -790,57 +790,8 @@ public final class Skript extends JavaPlugin implements Listener {
 					}, 100);
 				}
 
-				// Enable metrics and register custom charts
-				Metrics metrics = new Metrics(Skript.this, 722); // 722 is our bStats plugin ID
-				metrics.addCustomChart(new SimplePie("pluginLanguage", Language::getName));
-				metrics.addCustomChart(new SimplePie("effectCommands", () ->
-					SkriptConfig.enableEffectCommands.value().toString()
-				));
-				metrics.addCustomChart(new SimplePie("uuidsWithPlayers", () ->
-					SkriptConfig.usePlayerUUIDsInVariableNames.value().toString()
-				));
-				metrics.addCustomChart(new SimplePie("playerVariableFix", () ->
-					SkriptConfig.enablePlayerVariableFix.value().toString()
-				));
-				metrics.addCustomChart(new SimplePie("logVerbosity", () ->
-					SkriptConfig.verbosity.value().name().toLowerCase(Locale.ENGLISH).replace('_', ' ')
-				));
-				metrics.addCustomChart(new SimplePie("pluginPriority", () ->
-					SkriptConfig.defaultEventPriority.value().name().toLowerCase(Locale.ENGLISH).replace('_', ' ')
-				));
-				metrics.addCustomChart(new SimplePie("logPlayerCommands", () ->
-					String.valueOf((SkriptConfig.logEffectCommands.value() || SkriptConfig.logPlayerCommands.value()))
-				));
-				metrics.addCustomChart(new SimplePie("maxTargetDistance", () ->
-					SkriptConfig.maxTargetBlockDistance.value().toString()
-				));
-				metrics.addCustomChart(new SimplePie("softApiExceptions", () ->
-					SkriptConfig.apiSoftExceptions.value().toString()
-				));
-				metrics.addCustomChart(new SimplePie("timingsStatus", () -> {
-					if (!Skript.classExists("co.aikar.timings.Timings"))
-						return "unsupported";
-					return SkriptConfig.enableTimings.value().toString();
-				}));
-				metrics.addCustomChart(new SimplePie("parseLinks", () ->
-					ChatMessages.linkParseMode.name().toLowerCase(Locale.ENGLISH)
-				));
-				metrics.addCustomChart(new SimplePie("colorResetCodes", () ->
-					SkriptConfig.colorResetCodes.value().toString()
-				));
-				metrics.addCustomChart(new SimplePie("functionsWithNulls", () ->
-					SkriptConfig.executeFunctionsWithMissingParams.value().toString()
-				));
-				metrics.addCustomChart(new SimplePie("buildFlavor", () -> {
-					if (updater != null)
-						return updater.getCurrentRelease().flavor;
-					return "unknown";
-				}));
-				metrics.addCustomChart(new SimplePie("updateCheckerEnabled", () ->
-					SkriptConfig.checkForNewVersion.value().toString()
-				));
-				metrics.addCustomChart(new SimplePie("releaseChannel", SkriptConfig.releaseChannel::value));
-				Skript.metrics = metrics;
+				Skript.metrics = new Metrics(Skript.getInstance(), 722); // 722 is our bStats plugin ID
+				SkriptMetrics.setupMetrics(Skript.metrics);
 
 				/*
 				 * Start loading scripts

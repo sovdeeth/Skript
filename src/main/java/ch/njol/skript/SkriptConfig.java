@@ -79,13 +79,13 @@ public class SkriptConfig {
 				}
 			});
 	
-	static final Option<Boolean> checkForNewVersion = new Option<>("check for new version", false)
+	public static final Option<Boolean> checkForNewVersion = new Option<>("check for new version", false)
 			.setter(t -> {
 				SkriptUpdater updater = Skript.getInstance().getUpdater();
 				if (updater != null)
 					updater.setEnabled(t);
 			});
-	static final Option<Timespan> updateCheckInterval = new Option<>("update check interval", new Timespan(12 * 60 * 60 * 1000))
+	public static final Option<Timespan> updateCheckInterval = new Option<>("update check interval", new Timespan(12 * 60 * 60 * 1000))
 			.setter(t -> {
 				SkriptUpdater updater = Skript.getInstance().getUpdater();
 				if (updater != null)
@@ -93,7 +93,7 @@ public class SkriptConfig {
 			});
 	static final Option<Integer> updaterDownloadTries = new Option<>("updater download tries", 7)
 			.optional(true);
-	static final Option<String> releaseChannel = new Option<>("release channel", "none")
+	public static final Option<String> releaseChannel = new Option<>("release channel", "none")
 			.setter(t -> {
 				ReleaseChannel channel;
 				switch (t) {
@@ -139,8 +139,8 @@ public class SkriptConfig {
 	public static final Option<Boolean> enablePlayerVariableFix = new Option<>("player variable fix", true);
 	
 	@SuppressWarnings("null")
-	private static final DateFormat shortDateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
-	private static final Option<DateFormat> dateFormat = new Option<>("date format", shortDateFormat, s -> {
+	public static final DateFormat shortDateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
+	public static final Option<DateFormat> dateFormat = new Option<>("date format", shortDateFormat, s -> {
 		try {
 			if (s.equalsIgnoreCase("default"))
 				return null;
@@ -158,7 +158,7 @@ public class SkriptConfig {
 		}
 	}
 	
-	static final Option<Verbosity> verbosity = new Option<>("verbosity", Verbosity.NORMAL, new EnumParser<>(Verbosity.class, "verbosity"))
+	public static final Option<Verbosity> verbosity = new Option<>("verbosity", Verbosity.NORMAL, new EnumParser<>(Verbosity.class, "verbosity"))
 			.setter(SkriptLogger::setVerbosity);
 	
 	public static final Option<EventPriority> defaultEventPriority = new Option<>("plugin priority", EventPriority.NORMAL, s -> {
