@@ -111,7 +111,7 @@ import org.jetbrains.annotations.UnknownNullability;
 import org.junit.After;
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Result;
-import org.skriptlang.skript.SkriptMetrics;
+import org.skriptlang.skript.bukkit.SkriptMetrics;
 import org.skriptlang.skript.lang.comparator.Comparator;
 import org.skriptlang.skript.lang.comparator.Comparators;
 import org.skriptlang.skript.lang.converter.Converter;

@@ -1,4 +1,4 @@
-package org.skriptlang.skript;
+package org.skriptlang.skript.bukkit;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptConfig;
