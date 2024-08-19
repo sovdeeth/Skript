@@ -139,7 +139,7 @@ public class SkriptConfig {
 	public static final Option<Boolean> enablePlayerVariableFix = new Option<>("player variable fix", true);
 	
 	@SuppressWarnings("null")
-	public static final DateFormat shortDateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
+	private static final DateFormat shortDateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
 	public static final Option<DateFormat> dateFormat = new Option<>("date format", shortDateFormat, s -> {
 		try {
 			if (s.equalsIgnoreCase("default"))

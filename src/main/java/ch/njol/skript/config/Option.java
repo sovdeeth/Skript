@@ -18,17 +18,16 @@
  */
 package ch.njol.skript.config;
 
-import java.util.Locale;
-
-import org.eclipse.jdt.annotation.Nullable;
-
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.ClassInfo;
-import org.skriptlang.skript.lang.converter.Converter;
 import ch.njol.skript.classes.Parser;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.util.Setter;
+import org.eclipse.jdt.annotation.Nullable;
+import org.skriptlang.skript.lang.converter.Converter;
+
+import java.util.Locale;
 
 /**
  * @author Peter Güttinger
@@ -118,6 +117,10 @@ public class Option<T> {
 	
 	public final T value() {
 		return parsedValue;
+	}
+
+	public final T defaultValue() {
+		return defaultValue;
 	}
 	
 	public final boolean isOptional() {

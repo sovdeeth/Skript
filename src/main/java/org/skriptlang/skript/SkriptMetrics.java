@@ -2,9 +2,9 @@ package org.skriptlang.skript;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptConfig;
+import ch.njol.skript.config.Option;
 import ch.njol.skript.localization.Language;
 import ch.njol.skript.update.Updater;
-import ch.njol.skript.util.Timespan;
 import ch.njol.skript.util.Version;
 import ch.njol.skript.util.chat.ChatMessages;
 import org.bstats.bukkit.Metrics;
@@ -75,7 +75,7 @@ public class SkriptMetrics {
 
 		metrics.addCustomChart(new DrilldownPie("drilldownPluginLanguage", () -> {
 			String lang = Language.getName();
-			return isDefaultMap(lang, "english");
+			return isDefaultMap(lang, SkriptConfig.language.defaultValue());
 		}));
 
 		metrics.addCustomChart(new DrilldownPie("drilldownUpdateChecker", () -> {
@@ -120,7 +120,7 @@ public class SkriptMetrics {
 
 		metrics.addCustomChart(new DrilldownPie("drilldownDateFormat", () -> {
 			SimpleDateFormat dateFormat = (SimpleDateFormat) SkriptConfig.dateFormat.value();
-			boolean isDefault = dateFormat.equals(SkriptConfig.shortDateFormat);
+			boolean isDefault = dateFormat.equals(SkriptConfig.dateFormat.defaultValue());
 
 			Map<String, Integer> valueEntry = new HashMap<>(1);
 			valueEntry.put(dateFormat.toPattern(),  1);
@@ -133,26 +133,20 @@ public class SkriptMetrics {
 
 		metrics.addCustomChart(new DrilldownPie("drilldownLogVerbosity", () -> {
 			String verbosity = SkriptConfig.verbosity.value().name().toLowerCase(Locale.ENGLISH).replace('_', ' ');
-			return isDefaultMap(verbosity, "normal");
+			return isDefaultMap(verbosity, SkriptConfig.verbosity.defaultValue());
 		}));
 
 		metrics.addCustomChart(new DrilldownPie("drilldownPluginPriority", () -> {
 			String priority = SkriptConfig.defaultEventPriority.value().name().toLowerCase(Locale.ENGLISH).replace('_', ' ');
-			return isDefaultMap(priority, "high");
+			return isDefaultMap(priority, SkriptConfig.defaultEventPriority.defaultValue());
 		}));
 		metrics.addCustomChart(new SimplePie("cancelledByDefault", () ->
 			SkriptConfig.listenCancelledByDefault.value().toString()
 		));
 
-		metrics.addCustomChart(new DrilldownPie("drilldownNumberAccuracy", () -> {
-			int numAcc = SkriptConfig.numberAccuracy.value();
-			return isDefaultMap(numAcc, 2);
-		}));
+		metrics.addCustomChart(new DrilldownPie("drilldownNumberAccuracy", () -> isDefaultMap(SkriptConfig.numberAccuracy)));
 
-		metrics.addCustomChart(new DrilldownPie("drilldownMaxTargetDistance", () -> {
-			int numAcc = SkriptConfig.maxTargetBlockDistance.value();
-			return isDefaultMap(numAcc, 100);
-		}));
+		metrics.addCustomChart(new DrilldownPie("drilldownMaxTargetDistance", () -> isDefaultMap(SkriptConfig.maxTargetBlockDistance)));
 
 		metrics.addCustomChart(new SimplePie("caseSensitiveFunctions", () ->
 			SkriptConfig.caseSensitive.value().toString()
@@ -196,10 +190,7 @@ public class SkriptMetrics {
 			SkriptConfig.keepLastUsageDates.value().toString()
 		));
 
-		metrics.addCustomChart(new DrilldownPie("drilldownParsetimeWarningThreshold", () -> {
-			Timespan timespan = SkriptConfig.longParseTimeWarningThreshold.value();
-			return isDefaultMap(timespan, new Timespan(0), "disabled");
-		}));
+		metrics.addCustomChart(new DrilldownPie("drilldownParsetimeWarningThreshold", () -> isDefaultMap(SkriptConfig.longParseTimeWarningThreshold, "disabled")));
 	}
 
 	/**
@@ -230,31 +221,55 @@ public class SkriptMetrics {
 	 * Provides a Map for use with a {@link DrilldownPie} chart. Meant to be used in cases where a single default option has majority share, with many or custom alternative options.
 	 * Creates a chart where the default option is presented against "other", then clicking on "other" shows the alternative options.
 	 * @param value The option the user chose.
-	 * @param default_value The default option for this chart.
+	 * @param defaultValue The default option for this chart.
 	 * @return A Map that can be returned directly to a {@link DrilldownPie}.
-	 * @param <T> The type of the option's value.
+	 * @param <T> The type of the option.
 	 */
-	private static <T> Map<String,Map<String, Integer>> isDefaultMap(@Nullable T value, T default_value) {
-		return isDefaultMap(value, default_value ,default_value.toString());
+	private static <T> Map<String,Map<String, Integer>> isDefaultMap(@Nullable T value, T defaultValue) {
+		return isDefaultMap(value, defaultValue ,defaultValue.toString());
 	}
 
 	/**
 	 * Provides a Map for use with a {@link DrilldownPie} chart. Meant to be used in cases where a single default option has majority share, with many or custom alternative options.
 	 * Creates a chart where the default option is presented against "other", then clicking on "other" shows the alternative options.
 	 * @param value The option the user chose.
-	 * @param default_value The default option for this chart.
-	 * @param default_label The label to use as the default option for this chart
+	 * @param defaultValue The default option for this chart.
+	 * @param defaultLabel The label to use as the default option for this chart
 	 * @return A Map that can be returned directly to a {@link DrilldownPie}.
-	 * @param <T> The type of the option's value.
+	 * @param <T> The type of the option.
 	 */
-	private static <T> Map<String,Map<String, Integer>> isDefaultMap(@Nullable T value, @Nullable T default_value, String default_label) {
+	private static <T> Map<String,Map<String, Integer>> isDefaultMap(@Nullable T value, @Nullable T defaultValue, String defaultLabel) {
 		Map<String, Integer> valueEntry = new HashMap<>(1);
 		valueEntry.put(String.valueOf(value), 1);
 
 		Map<String, Map<String, Integer>> isDefault = new HashMap<>(1);
-		isDefault.put(Objects.equals(value, default_value) ? default_label : "other", valueEntry);
+		isDefault.put(Objects.equals(value, defaultValue) ? defaultLabel : "other", valueEntry);
 
 		return isDefault;
+	}
+
+	/**
+	 * Provides a Map for use with a {@link DrilldownPie} chart. Meant to be used in cases where a single default option has majority share, with many or custom alternative options.
+	 * Creates a chart where the default option is presented against "other", then clicking on "other" shows the alternative options.
+	 * @param option The {@link Option} from which to pull the current and default values
+	 * @return A Map that can be returned directly to a {@link DrilldownPie}.
+	 * @param <T> The type of the option.
+	 */
+	private static <T> Map<String,Map<String, Integer>> isDefaultMap(Option<T> option) {
+		return isDefaultMap(option.value(), option.defaultValue(), option.defaultValue().toString());
+
+	}
+
+	/**
+	 * Provides a Map for use with a {@link DrilldownPie} chart. Meant to be used in cases where a single default option has majority share, with many or custom alternative options.
+	 * Creates a chart where the default option is presented against "other", then clicking on "other" shows the alternative options.
+	 * @param option The {@link Option} from which to pull the current and default values
+	 * @param defaultLabel The label to use as the default option for this chart
+	 * @return A Map that can be returned directly to a {@link DrilldownPie}.
+	 * @param <T> The type of the option.
+	 */
+	private static <T> Map<String,Map<String, Integer>> isDefaultMap(Option<T> option, String defaultLabel) {
+		return isDefaultMap(option.value(), option.defaultValue(), defaultLabel);
 	}
 
 }
