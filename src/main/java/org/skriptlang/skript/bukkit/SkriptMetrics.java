@@ -7,13 +7,14 @@ import ch.njol.skript.localization.Language;
 import ch.njol.skript.update.Updater;
 import ch.njol.skript.util.Version;
 import ch.njol.skript.util.chat.ChatMessages;
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Table;
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.DrilldownPie;
 import org.bstats.charts.SimplePie;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.SimpleDateFormat;
-import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
@@ -36,30 +37,24 @@ public class SkriptMetrics {
 		// add custom version charts for easier reading:
 		metrics.addCustomChart(new DrilldownPie("drilldownPluginVersion", () -> {
 			Version version = Skript.getVersion();
-			//noinspection DuplicatedCode
-			String featureVersionString = version.getMajor() + "." + version.getMinor();
-
-			Map<String, Integer> preciseVersionEntry = new HashMap<>(1);
-			preciseVersionEntry.put(version.toString(), 1);
-
-			Map<String, Map<String, Integer>> featureVersionEntry = new HashMap<>(1);
-			featureVersionEntry.put(featureVersionString, preciseVersionEntry);
-
-			return featureVersionEntry;
+			Table<String, String, Integer> table = HashBasedTable.create(1,1);
+			table.put(
+				version.getMajor() + "." + version.getMinor(), // upper label
+				version.toString(), // lower label
+				1 // weight
+			);
+			return table.rowMap();
 		}));
 
 		metrics.addCustomChart(new DrilldownPie("drilldownMinecraftVersion", () -> {
 			Version version = Skript.getMinecraftVersion();
-			//noinspection DuplicatedCode
-			String majorVersionString = version.getMajor() + "." + version.getMinor();
-
-			Map<String, Integer> preciseVersionEntry = new HashMap<>(1);
-			preciseVersionEntry.put(version.toString(), 1);
-
-			Map<String, Map<String, Integer>> majorVersionEntry = new HashMap<>(1);
-			majorVersionEntry.put(majorVersionString, preciseVersionEntry);
-
-			return majorVersionEntry;
+			Table<String, String, Integer> table = HashBasedTable.create(1,1);
+			table.put(
+				version.getMajor() + "." + version.getMinor(), // upper label
+				version.toString(), // lower label
+				1 // weight
+			);
+			return table.rowMap();
 		}));
 
 		metrics.addCustomChart(new SimplePie("buildFlavor", () -> {
@@ -79,26 +74,25 @@ public class SkriptMetrics {
 		}));
 
 		metrics.addCustomChart(new DrilldownPie("drilldownUpdateChecker", () -> {
-			Map<String, Integer> charEntry = new HashMap<>(1);
-			charEntry.put(SkriptConfig.updateCheckInterval.value().toString(), 1);
-
-			Map<String, Map<String, Integer>> checkingEntry = new HashMap<>(1);
-			checkingEntry.put(SkriptConfig.checkForNewVersion.value().toString(), charEntry);
-
-			return checkingEntry;
+			Table<String, String, Integer> table = HashBasedTable.create(1,1);
+			table.put(
+				SkriptConfig.checkForNewVersion.value().toString(), // upper label
+				SkriptConfig.updateCheckInterval.value().toString(), // lower label
+				1 // weight
+			);
+			return table.rowMap();
 		}));
 		metrics.addCustomChart(new SimplePie("releaseChannel", SkriptConfig.releaseChannel::value));
 
 		// effect commands
 		metrics.addCustomChart(new DrilldownPie("drilldownEffectCommands", () -> {
-			Map<String, Integer> charEntry = new HashMap<>(1);
-			charEntry.put(SkriptConfig.effectCommandToken.value(), 1);
-
-			Map<String, Map<String, Integer>> hasEntry = new HashMap<>(1);
-			hasEntry.put(SkriptConfig.enableEffectCommands.value().toString(), charEntry);
-
-			return hasEntry;
-
+			Table<String, String, Integer> table = HashBasedTable.create(1,1);
+			table.put(
+				SkriptConfig.enableEffectCommands.value().toString(), // upper label
+				SkriptConfig.effectCommandToken.value(), // lower label
+				1 // weight
+			);
+			return table.rowMap();
 		}));
 		metrics.addCustomChart(new SimplePie("effectCommandsOps", () ->
 			SkriptConfig.allowOpsToUseEffectCommands.value().toString()
@@ -238,13 +232,13 @@ public class SkriptMetrics {
 	 * @param <T> The type of the option.
 	 */
 	private static <T> Map<String,Map<String, Integer>> isDefaultMap(@Nullable T value, @Nullable T defaultValue, String defaultLabel) {
-		Map<String, Integer> valueEntry = new HashMap<>(1);
-		valueEntry.put(String.valueOf(value), 1);
-
-		Map<String, Map<String, Integer>> isDefault = new HashMap<>(1);
-		isDefault.put(Objects.equals(value, defaultValue) ? defaultLabel : "other", valueEntry);
-
-		return isDefault;
+		Table<String, String, Integer> table = HashBasedTable.create(1,1);
+		table.put(
+			Objects.equals(value, defaultValue) ? defaultLabel : "other", // upper label
+			String.valueOf(value), // lower label
+			1 // weight
+		);
+		return table.rowMap();
 	}
 
 	/**
