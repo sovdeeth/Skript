@@ -188,4 +188,5 @@ public class SecFilter extends Section implements InputSource {
 	public String toString(@Nullable Event event, boolean debug) {
 		return "filter " + unfilteredObjects.toString(event, debug) + " to match " + (isAny ? "any" : "all");
 	}
+
 }
