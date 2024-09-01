@@ -1,21 +1,3 @@
-/**
- *   This file is part of Skript.
- *
- *  Skript is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  Skript is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
- *
- * Copyright Peter Güttinger, SkriptLang team and contributors
- */
 package ch.njol.skript.effects;
 
 import ch.njol.skript.Skript;
@@ -268,16 +250,6 @@ public class EffPlaySound extends Effect {
 
 		static SoundReceiver of(Player player) { return new PlayerSoundReciever(player); }
 		static SoundReceiver of(World world) { return new WorldSoundReciever(world); }
-
-		static net.kyori.adventure.sound.Sound getAdventureSound(NamespacedKey key, SoundCategory category, float volume, float pitch, OptionalLong seed) {
-			return net.kyori.adventure.sound.Sound.sound()
-				.source(category)
-				.volume(volume)
-				.pitch(pitch)
-				.seed(seed)
-				.type(key)
-				.build();
-		}
 	}
 
 	// Player adapter pattern
@@ -293,7 +265,13 @@ public class EffPlaySound extends Effect {
 			//noinspection DuplicatedCode
 			if (ADVENTURE_API) {
 				player.playSound(
-					SoundReceiver.getAdventureSound(sound, category, volume, pitch, seed),
+					net.kyori.adventure.sound.Sound.sound()
+						.source(category)
+						.volume(volume)
+						.pitch(pitch)
+						.seed(seed)
+						.type(sound)
+						.build(),
 					location.x(),
 					location.y(),
 					location.z()
@@ -326,7 +304,16 @@ public class EffPlaySound extends Effect {
 		public void playSound(Entity entity, NamespacedKey sound, SoundCategory category, float volume, float pitch, OptionalLong seed) {
 			//noinspection DuplicatedCode
 			if (ADVENTURE_API) {
-				player.playSound(SoundReceiver.getAdventureSound(sound, category, volume, pitch, seed), entity);
+				player.playSound(
+					net.kyori.adventure.sound.Sound.sound()
+						.source(category)
+						.volume(volume)
+						.pitch(pitch)
+						.seed(seed)
+						.type(sound)
+						.build(),
+					entity
+				);
 			} else if (!SPIGOT_SOUND_SEED || seed.isEmpty()) {
 				this.playSound(entity, sound.getKey(), category, volume, pitch);
 			} else {
@@ -348,7 +335,13 @@ public class EffPlaySound extends Effect {
 			//noinspection DuplicatedCode
 			if (ADVENTURE_API) {
 				world.playSound(
-					SoundReceiver.getAdventureSound(sound, category, volume, pitch, seed),
+					net.kyori.adventure.sound.Sound.sound()
+						.source(category)
+						.volume(volume)
+						.pitch(pitch)
+						.seed(seed)
+						.type(sound)
+						.build(),
 					location.x(),
 					location.y(),
 					location.z()
@@ -381,7 +374,16 @@ public class EffPlaySound extends Effect {
 		public void playSound(Entity entity, NamespacedKey sound, SoundCategory category, float volume, float pitch, OptionalLong seed) {
 			//noinspection DuplicatedCode
 			if (ADVENTURE_API) {
-				world.playSound(SoundReceiver.getAdventureSound(sound, category, volume, pitch, seed), entity);
+				world.playSound(
+					net.kyori.adventure.sound.Sound.sound()
+						.source(category)
+						.volume(volume)
+						.pitch(pitch)
+						.seed(seed)
+						.type(sound)
+						.build(),
+					entity
+				);
 			} else if (!SPIGOT_SOUND_SEED || seed.isEmpty()) {
 				this.playSound(entity, sound.getKey(), category, volume, pitch);
 			} else {
