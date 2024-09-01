@@ -120,12 +120,14 @@ public class SkriptMetrics {
 
 		metrics.addCustomChart(new DrilldownPie("drilldownLogVerbosity", () -> {
 			String verbosity = SkriptConfig.verbosity.value().name().toLowerCase(Locale.ENGLISH).replace('_', ' ');
-			return isDefaultMap(verbosity, SkriptConfig.verbosity.defaultValue());
+			String defaultValue = SkriptConfig.verbosity.defaultValue().name().toLowerCase(Locale.ENGLISH).replace('_', ' ');
+			return isDefaultMap(verbosity, defaultValue);
 		}));
 
 		metrics.addCustomChart(new DrilldownPie("drilldownPluginPriority", () -> {
 			String priority = SkriptConfig.defaultEventPriority.value().name().toLowerCase(Locale.ENGLISH).replace('_', ' ');
-			return isDefaultMap(priority, SkriptConfig.defaultEventPriority.defaultValue());
+			String defaultValue = SkriptConfig.defaultEventPriority.defaultValue().name().toLowerCase(Locale.ENGLISH).replace('_', ' ');
+			return isDefaultMap(priority, defaultValue);
 		}));
 		metrics.addCustomChart(new SimplePie("cancelledByDefault", () ->
 			SkriptConfig.listenCancelledByDefault.value().toString()
