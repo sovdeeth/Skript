@@ -23,12 +23,7 @@ class WorldSoundReceiver implements SoundReceiver {
 	public void playSound(Location location, NamespacedKey sound, SoundCategory category, float volume, float pitch, OptionalLong seed) {
 		//noinspection DuplicatedCode
 		if (ADVENTURE_API) {
-			world.playSound(
-				AdventureSoundUtils.getAdventureSound(sound, category, volume, pitch, seed),
-				location.x(),
-				location.y(),
-				location.z()
-			);
+			AdventureSoundUtils.playSound(world, location, sound, category, volume, pitch, seed);
 		} else if (!SPIGOT_SOUND_SEED || seed.isEmpty()) {
 			world.playSound(location, sound.getKey(), category, volume, pitch);
 		} else {
@@ -57,7 +52,7 @@ class WorldSoundReceiver implements SoundReceiver {
 	public void playSound(Entity entity, NamespacedKey sound, SoundCategory category, float volume, float pitch, OptionalLong seed) {
 		//noinspection DuplicatedCode
 		if (ADVENTURE_API) {
-			world.playSound(AdventureSoundUtils.getAdventureSound(sound, category, volume, pitch, seed), entity);
+			AdventureSoundUtils.playSound(world, entity, sound, category, volume, pitch, seed);
 		} else if (!SPIGOT_SOUND_SEED || seed.isEmpty()) {
 			this.playSound(entity, sound.getKey(), category, volume, pitch);
 		} else {
