@@ -93,9 +93,7 @@ public class EffPlaySound extends Effect {
 	public static final Pattern KEY_PATTERN = Pattern.compile("([a-z0-9._-]+:)?([a-z0-9/._-]+)");
 
 	static {
-		String seedOption = "";
-		if (HAS_SEED)
-			seedOption = "[[with] seed %-number%] ";
+		String seedOption = HAS_SEED ? "[[with] seed %-number%] " : "";
 		String emitterTypes = "locations";
 		if (ENTITY_EMITTER)
 			emitterTypes += "/entities";
