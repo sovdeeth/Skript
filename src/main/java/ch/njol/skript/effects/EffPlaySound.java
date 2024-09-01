@@ -196,6 +196,9 @@ public class EffPlaySound extends Effect {
 			validSounds.add(key);
 		}
 
+		if (validSounds.isEmpty())
+			return;
+
 		// play sounds
 		if (players != null) {
 			if (emitters == null) {
@@ -209,26 +212,26 @@ public class EffPlaySound extends Effect {
 				for (Player player : players.getArray(event)) {
 					SoundReceiver receiver = SoundReceiver.of(player);
 					for (Object emitter : emitters.getArray(event)) {
-						if (emitter instanceof Location location) {
+						if (emitter instanceof Location) {
 							for (NamespacedKey sound : validSounds)
-								receiver.playSound(location, sound, category, volume, pitch, seed);
-						} else if (emitter instanceof Entity entity) {
+								receiver.playSound(((Location) emitter), sound, category, volume, pitch, seed);
+						} else if (emitter instanceof Entity) {
 							for (NamespacedKey sound : validSounds)
-								receiver.playSound(entity, sound, category, volume, pitch, seed);
+								receiver.playSound(((Entity) emitter), sound, category, volume, pitch, seed);
 						}
 					}
 				}
 			}
 		} else if (emitters != null) {
 			for (Object emitter : emitters.getArray(event)) {
-				if (ENTITY_EMITTER && emitter instanceof Entity entity) {
-					SoundReceiver receiver = SoundReceiver.of(entity.getWorld());
+				if (ENTITY_EMITTER && emitter instanceof Entity) {
+					SoundReceiver receiver = SoundReceiver.of(((Entity) emitter).getWorld());
 					for (NamespacedKey sound : validSounds)
-						receiver.playSound(entity, sound, category, volume, pitch, seed);
-				} else if (emitter instanceof Location location) {
-					SoundReceiver receiver = SoundReceiver.of(location.getWorld());
+						receiver.playSound(((Entity) emitter), sound, category, volume, pitch, seed);
+				} else if (emitter instanceof Location) {
+					SoundReceiver receiver = SoundReceiver.of(((Location) emitter).getWorld());
 					for (NamespacedKey sound : validSounds)
-						receiver.playSound(location, sound, category, volume, pitch, seed);
+						receiver.playSound(((Location) emitter), sound, category, volume, pitch, seed);
 				}
 			}
 		}
@@ -280,7 +283,12 @@ public class EffPlaySound extends Effect {
 	}
 
 	// Player adapter pattern
-	private record PlayerSoundReciever(Player player) implements SoundReceiver {
+	private static final class PlayerSoundReciever implements SoundReceiver {
+		private final Player player;
+
+		private PlayerSoundReciever(Player player) {
+			this.player = player;
+		}
 
 		@Override
 		public void playSound(Location location, NamespacedKey sound, SoundCategory category, float volume, float pitch, OptionalLong seed) {
@@ -301,12 +309,12 @@ public class EffPlaySound extends Effect {
 
 		private void playSound(Entity entity, String sound, SoundCategory category, float volume, float pitch) {
 			//noinspection DuplicatedCode
-			if (!ENTITY_EMITTER_STRING) {
+			if (ENTITY_EMITTER_STRING) {
 				player.playSound(entity, sound, category, volume, pitch);
 			} else if (ENTITY_EMITTER_SOUND) {
 				Sound enumSound;
 				try {
-					enumSound = Sound.valueOf(sound);
+					enumSound = Sound.valueOf(sound.replace('.','_').toUpperCase(Locale.ENGLISH));
 				} catch (IllegalArgumentException e) {
 					return;
 				}
@@ -330,7 +338,12 @@ public class EffPlaySound extends Effect {
 	}
 
 	// World adapter pattern
-	private record WorldSoundReciever(World world) implements SoundReceiver {
+	private static final class WorldSoundReciever implements SoundReceiver {
+		private final World world;
+
+		private WorldSoundReciever(World world) {
+			this.world = world;
+		}
 
 		@Override
 		public void playSound(Location location, NamespacedKey sound, SoundCategory category, float volume, float pitch, OptionalLong seed) {
@@ -351,12 +364,12 @@ public class EffPlaySound extends Effect {
 
 		private void playSound(Entity entity, String sound, SoundCategory category, float volume, float pitch) {
 			//noinspection DuplicatedCode
-			if (!ENTITY_EMITTER_STRING) {
+			if (ENTITY_EMITTER_STRING) {
 				world.playSound(entity, sound, category, volume, pitch);
 			} else if (ENTITY_EMITTER_SOUND) {
 				Sound enumSound;
 				try {
-					enumSound = Sound.valueOf(sound);
+					enumSound = Sound.valueOf(sound.replace('.','_').toUpperCase(Locale.ENGLISH));
 				} catch (IllegalArgumentException e) {
 					return;
 				}
