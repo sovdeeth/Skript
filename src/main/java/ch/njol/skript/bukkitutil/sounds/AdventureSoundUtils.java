@@ -11,6 +11,7 @@ import org.bukkit.entity.Player;
 import java.util.OptionalLong;
 
 public class AdventureSoundUtils {
+
 	public static Sound getAdventureSound(NamespacedKey key, SoundCategory category, float volume, float pitch, OptionalLong seed) {
 		return Sound.sound()
 			.source(category)
@@ -52,4 +53,5 @@ public class AdventureSoundUtils {
 			entity
 		);
 	}
+
 }

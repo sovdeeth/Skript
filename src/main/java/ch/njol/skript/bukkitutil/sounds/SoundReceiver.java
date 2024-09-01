@@ -32,6 +32,7 @@ public interface SoundReceiver {
 
 	// Player adapter pattern
 	class PlayerSoundReceiver implements SoundReceiver {
+
 		private final Player player;
 
 		protected PlayerSoundReceiver(Player player) {
@@ -82,6 +83,7 @@ public interface SoundReceiver {
 
 	// World adapter pattern
 	class WorldSoundReceiver implements SoundReceiver {
+
 		private final World world;
 
 		protected WorldSoundReceiver(World world) {
