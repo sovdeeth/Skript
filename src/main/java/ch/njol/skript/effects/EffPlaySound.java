@@ -19,9 +19,6 @@
 package ch.njol.skript.effects;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.bukkitutil.AdventureSoundReceiver;
-import ch.njol.skript.bukkitutil.AdventureSoundReceiver.AdventureEmitterSoundReceiver;
-import ch.njol.skript.bukkitutil.AdventureSoundReceiver.AdventureEntitySoundReceiver;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
@@ -39,9 +36,10 @@ import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.OptionalLong;
 import java.util.regex.Matcher;
@@ -73,22 +71,38 @@ import java.util.regex.Pattern;
 @Since("2.2-dev28, 2.4 (sound categories), 2.9.0 (sound seed & entity emitter)")
 public class EffPlaySound extends Effect {
 
+	// <=1.17:
+	// 		Player - Location - Sound/String
+	// 		World - Location - Sound/String
+	// 1.18:
+	// 		Player - Location - Sound/String
+	// 		World - Location - Sound/String
+	// 		Player - Entity - Sound
+	// 		World - Entity - Sound
+	// 1.19:
+	// 		Player - Location/Entity - Sound/String
+	// 		World - Location/Entity - Sound/String
+	// 1.20 - spigot adds sound seeds
+
 	private static final boolean ADVENTURE_API = Skript.classExists("net.kyori.adventure.sound.Sound$Builder");
-	private static final boolean PLAYER_ENTITY_EMITTER = Skript.methodExists(Player.class, "playSound", Entity.class, Sound.class, SoundCategory.class, float.class, float.class);
-	private static final boolean WORLD_ENTITY_EMITTER = Skript.methodExists(World.class, "playSound", Entity.class, String.class, SoundCategory.class, float.class, float.class);
+	private static final boolean SPIGOT_SOUND_SEED = Skript.methodExists(Player.class, "playSound", Entity.class, Sound.class, SoundCategory.class, float.class, float.class, long.class);
+	private static final boolean HAS_SEED = ADVENTURE_API || SPIGOT_SOUND_SEED;
+	private static final boolean ENTITY_EMITTER_SOUND = Skript.methodExists(Player.class, "playSound", Entity.class, Sound.class, SoundCategory.class, float.class, float.class);
+	private static final boolean ENTITY_EMITTER_STRING = Skript.methodExists(Player.class, "playSound", Entity.class, String.class, SoundCategory.class, float.class, float.class);
+	private static final boolean ENTITY_EMITTER = ENTITY_EMITTER_SOUND || ENTITY_EMITTER_STRING;
 	public static final Pattern KEY_PATTERN = Pattern.compile("([a-z0-9._-]+:)?([a-z0-9/._-]+)");
 
 	static {
-		String additional = "";
-		if (ADVENTURE_API)
-			additional = "[[with] seed %-number%] ";
+		String seedOption = "";
+		if (HAS_SEED)
+			seedOption = "[[with] seed %-number%] ";
 		String emitterTypes = "locations";
-		if (PLAYER_ENTITY_EMITTER)
+		if (ENTITY_EMITTER)
 			emitterTypes += "/entities";
 		Skript.registerEffect(EffPlaySound.class,
-				"play sound[s] %strings% " + additional + "[(in|from) %-soundcategory%] " +
+				"play sound[s] %strings% " + seedOption + "[(in|from) %-soundcategory%] " +
 						"[(at|with) volume %-number%] [(and|at|with) pitch %-number%] (at|on|from) %" + emitterTypes + "% [(to|for) %-players%]",
-				"play sound[s] %strings% " + additional + "[(in|from) %-soundcategory%] " +
+				"play sound[s] %strings% " + seedOption + "[(in|from) %-soundcategory%] " +
 						"[(at|with) volume %-number%] [(and|at|with) pitch %-number%] [(to|for) %players%] [(at|on|from) %-" + emitterTypes + "%]"
 		);
 	}
@@ -119,7 +133,7 @@ public class EffPlaySound extends Effect {
 	public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
 		sounds = (Expression<String>) exprs[0];
 		int index = 1;
-		if (ADVENTURE_API)
+		if (HAS_SEED)
 			seed = (Expression<Number>) exprs[index++];
 		category = (Expression<SoundCategory>) exprs[index++];
 		volume = (Expression<Number>) exprs[index++];
@@ -151,37 +165,70 @@ public class EffPlaySound extends Effect {
 				.orElse(1)
 				.floatValue();
 
+		// validate strings
+		List<NamespacedKey> validSounds = new ArrayList<>();
+		for (String sound : sounds.getArray(event)) {
+			NamespacedKey key = null;
+			try {
+				Sound enumSound = Sound.valueOf(sound.toUpperCase(Locale.ENGLISH));
+				key = enumSound.getKey();
+			} catch (IllegalArgumentException alternative) {
+				sound = sound.toLowerCase(Locale.ENGLISH);
+				Matcher keyMatcher = KEY_PATTERN.matcher(sound);
+				if (!keyMatcher.matches())
+					continue;
+				try {
+					String namespace = keyMatcher.group(1);
+					String keyValue = keyMatcher.group(2);
+					if (namespace == null) {
+						key = NamespacedKey.minecraft(keyValue);
+					} else {
+						namespace = namespace.substring(0, namespace.length() - 1);
+						key = new NamespacedKey(namespace, keyValue);
+					}
+				} catch (IllegalArgumentException argument) {
+					// The user input invalid characters
+				}
+			}
+
+			if (key == null)
+				continue;
+			validSounds.add(key);
+		}
+
+		// play sounds
 		if (players != null) {
 			if (emitters == null) {
 				for (Player player : players.getArray(event)) {
-					play(PLAYER_ENTITY_EMITTER ? Player::playSound : null, Player::playSound, ADVENTURE_API ? Player::playSound : null, ADVENTURE_API ? Player::playSound : null,
-							player,	player.getLocation(), sounds.getArray(event), category, volume, pitch, seed);
+					SoundReceiver receiver = SoundReceiver.of(player);
+					Location emitter = player.getLocation();
+					for (NamespacedKey sound : validSounds)
+						receiver.playSound(emitter, sound, category, volume, pitch, seed);
 				}
 			} else {
 				for (Player player : players.getArray(event)) {
+					SoundReceiver receiver = SoundReceiver.of(player);
 					for (Object emitter : emitters.getArray(event)) {
-						if (emitter instanceof Entity && PLAYER_ENTITY_EMITTER) {
-							Entity entity = (Entity) emitter;
-							play(Player::playSound, Player::playSound, ADVENTURE_API ? Player::playSound : null, ADVENTURE_API ? Player::playSound : null,
-									player,	entity, sounds.getArray(event), category, volume, pitch, seed);
-						} else if (emitter instanceof Location) {
-							Location location = (Location) emitter;
-							play(PLAYER_ENTITY_EMITTER ? Player::playSound : null, Player::playSound, ADVENTURE_API ? Player::playSound : null, ADVENTURE_API ? Player::playSound : null,
-									player, location, sounds.getArray(event), category, volume, pitch, seed);
+						if (emitter instanceof Location location) {
+							for (NamespacedKey sound : validSounds)
+								receiver.playSound(location, sound, category, volume, pitch, seed);
+						} else if (emitter instanceof Entity entity) {
+							for (NamespacedKey sound : validSounds)
+								receiver.playSound(entity, sound, category, volume, pitch, seed);
 						}
 					}
 				}
 			}
 		} else if (emitters != null) {
 			for (Object emitter : emitters.getArray(event)) {
-				if (emitter instanceof Entity && WORLD_ENTITY_EMITTER) {
-					Entity entity = (Entity) emitter;
-					play(World::playSound, World::playSound, ADVENTURE_API ? World::playSound : null, ADVENTURE_API ? World::playSound : null,
-							entity.getWorld(), entity, sounds.getArray(event), category, volume, pitch, seed);
-				} else if (emitter instanceof Location) {
-					Location location = (Location) emitter;
-					play(WORLD_ENTITY_EMITTER ? World::playSound : null, World::playSound, ADVENTURE_API ? World::playSound : null, ADVENTURE_API ? World::playSound : null,
-							location.getWorld(), location, sounds.getArray(event), category, volume, pitch, seed);
+				if (ENTITY_EMITTER && emitter instanceof Entity entity) {
+					SoundReceiver receiver = SoundReceiver.of(entity.getWorld());
+					for (NamespacedKey sound : validSounds)
+						receiver.playSound(entity, sound, category, volume, pitch, seed);
+				} else if (emitter instanceof Location location) {
+					SoundReceiver receiver = SoundReceiver.of(location.getWorld());
+					for (NamespacedKey sound : validSounds)
+						receiver.playSound(location, sound, category, volume, pitch, seed);
 				}
 			}
 		}
@@ -209,64 +256,125 @@ public class EffPlaySound extends Effect {
 		return builder.toString();
 	}
 
-	private <T, E> void play(@Nullable SoundReceiver<T, Entity> entityReceiver,
-			@NotNull SoundReceiver<T, Location> locationReceiver,
-			@Nullable AdventureEmitterSoundReceiver<T> adventureLocationReceiver,
-			@Nullable AdventureEntitySoundReceiver<T> adventureEmitterReceiver,
-			@NotNull T receiver, @NotNull E emitter, @NotNull String[] sounds,
-			@NotNull SoundCategory category, float volume, float pitch, OptionalLong seed) {
-		if (!ADVENTURE_API || adventureLocationReceiver == null || adventureEmitterReceiver == null) {
-			SoundReceiver.play(entityReceiver, locationReceiver, receiver, emitter, sounds, category, volume, pitch, seed);
-			return;
+	/**
+	 * Adapter pattern to unify {@link World} and {@link Player} playSound methods.
+	 * Methods can be called without determining version support, it is handled internally.
+	 * Non-supported methods will simply delegate to supported methods.
+	 */
+	private interface SoundReceiver {
+		void playSound(Location location, NamespacedKey sound, SoundCategory category, float volume, float pitch, OptionalLong seed);
+		void playSound(Entity entity, NamespacedKey sound, SoundCategory category, float volume, float pitch, OptionalLong seed);
+
+		static SoundReceiver of(Player player) { return new PlayerSoundReciever(player); }
+		static SoundReceiver of(World world) { return new WorldSoundReciever(world); }
+
+		static net.kyori.adventure.sound.Sound getAdventureSound(NamespacedKey key, SoundCategory category, float volume, float pitch, OptionalLong seed) {
+			return net.kyori.adventure.sound.Sound.sound()
+				.source(category)
+				.volume(volume)
+				.pitch(pitch)
+				.seed(seed)
+				.type(key)
+				.build();
 		}
-		AdventureSoundReceiver.play(adventureLocationReceiver, adventureEmitterReceiver, receiver, emitter, sounds, category, volume, pitch, seed);
 	}
 
-	@FunctionalInterface
-	private interface SoundReceiver<T, E> {
-		void play(
-			@NotNull T receiver, @NotNull E emitter, @NotNull String sound,
-			@NotNull SoundCategory category, float volume, float pitch
-		);
+	// Player adapter pattern
+	private record PlayerSoundReciever(Player player) implements SoundReceiver {
 
-		static <T, E> void play(
-			@Nullable SoundReceiver<T, Entity> entityReceiver,
-			@NotNull SoundReceiver<T, Location> locationReceiver,
-			@NotNull T receiver, @NotNull E emitter, @NotNull String[] sounds,
-			@NotNull SoundCategory category, float volume, float pitch, OptionalLong seed
-		) {
-			for (String sound : sounds) {
-				NamespacedKey key = null;
+		@Override
+		public void playSound(Location location, NamespacedKey sound, SoundCategory category, float volume, float pitch, OptionalLong seed) {
+			//noinspection DuplicatedCode
+			if (ADVENTURE_API) {
+				player.playSound(
+					SoundReceiver.getAdventureSound(sound, category, volume, pitch, seed),
+					location.x(),
+					location.y(),
+					location.z()
+				);
+			} else if (!SPIGOT_SOUND_SEED || seed.isEmpty()) {
+				player.playSound(location, sound.getKey(), category, volume, pitch);
+			} else {
+				player.playSound(location, sound.getKey(), category, volume, pitch, seed.getAsLong());
+			}
+		}
+
+		private void playSound(Entity entity, String sound, SoundCategory category, float volume, float pitch) {
+			//noinspection DuplicatedCode
+			if (!ENTITY_EMITTER_STRING) {
+				player.playSound(entity, sound, category, volume, pitch);
+			} else if (ENTITY_EMITTER_SOUND) {
+				Sound enumSound;
 				try {
-					Sound enumSound = Sound.valueOf(sound.toUpperCase(Locale.ENGLISH));
-					key = enumSound.getKey();
-				} catch (IllegalArgumentException alternative) {
-					sound = sound.toLowerCase(Locale.ENGLISH);
-					Matcher keyMatcher = KEY_PATTERN.matcher(sound);
-					if (!keyMatcher.matches())
-						continue;
-					try {
-						String namespace = keyMatcher.group(1);
-						String keyValue = keyMatcher.group(2);
-						if (namespace == null) {
-							key = NamespacedKey.minecraft(keyValue);
-						} else {
-							namespace = namespace.substring(0, namespace.length() - 1);
-							key = new NamespacedKey(namespace, keyValue);
-						}
-					} catch (IllegalArgumentException argument) {
-						// The user input invalid characters
-					}
+					enumSound = Sound.valueOf(sound);
+				} catch (IllegalArgumentException e) {
+					return;
 				}
+				player.playSound(entity, enumSound, category, volume, pitch);
+			} else {
+				player.playSound(entity.getLocation(), sound, category, volume, pitch);
+			}
+		}
 
-				if (key == null)
-					continue;
-				if (emitter instanceof Location) {
-					locationReceiver.play(receiver, (Location) emitter, key.getKey(), category, volume, pitch);
-				} else if (emitter instanceof Entity && entityReceiver != null) {
-					entityReceiver.play(receiver, (Entity) emitter, key.getKey(), category, volume, pitch);
+		@Override
+		public void playSound(Entity entity, NamespacedKey sound, SoundCategory category, float volume, float pitch, OptionalLong seed) {
+			//noinspection DuplicatedCode
+			if (ADVENTURE_API) {
+				player.playSound(SoundReceiver.getAdventureSound(sound, category, volume, pitch, seed), entity);
+			} else if (!SPIGOT_SOUND_SEED || seed.isEmpty()) {
+				this.playSound(entity, sound.getKey(), category, volume, pitch);
+			} else {
+				player.playSound(entity, sound.getKey(), category, volume, pitch, seed.getAsLong());
+			}
+		}
+	}
+
+	// World adapter pattern
+	private record WorldSoundReciever(World world) implements SoundReceiver {
+
+		@Override
+		public void playSound(Location location, NamespacedKey sound, SoundCategory category, float volume, float pitch, OptionalLong seed) {
+			//noinspection DuplicatedCode
+			if (ADVENTURE_API) {
+				world.playSound(
+					SoundReceiver.getAdventureSound(sound, category, volume, pitch, seed),
+					location.x(),
+					location.y(),
+					location.z()
+				);
+			} else if (!SPIGOT_SOUND_SEED || seed.isEmpty()) {
+				world.playSound(location, sound.getKey(), category, volume, pitch);
+			} else {
+				world.playSound(location, sound.getKey(), category, volume, pitch, seed.getAsLong());
+			}
+		}
+
+		private void playSound(Entity entity, String sound, SoundCategory category, float volume, float pitch) {
+			//noinspection DuplicatedCode
+			if (!ENTITY_EMITTER_STRING) {
+				world.playSound(entity, sound, category, volume, pitch);
+			} else if (ENTITY_EMITTER_SOUND) {
+				Sound enumSound;
+				try {
+					enumSound = Sound.valueOf(sound);
+				} catch (IllegalArgumentException e) {
+					return;
 				}
-				return;
+				world.playSound(entity, enumSound, category, volume, pitch);
+			} else {
+				world.playSound(entity.getLocation(), sound, category, volume, pitch);
+			}
+		}
+
+		@Override
+		public void playSound(Entity entity, NamespacedKey sound, SoundCategory category, float volume, float pitch, OptionalLong seed) {
+			//noinspection DuplicatedCode
+			if (ADVENTURE_API) {
+				world.playSound(SoundReceiver.getAdventureSound(sound, category, volume, pitch, seed), entity);
+			} else if (!SPIGOT_SOUND_SEED || seed.isEmpty()) {
+				this.playSound(entity, sound.getKey(), category, volume, pitch);
+			} else {
+				world.playSound(entity, sound.getKey(), category, volume, pitch, seed.getAsLong());
 			}
 		}
 	}
