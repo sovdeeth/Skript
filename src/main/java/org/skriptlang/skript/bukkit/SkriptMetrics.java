@@ -145,10 +145,10 @@ public class SkriptMetrics {
 			SkriptConfig.caseSensitive.value().toString()
 		));
 		metrics.addCustomChart(new SimplePie("caseSensitiveVariables", () ->
-			SkriptConfig.caseInsensitiveVariables.value().toString()
+			String.valueOf(!SkriptConfig.caseInsensitiveVariables.value())
 		));
 		metrics.addCustomChart(new SimplePie("caseSensitiveCommands", () ->
-			SkriptConfig.caseInsensitiveCommands.value().toString()
+			String.valueOf(!SkriptConfig.caseInsensitiveCommands.value())
 		));
 
 		metrics.addCustomChart(new SimplePie("disableSaveWarnings", () ->
