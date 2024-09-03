@@ -19,6 +19,7 @@
 package org.skriptlang.skript.commands.bukkit;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.command.CommandUsage;
 import ch.njol.skript.lang.Trigger;
 import ch.njol.skript.lang.VariableString;
 import ch.njol.skript.patterns.SkriptPattern;
@@ -40,7 +41,7 @@ import java.util.List;
 public class BukkitScriptCommand extends ScriptCommand {
 
 	public BukkitScriptCommand(
-		String label, @Nullable String namespace, String description, String usage, List<String> aliases,
+		String label, @Nullable String namespace, String description, CommandUsage usage, List<String> aliases,
 		List<CommandSenderType> executableBy, @Nullable String permission, @Nullable VariableString permissionMessage,
 		@Nullable CommandCooldown cooldown, Trigger trigger, List<Argument<?>> arguments, SkriptPattern pattern
 	) {

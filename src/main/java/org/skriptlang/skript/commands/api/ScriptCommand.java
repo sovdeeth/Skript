@@ -19,6 +19,7 @@
 package org.skriptlang.skript.commands.api;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.command.CommandUsage;
 import ch.njol.skript.command.Commands;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.lang.SkriptParser;
@@ -56,7 +57,7 @@ public abstract class ScriptCommand {
 	private final String namespace;
 	private final String label;
 	private final String description;
-	private final String usage;
+	private final CommandUsage usage;
 	private final List<String> aliases;
 	@Nullable
 	private final String permission;
@@ -69,13 +70,13 @@ public abstract class ScriptCommand {
 	private final SkriptPattern pattern;
 
 	public ScriptCommand(
-		String label, @Nullable String namespace, String description, String usage, List<String> aliases,
+		String label, @Nullable String namespace, String description, CommandUsage usage, List<String> aliases,
 		List<CommandSenderType> executableBy, @Nullable String permission, @Nullable VariableString permissionMessage,
 		@Nullable CommandCooldown cooldown, Trigger trigger, List<Argument<?>> arguments, SkriptPattern pattern
 	) {
 		this.label = label.toLowerCase(Locale.ENGLISH);
 		this.description = Utils.replaceEnglishChatStyles(description);
-		this.usage = Utils.replaceEnglishChatStyles(usage);
+		this.usage = usage
 
 		if (namespace != null) {
 			for (char c : namespace.toCharArray()) {
@@ -167,7 +168,7 @@ public abstract class ScriptCommand {
 		// argument parsing
 		String joinedArgs = StringUtils.join(args, " ");
 		if (!parseArguments(joinedArgs, event)) {
-			sender.sendMessage(usage);
+			sender.sendMessage(usage.getUsage(event));
 			return;
 		}
 
@@ -295,7 +296,7 @@ public abstract class ScriptCommand {
 		return description;
 	}
 
-	public String getUsage() {
+	public CommandUsage getUsage() {
 		return usage;
 	}
 

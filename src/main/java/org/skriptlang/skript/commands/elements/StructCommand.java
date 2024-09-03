@@ -21,8 +21,10 @@ package org.skriptlang.skript.commands.elements;
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptAPIException;
+import ch.njol.skript.bukkitutil.CommandReloader;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.Parser;
+import ch.njol.skript.command.CommandUsage;
 import ch.njol.skript.config.SectionNode;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
@@ -64,7 +66,6 @@ import org.skriptlang.skript.lang.structure.Structure;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
@@ -89,6 +90,9 @@ import java.util.regex.Pattern;
 @Since("1.0")
 public class StructCommand extends Structure {
 
+	// Paper versions with the new command system need a delay before syncing commands or a CME will occur.
+	private static final boolean DELAY_COMMAND_SYNCING = Skript.classExists("io.papermc.paper.command.brigadier.Commands");
+
 	public static final Priority PRIORITY = new Priority(500);
 
 	private static final Pattern COMMAND_PATTERN = Pattern.compile("(?i)^command\\s+/?(\\S+)\\s*(\\s+(.+))?$");
@@ -101,9 +105,8 @@ public class StructCommand extends Structure {
 		Skript.registerStructure(
 			StructCommand.class,
 			EntryValidator.builder()
-				.addEntry("prefix", null, true)
+				.addEntryData(new VariableStringEntryData("usage", null, true))
 				.addEntry("description", "", true)
-				.addEntry("usage", null, true)
 				.addEntry("prefix", null, true)
 				.addEntry("permission", "", true)
 				.addEntryData(new VariableStringEntryData("permission message", null, true))
@@ -312,10 +315,9 @@ public class StructCommand extends Structure {
 		});
 		desc = unescape(desc).trim();
 
-		String usage = entryContainer.getOptional("usage", String.class, false);
-		if (usage == null) {
-			usage = ScriptCommand.M_CORRECT_USAGE + " " + desc;
-		}
+		VariableString usageMessage = entryContainer.getOptional("usage", VariableString.class, false);
+		String defaultUsageMessage = ScriptCommand.M_CORRECT_USAGE + " " + desc;
+		CommandUsage usage = new CommandUsage(usageMessage, defaultUsageMessage);
 
 		String description = entryContainer.get("description", String.class, true);
 		String prefix = entryContainer.getOptional("prefix", String.class, false);
@@ -405,11 +407,21 @@ public class StructCommand extends Structure {
 
 	private static void attemptCommandSync() {
 		if (SYNC_COMMANDS.compareAndSet(true, false)) {
-			if (CommandUtils.syncCommands(Bukkit.getServer())) {
-				Skript.debug("Commands synced to clients");
+			if (DELAY_COMMAND_SYNCING) {
+				// if the plugin is disabled, the server is likely closing and delaying will cause an error.
+				if (Bukkit.getPluginManager().isPluginEnabled(Skript.getInstance()))
+					Bukkit.getScheduler().runTask(Skript.getInstance(), StructCommand::forceCommandSync);
 			} else {
-				Skript.debug("Commands changed but not synced to clients (normal on 1.12 and older)");
+				forceCommandSync();
 			}
+		}
+	}
+
+	private static void forceCommandSync() {
+		if (CommandUtils.syncCommands(Bukkit.getServer())) {
+			Skript.debug("Commands synced to clients");
+		} else {
+			Skript.debug("Commands changed but not synced to clients (normal on 1.12 and older)");
 		}
 	}
 
