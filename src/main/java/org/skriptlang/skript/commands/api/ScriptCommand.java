@@ -76,7 +76,7 @@ public abstract class ScriptCommand {
 	) {
 		this.label = label.toLowerCase(Locale.ENGLISH);
 		this.description = Utils.replaceEnglishChatStyles(description);
-		this.usage = usage
+		this.usage = usage;
 
 		if (namespace != null) {
 			for (char c : namespace.toCharArray()) {

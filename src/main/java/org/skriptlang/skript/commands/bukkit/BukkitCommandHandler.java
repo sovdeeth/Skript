@@ -75,7 +75,7 @@ public class BukkitCommandHandler implements CommandHandler {
 
 			command.setAliases(scriptCommand.getAliases());
 			command.setDescription(scriptCommand.getDescription());
-			command.setUsage(scriptCommand.getUsage());
+			command.setUsage(scriptCommand.getUsage().getUsage());
 
 			command.setExecutor(new TabExecutor() {
 				@Override
