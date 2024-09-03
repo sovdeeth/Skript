@@ -1,24 +1,31 @@
 package ch.njol.skript.expressions;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
-import ch.njol.util.coll.CollectionUtils;
 import me.lucko.spark.api.Spark;
 import me.lucko.spark.api.SparkProvider;
 import me.lucko.spark.api.statistic.StatisticWindow;
 import me.lucko.spark.api.statistic.types.DoubleStatistic;
-import org.bukkit.Bukkit;
 import org.bukkit.event.Event;
-import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
 
+@Name("CPU (Central Processing Unit) Usage")
+@Description("Returns the 3 most recent CPU Usage readings, like the information from Spark's /tps command." +
+			"This expression is only supported with servers that have Spark on their server.")
+@Examples({"broadcast \"%cpu usage from the last 10 seconds%\"",
+	"broadcast \"%cpu usage from the last 1 minute%\"",
+	"broadcast \"%cpu usage from the last 15 minutes%\"",
+	"broadcast \"%cpu usage%\""})
+@Since("INSERT VERSION")
 public class ExprCpuUsage extends SimpleExpression<Number> {
 
 	private int index;
