@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 public class ExprCpuUsage extends SimpleExpression<Number> {
 
 	private int index;
-	private String expr = "cpu";
+	private String expr = "cpu usage";
 
 	static {
 		Skript.registerExpression(ExprCpuUsage.class, Number.class, ExpressionType.SIMPLE,
