@@ -18,8 +18,8 @@ import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
 
-@Name("CPU (Central Processing Unit) Usage")
-@Description("Returns the 3 most recent CPU Usage readings, like the information from Spark's /tps command." +
+@Name("CPU Usage")
+@Description("Returns the 3 most recent CPU usage readings, like the information from Spark's /tps command. " +
 			"This expression is only supported with servers that have Spark on their server.")
 @Examples({"broadcast \"%cpu usage from the last 10 seconds%\"",
 	"broadcast \"%cpu usage from the last 1 minute%\"",
@@ -33,22 +33,14 @@ public class ExprCpuUsage extends SimpleExpression<Number> {
 
 	static {
 		Skript.registerExpression(ExprCpuUsage.class, Number.class, ExpressionType.SIMPLE,
-			"cpu usage from [the] last 10[ ]s[seconds]",
+			"cpu usage from [the] last 10[ ]s[econds]",
 			"cpu usage from [the] last ([1] minute|1[ ]m[inute])",
 			"cpu usage from [the] last 15[ ]m[inutes]",
 			"[the] cpu usage");
 	}
 
 	private static Spark getSparkInstance() {
-		try {
-			Spark spark = SparkProvider.get();
-			if (spark != null) {
-				return SparkProvider.get();
-			}
-		} catch (Exception e) {
-			return null;
-		}
-		return null;
+		return SparkProvider.get();
 	}
 
 	@Override
@@ -67,21 +59,9 @@ public class ExprCpuUsage extends SimpleExpression<Number> {
 		Spark spark = SparkProvider.get();
 		DoubleStatistic<StatisticWindow.CpuUsage> cpuUsage = spark.cpuSystem();
 		return switch (index) {
-			case 0 -> {
-				double usageLast10Seconds = cpuUsage.poll(StatisticWindow.CpuUsage.SECONDS_10);
-				Number usage10Seconds = (Number) (usageLast10Seconds * 100);
-				yield new Number[]{usage10Seconds};
-			}
-			case 1 -> {
-				double usageLast1Minute = cpuUsage.poll(StatisticWindow.CpuUsage.MINUTES_1);
-				Number usage1Minute = (Number) (usageLast1Minute * 100);
-				yield new Number[]{usage1Minute};
-			}
-			case 2 -> {
-				double usageLast15Minutes = cpuUsage.poll(StatisticWindow.CpuUsage.MINUTES_15);
-				Number usage15Minutes = (Number) (usageLast15Minutes * 100);
-				yield new Number[]{usage15Minutes};
-			}
+			case 0 -> new Number[]{cpuUsage.poll(StatisticWindow.CpuUsage.SECONDS_10) * 100};
+			case 1 -> new Number[]{cpuUsage.poll(StatisticWindow.CpuUsage.MINUTES_1) * 100};
+			case 2 -> new Number[]{cpuUsage.poll(StatisticWindow.CpuUsage.MINUTES_15) * 100};
 			default -> {
 				double usageLast10Seconds = cpuUsage.poll(StatisticWindow.CpuUsage.SECONDS_10);
 				double usageLast1Minute = cpuUsage.poll(StatisticWindow.CpuUsage.MINUTES_1);
