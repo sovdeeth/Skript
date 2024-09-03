@@ -21,6 +21,7 @@ allprojects {
 		maven { url 'https://repo.papermc.io/repository/maven-public/' }
 		maven { url = 'https://s01.oss.sonatype.org/content/repositories/snapshots/' } // needed for paper adventure snapshot
 		maven { url 'https://ci.emc.gs/nexus/content/groups/aikar/' }
+		maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
 	}
 }
 
@@ -36,6 +37,8 @@ dependencies {
 	implementation group: 'net.milkbowl.vault', name: 'Vault', version: '1.7.3', {
 		exclude group: 'org.bstats', module: 'bstats-bukkit'
 	}
+
+	compileOnly 'me.lucko:spark-api:0.1-SNAPSHOT'
 
 	implementation fileTree(dir: 'lib', include: '*.jar')
 
