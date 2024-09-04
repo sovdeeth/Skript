@@ -1,21 +1,3 @@
-/**
- *   This file is part of Skript.
- *
- *  Skript is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  Skript is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
- *
- * Copyright Peter Güttinger, SkriptLang team and contributors
- */
 package org.skriptlang.skript.commands.api;
 
 import ch.njol.skript.Skript;
@@ -26,23 +8,21 @@ import ch.njol.skript.lang.Variable;
 import ch.njol.skript.lang.VariableString;
 import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.skript.log.RetainingLogHandler;
-import org.eclipse.jdt.annotation.Nullable;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.WeakHashMap;
 
 public class Argument<T> {
 
-	@Nullable
-	private final String name;
+	private final @Nullable String name;
 	private final Class<T> type;
 
 	private final boolean optional;
 	private final boolean single;
 
-	@Nullable
-	private final Expression<? extends T> defaultValue;
+	private final @Nullable Expression<? extends T> defaultValue;
 
 	// TODO in the future this map should be replaced and argument values
 	// should be stored on a argument-value map on each execution's "TriggerContext"
@@ -61,9 +41,7 @@ public class Argument<T> {
 	}
 
 	@ApiStatus.Internal
-	@Nullable
-	@SuppressWarnings("unchecked")
-	public static <T> Argument<T> of(
+	public static <T> @Nullable Argument<T> of(
 		@Nullable String name, Class<T> type,
 		boolean optional, boolean single,
 		@Nullable String defaultExpression
@@ -81,6 +59,7 @@ public class Argument<T> {
 				if (defaultExpression.startsWith("%") && defaultExpression.endsWith("%")) {
 					// attempt to parse this as an expression
 
+					//noinspection unchecked
 					parsedDefaultExpression = new SkriptParser(
 						defaultExpression.substring(1, defaultExpression.length() - 1),
 						SkriptParser.PARSE_EXPRESSIONS,
@@ -92,14 +71,17 @@ public class Argument<T> {
 
 					if (type == String.class) { // this is a string literal
 						if (defaultExpression.startsWith("\"") && defaultExpression.endsWith("\"")) {
+							//noinspection unchecked
 							parsedDefaultExpression =
 								(Expression<? extends T>) VariableString.newInstance(defaultExpression.substring(1, defaultExpression.length() - 1));
 						} else {
+							//noinspection unchecked
 							parsedDefaultExpression =
 								(Expression<? extends T>) new SimpleLiteral<>(defaultExpression, false);
 						}
 					} else { // any other kind of literal
 						// TODO is ParseContext.DEFAULT correct?
+						//noinspection unchecked
 						parsedDefaultExpression = new SkriptParser(
 							defaultExpression, SkriptParser.PARSE_LITERALS, ParseContext.DEFAULT
 						).parseExpression(type);
@@ -120,8 +102,7 @@ public class Argument<T> {
 		return new Argument<>(name, type, optional, single, parsedDefaultExpression);
 	}
 
-	@Nullable
-	public String getName() {
+	public @Nullable String getName() {
 		return name;
 	}
 
@@ -141,8 +122,7 @@ public class Argument<T> {
 		valueMap.put(event, values);
 	}
 
-	@Nullable
-	public T[] getValues(ScriptCommandEvent event) {
+	public T @Nullable [] getValues(ScriptCommandEvent event) {
 		return valueMap.getOrDefault(event, defaultValue != null ? defaultValue.getArray(event) : null);
 	}
 

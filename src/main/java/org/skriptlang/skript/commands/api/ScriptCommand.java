@@ -41,12 +41,10 @@ public abstract class ScriptCommand {
 	private final String description;
 	private final CommandUsage usage;
 	private final List<String> aliases;
-	@Nullable
-	private final String permission;
+	private final @Nullable String permission;
 	private final VariableString permissionMessage;
 	private final List<CommandSenderType> executableBy;
-	@Nullable
-	private final CommandCooldown cooldown;
+	private final @Nullable CommandCooldown cooldown;
 	private final Trigger trigger;
 	private final List<Argument<?>> arguments;
 	private final SkriptPattern pattern;
@@ -253,6 +251,8 @@ public abstract class ScriptCommand {
 			String name = argument.getName();
 			if (name != null) {
 				Object[] values = argument.getValues(event);
+				if (values == null)
+					continue;
 				if (argument.isSingle()) {
 					if (values.length > 0)
 						Variables.setVariable(name, values[0], event, true);

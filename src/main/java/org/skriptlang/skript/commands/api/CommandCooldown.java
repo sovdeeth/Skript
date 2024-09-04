@@ -1,30 +1,14 @@
-/**
- *   This file is part of Skript.
- *
- *  Skript is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  Skript is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
- *
- * Copyright Peter Güttinger, SkriptLang team and contributors
- */
 package org.skriptlang.skript.commands.api;
 
 import ch.njol.skript.lang.VariableString;
 import ch.njol.skript.localization.Language;
 import ch.njol.skript.util.Date;
 import ch.njol.skript.util.Timespan;
+import ch.njol.skript.util.Timespan.TimePeriod;
 import ch.njol.skript.variables.Variables;
 import org.bukkit.event.Event;
-import org.eclipse.jdt.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnknownNullability;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -39,13 +23,11 @@ public class CommandCooldown {
 	private final Map<UUID, Date> cooldownEndDates = new HashMap<>();
 
 	private final Timespan cooldown;
-	private final VariableString cooldownMessage;
+	private final @UnknownNullability VariableString cooldownMessage;
 
 	private final String cooldownBypassPermission;
-	@Nullable
-	private final VariableString cooldownStorageVariableName;
+	private final @Nullable VariableString cooldownStorageVariableName;
 
-	@SuppressWarnings("ConstantConditions")
 	public CommandCooldown(Timespan cooldown, @Nullable VariableString cooldownMessage, String cooldownBypassPermission, @Nullable VariableString cooldownStorageVariableName) {
 		this.cooldown = cooldown;
 		this.cooldownMessage = cooldownMessage != null ? cooldownMessage :
@@ -92,14 +74,16 @@ public class CommandCooldown {
 	 * @param startDate The retroactive start date of the cooldown. Must be in the past.
 	 * @see #setRemainingDuration(ScriptCommandSender, Event, Timespan)
 	 * @see #setEndDate(ScriptCommandSender, Event, Date)
+	 * @throws IllegalArgumentException if start date is in the future.
 	 */
 	public void applyCooldown(ScriptCommandSender sender, Event event, Date startDate) {
-		if (startDate.isAfter(new Date()))
+		Date now = new Date();
+		if (startDate.isAfter(now))
 			throw new IllegalArgumentException("Start date must be in the past.");
 		if (hasBypassPermission(sender))
 			return;
-		Timespan elapsed = new Date().difference(startDate);
-		Timespan remaining = new Timespan(cooldown.getMilliSeconds() - elapsed.getMilliSeconds());
+		Timespan elapsed = now.difference(startDate);
+		Timespan remaining = new Timespan(cooldown.getAs(TimePeriod.MILLISECOND) - elapsed.getAs(TimePeriod.MILLISECOND));
 		setRemainingDuration(sender, event, remaining);
 	}
 
@@ -154,7 +138,7 @@ public class CommandCooldown {
 	 */
 	public void setRemainingDuration(ScriptCommandSender sender, Event event, Timespan newDuration) {
 		Date endDate = null;
-		if (newDuration.getMilliSeconds() > 0) {
+		if (newDuration.getAs(TimePeriod.MILLISECOND) > 0) {
 			endDate = new Date();
 			endDate.add(newDuration);
 		}
@@ -168,8 +152,7 @@ public class CommandCooldown {
 	 * @param event The event used to evaluate the cooldown storage variable name, if one exists.
 	 * @return The end date of the cooldown. Will be {@code null} if the {@link ScriptCommandSender} is not on cooldown.
 	 */
-	@Nullable
-	public Date getEndDate(ScriptCommandSender sender, Event event) {
+	public @UnknownNullability Date getEndDate(ScriptCommandSender sender, Event event) {
 		// prefer the cooldown storage variable if it exists
 		if (cooldownStorageVariableName != null)
 			return getEndDateVariable(event);
@@ -196,8 +179,7 @@ public class CommandCooldown {
 	 * @param event The event used to evaluate the cooldown storage variable.
 	 * @return The end date of the cooldown. Will be {@code null} if the {@link ScriptCommandSender} is not on cooldown.
 	 */
-	@Nullable
-	private Date getEndDateVariable(Event event) {
+	private @UnknownNullability Date getEndDateVariable(Event event) {
 		String variableName = getStorageVariableName(event);
 		Object variable = Variables.getVariable(variableName, null, false);
 		Date endDate = null;
@@ -262,8 +244,8 @@ public class CommandCooldown {
 	 * @param event The event used to evaluate the cooldown storage variable name, if one exists.
 	 * @return The elapsed cooldown duration, or {@code null} if the {@link ScriptCommandSender} is not on cooldown.
 	 */
-	@Nullable
-	public Timespan getElapsedDuration(ScriptCommandSender sender, Event event) {
+	public @Nullable Timespan getElapsedDuration(ScriptCommandSender sender, Event event) {
+		// TODO: implement
 		return null;
 	}
 
@@ -277,6 +259,7 @@ public class CommandCooldown {
 	 *                    current cooldown, the {@link ScriptCommandSender} will be taken off cooldown.
 	 */
 	public void setElapsedDuration(ScriptCommandSender sender, Event event, Timespan newElapsedDuration) {
+		// TODO: implement
 	}
 
 	/**
@@ -301,16 +284,14 @@ public class CommandCooldown {
 	/**
 	 * @return The permission required to bypass the cooldown.
 	 */
-	@Nullable
-	public String getCooldownBypassPermission() {
+	public @Nullable String getCooldownBypassPermission() {
 		return cooldownBypassPermission;
 	}
 
 	/**
 	 * @return The name of the variable used to store the remaining cooldown duration.
 	 */
-	@Nullable
-	public VariableString getCooldownStorageVariableName() {
+	public @Nullable VariableString getCooldownStorageVariableName() {
 		return cooldownStorageVariableName;
 	}
 

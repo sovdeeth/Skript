@@ -1,21 +1,3 @@
-/**
- *   This file is part of Skript.
- *
- *  Skript is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  Skript is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
- *
- * Copyright Peter Güttinger, SkriptLang team and contributors
- */
 package org.skriptlang.skript.commands.elements;
 
 import ch.njol.skript.ScriptLoader;
@@ -45,7 +27,7 @@ import ch.njol.util.NonNullPair;
 import ch.njol.util.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.event.Event;
-import org.eclipse.jdt.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import org.skriptlang.skript.commands.CommandModule;
 import org.skriptlang.skript.commands.api.Argument;
 import org.skriptlang.skript.commands.api.CommandCooldown;
@@ -74,17 +56,17 @@ import java.util.regex.Pattern;
 @Description("Used for registering custom commands.")
 @Examples({
 	"command /broadcast <string>:",
-	"\tusage: A command for broadcasting a message to all players.",
-	"\tpermission: skript.command.broadcast",
-	"\tpermission message: You don't have permission to broadcast messages",
-	"\taliases: /bc",
-	"\texecutable by: players and console",
-	"\tcooldown: 15 seconds",
-	"\tcooldown message: You last broadcast a message %elapsed time% ago. You can broadcast another message in %remaining time%.",
-	"\tcooldown bypass: skript.command.broadcast.admin",
-	"\tcooldown storage: {cooldown::%player%}",
-	"\ttrigger:",
-	"\t\tbroadcast the argument"
+		"\tusage: A command for broadcasting a message to all players.",
+		"\tpermission: skript.command.broadcast",
+		"\tpermission message: You don't have permission to broadcast messages",
+		"\taliases: /bc",
+		"\texecutable by: players and console",
+		"\tcooldown: 15 seconds",
+		"\tcooldown message: You last broadcast a message %elapsed time% ago. You can broadcast another message in %remaining time%.",
+		"\tcooldown bypass: skript.command.broadcast.admin",
+		"\tcooldown storage: {cooldown::%player%}",
+		"\ttrigger:",
+			"\t\tbroadcast the argument"
 })
 @Since("1.0")
 public class StructCommand extends Structure {
@@ -127,8 +109,7 @@ public class StructCommand extends Structure {
 					private final Pattern pattern = Pattern.compile("\\s*,\\s*|\\s+(and|or)\\s+");
 
 					@Override
-					@Nullable
-					protected List<CommandSenderType> getValue(String value) {
+					protected @Nullable List<CommandSenderType> getValue(String value) {
 						List<CommandSenderType> executableBy = new ArrayList<>();
 						for (String b : pattern.split(value)) {
 							if (b.equalsIgnoreCase("console") || b.equalsIgnoreCase("the console")) {
@@ -162,14 +143,12 @@ public class StructCommand extends Structure {
 	@SuppressWarnings("NotNullFieldNotInitialized")
 	private EntryContainer entryContainer;
 
-	@Nullable
-	private ScriptCommand command;
+	private @Nullable ScriptCommand command;
 
 	// todo: figure out a better way
 	// right now the trigger parsing needs access to the arguments, but we can't get them from the command
 	// because the command is created after the trigger is parsed
-	@Nullable
-	private List<Argument<?>> arguments;
+	private @Nullable List<Argument<?>> arguments;
 
 	@SuppressWarnings("NotNullFieldNotInitialized")
 	private MatchResult matchResult;
@@ -434,8 +413,7 @@ public class StructCommand extends Structure {
 		return "command";
 	}
 
-	@Nullable
-	public List<Argument<?>> getArguments() {
+	public @Nullable List<Argument<?>> getArguments() {
 		return this.arguments;
 	}
 

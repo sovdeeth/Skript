@@ -1,21 +1,3 @@
-/**
- *   This file is part of Skript.
- *
- *  Skript is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  Skript is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
- *
- * Copyright Peter Güttinger, SkriptLang team and contributors
- */
 package org.skriptlang.skript.commands.bukkit;
 
 import ch.njol.skript.Skript;
@@ -29,7 +11,7 @@ import org.bukkit.command.SimpleCommandMap;
 import org.bukkit.command.TabExecutor;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.SimplePluginManager;
-import org.eclipse.jdt.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import org.skriptlang.skript.commands.api.Argument;
 import org.skriptlang.skript.commands.api.CommandHandler;
 import org.skriptlang.skript.commands.api.ScriptCommand;
@@ -86,8 +68,7 @@ public class BukkitCommandHandler implements CommandHandler {
 				}
 
 				@Override
-				@Nullable
-				public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
+				public @Nullable List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
 					int argIndex = args.length - 1;
 					List<Argument<?>> arguments = scriptCommand.getArguments();
 
@@ -129,8 +110,7 @@ public class BukkitCommandHandler implements CommandHandler {
 	}
 
 	@Override
-	@Nullable
-	public ScriptCommand getScriptCommand(String label) {
+	public @Nullable ScriptCommand getScriptCommand(String label) {
 		synchronized (scriptCommandMap) {
 			for (ScriptCommand scriptCommand : scriptCommandMap.keySet()) {
 				if (scriptCommand.getLabel().equals(label)) {
