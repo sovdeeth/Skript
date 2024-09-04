@@ -4,6 +4,7 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.RequiredPlugins;
 import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
@@ -19,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 
 @Name("CPU Usage")
+@RequiredPlugins("Spark")
 @Description("Returns the 3 most recent CPU usage readings, like the information from Spark's /tps command. " +
 			"This expression is only supported with servers that have Spark on their server.")
 @Examples({"broadcast \"%cpu usage from the last 10 seconds%\"",
@@ -41,7 +43,7 @@ public class ExprCpuUsage extends SimpleExpression<Number> {
 
 	@Override
 	public boolean init(Expression<?>[] expressions, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult) {
-		Spark spark = getSparkInstance();
+		Spark spark = SparkProvider.get();
 		if (spark != null) {
 			expr = parseResult.expr;
 			index = matchedPattern;
@@ -58,15 +60,7 @@ public class ExprCpuUsage extends SimpleExpression<Number> {
 			case 0 -> new Number[]{cpuUsage.poll(StatisticWindow.CpuUsage.SECONDS_10) * 100};
 			case 1 -> new Number[]{cpuUsage.poll(StatisticWindow.CpuUsage.MINUTES_1) * 100};
 			case 2 -> new Number[]{cpuUsage.poll(StatisticWindow.CpuUsage.MINUTES_15) * 100};
-			default -> {
-				double usageLast10Seconds = cpuUsage.poll(StatisticWindow.CpuUsage.SECONDS_10);
-				double usageLast1Minute = cpuUsage.poll(StatisticWindow.CpuUsage.MINUTES_1);
-				double usageLast15Minutes = cpuUsage.poll(StatisticWindow.CpuUsage.MINUTES_15);
-				Number number1 = (Number) (usageLast10Seconds * 100);
-				Number number2 = (Number) (usageLast1Minute * 100);
-				Number number3 = (Number) (usageLast15Minutes * 100);
-				yield new Number[]{number1, number2, number3};
-			}
+			default -> new Number[]{cpuUsage.poll(StatisticWindow.CpuUsage.SECONDS_10) * 100, cpuUsage.poll(StatisticWindow.CpuUsage.MINUTES_1) * 100, cpuUsage.poll(StatisticWindow.CpuUsage.MINUTES_15) * 100};
 		};
 	}
 
