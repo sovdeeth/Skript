@@ -1,4 +1,4 @@
-test "transform effect":
+test "transform expression":
 	set {_a::*} to integers between -10 and 10
 	assert {_a::*} transformed using (input + 2) is integers between -8 and 12 with "failed to transform with +2"
 

@@ -34,7 +34,7 @@ import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.stream.StreamSupport;
 
-@Name("Transform List")
+@Name("Transformed List")
 @Description({
 	"Transforms (or 'maps') a list's values using a given expression. This is akin to looping over the list and getting " +
 	"a modified version of each value.",
@@ -164,4 +164,5 @@ public class ExprTransform extends SimpleExpression<Object> implements InputSour
 	public String toString(@Nullable Event event, boolean debug) {
 		return unmappedObjects.toString(event, debug) + " transformed using " + mappingExpr.toString(event, debug);
 	}
+	
 }

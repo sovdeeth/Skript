@@ -91,7 +91,7 @@ public class SecFilter extends Section implements InputSource {
 		try {
 			for (Node childNode : sectionNode) {
 				if (!(childNode instanceof SimpleNode)) {
-					Skript.error("filter sections may not contain other sections");
+					Skript.error("Filter sections may not contain other sections");
 					return false;
 				}
 				String childKey = childNode.getKey();
