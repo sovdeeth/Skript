@@ -16,9 +16,13 @@ public class SparkHook extends Hook<Plugin> {
 
 	public static Spark spark;
 
+	public static Spark getSparkInstance() {
+		return SparkProvider.get();
+	}
+
 	@Override
 	protected boolean init() {
-		spark = SparkProvider.get();
+		spark = getSparkInstance();
 		return spark != null;
 	}
 

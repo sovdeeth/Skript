@@ -6,6 +6,7 @@ import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.RequiredPlugins;
 import ch.njol.skript.doc.Since;
+import ch.njol.skript.hooks.spark.SparkHook;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser;
@@ -18,15 +19,16 @@ import me.lucko.spark.api.statistic.types.DoubleStatistic;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
-
 @Name("CPU Usage")
 @RequiredPlugins("Spark")
-@Description("Returns the 3 most recent CPU usage readings, like the information from Spark's /tps command. " +
+@Description("Returns the CPU usage readings, like the information from Spark's /tps command. " +
 			"This expression is only supported with servers that have Spark on their server.")
-@Examples({"broadcast \"%cpu usage from the last 10 seconds%\"",
-	"broadcast \"%cpu usage from the last 1 minute%\"",
-	"broadcast \"%cpu usage from the last 15 minutes%\"",
-	"broadcast \"%cpu usage%\""})
+@Examples({
+	"broadcast cpu usage from the last 10 seconds",
+	"broadcast cpu usage from the last 1 minute",
+	"broadcast cpu usage from the last 15 minutes",
+	"broadcast cpu usage"
+})
 @Since("INSERT VERSION")
 public class ExprCpuUsage extends SimpleExpression<Number> {
 
@@ -35,15 +37,15 @@ public class ExprCpuUsage extends SimpleExpression<Number> {
 
 	static {
 		Skript.registerExpression(ExprCpuUsage.class, Number.class, ExpressionType.SIMPLE,
-			"cpu usage from [the] last 10[ ]s[econds]",
-			"cpu usage from [the] last ([1] minute|1[ ]m[inute])",
-			"cpu usage from [the] last 15[ ]m[inutes]",
+			"[the] cpu usage from [the] last 10[ ]s[econds]",
+			"[the] cpu usage from [the] last ([1] minute|1[ ]m[inute])",
+			"[the] cpu usage from [the] last 15[ ]m[inutes]",
 			"[the] cpu usage");
 	}
 
 	@Override
 	public boolean init(Expression<?>[] expressions, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult) {
-		Spark spark = SparkProvider.get();
+		Spark spark = SparkHook.getSparkInstance();
 		if (spark != null) {
 			expr = parseResult.expr;
 			index = matchedPattern;
@@ -54,7 +56,7 @@ public class ExprCpuUsage extends SimpleExpression<Number> {
 
 	@Override
 	protected Number @Nullable [] get(Event event) {
-		Spark spark = SparkProvider.get();
+		Spark spark = SparkHook.getSparkInstance();
 		DoubleStatistic<StatisticWindow.CpuUsage> cpuUsage = spark.cpuSystem();
 		return switch (index) {
 			case 0 -> new Number[]{cpuUsage.poll(StatisticWindow.CpuUsage.SECONDS_10) * 100};
