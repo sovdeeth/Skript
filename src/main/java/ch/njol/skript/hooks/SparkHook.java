@@ -24,7 +24,7 @@ public class SparkHook extends Hook<Plugin> {
 	@Override
 	protected void loadClasses() throws IOException {
 		if (spark != null) {
-			Skript.getAddonInstance().loadClasses(getClass().getPackage().getName() + ".Spark");
+			Skript.getAddonInstance().loadClasses(getClass().getPackage().getName() + ".api.Spark");
 		}
 	}
 
