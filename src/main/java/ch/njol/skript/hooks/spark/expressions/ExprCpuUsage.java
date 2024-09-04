@@ -1,4 +1,4 @@
-package ch.njol.skript.expressions;
+package ch.njol.skript.hooks.spark.expressions;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;

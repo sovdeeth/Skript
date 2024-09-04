@@ -1,6 +1,7 @@
-package ch.njol.skript.hooks;
+package ch.njol.skript.hooks.spark;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.hooks.Hook;
 import me.lucko.spark.api.Spark;
 import me.lucko.spark.api.SparkProvider;
 import org.bukkit.plugin.Plugin;
@@ -24,7 +25,7 @@ public class SparkHook extends Hook<Plugin> {
 	@Override
 	protected void loadClasses() throws IOException {
 		if (spark != null) {
-			Skript.getAddonInstance().loadClasses(getClass().getPackage().getName() + ".api.Spark");
+			Skript.getAddonInstance().loadClasses(getClass().getPackage().getName() + ".spark");
 		}
 	}
 
