@@ -39,10 +39,6 @@ public class ExprCpuUsage extends SimpleExpression<Number> {
 			"[the] cpu usage");
 	}
 
-	private static Spark getSparkInstance() {
-		return SparkProvider.get();
-	}
-
 	@Override
 	public boolean init(Expression<?>[] expressions, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult) {
 		Spark spark = getSparkInstance();
