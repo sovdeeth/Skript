@@ -45,7 +45,7 @@ public class ExprCpuUsage extends SimpleExpression<Number> {
 
 	@Override
 	public boolean init(Expression<?>[] expressions, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult) {
-		Spark spark = SparkHook.getSparkInstance();
+		Spark spark = SparkProvider.get();
 		if (spark != null) {
 			expr = parseResult.expr;
 			index = matchedPattern;
@@ -56,7 +56,7 @@ public class ExprCpuUsage extends SimpleExpression<Number> {
 
 	@Override
 	protected Number @Nullable [] get(Event event) {
-		Spark spark = SparkHook.getSparkInstance();
+		Spark spark = SparkProvider.get();
 		DoubleStatistic<StatisticWindow.CpuUsage> cpuUsage = spark.cpuSystem();
 		return switch (index) {
 			case 0 -> new Number[]{cpuUsage.poll(StatisticWindow.CpuUsage.SECONDS_10) * 100};

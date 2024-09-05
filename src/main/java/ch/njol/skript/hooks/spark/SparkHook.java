@@ -10,19 +10,13 @@ import java.io.IOException;
 
 public class SparkHook extends Hook<Plugin> {
 
-	public static String NO_SPARK_SUPPORT = "Your server does not have Spark installed.";
-
 	public SparkHook() throws IOException {}
 
 	public static Spark spark;
 
-	public static Spark getSparkInstance() {
-		return SparkProvider.get();
-	}
-
 	@Override
 	protected boolean init() {
-		spark = getSparkInstance();
+		spark = SparkProvider.get();
 		return spark != null;
 	}
 
