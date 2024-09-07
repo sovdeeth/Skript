@@ -32,6 +32,7 @@ import java.util.Set;
 @Description({
 	"Transforms (or 'maps') a list's values using a given expression. This is akin to looping over the list and setting " +
 	"each value to a modified version of itself.",
+	"Applies the given function to each element in the list, replacing the original element with the function's result.",
 	"If the given expression returns a single value, the indices of the list will not change. If the expression returns " +
 	"multiple values, then then indices will be reset as a single index cannot contain multiple values.",
 	"Only variable lists can be transformed with this effect. For other lists, see the transform expression."
