@@ -314,12 +314,12 @@ public class SecConditional extends Section {
 			case IF -> {
 				if (multiline)
 					yield parseIf + "if " + (ifAny ? "any" : "all");
-				yield parseIf + "if " + ((Condition) conditional.getCondtionals().get(0)).toString(event, debug);
+				yield parseIf + "if " + ((Condition) conditional.getConditionals().get(0)).toString(event, debug);
 			}
 			case ELSE_IF -> {
 				if (multiline)
 					yield "else " + parseIf + "if " + (ifAny ? "any" : "all");
-				yield "else " + parseIf + "if " + ((Condition) conditional.getCondtionals().get(0)).toString(event, debug);
+				yield "else " + parseIf + "if " + ((Condition) conditional.getConditionals().get(0)).toString(event, debug);
 			}
 			case ELSE -> "else";
 			case THEN -> "then";

@@ -2,10 +2,13 @@ package org.skriptlang.skript.lang.condition;
 
 import ch.njol.util.Kleenean;
 import org.bukkit.event.Event;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A {@link Conditional} that is built of other {@link Conditional}s.
@@ -15,15 +18,17 @@ import java.util.List;
  */
 public class CompoundConditional implements Conditional {
 
-	private final List<Conditional> componentCondtionals = new ArrayList<>();
+	private final LinkedHashSet<Conditional> componentConditionals = new LinkedHashSet<>();
 	private final Operator operator;
+	private boolean useCache;
 
-	public CompoundConditional(Operator operator, List<Conditional> conditionals) {
+	public CompoundConditional(Operator operator, @NotNull Collection<Conditional> conditionals) {
 		if (conditionals.isEmpty())
 			throw new IllegalArgumentException("CompoundConditionals must contain at least 1 component conditional.");
 		if (operator == Operator.NOT && conditionals.size() != 1)
 			throw new IllegalArgumentException("The NOT operator cannot be applied to multiple Conditionals.");
-		this.componentCondtionals.addAll(conditionals);
+		this.componentConditionals.addAll(conditionals);
+		useCache = conditionals.stream().anyMatch(cond -> cond instanceof CompoundConditional);
 		this.operator = operator;
 	}
 
@@ -33,32 +38,41 @@ public class CompoundConditional implements Conditional {
 
 	@Override
 	public Kleenean evaluate(Event event) {
+		Map<Conditional, Kleenean> cache = null;
+		// only use overhead of a cache if we think it will be useful (stacked conditionals)
+		if (useCache)
+			cache = new HashMap<>();
+		return evaluate(event, cache);
+	}
+
+	@Override
+	public Kleenean evaluate(Event event, Map<Conditional, Kleenean> cache) {
 		Kleenean result;
 		return switch (operator) {
 			case OR -> {
 				result = Kleenean.FALSE;
-				for (Conditional conditional : componentCondtionals) {
-					result = conditional.or(result, event);
+				for (Conditional conditional : componentConditionals) {
+					result = conditional.or(result, event, cache);
 				}
 				yield result;
 			}
 			case AND -> {
 				result = Kleenean.TRUE;
-				for (Conditional conditional : componentCondtionals) {
-					result = conditional.and(result, event);
+				for (Conditional conditional : componentConditionals) {
+					result = conditional.and(result, event, cache);
 				}
 				yield result;
 			}
 			case NOT -> {
-				if (componentCondtionals.size() > 1)
+				if (componentConditionals.size() > 1)
 					throw new IllegalStateException("Cannot apply NOT to multiple conditionals! Cannot evaluate.");
-				yield componentCondtionals.getFirst().evaluate(event);
+				yield componentConditionals.getFirst().evaluate(event, cache);
 			}
 		};
 	}
 
-	public List<Conditional> getCondtionals() {
-		return Collections.unmodifiableList(componentCondtionals);
+	public List<Conditional> getConditionals() {
+		return componentConditionals.stream().toList();
 	}
 
 	public Operator getOperator() {
@@ -69,7 +83,8 @@ public class CompoundConditional implements Conditional {
 		addConditionals(List.of(conditionals));
 	}
 
-	protected void addConditionals(List<Conditional> conditionals) {
-		componentCondtionals.addAll(conditionals);
+	protected void addConditionals(Collection<Conditional> conditionals) {
+		componentConditionals.addAll(conditionals);
+		useCache |= conditionals.stream().anyMatch(cond -> cond instanceof CompoundConditional);
 	}
 }

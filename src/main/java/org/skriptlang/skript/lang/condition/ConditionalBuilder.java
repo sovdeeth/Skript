@@ -43,7 +43,7 @@ public class ConditionalBuilder {
 		List<Conditional> inputConditionals = new ArrayList<>(andCondtionals.length + 1);
 		inputConditionals.set(0, null); // just for padding
 		inputConditionals.addAll(List.of(andCondtionals));
-		for (Conditional conditional : root.getCondtionals()) {
+		for (Conditional conditional : root.getConditionals()) {
 			inputConditionals.set(0, conditional);
 			newConditionals.add(new CompoundConditional(Operator.AND, inputConditionals));
 		}
@@ -94,11 +94,11 @@ public class ConditionalBuilder {
 
 		return switch (compound.getOperator()) {
 			// !!a -> a
-			case NOT -> compound.getCondtionals().getFirst();
+			case NOT -> compound.getConditionals().getFirst();
 			// !(a && b) -> (!a || !b)
 			case AND -> {
 				List<Conditional> newConditionals = new ArrayList<>();
-				for (Conditional cond : compound.getCondtionals()) {
+				for (Conditional cond : compound.getConditionals()) {
 					newConditionals.add(negate(cond));
 				}
 				yield new CompoundConditional(Operator.OR, newConditionals);
@@ -106,7 +106,7 @@ public class ConditionalBuilder {
 			// !(a || b) -> (!a && !b)
 			case OR -> {
 				List<Conditional> newConditionals = new ArrayList<>();
-				for (Conditional cond : compound.getCondtionals()) {
+				for (Conditional cond : compound.getConditionals()) {
 					newConditionals.add(negate(cond));
 				}
 				yield new CompoundConditional(Operator.AND, newConditionals);
