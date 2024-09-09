@@ -6,6 +6,8 @@ import org.bukkit.event.Event;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -29,7 +31,7 @@ public interface Conditional extends Debuggable {
 	/**
 	 * Evaluates this object as `true`, `false`, or `unknown`.
 	 * This value may change between subsequent callings.
-	 * Uses a mutable cache of evaluated conditionals to prevent duplicate evaluations.
+	 * May use a mutable cache of evaluated conditionals to prevent duplicate evaluations.
 	 *
 	 * @param event The event with which to evaluate this object.
 	 * @param cache The cache of evaluated conditionals.
@@ -42,7 +44,6 @@ public interface Conditional extends Debuggable {
 		//noinspection DataFlowIssue
 		return cache.computeIfAbsent(this, (cond -> cond.evaluate(event)));
 	}
-
 
 	/**
 	 * Computes {@link Kleenean#and(Kleenean)} with the evaluations of this {@link Conditional} and the other.
@@ -180,10 +181,58 @@ public interface Conditional extends Debuggable {
 		return this.evaluate(event, cache).not();
 	}
 
+	/**
+	 * @return a new builder object for making conditions, specifically compound ones.
+	 */
 	static ConditionalBuilder builder() {
 		return new ConditionalBuilder();
 	}
 
+	/**
+	 * @param conditional A conditional to begin the builder with.
+	 * @return a new builder object for making conditions, specifically compound ones.
+	 */
+	static ConditionalBuilder builder(Conditional conditional) {
+		return new ConditionalBuilder(conditional);
+	}
+
+	/**
+	 * Negates a given conditional. Follows the following transformation rules: <br>
+	 * {@code !!a -> a}<br>
+	 * {@code !(a || b) -> (!a && !b)}<br>
+	 * {@code !(a && b) -> (!a || !b)}<br>
+	 * @param conditional The conditional to negate.
+	 * @return The negated conditional.
+	 */
+	static Conditional negate(Conditional conditional) {
+		if (!(conditional instanceof CompoundConditional compound))
+			return new CompoundConditional(Operator.NOT, conditional);
+
+		return switch (compound.getOperator()) {
+			// !!a -> a
+			case NOT -> compound.getConditionals().getFirst();
+			// !(a && b) -> (!a || !b)
+			case AND -> {
+				List<Conditional> newConditionals = new ArrayList<>();
+				for (Conditional cond : compound.getConditionals()) {
+					newConditionals.add(negate(cond));
+				}
+				yield new CompoundConditional(Operator.OR, newConditionals);
+			}
+			// !(a || b) -> (!a && !b)
+			case OR -> {
+				List<Conditional> newConditionals = new ArrayList<>();
+				for (Conditional cond : compound.getConditionals()) {
+					newConditionals.add(negate(cond));
+				}
+				yield new CompoundConditional(Operator.AND, newConditionals);
+			}
+		};
+	}
+
+	/**
+	 * Represents a boolean logic operator.
+	 */
 	enum Operator {
 		AND("&&"),
 		OR("||"),
