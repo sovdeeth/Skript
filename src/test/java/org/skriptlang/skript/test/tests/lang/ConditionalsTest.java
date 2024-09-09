@@ -148,7 +148,7 @@ public class ConditionalsTest {
 		TestConditional condFalseB = new TestConditional(Kleenean.FALSE);
 		TestConditional condUnknownB = new TestConditional(Kleenean.UNKNOWN);
 
-		Conditional trueAndTrue = Conditional.builder()
+		Conditional<Event> trueAndTrue = Conditional.builder(Event.class)
 			.and(condTrue, condTrueB)
 			.build();
 
@@ -157,7 +157,7 @@ public class ConditionalsTest {
 		assertEvals(condTrueB, 1);
 
 
-		Conditional trueAndFalse = Conditional.builder()
+		Conditional<Event> trueAndFalse = Conditional.builder(Event.class)
 			.and(condTrue, condFalse)
 			.build();
 
@@ -166,7 +166,7 @@ public class ConditionalsTest {
 		assertEvals(condFalse, 1);
 
 
-		Conditional falseAndTrueAndFalse = Conditional.builder()
+		Conditional<Event> falseAndTrueAndFalse = Conditional.builder(Event.class)
 			.and(condFalse, condTrue, condFalse)
 			.build();
 
@@ -175,7 +175,7 @@ public class ConditionalsTest {
 		assertEvals(condFalse, 1);
 
 
-		Conditional trueAndUnknown = Conditional.builder()
+		Conditional<Event> trueAndUnknown = Conditional.builder(Event.class)
 			.and(condTrue, condUnknown)
 			.build();
 
@@ -184,7 +184,7 @@ public class ConditionalsTest {
 		assertEvals(condUnknown, 1);
 
 
-		Conditional falseAndFalse = Conditional.builder()
+		Conditional<Event> falseAndFalse = Conditional.builder(Event.class)
 			.and(condFalse, condFalseB)
 			.build();
 
@@ -192,7 +192,7 @@ public class ConditionalsTest {
 		assertEvals(condFalseB, 0);
 		assertEvals(condFalse, 1);
 
-		Conditional falseAndUnknown = Conditional.builder()
+		Conditional<Event> falseAndUnknown = Conditional.builder(Event.class)
 			.and(condFalse, condUnknown)
 			.build();
 
@@ -200,7 +200,7 @@ public class ConditionalsTest {
 		assertEvals(condUnknown, 0);
 		assertEvals(condFalse, 1);
 
-		Conditional unknownAndUnknown = Conditional.builder()
+		Conditional<Event> unknownAndUnknown = Conditional.builder(Event.class)
 			.and(condUnknown, condUnknownB)
 			.build();
 
@@ -216,7 +216,7 @@ public class ConditionalsTest {
 		TestConditional condFalseB = new TestConditional(Kleenean.FALSE);
 		TestConditional condUnknownB = new TestConditional(Kleenean.UNKNOWN);
 
-		Conditional trueOrTrue = Conditional.builder()
+		Conditional<Event> trueOrTrue = Conditional.builder(Event.class)
 			.or(condTrue, condTrueB)
 			.build();
 
@@ -225,7 +225,7 @@ public class ConditionalsTest {
 		assertEvals(condTrueB, 0);
 
 
-		Conditional trueOrFalse = Conditional.builder()
+		Conditional<Event> trueOrFalse = Conditional.builder(Event.class)
 			.or(condTrue, condFalse)
 			.build();
 
@@ -234,7 +234,7 @@ public class ConditionalsTest {
 		assertEvals(condFalse, 0);
 
 
-		Conditional falseOrTrueOrFalse = Conditional.builder()
+		Conditional<Event> falseOrTrueOrFalse = Conditional.builder(Event.class)
 			.or(condFalse, condTrue, condFalseB)
 			.build();
 
@@ -244,7 +244,7 @@ public class ConditionalsTest {
 		assertEvals(condFalseB, 0);
 
 
-		Conditional trueOrUnknown = Conditional.builder()
+		Conditional<Event> trueOrUnknown = Conditional.builder(Event.class)
 			.or(condTrue, condUnknown)
 			.build();
 
@@ -253,7 +253,7 @@ public class ConditionalsTest {
 		assertEvals(condUnknown, 0);
 
 
-		Conditional falseOrFalse = Conditional.builder()
+		Conditional<Event> falseOrFalse = Conditional.builder(Event.class)
 			.or(condFalse, condFalseB)
 			.build();
 
@@ -261,7 +261,7 @@ public class ConditionalsTest {
 		assertEvals(condFalseB, 1);
 		assertEvals(condFalse, 1);
 
-		Conditional falseOrUnknown = Conditional.builder()
+		Conditional<Event> falseOrUnknown = Conditional.builder(Event.class)
 			.or(condFalse, condUnknown)
 			.build();
 
@@ -269,7 +269,7 @@ public class ConditionalsTest {
 		assertEvals(condUnknown, 1);
 		assertEvals(condFalse, 1);
 
-		Conditional unknownAndUnknown = Conditional.builder()
+		Conditional<Event> unknownAndUnknown = Conditional.builder(Event.class)
 			.or(condUnknown, condUnknownB)
 			.build();
 
@@ -280,7 +280,7 @@ public class ConditionalsTest {
 
 	@Test
 	public void testComplexCombined() {
-		Conditional trueAndFalseOrUnknownOrTrue = Conditional.builder()
+		Conditional<Event> trueAndFalseOrUnknownOrTrue = Conditional.builder(Event.class)
 			.and(condTrue, condFalse)
 			.or(condUnknown, condTrue)
 			.build();
@@ -290,9 +290,9 @@ public class ConditionalsTest {
 		assertEvals(condFalse, 1);
 		assertEvals(condUnknown, 1);
 
-		Conditional trueOrTrueAndFalseOrUnknown = Conditional.builder()
+		Conditional<Event> trueOrTrueAndFalseOrUnknown = Conditional.builder(Event.class)
 			.or(condTrue)
-			.or(new CompoundConditional(Conditional.Operator.AND, condTrue, condFalse))
+			.or(new CompoundConditional<>(Conditional.Operator.AND, condTrue, condFalse))
 			.or(condUnknown)
 			.build();
 
@@ -302,7 +302,7 @@ public class ConditionalsTest {
 		assertEvals(condUnknown, 0);
 
 		// should compose to (U && T && F) || (T && T && F)
-		Conditional unknownOrTrueAndTrueAndFalse = Conditional.builder()
+		Conditional<Event> unknownOrTrueAndTrueAndFalse = Conditional.builder(Event.class)
 			.or(condUnknown, condTrue)
 			.and(condTrue, condFalse)
 			.build();
@@ -314,7 +314,7 @@ public class ConditionalsTest {
 	}
 
 	@Ignore
-	private static class TestConditional implements Conditional {
+	private static class TestConditional implements Conditional<Event> {
 
 		public int timesEvaluated;
 		public final Kleenean value;

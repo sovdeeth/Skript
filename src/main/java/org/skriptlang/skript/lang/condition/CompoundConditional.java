@@ -10,16 +10,18 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
  * A {@link Conditional} that is built of other {@link Conditional}s.
- * It is composed of a {@link List} of {@link Conditional}s that are acted upon by a single {@link Operator}.
+ * It is composed of an ordered {@link Set} of {@link Conditional}s that are acted upon by a single {@link Operator}.
+ * @param <T> The context class to use for evaluation.
  * @see ConditionalBuilder
  */
-public class CompoundConditional implements Conditional {
+public class CompoundConditional<T> implements Conditional<T> {
 
-	private final LinkedHashSet<Conditional> componentConditionals = new LinkedHashSet<>();
+	private final LinkedHashSet<Conditional<T>> componentConditionals = new LinkedHashSet<>();
 	private final Operator operator;
 
 	/**
@@ -33,7 +35,7 @@ public class CompoundConditional implements Conditional {
 	 * @param conditionals A collection of conditionals to combine using the operator. Must be >= 1 in length,
 	 *                     or exactly 1 if {@link Operator#NOT} is used.
 	 */
-	public CompoundConditional(Operator operator, @NotNull Collection<Conditional> conditionals) {
+	public CompoundConditional(Operator operator, @NotNull Collection<Conditional<T>> conditionals) {
 		if (conditionals.isEmpty())
 			throw new IllegalArgumentException("CompoundConditionals must contain at least 1 component conditional.");
 		if (operator == Operator.NOT && conditionals.size() != 1)
@@ -50,41 +52,42 @@ public class CompoundConditional implements Conditional {
 	 * @param conditionals Conditionals to combine using the operator. Must be >= 1 in length,
 	 *                     or exactly 1 if {@link Operator#NOT} is used.
 	 */
-	public CompoundConditional(Operator operator, Conditional... conditionals) {
+	@SafeVarargs
+	public CompoundConditional(Operator operator, Conditional<T>... conditionals) {
 		this(operator, List.of(conditionals));
 	}
 
 	@Override
-	public Kleenean evaluate(Event event) {
-		Map<Conditional, Kleenean> cache = null;
+	public Kleenean evaluate(T context) {
+		Map<Conditional<T>, Kleenean> cache = null;
 		// only use overhead of a cache if we think it will be useful (stacked conditionals)
 		if (useCache)
 			cache = new HashMap<>();
-		return evaluate(event, cache);
+		return evaluate(context, cache);
 	}
 
 	@Override
-	public Kleenean evaluate(Event event, Map<Conditional, Kleenean> cache) {
+	public Kleenean evaluate(T context, Map<Conditional<T>, Kleenean> cache) {
 		Kleenean result;
 		return switch (operator) {
 			case OR -> {
 				result = Kleenean.FALSE;
-				for (Conditional conditional : componentConditionals) {
-					result = conditional.or(result, event, cache);
+				for (Conditional<T> conditional : componentConditionals) {
+					result = conditional.or(result, context, cache);
 				}
 				yield result;
 			}
 			case AND -> {
 				result = Kleenean.TRUE;
-				for (Conditional conditional : componentConditionals) {
-					result = conditional.and(result, event, cache);
+				for (Conditional<T> conditional : componentConditionals) {
+					result = conditional.and(result, context, cache);
 				}
 				yield result;
 			}
 			case NOT -> {
 				if (componentConditionals.size() > 1)
 					throw new IllegalStateException("Cannot apply NOT to multiple conditionals! Cannot evaluate.");
-				yield componentConditionals.getFirst().evaluate(event, cache);
+				yield componentConditionals.getFirst().evaluate(context, cache);
 			}
 		};
 	}
@@ -92,7 +95,7 @@ public class CompoundConditional implements Conditional {
 	/**
 	 * @return An immutable list of the component conditionals of this object.
 	 */
-	public List<Conditional> getConditionals() {
+	public List<Conditional<T>> getConditionals() {
 		return componentConditionals.stream().toList();
 	}
 
@@ -106,14 +109,15 @@ public class CompoundConditional implements Conditional {
 	/**
 	 * @param conditionals Adds more conditionals to this object's component conditionals.
 	 */
-	protected void addConditionals(Conditional... conditionals) {
+	@SafeVarargs
+	protected final void addConditionals(Conditional<T>... conditionals) {
 		addConditionals(List.of(conditionals));
 	}
 
 	/**
 	 * @param conditionals Adds more conditionals to this object's component conditionals.
 	 */
-	protected void addConditionals(Collection<Conditional> conditionals) {
+	protected void addConditionals(Collection<Conditional<T>> conditionals) {
 		componentConditionals.addAll(conditionals);
 		useCache |= conditionals.stream().anyMatch(cond -> cond instanceof CompoundConditional);
 	}

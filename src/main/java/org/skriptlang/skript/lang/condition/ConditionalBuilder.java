@@ -14,16 +14,17 @@ import static org.skriptlang.skript.lang.condition.Conditional.negate;
  * ex. {@code (a && !b && c) || b || (!c && d)}.
  * <br>
  * A builder should no longer be used after calling {@link #build()}.
+ * @param <T> The context class to use for evaluation.
  * @see CompoundConditional
  */
-public class ConditionalBuilder {
+public class ConditionalBuilder<T> {
 
-	private CompoundConditional root;
+	private CompoundConditional<T> root;
 
 	/**
 	 * Creates an empty builder.
 	 */
-	protected ConditionalBuilder() {
+	ConditionalBuilder() {
 		this.root = null;
 	}
 
@@ -32,11 +33,11 @@ public class ConditionalBuilder {
 	 * @param root If given a {@link CompoundConditional}, it is used as the root conditional.
 	 *             Otherwise, a OR compound conditional is created as the root with the given conditional within.
 	 */
-	protected ConditionalBuilder(Conditional root) {
-		if (root instanceof CompoundConditional compoundConditional) {
+	ConditionalBuilder(Conditional<T> root) {
+		if (root instanceof CompoundConditional<T> compoundConditional) {
 			this.root = compoundConditional;
 		} else {
-			this.root = new CompoundConditional(Operator.OR, root);
+			this.root = new CompoundConditional<>(Operator.OR, root);
 		}
 	}
 
@@ -44,7 +45,7 @@ public class ConditionalBuilder {
 	 * @return The root conditional, which will be DNF-compliant
 	 * @throws IllegalStateException if the builder is empty.
 	 */
-	public Conditional build() {
+	public Conditional<T> build() {
 		if (root == null)
 			throw new IllegalStateException("Cannot build an empty conditional!");
 		return root;
@@ -57,15 +58,16 @@ public class ConditionalBuilder {
 	 * @param andConditionals conditionals to AND to the existing conditional.
 	 * @return the builder
 	 */
+	@SafeVarargs
 	@Contract("_ -> this")
-	public ConditionalBuilder and(Conditional... andConditionals) {
+	public final ConditionalBuilder<T> and(Conditional<T>... andConditionals) {
 		if (root == null) {
-			root = new CompoundConditional(Operator.AND, andConditionals);
+			root = new CompoundConditional<>(Operator.AND, andConditionals);
 			return this;
 		}
 
 		// unroll conditionals if they're ANDs
-		List<Conditional> newConditionals = unroll(List.of(andConditionals), Operator.AND);
+		List<Conditional<T>> newConditionals = unroll(List.of(andConditionals), Operator.AND);
 
 		// if the root is still just AND, we can just append.
 		if (root.getOperator() == Operator.AND) {
@@ -74,14 +76,14 @@ public class ConditionalBuilder {
 		}
 		// Otherwise, we need to transform:
 		// (a || b) && c -> (a && c) || (b && c)
-		List<Conditional> transformedConditionals = new ArrayList<>();
+		List<Conditional<T>> transformedConditionals = new ArrayList<>();
 		newConditionals.add(0, null); // just for padding
-		for (Conditional conditional : root.getConditionals()) {
+		for (Conditional<T> conditional : root.getConditionals()) {
 			newConditionals.set(0, conditional);
-			transformedConditionals.add(new CompoundConditional(Operator.AND, newConditionals));
+			transformedConditionals.add(new CompoundConditional<>(Operator.AND, newConditionals));
 		}
 
-		root = new CompoundConditional(Operator.OR, transformedConditionals);
+		root = new CompoundConditional<>(Operator.OR, transformedConditionals);
 		return this;
 	}
 
@@ -91,15 +93,16 @@ public class ConditionalBuilder {
 	 * @param orConditionals conditionals to OR to the existing conditional.
 	 * @return the builder
 	 */
+	@SafeVarargs
 	@Contract("_ -> this")
-	public ConditionalBuilder or(Conditional... orConditionals) {
+	public final ConditionalBuilder<T> or(Conditional<T>... orConditionals) {
 		if (root == null) {
-			root = new CompoundConditional(Operator.OR, orConditionals);
+			root = new CompoundConditional<>(Operator.OR, orConditionals);
 			return this;
 		}
 
 		// unroll conditionals if they're ORs
-		List<Conditional> newConditionals = unroll(List.of(orConditionals), Operator.OR);
+		List<Conditional<T>> newConditionals = unroll(List.of(orConditionals), Operator.OR);
 
 		// Since DNF is a series of ANDs, ORed together, we can simply add these to the root if it's already OR.
 		if (root.getOperator() == Operator.OR) {
@@ -108,7 +111,7 @@ public class ConditionalBuilder {
 		}
 		// otherwise we need to nest the AND/NOT condition within a new root with OR operator.
 		newConditionals.add(0, root);
-		root = new CompoundConditional(Operator.OR, newConditionals);
+		root = new CompoundConditional<>(Operator.OR, newConditionals);
 		return this;
 	}
 
@@ -120,10 +123,10 @@ public class ConditionalBuilder {
 	 * @return A new list of conditionals without superfluous nesting.
 	 */
 	@Contract("_,_ -> new")
-	private static List<Conditional> unroll(Collection<Conditional> conditionals, Operator operator) {
-		List<Conditional> newConditionals = new ArrayList<>();
-		for (Conditional conditional : conditionals) {
-			if (conditional instanceof CompoundConditional compound && compound.getOperator() == operator) {
+	private static <T> List<Conditional<T>> unroll(Collection<Conditional<T>> conditionals, Operator operator) {
+		List<Conditional<T>> newConditionals = new ArrayList<>();
+		for (Conditional<T> conditional : conditionals) {
+			if (conditional instanceof CompoundConditional<T> compound && compound.getOperator() == operator) {
 				newConditionals.addAll(unroll(compound.getConditionals(), operator));
 			} else {
 				newConditionals.add(conditional);
@@ -138,7 +141,7 @@ public class ConditionalBuilder {
 	 * @return the builder
 	 */
 	@Contract("_ -> this")
-	public ConditionalBuilder andNot(Conditional conditional) {
+	public ConditionalBuilder<T> andNot(Conditional<T> conditional) {
 		return and(negate(conditional));
 	}
 
@@ -148,7 +151,7 @@ public class ConditionalBuilder {
 	 * @return the builder
 	 */
 	@Contract("_ -> this")
-	public ConditionalBuilder orNot(Conditional conditional) {
+	public ConditionalBuilder<T> orNot(Conditional<T> conditional) {
 		return or(negate(conditional));
 	}
 
@@ -159,8 +162,9 @@ public class ConditionalBuilder {
 	 * @param conditionals The conditional to add.
 	 * @return the builder
 	 */
+	@SafeVarargs
 	@Contract("_,_ -> this")
-	public ConditionalBuilder add(boolean or, Conditional... conditionals) {
+	public final ConditionalBuilder<T> add(boolean or, Conditional<T>... conditionals) {
 		if (or)
 			return or(conditionals);
 		return and(conditionals);

@@ -2,7 +2,6 @@ package org.skriptlang.skript.lang.condition;
 
 import ch.njol.skript.lang.Debuggable;
 import ch.njol.util.Kleenean;
-import org.bukkit.event.Event;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,35 +13,36 @@ import java.util.Map;
  * An object which can evaluate to `true`, `false`, or `unknown`.
  * `unknown` is currently unused, but intended for future handling of unexpected runtime situations, where some aspect of
  * the condition in ill-defined by the user and would result in ambiguous or undefined behavior.
+ * @param <T> The context class to use for evaluation.
  */
 // TODO: replace Bukkit event with proper context object
-public interface Conditional extends Debuggable {
+public interface Conditional<T> extends Debuggable {
 
 	/**
 	 * Evaluates this object as `true`, `false`, or `unknown`.
 	 * This value may change between subsequent callings.
 	 *
-	 * @param event The event with which to evaluate this object.
+	 * @param context The context with which to evaluate this object.
 	 * @return The evaluation of this object.
 	 */
 	@Contract(pure = true)
-	Kleenean evaluate(Event event);
+	Kleenean evaluate(T context);
 
 	/**
 	 * Evaluates this object as `true`, `false`, or `unknown`.
 	 * This value may change between subsequent callings.
 	 * May use a mutable cache of evaluated conditionals to prevent duplicate evaluations.
 	 *
-	 * @param event The event with which to evaluate this object.
+	 * @param context The context with which to evaluate this object.
 	 * @param cache The cache of evaluated conditionals.
 	 * @return The evaluation of this object.
 	 */
 	@Contract(pure = true)
-	default Kleenean evaluate(Event event, @Nullable Map<Conditional, Kleenean> cache) {
+	default Kleenean evaluate(T context, @Nullable Map<Conditional<T>, Kleenean> cache) {
 		if (cache == null)
-			return evaluate(event);
+			return evaluate(context);
 		//noinspection DataFlowIssue
-		return cache.computeIfAbsent(this, (cond -> cond.evaluate(event)));
+		return cache.computeIfAbsent(this, (cond -> cond.evaluate(context)));
 	}
 
 	/**
@@ -50,12 +50,12 @@ public interface Conditional extends Debuggable {
 	 * Evaluates the other first, and shortcuts if it is not {@link Kleenean#TRUE}.
 	 *
 	 * @param other The {@link Conditional} to AND with. Will always be evaluated.
-	 * @param event The event with which to evaluate the conditionals.
+	 * @param context The context with which to evaluate the conditionals.
 	 * @return The result of {@link Kleenean#and(Kleenean)}, given the evaluations of the two conditionals.
 	 */
 	@Contract(pure = true)
-	default Kleenean and(Conditional other, Event event) {
-		return and(other.evaluate(event, null), event, null);
+	default Kleenean and(Conditional<T> other, T context) {
+		return and(other.evaluate(context, null), context, null);
 	}
 
 	/**
@@ -64,13 +64,13 @@ public interface Conditional extends Debuggable {
 	 * Uses a mutable cache of evaluated conditionals to prevent duplicate evaluations.
 	 *
 	 * @param other The {@link Conditional} to AND with. Will always be evaluated.
-	 * @param event The event with which to evaluate the conditionals.
+	 * @param context The context with which to evaluate the conditionals.
 	 * @param cache The cache of evaluated conditionals.
 	 * @return The result of {@link Kleenean#and(Kleenean)}, given the evaluations of the two conditionals.
 	 */
 	@Contract(pure = true)
-	default Kleenean and(Conditional other, Event event, @Nullable Map<Conditional, Kleenean> cache) {
-		return and(other.evaluate(event, cache), event, cache);
+	default Kleenean and(Conditional<T> other, T context, @Nullable Map<Conditional<T>, Kleenean> cache) {
+		return and(other.evaluate(context, cache), context, cache);
 	}
 
 	/**
@@ -78,12 +78,12 @@ public interface Conditional extends Debuggable {
 	 * Evaluates this object iff the given {@link Kleenean} is {@link Kleenean#TRUE}.
 	 *
 	 * @param other The {@link Kleenean} to AND with.
-	 * @param event The event with which to evaluate the conditional, if necessary.
+	 * @param context The context with which to evaluate the conditional, if necessary.
 	 * @return The result of {@link Kleenean#and(Kleenean)}, given the evaluation of the conditional.
 	 */
 	@Contract(pure = true)
-	default Kleenean and(Kleenean other, Event event) {
-		return and(other, event, null);
+	default Kleenean and(Kleenean other, T context) {
+		return and(other, context, null);
 	}
 
 	/**
@@ -92,15 +92,15 @@ public interface Conditional extends Debuggable {
 	 * Uses a mutable cache of evaluated conditionals to prevent duplicate evaluations.
 	 *
 	 * @param other The {@link Kleenean} to AND with.
-	 * @param event The event with which to evaluate the conditional, if necessary.
+	 * @param context The context with which to evaluate the conditional, if necessary.
 	 * @param cache The cache of evaluated conditionals.
 	 * @return The result of {@link Kleenean#and(Kleenean)}, given the evaluation of the conditional.
 	 */
 	@Contract(pure = true)
-	default Kleenean and(Kleenean other, Event event, @Nullable Map<Conditional, Kleenean> cache) {
+	default Kleenean and(Kleenean other, T context, @Nullable Map<Conditional<T>, Kleenean> cache) {
 		if (other.isFalse())
 			return other;
-		return other.and(evaluate(event, cache));
+		return other.and(evaluate(context, cache));
 	}
 
 	/**
@@ -108,12 +108,12 @@ public interface Conditional extends Debuggable {
 	 * Evaluates the other first, and shortcuts if it is not {@link Kleenean#TRUE}.
 	 *
 	 * @param other The {@link Conditional} to OR with. Will always be evaluated.
-	 * @param event The event with which to evaluate the conditionals.
+	 * @param context The context with which to evaluate the conditionals.
 	 * @return The result of {@link Kleenean#or(Kleenean)}, given the evaluations of the two conditionals.
 	 */
 	@Contract(pure = true)
-	default Kleenean or(Conditional other, Event event) {
-		return or(other.evaluate(event, null), event, null);
+	default Kleenean or(Conditional<T> other, T context) {
+		return or(other.evaluate(context, null), context, null);
 	}
 
 	/**
@@ -122,13 +122,13 @@ public interface Conditional extends Debuggable {
 	 * Uses a mutable cache of evaluated conditionals to prevent duplicate evaluations.
 	 *
 	 * @param other The {@link Conditional} to OR with. Will always be evaluated.
-	 * @param event The event with which to evaluate the conditionals.
+	 * @param context The context with which to evaluate the conditionals.
 	 * @param cache The cache of evaluated conditionals.
 	 * @return The result of {@link Kleenean#and(Kleenean)}, given the evaluations of the two conditionals.
 	 */
 	@Contract(pure = true)
-	default Kleenean or(Conditional other, Event event, @Nullable Map<Conditional, Kleenean> cache) {
-		return or(other.evaluate(event, cache), event, cache);
+	default Kleenean or(Conditional<T> other, T context, @Nullable Map<Conditional<T>, Kleenean> cache) {
+		return or(other.evaluate(context, cache), context, cache);
 	}
 
 	/**
@@ -136,12 +136,12 @@ public interface Conditional extends Debuggable {
 	 * Evaluates this object iff the given {@link Kleenean} is {@link Kleenean#FALSE} or {@link Kleenean#UNKNOWN}.
 	 *
 	 * @param other The {@link Kleenean} to OR with.
-	 * @param event The event with which to evaluate the conditional, if necessary.
+	 * @param context The context with which to evaluate the conditional, if necessary.
 	 * @return The result of {@link Kleenean#or(Kleenean)}, given the evaluation of the conditional.
 	 */
 	@Contract(pure = true)
-	default Kleenean or(Kleenean other, Event event) {
-		return or(other, event, null);
+	default Kleenean or(Kleenean other, T context) {
+		return or(other, context, null);
 	}
 
 	/**
@@ -150,50 +150,51 @@ public interface Conditional extends Debuggable {
 	 * Uses a mutable cache of evaluated conditionals to prevent duplicate evaluations.
 	 *
 	 * @param other The {@link Kleenean} to OR with.
-	 * @param event The event with which to evaluate the conditional, if necessary.
+	 * @param context The context with which to evaluate the conditional, if necessary.
 	 * @param cache The cache of evaluated conditionals.
 	 * @return The result of {@link Kleenean#or(Kleenean)}, given the evaluation of the conditional.
 	 */
 	@Contract(pure = true)
-	default Kleenean or(Kleenean other, Event event, @Nullable Map<Conditional, Kleenean> cache) {
+	default Kleenean or(Kleenean other, T context, @Nullable Map<Conditional<T>, Kleenean> cache) {
 		if (other.isTrue())
 			return other;
-		return other.or(evaluate(event, cache));
+		return other.or(evaluate(context, cache));
 	}
 
 	/**
 	 * Computes {@link Kleenean#not()} on the evaluation of this {@link Conditional}.
-	 * @param event The event with which to evaluate the conditional.
+	 * @param context The context with which to evaluate the conditional.
 	 * @return The result of {@link Kleenean#not()}, given the evaluation of the conditional.
 	 */
 	@Contract(pure = true)
-	default Kleenean not(Event event) {
-		return not(event, null);
+	default Kleenean not(T context) {
+		return not(context, null);
 	}
 
 	/**
 	 * Computes {@link Kleenean#not()} on the evaluation of this {@link Conditional}.
-	 * @param event The event with which to evaluate the conditional.
+	 * @param context The context with which to evaluate the conditional.
 	 * @return The result of {@link Kleenean#not()}, given the evaluation of the conditional.
 	 */
 	@Contract(pure = true)
-	default Kleenean not(Event event, @Nullable Map<Conditional, Kleenean> cache) {
-		return this.evaluate(event, cache).not();
+	default Kleenean not(T context, @Nullable Map<Conditional<T>, Kleenean> cache) {
+		return this.evaluate(context, cache).not();
 	}
 
 	/**
+	 * @param ignoredContextClass The class of the context to use for the built condition.
 	 * @return a new builder object for making conditions, specifically compound ones.
 	 */
-	static ConditionalBuilder builder() {
-		return new ConditionalBuilder();
+	static <T> ConditionalBuilder<T> builder(Class<T> ignoredContextClass) {
+		return new ConditionalBuilder<>();
 	}
 
 	/**
 	 * @param conditional A conditional to begin the builder with.
 	 * @return a new builder object for making conditions, specifically compound ones.
 	 */
-	static ConditionalBuilder builder(Conditional conditional) {
-		return new ConditionalBuilder(conditional);
+	static <T> ConditionalBuilder<T> builder(Conditional<T> conditional) {
+		return new ConditionalBuilder<>(conditional);
 	}
 
 	/**
@@ -204,28 +205,28 @@ public interface Conditional extends Debuggable {
 	 * @param conditional The conditional to negate.
 	 * @return The negated conditional.
 	 */
-	static Conditional negate(Conditional conditional) {
-		if (!(conditional instanceof CompoundConditional compound))
-			return new CompoundConditional(Operator.NOT, conditional);
+	static <T> Conditional<T> negate(Conditional<T> conditional) {
+		if (!(conditional instanceof CompoundConditional<T> compound))
+			return new CompoundConditional<>(Operator.NOT, conditional);
 
 		return switch (compound.getOperator()) {
 			// !!a -> a
 			case NOT -> compound.getConditionals().getFirst();
 			// !(a && b) -> (!a || !b)
 			case AND -> {
-				List<Conditional> newConditionals = new ArrayList<>();
-				for (Conditional cond : compound.getConditionals()) {
+				List<Conditional<T>> newConditionals = new ArrayList<>();
+				for (Conditional<T> cond : compound.getConditionals()) {
 					newConditionals.add(negate(cond));
 				}
-				yield new CompoundConditional(Operator.OR, newConditionals);
+				yield new CompoundConditional<>(Operator.OR, newConditionals);
 			}
 			// !(a || b) -> (!a && !b)
 			case OR -> {
-				List<Conditional> newConditionals = new ArrayList<>();
-				for (Conditional cond : compound.getConditionals()) {
+				List<Conditional<T>> newConditionals = new ArrayList<>();
+				for (Conditional<T> cond : compound.getConditionals()) {
 					newConditionals.add(negate(cond));
 				}
-				yield new CompoundConditional(Operator.AND, newConditionals);
+				yield new CompoundConditional<>(Operator.AND, newConditionals);
 			}
 		};
 	}

@@ -33,7 +33,7 @@ import java.util.Iterator;
  *
  * @see Skript#registerCondition(Class, String...)
  */
-public abstract class Condition extends Statement implements Conditional {
+public abstract class Condition extends Statement implements Conditional<Event> {
 
 	public enum ConditionType {
 		/**
