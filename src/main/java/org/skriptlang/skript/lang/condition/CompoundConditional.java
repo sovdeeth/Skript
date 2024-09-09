@@ -125,12 +125,14 @@ public class CompoundConditional<T> implements Conditional<T> {
 	@Override
 	public String toString(@Nullable Event event, boolean debug) {
 		if (operator == Operator.NOT)
-			return "!" + componentConditionals.getFirst().toString(event, debug);
-		return "(" +
-			componentConditionals.stream()
-				.map(conditional -> conditional.toString(event, debug))
-				.collect(Collectors.joining(" " + operator.getSymbol() + " ")) +
-			")";
+			return "!" + joinConditionals(event, debug);
+		return "(" + joinConditionals(event, debug) + ")";
+	}
+
+	private String joinConditionals(@Nullable Event event, boolean debug) {
+		return componentConditionals.stream()
+			.map(conditional -> conditional.toString(event, debug))
+			.collect(Collectors.joining(" " + operator.getSymbol() + " "));
 	}
 
 	@Override
