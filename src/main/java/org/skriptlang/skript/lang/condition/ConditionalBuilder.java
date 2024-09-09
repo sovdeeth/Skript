@@ -3,6 +3,7 @@ package org.skriptlang.skript.lang.condition;
 import org.skriptlang.skript.lang.condition.Conditional.Operator;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -32,23 +33,25 @@ public class ConditionalBuilder {
 			return this;
 		}
 
+		// unroll conditionals if they're ANDs
+		List<Conditional> newConditionals = unroll(List.of(andCondtionals), Operator.AND);
+
 		// if the root is still just AND, we can just append.
 		if (root.getOperator() == Operator.AND) {
-			root.addConditionals(andCondtionals);
+			root.addConditionals(newConditionals);
 			return this;
 		}
 		// Otherwise, we need to transform:
 		// (a || b) && c -> (a && c) || (b && c)
-		List<Conditional> newConditionals = new ArrayList<>();
+		List<Conditional> transformedConditionals = new ArrayList<>();
 		List<Conditional> inputConditionals = new ArrayList<>(andCondtionals.length + 1);
-		inputConditionals.set(0, null); // just for padding
-		inputConditionals.addAll(List.of(andCondtionals));
+		newConditionals.add(0, null); // just for padding
 		for (Conditional conditional : root.getConditionals()) {
-			inputConditionals.set(0, conditional);
-			newConditionals.add(new CompoundConditional(Operator.AND, inputConditionals));
+			newConditionals.set(0, conditional);
+			transformedConditionals.add(new CompoundConditional(Operator.AND, newConditionals));
 		}
 
-		root = new CompoundConditional(Operator.OR, newConditionals);
+		root = new CompoundConditional(Operator.OR, transformedConditionals);
 		return this;
 	}
 
@@ -59,17 +62,30 @@ public class ConditionalBuilder {
 			return this;
 		}
 
+		// unroll conditionals if they're ORs
+		List<Conditional> newConditionals = unroll(List.of(orCondtionals), Operator.OR);
+
 		// Since DNF is a series of ANDs, ORed together, we can simply add these to the root if it's already OR.
 		if (root.getOperator() == Operator.OR) {
-			root.addConditionals(orCondtionals);
+			root.addConditionals(newConditionals);
 			return this;
 		}
 		// otherwise we need to nest the AND/NOT condition within a new root with OR operator.
-		List<Conditional> conditionalList = new ArrayList<>();
-		conditionalList.add(0, root);
-		conditionalList.addAll(List.of(orCondtionals));
-		root = new CompoundConditional(Operator.OR, conditionalList);
+		newConditionals.add(0, root);
+		root = new CompoundConditional(Operator.OR, newConditionals);
 		return this;
+	}
+
+	private static List<Conditional> unroll(Collection<Conditional> conditionals, Operator operator) {
+		List<Conditional> newConditionals = new ArrayList<>();
+		for (Conditional conditional : conditionals) {
+			if (conditional instanceof CompoundConditional compound && compound.getOperator() == operator) {
+				newConditionals.addAll(unroll(compound.getConditionals(), operator));
+			} else {
+				newConditionals.add(conditional);
+			}
+		}
+		return newConditionals;
 	}
 
 	// (existing) && !(new)

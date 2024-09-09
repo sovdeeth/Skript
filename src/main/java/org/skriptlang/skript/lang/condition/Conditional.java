@@ -1,5 +1,6 @@
 package org.skriptlang.skript.lang.condition;
 
+import ch.njol.skript.lang.Debuggable;
 import ch.njol.util.Kleenean;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Contract;
@@ -13,7 +14,7 @@ import java.util.Map;
  * the condition in ill-defined by the user and would result in ambiguous or undefined behavior.
  */
 // TODO: replace Bukkit event with proper context object
-public interface Conditional {
+public interface Conditional extends Debuggable {
 
 	/**
 	 * Evaluates this object as `true`, `false`, or `unknown`.
@@ -184,8 +185,19 @@ public interface Conditional {
 	}
 
 	enum Operator {
-		AND,
-		OR,
-		NOT
+		AND("&&"),
+		OR("||"),
+		NOT("!");
+
+		private final String symbol;
+
+		Operator(String symbol) {
+			this.symbol = symbol;
+		}
+
+		String getSymbol() {
+			return symbol;
+		}
+
 	}
 }

@@ -3,12 +3,14 @@ package org.skriptlang.skript.lang.condition;
 import ch.njol.util.Kleenean;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * A {@link Conditional} that is built of other {@link Conditional}s.
@@ -86,5 +88,19 @@ public class CompoundConditional implements Conditional {
 	protected void addConditionals(Collection<Conditional> conditionals) {
 		componentConditionals.addAll(conditionals);
 		useCache |= conditionals.stream().anyMatch(cond -> cond instanceof CompoundConditional);
+	}
+
+	@Override
+	public String toString(@Nullable Event event, boolean debug) {
+		return "(" +
+			componentConditionals.stream()
+				.map(conditional -> conditional.toString(event, debug))
+				.collect(Collectors.joining(" " + operator.getSymbol() + " ")) +
+			")";
+	}
+
+	@Override
+	public String toString() {
+		return toString(null, false);
 	}
 }

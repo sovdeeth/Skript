@@ -3,10 +3,12 @@ package org.skriptlang.skript.test.tests.lang;
 import ch.njol.skript.lang.util.ContextlessEvent;
 import ch.njol.util.Kleenean;
 import org.bukkit.event.Event;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.skriptlang.skript.lang.condition.CompoundConditional;
 import org.skriptlang.skript.lang.condition.Conditional;
 
 public class ConditionalsTest {
@@ -139,6 +141,178 @@ public class ConditionalsTest {
 		assertEvals(condFalse, 1);
 	}
 
+	@Test
+	public void testCombinedAnd() {
+
+		TestConditional condTrueB = new TestConditional(Kleenean.TRUE);
+		TestConditional condFalseB = new TestConditional(Kleenean.FALSE);
+		TestConditional condUnknownB = new TestConditional(Kleenean.UNKNOWN);
+
+		Conditional trueAndTrue = Conditional.builder()
+			.and(condTrue, condTrueB)
+			.build();
+
+		Assert.assertEquals(Kleenean.TRUE, trueAndTrue.evaluate(event));
+		assertEvals(condTrue, 1);
+		assertEvals(condTrueB, 1);
+
+
+		Conditional trueAndFalse = Conditional.builder()
+			.and(condTrue, condFalse)
+			.build();
+
+		Assert.assertEquals(Kleenean.FALSE, trueAndFalse.evaluate(event));
+		assertEvals(condTrue, 1);
+		assertEvals(condFalse, 1);
+
+
+		Conditional falseAndTrueAndFalse = Conditional.builder()
+			.and(condFalse, condTrue, condFalse)
+			.build();
+
+		Assert.assertEquals(Kleenean.FALSE, falseAndTrueAndFalse.evaluate(event));
+		assertEvals(condTrue, 0);
+		assertEvals(condFalse, 1);
+
+
+		Conditional trueAndUnknown = Conditional.builder()
+			.and(condTrue, condUnknown)
+			.build();
+
+		Assert.assertEquals(Kleenean.UNKNOWN, trueAndUnknown.evaluate(event));
+		assertEvals(condTrue, 1);
+		assertEvals(condUnknown, 1);
+
+
+		Conditional falseAndFalse = Conditional.builder()
+			.and(condFalse, condFalseB)
+			.build();
+
+		Assert.assertEquals(Kleenean.FALSE, falseAndFalse.evaluate(event));
+		assertEvals(condFalseB, 0);
+		assertEvals(condFalse, 1);
+
+		Conditional falseAndUnknown = Conditional.builder()
+			.and(condFalse, condUnknown)
+			.build();
+
+		Assert.assertEquals(Kleenean.FALSE, falseAndUnknown.evaluate(event));
+		assertEvals(condUnknown, 0);
+		assertEvals(condFalse, 1);
+
+		Conditional unknownAndUnknown = Conditional.builder()
+			.and(condUnknown, condUnknownB)
+			.build();
+
+		Assert.assertEquals(Kleenean.UNKNOWN, unknownAndUnknown.evaluate(event));
+		assertEvals(condUnknown, 1);
+		assertEvals(condUnknownB, 1);
+	}
+
+	@Test
+	public void testCombinedOr() {
+
+		TestConditional condTrueB = new TestConditional(Kleenean.TRUE);
+		TestConditional condFalseB = new TestConditional(Kleenean.FALSE);
+		TestConditional condUnknownB = new TestConditional(Kleenean.UNKNOWN);
+
+		Conditional trueOrTrue = Conditional.builder()
+			.or(condTrue, condTrueB)
+			.build();
+
+		Assert.assertEquals(Kleenean.TRUE, trueOrTrue.evaluate(event));
+		assertEvals(condTrue, 1);
+		assertEvals(condTrueB, 0);
+
+
+		Conditional trueOrFalse = Conditional.builder()
+			.or(condTrue, condFalse)
+			.build();
+
+		Assert.assertEquals(Kleenean.TRUE, trueOrFalse.evaluate(event));
+		assertEvals(condTrue, 1);
+		assertEvals(condFalse, 0);
+
+
+		Conditional falseOrTrueOrFalse = Conditional.builder()
+			.or(condFalse, condTrue, condFalseB)
+			.build();
+
+		Assert.assertEquals(Kleenean.TRUE, falseOrTrueOrFalse.evaluate(event));
+		assertEvals(condTrue, 1);
+		assertEvals(condFalse, 1);
+		assertEvals(condFalseB, 0);
+
+
+		Conditional trueOrUnknown = Conditional.builder()
+			.or(condTrue, condUnknown)
+			.build();
+
+		Assert.assertEquals(Kleenean.TRUE, trueOrUnknown.evaluate(event));
+		assertEvals(condTrue, 1);
+		assertEvals(condUnknown, 0);
+
+
+		Conditional falseOrFalse = Conditional.builder()
+			.or(condFalse, condFalseB)
+			.build();
+
+		Assert.assertEquals(Kleenean.FALSE, falseOrFalse.evaluate(event));
+		assertEvals(condFalseB, 1);
+		assertEvals(condFalse, 1);
+
+		Conditional falseOrUnknown = Conditional.builder()
+			.or(condFalse, condUnknown)
+			.build();
+
+		Assert.assertEquals(Kleenean.UNKNOWN, falseOrUnknown.evaluate(event));
+		assertEvals(condUnknown, 1);
+		assertEvals(condFalse, 1);
+
+		Conditional unknownAndUnknown = Conditional.builder()
+			.or(condUnknown, condUnknownB)
+			.build();
+
+		Assert.assertEquals(Kleenean.UNKNOWN, unknownAndUnknown.evaluate(event));
+		assertEvals(condUnknown, 1);
+		assertEvals(condUnknownB, 1);
+	}
+
+	@Test
+	public void testComplexCombined() {
+		Conditional trueAndFalseOrUnknownOrTrue = Conditional.builder()
+			.and(condTrue, condFalse)
+			.or(condUnknown, condTrue)
+			.build();
+
+		Assert.assertEquals(Kleenean.TRUE, trueAndFalseOrUnknownOrTrue.evaluate(event));
+		assertEvals(condTrue, 1);
+		assertEvals(condFalse, 1);
+		assertEvals(condUnknown, 1);
+
+		Conditional trueOrTrueAndFalseOrUnknown = Conditional.builder()
+			.or(condTrue)
+			.or(new CompoundConditional(Conditional.Operator.AND, condTrue, condFalse))
+			.or(condUnknown)
+			.build();
+
+		Assert.assertEquals(Kleenean.TRUE, trueOrTrueAndFalseOrUnknown.evaluate(event));
+		assertEvals(condTrue, 1);
+		assertEvals(condFalse, 0);
+		assertEvals(condUnknown, 0);
+
+		// should compose to (U && T && F) || (T && T && F)
+		Conditional unknownOrTrueAndTrueAndFalse = Conditional.builder()
+			.or(condUnknown, condTrue)
+			.and(condTrue, condFalse)
+			.build();
+
+		Assert.assertEquals(Kleenean.FALSE, unknownOrTrueAndTrueAndFalse.evaluate(event));
+		assertEvals(condTrue, 1);
+		assertEvals(condFalse, 1);
+		assertEvals(condUnknown, 1);
+	}
+
 	@Ignore
 	private static class TestConditional implements Conditional {
 
@@ -159,5 +333,9 @@ public class ConditionalsTest {
 			timesEvaluated = 0;
 		}
 
+		@Override
+		public String toString(@Nullable Event event, boolean debug) {
+			return value.toString();
+		}
 	}
 }
