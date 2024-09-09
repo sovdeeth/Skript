@@ -87,7 +87,7 @@ public class CompoundConditional<T> implements Conditional<T> {
 			case NOT -> {
 				if (componentConditionals.size() > 1)
 					throw new IllegalStateException("Cannot apply NOT to multiple conditionals! Cannot evaluate.");
-				yield componentConditionals.getFirst().evaluate(context, cache);
+				yield componentConditionals.getFirst().evaluate(context, cache).not();
 			}
 		};
 	}
@@ -124,6 +124,8 @@ public class CompoundConditional<T> implements Conditional<T> {
 
 	@Override
 	public String toString(@Nullable Event event, boolean debug) {
+		if (operator == Operator.NOT)
+			return "!" + componentConditionals.getFirst().toString(event, debug);
 		return "(" +
 			componentConditionals.stream()
 				.map(conditional -> conditional.toString(event, debug))

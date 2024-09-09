@@ -313,6 +313,33 @@ public class ConditionalTest {
 		assertEvals(condUnknown, 1);
 	}
 
+	@Test
+	public void testCombinedAndOrNot() {
+		TestConditional condFalseB = new TestConditional(Kleenean.FALSE);
+
+		Conditional<Event> falseOrNotTrueAndFalse = Conditional.builder(condFalse)
+			.orNot(new CompoundConditional<>(Conditional.Operator.AND, condTrue, condFalseB))
+			.build();
+
+		Assert.assertEquals(Kleenean.TRUE, falseOrNotTrueAndFalse.evaluate(event));
+		assertEvals(condTrue, 1);
+		assertEvals(condFalse, 1);
+		assertEvals(condFalseB, 1);
+
+
+		Conditional<Event> unknownAndNotTrueOrFalseOrNotFalse = Conditional.builder(Event.class)
+			.and(condUnknown)
+			.andNot(new CompoundConditional<>(Conditional.Operator.OR, condTrue, condFalse))
+			.orNot(condFalseB)
+			.build();
+
+		Assert.assertEquals(Kleenean.TRUE, unknownAndNotTrueOrFalseOrNotFalse.evaluate(event));
+		assertEvals(condUnknown, 1);
+		assertEvals(condTrue, 1);
+		assertEvals(condFalse, 0);
+		assertEvals(condFalseB, 1);
+	}
+
 	@Ignore
 	private static class TestConditional implements Conditional<Event> {
 
