@@ -100,7 +100,7 @@ public class SecConditional extends Section {
 	}
 
 	private ConditionalType type;
-	private @UnknownNullability CompoundConditional conditional;
+	private @UnknownNullability CompoundConditional<Event> conditional;
 	private boolean ifAny;
 	private boolean parseIf;
 	private boolean parseIfPassed;
@@ -174,7 +174,7 @@ public class SecConditional extends Section {
 			Class<? extends Event>[] currentEvents = parser.getCurrentEvents();
 			String currentEventName = parser.getCurrentEventName();
 
-			List<Conditional> conditionals = new ArrayList<>();
+			List<Conditional<Event>> conditionals = new ArrayList<>();
 
 			// Change event if using 'parse if'
 			if (parseIf) {
@@ -225,7 +225,7 @@ public class SecConditional extends Section {
 			if (conditionals.isEmpty())
 				return false;
 
-			conditional = new CompoundConditional(ifAny ? Operator.OR : Operator.AND, conditionals);
+			conditional = new CompoundConditional<>(ifAny ? Operator.OR : Operator.AND, conditionals);
 		}
 
 		// ([else] parse if) If condition is valid and false, do not parse the section
