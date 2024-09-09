@@ -87,7 +87,11 @@ public class CompoundConditional<T> implements Conditional<T> {
 			case NOT -> {
 				if (componentConditionals.size() > 1)
 					throw new IllegalStateException("Cannot apply NOT to multiple conditionals! Cannot evaluate.");
-				yield componentConditionals.getFirst().evaluate(context, cache).not();
+				// best workaround since getFirst is java 21
+				for (Conditional<T> conditional : componentConditionals) {
+					yield conditional.evaluate(context, cache).not();
+				}
+				throw new IllegalStateException("Cannot apply NOT to zero conditionals! Cannot evaluate.");
 			}
 		};
 	}
