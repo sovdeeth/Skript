@@ -11,7 +11,7 @@ import org.junit.Test;
 import org.skriptlang.skript.lang.condition.CompoundConditional;
 import org.skriptlang.skript.lang.condition.Conditional;
 
-public class ConditionalsTest {
+public class ConditionalTest {
 
 	TestConditional condTrue;
 	TestConditional condFalse;

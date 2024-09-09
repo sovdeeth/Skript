@@ -15,7 +15,6 @@ import java.util.Map;
  * the condition in ill-defined by the user and would result in ambiguous or undefined behavior.
  * @param <T> The context class to use for evaluation.
  */
-// TODO: replace Bukkit event with proper context object
 public interface Conditional<T> extends Debuggable {
 
 	/**
@@ -42,7 +41,7 @@ public interface Conditional<T> extends Debuggable {
 		if (cache == null)
 			return evaluate(context);
 		//noinspection DataFlowIssue
-		return cache.computeIfAbsent(this, (cond -> cond.evaluate(context)));
+		return cache.computeIfAbsent(this, cond -> cond.evaluate(context));
 	}
 
 	/**

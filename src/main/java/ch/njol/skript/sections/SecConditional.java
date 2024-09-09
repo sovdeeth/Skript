@@ -1,21 +1,3 @@
-/**
- *   This file is part of Skript.
- *
- *  Skript is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  Skript is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
- *
- * Copyright Peter Güttinger, SkriptLang team and contributors
- */
 package ch.njol.skript.sections;
 
 import ch.njol.skript.ScriptLoader;
@@ -39,7 +21,7 @@ import ch.njol.skript.util.Patterns;
 import ch.njol.util.Kleenean;
 import com.google.common.collect.Iterables;
 import org.bukkit.event.Event;
-import org.eclipse.jdt.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
 import org.skriptlang.skript.lang.condition.CompoundConditional;
 import org.skriptlang.skript.lang.condition.Conditional;
@@ -272,19 +254,16 @@ public class SecConditional extends Section {
 	}
 
 	@Override
-	@Nullable
-	public TriggerItem getNext() {
+	public @Nullable TriggerItem getNext() {
 		return getSkippedNext();
 	}
 
-	@Nullable
-	public TriggerItem getNormalNext() {
+	public @Nullable TriggerItem getNormalNext() {
 		return super.getNext();
 	}
 
-	@Nullable
 	@Override
-	protected TriggerItem walk(Event event) {
+	protected @Nullable TriggerItem walk(Event event) {
 		if (type == ConditionalType.THEN || (parseIf && !parseIfPassed)) {
 			return getNormalNext();
 		} else if (parseIf || checkConditions(event)) {
@@ -314,12 +293,12 @@ public class SecConditional extends Section {
 			case IF -> {
 				if (multiline)
 					yield parseIf + "if " + (ifAny ? "any" : "all");
-				yield parseIf + "if " + ((Condition) conditional.getConditionals().get(0)).toString(event, debug);
+				yield parseIf + "if " + conditional.getConditionals().get(0).toString(event, debug);
 			}
 			case ELSE_IF -> {
 				if (multiline)
 					yield "else " + parseIf + "if " + (ifAny ? "any" : "all");
-				yield "else " + parseIf + "if " + ((Condition) conditional.getConditionals().get(0)).toString(event, debug);
+				yield "else " + parseIf + "if " + conditional.getConditionals().get(0).toString(event, debug);
 			}
 			case ELSE -> "else";
 			case THEN -> "then";
@@ -374,8 +353,7 @@ public class SecConditional extends Section {
 		return conditional == null || conditional.evaluate(event).isTrue();
 	}
 
-	@Nullable
-	private Node getNextNode(Node precedingNode, ParserInstance parser) {
+	private @Nullable Node getNextNode(Node precedingNode, ParserInstance parser) {
 		// iterating over the parent node causes the current node to change, so we need to store it to reset it later
 		Node originalCurrentNode = parser.getNode();
 		SectionNode parentNode = precedingNode.getParent();
