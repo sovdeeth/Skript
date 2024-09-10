@@ -1,21 +1,3 @@
-/**
- *   This file is part of Skript.
- *
- *  Skript is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  Skript is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
- *
- * Copyright Peter Güttinger, SkriptLang team and contributors
- */
 package org.skriptlang.skript.commands.elements;
 
 import ch.njol.skript.Skript;
@@ -29,16 +11,12 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.util.Timespan;
 import ch.njol.util.Kleenean;
-import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
-import org.eclipse.jdt.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import org.skriptlang.skript.commands.api.CommandCooldown;
 import org.skriptlang.skript.commands.api.ScriptCommand;
 import org.skriptlang.skript.commands.api.ScriptCommandEvent;
 import org.skriptlang.skript.commands.api.ScriptCommandSender;
-
-import java.util.UUID;
-
 
 @Name("Cooldown Time/Remaining Time/Elapsed Time/Last Usage/Bypass Permission")
 @Description("Only usable in command events. Represents the cooldown time, the remaining time, or the elapsed time")
@@ -78,11 +56,9 @@ public class ExprCommandCooldown extends SimpleExpression<Timespan> {
 	}
 
 	@Override
-	@Nullable
-	protected Timespan[] get(Event event) {
-		if (!(event instanceof ScriptCommandEvent))
+	protected Timespan @Nullable [] get(Event event) {
+		if (!(event instanceof ScriptCommandEvent commandEvent))
 			return null;
-		ScriptCommandEvent commandEvent = ((ScriptCommandEvent) event);
 		ScriptCommand scriptCommand = commandEvent.getScriptCommand();
 
 		ScriptCommandSender sender = commandEvent.getSender();
@@ -90,15 +66,11 @@ public class ExprCommandCooldown extends SimpleExpression<Timespan> {
 		if (cooldown == null)
 			return null;
 
-		switch (pattern) {
-			case REMAINING_TIME:
-				return new Timespan[]{cooldown.getRemainingDuration(sender, event)};
-			case ELAPSED_TIME:
-				return new Timespan[]{cooldown.getElapsedDuration(sender, event)};
-			case COOLDOWN_TIME:
-				return new Timespan[]{cooldown.getDefaultCooldown()};
-		}
-		return null;
+		return switch (pattern) {
+			case REMAINING_TIME -> new Timespan[]{cooldown.getRemainingDuration(sender, event)};
+			case ELAPSED_TIME -> new Timespan[]{cooldown.getElapsedDuration(sender, event)};
+			case COOLDOWN_TIME -> new Timespan[]{cooldown.getDefaultCooldown()};
+		};
 	}
 
 	@Override
@@ -113,16 +85,11 @@ public class ExprCommandCooldown extends SimpleExpression<Timespan> {
 
 	@Override
 	public String toString(@Nullable Event event, boolean debug) {
-		switch (pattern) {
-			case REMAINING_TIME:
-				return "remaining time";
-			case ELAPSED_TIME:
-				return "elapsed time";
-			case COOLDOWN_TIME:
-				return "cooldown time";
-		}
-		assert false;
-		return "unknown";
+		return switch (pattern) {
+			case REMAINING_TIME -> "remaining time";
+			case ELAPSED_TIME -> "elapsed time";
+			case COOLDOWN_TIME -> "cooldown time";
+		};
 	}
 
 }

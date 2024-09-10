@@ -1,43 +1,9 @@
-/**
- *   This file is part of Skript.
- *
- *  Skript is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  Skript is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
- *
- * Copyright Peter Güttinger, SkriptLang team and contributors
- */
 package org.skriptlang.skript.commands.elements;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.function.Function;
-
-import ch.njol.skript.command.ScriptCommand;
-import ch.njol.skript.command.ScriptCommandEvent;
-import ch.njol.skript.util.Utils;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandMap;
-import org.bukkit.command.PluginCommand;
-import org.bukkit.command.defaults.BukkitCommand;
-import org.bukkit.event.Event;
-import org.bukkit.event.player.PlayerCommandPreprocessEvent;
-import org.bukkit.event.server.ServerCommandEvent;
-import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.command.Commands;
+import ch.njol.skript.command.ScriptCommand;
+import ch.njol.skript.command.ScriptCommandEvent;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
@@ -46,7 +12,22 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.skript.util.Utils;
 import ch.njol.util.Kleenean;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandMap;
+import org.bukkit.command.PluginCommand;
+import org.bukkit.command.defaults.BukkitCommand;
+import org.bukkit.event.Event;
+import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.server.ServerCommandEvent;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.function.Function;
 
 @Name("Command Info")
 @Description("An expression to obtain various details about a command")
@@ -116,8 +97,7 @@ public class ExprCommandInfo extends SimpleExpression<String> {
 	@SuppressWarnings("NotNullFieldNotInitialized")
 	private InfoType type;
 
-	@Nullable
-	private Expression<String> commandName;
+	private @Nullable Expression<String> commandName;
 
 	@Override
 	@SuppressWarnings("unchecked")
@@ -131,9 +111,8 @@ public class ExprCommandInfo extends SimpleExpression<String> {
 		return true;
 	}
 
-	@Nullable
 	@Override
-	protected String[] get(Event event) {
+	protected String @Nullable [] get(Event event) {
 		Command[] commands = getCommands(event);
 		if (commands == null)
 			return new String[0];
@@ -165,8 +144,7 @@ public class ExprCommandInfo extends SimpleExpression<String> {
 			(commandName == null ? "" : " of command " + commandName.toString(event, debug));
 	}
 
-	@Nullable
-	private Command[] getCommands(Event event) {
+	private Command @Nullable [] getCommands(Event event) {
 		if (event instanceof ScriptCommandEvent && commandName == null)
 			return new Command[] {((ScriptCommandEvent) event).getScriptCommand().getBukkitCommand()};
 

@@ -1,21 +1,3 @@
-/**
- *   This file is part of Skript.
- *
- *  Skript is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  Skript is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
- *
- * Copyright Peter Güttinger, SkriptLang team and contributors
- */
 package org.skriptlang.skript.commands.elements;
 
 import ch.njol.skript.Skript;
@@ -38,7 +20,7 @@ import ch.njol.util.StringUtils;
 import org.bukkit.event.Event;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.server.ServerCommandEvent;
-import org.eclipse.jdt.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import org.skriptlang.skript.commands.api.Argument;
 import org.skriptlang.skript.commands.api.ScriptCommandEvent;
 
@@ -80,14 +62,13 @@ public class ExprArgument extends SimpleExpression<Object> {
 	@SuppressWarnings("NotNullFieldNotInitialized")
 	private ArgumentType argumentType;
 
-	@Nullable
-	private Argument<?> argument;
+	private @Nullable Argument<?> argument;
 
 	private int ordinal = -1; // Available in ORDINAL and sometimes CLASSINFO
 	
 	@Override
 	@SuppressWarnings("unchecked")
-	public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
+	public boolean init(Expression<?>[] expressions, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
 		ParserInstance parser = getParser();
 
 		boolean scriptCommand = parser.isCurrentStructure(StructCommand.class);
@@ -122,7 +103,7 @@ public class ExprArgument extends SimpleExpression<Object> {
 
 		//noinspection ConstantConditions - current structure will never be null
 		List<Argument<?>> arguments = ((StructCommand) parser.getCurrentStructure()).getArguments();
-		if (scriptCommand && arguments.isEmpty()) {
+		if (scriptCommand && (arguments == null || arguments.isEmpty())) {
 			Skript.error("This command doesn't have any arguments");
 			return false;
 		}
@@ -165,8 +146,8 @@ public class ExprArgument extends SimpleExpression<Object> {
 					Skript.error("'arguments' cannot be used for script commands. Use 'argument 1', 'argument 2', etc. instead", ErrorQuality.SEMANTIC_ERROR);
 					return false;
 				case CLASSINFO:
-					ClassInfo<?> c = ((Literal<ClassInfo<?>>) exprs[0]).getSingle();
-					if (parseResult.regexes.size() > 0) {
+					ClassInfo<?> c = ((Literal<ClassInfo<?>>) expressions[0]).getSingle();
+					if (!parseResult.regexes.isEmpty()) {
 						ordinal = Utils.parseInt(parseResult.regexes.get(0).group());
 						if (ordinal > arguments.size()) {
 							Skript.error("This command doesn't have a " + StringUtils.fancyOrderNumber(ordinal) + " " + c + " argument", ErrorQuality.SEMANTIC_ERROR);
@@ -218,8 +199,7 @@ public class ExprArgument extends SimpleExpression<Object> {
 	}
 	
 	@Override
-	@Nullable
-	protected Object[] get(Event event) {
+	protected Object @Nullable [] get(Event event) {
 		if (argument != null) { // handle this as a script command
 			if (!(event instanceof ScriptCommandEvent)) {
 				return new Object[0];
@@ -279,8 +259,8 @@ public class ExprArgument extends SimpleExpression<Object> {
 	}
 
 	@Override
-	public boolean isLoopOf(String s) {
-		return s.equalsIgnoreCase("argument");
+	public boolean isLoopOf(String typeString) {
+		return typeString.equalsIgnoreCase("argument");
 	}
 
 	@Override
