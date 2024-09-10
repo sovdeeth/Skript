@@ -146,4 +146,5 @@ class CompoundConditional<T> implements Conditional<T> {
 	public String toString() {
 		return toString(null, false);
 	}
+
 }

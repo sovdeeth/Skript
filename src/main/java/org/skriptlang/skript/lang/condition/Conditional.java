@@ -299,4 +299,5 @@ public interface Conditional<T> extends Debuggable {
 		}
 
 	}
+
 }
