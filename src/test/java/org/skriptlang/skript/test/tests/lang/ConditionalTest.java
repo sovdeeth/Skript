@@ -69,17 +69,17 @@ public class ConditionalTest {
 
 	@Test
 	public void testBasicOrKnown() {
-		// true AND known x
+		// true OR known x
 		assertBasic(condTrue, Kleenean.TRUE, condTrue.evaluateOr(Kleenean.TRUE, context), 0);
 		assertBasic(condTrue, Kleenean.TRUE, condTrue.evaluateOr(Kleenean.FALSE, context), 1);
 		assertBasic(condTrue, Kleenean.TRUE, condTrue.evaluateOr(Kleenean.UNKNOWN, context), 1);
 
-		// false AND known x
+		// false OR known x
 		assertBasic(condFalse, Kleenean.TRUE, condFalse.evaluateOr(Kleenean.TRUE, context), 0);
 		assertBasic(condFalse, Kleenean.FALSE, condFalse.evaluateOr(Kleenean.FALSE, context), 1);
 		assertBasic(condFalse, Kleenean.UNKNOWN, condFalse.evaluateOr(Kleenean.UNKNOWN, context), 1);
 
-		// unknown AND known x
+		// unknown OR known x
 		assertBasic(condUnknown, Kleenean.TRUE, condUnknown.evaluateOr(Kleenean.TRUE, context), 0);
 		assertBasic(condUnknown, Kleenean.UNKNOWN, condUnknown.evaluateOr(Kleenean.FALSE, context), 1);
 		assertBasic(condUnknown, Kleenean.UNKNOWN, condUnknown.evaluateOr(Kleenean.UNKNOWN, context), 1);
