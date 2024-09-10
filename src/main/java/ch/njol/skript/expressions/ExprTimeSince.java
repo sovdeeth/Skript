@@ -17,12 +17,12 @@ import org.jetbrains.annotations.Nullable;
 
 @Name("Time Since/Until")
 @Description({
-	"The time since a date has passed or the time until a date will pass. will return 0 seconds.",
-	"This expression will return 0 seconds if the time since or time until would be negative, eg. if one tries to get the time since a future date."
+	"The time since a date has passed or the time until a date will pass.",
+	"This expression will return 0 seconds if the time since or time until would be negative, e.g. if one tries to get the time since a future date."
 })
 @Examples({
 	"send \"%time since 5 minecraft days ago% has passed since 5 minecraft days ago!\" to player",
-	"send \"%time until {countdown::ends}% until the game begins!\" to player"
+	"send \"%time until {countdown::end}% until the game begins!\" to player"
 })
 @Since("2.5, INSERT VERSION (time until)")
 public class ExprTimeSince extends SimplePropertyExpression<Date, Timespan> {
