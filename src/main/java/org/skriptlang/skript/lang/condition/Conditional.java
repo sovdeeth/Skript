@@ -3,9 +3,11 @@ package org.skriptlang.skript.lang.condition;
 import ch.njol.skript.lang.Debuggable;
 import ch.njol.util.Kleenean;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -53,8 +55,8 @@ public interface Conditional<T> extends Debuggable {
 	 * @return The result of {@link Kleenean#and(Kleenean)}, given the evaluations of the two conditionals.
 	 */
 	@Contract(pure = true)
-	default Kleenean and(Conditional<T> other, T context) {
-		return and(other.evaluate(context, null), context, null);
+	default Kleenean evaluateAnd(Conditional<T> other, T context) {
+		return evaluateAnd(other.evaluate(context, null), context, null);
 	}
 
 	/**
@@ -68,8 +70,8 @@ public interface Conditional<T> extends Debuggable {
 	 * @return The result of {@link Kleenean#and(Kleenean)}, given the evaluations of the two conditionals.
 	 */
 	@Contract(pure = true)
-	default Kleenean and(Conditional<T> other, T context, @Nullable Map<Conditional<T>, Kleenean> cache) {
-		return and(other.evaluate(context, cache), context, cache);
+	default Kleenean evaluateAnd(Conditional<T> other, T context, @Nullable Map<Conditional<T>, Kleenean> cache) {
+		return evaluateAnd(other.evaluate(context, cache), context, cache);
 	}
 
 	/**
@@ -81,8 +83,8 @@ public interface Conditional<T> extends Debuggable {
 	 * @return The result of {@link Kleenean#and(Kleenean)}, given the evaluation of the conditional.
 	 */
 	@Contract(pure = true)
-	default Kleenean and(Kleenean other, T context) {
-		return and(other, context, null);
+	default Kleenean evaluateAnd(Kleenean other, T context) {
+		return evaluateAnd(other, context, null);
 	}
 
 	/**
@@ -96,7 +98,7 @@ public interface Conditional<T> extends Debuggable {
 	 * @return The result of {@link Kleenean#and(Kleenean)}, given the evaluation of the conditional.
 	 */
 	@Contract(pure = true)
-	default Kleenean and(Kleenean other, T context, @Nullable Map<Conditional<T>, Kleenean> cache) {
+	default Kleenean evaluateAnd(Kleenean other, T context, @Nullable Map<Conditional<T>, Kleenean> cache) {
 		if (other.isFalse())
 			return other;
 		return other.and(evaluate(context, cache));
@@ -111,8 +113,8 @@ public interface Conditional<T> extends Debuggable {
 	 * @return The result of {@link Kleenean#or(Kleenean)}, given the evaluations of the two conditionals.
 	 */
 	@Contract(pure = true)
-	default Kleenean or(Conditional<T> other, T context) {
-		return or(other.evaluate(context, null), context, null);
+	default Kleenean evaluateOr(Conditional<T> other, T context) {
+		return evaluateOr(other.evaluate(context, null), context, null);
 	}
 
 	/**
@@ -126,8 +128,8 @@ public interface Conditional<T> extends Debuggable {
 	 * @return The result of {@link Kleenean#and(Kleenean)}, given the evaluations of the two conditionals.
 	 */
 	@Contract(pure = true)
-	default Kleenean or(Conditional<T> other, T context, @Nullable Map<Conditional<T>, Kleenean> cache) {
-		return or(other.evaluate(context, cache), context, cache);
+	default Kleenean evaluateOr(Conditional<T> other, T context, @Nullable Map<Conditional<T>, Kleenean> cache) {
+		return evaluateOr(other.evaluate(context, cache), context, cache);
 	}
 
 	/**
@@ -139,8 +141,8 @@ public interface Conditional<T> extends Debuggable {
 	 * @return The result of {@link Kleenean#or(Kleenean)}, given the evaluation of the conditional.
 	 */
 	@Contract(pure = true)
-	default Kleenean or(Kleenean other, T context) {
-		return or(other, context, null);
+	default Kleenean evaluateOr(Kleenean other, T context) {
+		return evaluateOr(other, context, null);
 	}
 
 	/**
@@ -154,7 +156,7 @@ public interface Conditional<T> extends Debuggable {
 	 * @return The result of {@link Kleenean#or(Kleenean)}, given the evaluation of the conditional.
 	 */
 	@Contract(pure = true)
-	default Kleenean or(Kleenean other, T context, @Nullable Map<Conditional<T>, Kleenean> cache) {
+	default Kleenean evaluateOr(Kleenean other, T context, @Nullable Map<Conditional<T>, Kleenean> cache) {
 		if (other.isTrue())
 			return other;
 		return other.or(evaluate(context, cache));
@@ -166,8 +168,8 @@ public interface Conditional<T> extends Debuggable {
 	 * @return The result of {@link Kleenean#not()}, given the evaluation of the conditional.
 	 */
 	@Contract(pure = true)
-	default Kleenean not(T context) {
-		return not(context, null);
+	default Kleenean evaluateNot(T context) {
+		return evaluateNot(context, null);
 	}
 
 	/**
@@ -176,24 +178,72 @@ public interface Conditional<T> extends Debuggable {
 	 * @return The result of {@link Kleenean#not()}, given the evaluation of the conditional.
 	 */
 	@Contract(pure = true)
-	default Kleenean not(T context, @Nullable Map<Conditional<T>, Kleenean> cache) {
+	default Kleenean evaluateNot(T context, @Nullable Map<Conditional<T>, Kleenean> cache) {
 		return this.evaluate(context, cache).not();
 	}
 
 	/**
-	 * @param ignoredContextClass The class of the context to use for the built condition.
-	 * @return a new builder object for making conditions, specifically compound ones.
+	 * Combine this conditional with others using {@link Operator#AND} or {@link Operator#OR}.
+	 * This does not maintain DNF. Use {@link DNFConditionalBuilder} for that purpose.
+	 * @param operator The operator to use (AND or OR).
+	 * @param conditionals The conditionals to combine with this object.
+	 * @return A new conditional that contains this conditional and the given conditionals
 	 */
-	static <T> ConditionalBuilder<T> builder(Class<T> ignoredContextClass) {
-		return new ConditionalBuilder<>();
+	@SuppressWarnings("unchecked")
+	@Contract("_, _ -> new")
+	default Conditional<T> combine(Operator operator, Conditional<T>... conditionals) {
+		if (operator == Operator.NOT)
+			throw new IllegalArgumentException("Cannot combine conditionals using NOT!");
+		List<Conditional<T>> conditions = new ArrayList<>();
+		conditions.add(this);
+		conditions.addAll(List.of(conditionals));
+		return new CompoundConditional<>(operator, conditions);
+	}
+
+	/**
+	 * Creates a compound conditional from multiple conditionals using {@link Operator#AND} or {@link Operator#OR}.
+	 * This does not maintain DNF. Use {@link DNFConditionalBuilder} for that purpose.
+	 * @param operator The operator to use (AND or OR).
+	 * @param conditionals The conditionals to combine.
+	 * @return A new conditional that contains this conditional and the given conditionals
+	 */
+	@Contract("_, _ -> new")
+	static <T> Conditional<T> compound(Operator operator, Collection<Conditional<T>> conditionals) {
+		if (operator == Operator.NOT)
+			throw new IllegalArgumentException("Cannot combine conditionals using NOT!");
+		return new CompoundConditional<>(operator, conditionals);
+	}
+
+	/**
+	 * Creates a compound conditional from multiple conditionals using {@link Operator#AND} or {@link Operator#OR}.
+	 * This does not maintain DNF. Use {@link DNFConditionalBuilder} for that purpose.
+	 * @param operator The operator to use (AND or OR).
+	 * @param conditionals The conditionals to combine.
+	 * @return A new conditional that contains this conditional and the given conditionals
+	 */
+	@SuppressWarnings("unchecked")
+	@Contract("_, _ -> new")
+	static <T> Conditional<T> compound(Operator operator, Conditional<T>... conditionals) {
+		return compound(operator, List.of(conditionals));
+	}
+
+	/**
+	 * Provides a builder for conditions in disjunctive normal form. ex: {@code (A && B) || C || (!D &&E)}
+	 * @param ignoredContextClass The class of the context to use for the built condition.
+	 * @return a new builder object for making DNF conditions.
+	 */
+	@Contract(value = "_ -> new", pure = true)
+	static <T> @NotNull DNFConditionalBuilder<T> builderDNF(Class<T> ignoredContextClass) {
+		return new DNFConditionalBuilder<>();
 	}
 
 	/**
 	 * @param conditional A conditional to begin the builder with.
 	 * @return a new builder object for making conditions, specifically compound ones.
 	 */
-	static <T> ConditionalBuilder<T> builder(Conditional<T> conditional) {
-		return new ConditionalBuilder<>(conditional);
+	@Contract("_ -> new")
+	static <T> @NotNull DNFConditionalBuilder<T> builderDNF(Conditional<T> conditional) {
+		return new DNFConditionalBuilder<>(conditional);
 	}
 
 	/**

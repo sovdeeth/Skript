@@ -23,7 +23,6 @@ import com.google.common.collect.Iterables;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
-import org.skriptlang.skript.lang.condition.CompoundConditional;
 import org.skriptlang.skript.lang.condition.Conditional;
 import org.skriptlang.skript.lang.condition.Conditional.Operator;
 
@@ -82,7 +81,7 @@ public class SecConditional extends Section {
 	}
 
 	private ConditionalType type;
-	private @UnknownNullability CompoundConditional<Event> conditional;
+	private @UnknownNullability Conditional<Event> conditional;
 	private boolean ifAny;
 	private boolean parseIf;
 	private boolean parseIfPassed;
@@ -207,7 +206,7 @@ public class SecConditional extends Section {
 			if (conditionals.isEmpty())
 				return false;
 
-			conditional = new CompoundConditional<>(ifAny ? Operator.OR : Operator.AND, conditionals);
+			conditional = Conditional.compound(ifAny ? Operator.OR : Operator.AND, conditionals);
 		}
 
 		// ([else] parse if) If condition is valid and false, do not parse the section
@@ -293,12 +292,12 @@ public class SecConditional extends Section {
 			case IF -> {
 				if (multiline)
 					yield parseIf + "if " + (ifAny ? "any" : "all");
-				yield parseIf + "if " + conditional.getConditionals().get(0).toString(event, debug);
+				yield parseIf + "if " + conditional.toString(event, debug);
 			}
 			case ELSE_IF -> {
 				if (multiline)
 					yield "else " + parseIf + "if " + (ifAny ? "any" : "all");
-				yield "else " + parseIf + "if " + conditional.getConditionals().get(0).toString(event, debug);
+				yield "else " + parseIf + "if " + conditional.toString(event, debug);
 			}
 			case ELSE -> "else";
 			case THEN -> "then";

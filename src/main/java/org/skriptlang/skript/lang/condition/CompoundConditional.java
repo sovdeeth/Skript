@@ -4,6 +4,7 @@ import ch.njol.util.Kleenean;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -17,9 +18,9 @@ import java.util.stream.Collectors;
  * A {@link Conditional} that is built of other {@link Conditional}s.
  * It is composed of an ordered {@link Set} of {@link Conditional}s that are acted upon by a single {@link Operator}.
  * @param <T> The context class to use for evaluation.
- * @see ConditionalBuilder
+ * @see DNFConditionalBuilder
  */
-public class CompoundConditional<T> implements Conditional<T> {
+class CompoundConditional<T> implements Conditional<T> {
 
 	private final LinkedHashSet<Conditional<T>> componentConditionals = new LinkedHashSet<>();
 	private final Operator operator;
@@ -35,7 +36,7 @@ public class CompoundConditional<T> implements Conditional<T> {
 	 * @param conditionals A collection of conditionals to combine using the operator. Must be >= 1 in length,
 	 *                     or exactly 1 if {@link Operator#NOT} is used.
 	 */
-	public CompoundConditional(Operator operator, @NotNull Collection<Conditional<T>> conditionals) {
+	CompoundConditional(Operator operator, @NotNull Collection<Conditional<T>> conditionals) {
 		if (conditionals.isEmpty())
 			throw new IllegalArgumentException("CompoundConditionals must contain at least 1 component conditional.");
 		if (operator == Operator.NOT && conditionals.size() != 1)
@@ -53,7 +54,7 @@ public class CompoundConditional<T> implements Conditional<T> {
 	 *                     or exactly 1 if {@link Operator#NOT} is used.
 	 */
 	@SafeVarargs
-	public CompoundConditional(Operator operator, Conditional<T>... conditionals) {
+	CompoundConditional(Operator operator, Conditional<T>... conditionals) {
 		this(operator, List.of(conditionals));
 	}
 
@@ -73,14 +74,14 @@ public class CompoundConditional<T> implements Conditional<T> {
 			case OR -> {
 				result = Kleenean.FALSE;
 				for (Conditional<T> conditional : componentConditionals) {
-					result = conditional.or(result, context, cache);
+					result = conditional.evaluateOr(result, context, cache);
 				}
 				yield result;
 			}
 			case AND -> {
 				result = Kleenean.TRUE;
 				for (Conditional<T> conditional : componentConditionals) {
-					result = conditional.and(result, context, cache);
+					result = conditional.evaluateAnd(result, context, cache);
 				}
 				yield result;
 			}
@@ -99,6 +100,7 @@ public class CompoundConditional<T> implements Conditional<T> {
 	/**
 	 * @return An immutable list of the component conditionals of this object.
 	 */
+	@Unmodifiable
 	public List<Conditional<T>> getConditionals() {
 		return componentConditionals.stream().toList();
 	}
@@ -114,18 +116,19 @@ public class CompoundConditional<T> implements Conditional<T> {
 	 * @param conditionals Adds more conditionals to this object's component conditionals.
 	 */
 	@SafeVarargs
-	protected final void addConditionals(Conditional<T>... conditionals) {
+	public final void addConditionals(Conditional<T>... conditionals) {
 		addConditionals(List.of(conditionals));
 	}
 
 	/**
 	 * @param conditionals Adds more conditionals to this object's component conditionals.
 	 */
-	protected void addConditionals(Collection<Conditional<T>> conditionals) {
+	public void addConditionals(Collection<Conditional<T>> conditionals) {
 		componentConditionals.addAll(conditionals);
 		useCache |= conditionals.stream().anyMatch(cond -> cond instanceof CompoundConditional);
 	}
 
+	//TODO: replace event with context object in debuggable rework pr
 	@Override
 	public String toString(@Nullable Event event, boolean debug) {
 		if (operator == Operator.NOT)

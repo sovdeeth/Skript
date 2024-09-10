@@ -15,16 +15,15 @@ import static org.skriptlang.skript.lang.condition.Conditional.negate;
  * <br>
  * A builder should no longer be used after calling {@link #build()}.
  * @param <T> The context class to use for evaluation.
- * @see CompoundConditional
  */
-public class ConditionalBuilder<T> {
+public class DNFConditionalBuilder<T> {
 
 	private CompoundConditional<T> root;
 
 	/**
 	 * Creates an empty builder.
 	 */
-	ConditionalBuilder() {
+	DNFConditionalBuilder() {
 		this.root = null;
 	}
 
@@ -33,7 +32,7 @@ public class ConditionalBuilder<T> {
 	 * @param root If given a {@link CompoundConditional}, it is used as the root conditional.
 	 *             Otherwise, a OR compound conditional is created as the root with the given conditional within.
 	 */
-	ConditionalBuilder(Conditional<T> root) {
+	DNFConditionalBuilder(Conditional<T> root) {
 		if (root instanceof CompoundConditional<T> compoundConditional) {
 			this.root = compoundConditional;
 		} else {
@@ -60,7 +59,7 @@ public class ConditionalBuilder<T> {
 	 */
 	@SafeVarargs
 	@Contract("_ -> this")
-	public final ConditionalBuilder<T> and(Conditional<T>... andConditionals) {
+	public final DNFConditionalBuilder<T> and(Conditional<T>... andConditionals) {
 		if (root == null) {
 			root = new CompoundConditional<>(Operator.AND, andConditionals);
 			return this;
@@ -95,7 +94,7 @@ public class ConditionalBuilder<T> {
 	 */
 	@SafeVarargs
 	@Contract("_ -> this")
-	public final ConditionalBuilder<T> or(Conditional<T>... orConditionals) {
+	public final DNFConditionalBuilder<T> or(Conditional<T>... orConditionals) {
 		if (root == null) {
 			root = new CompoundConditional<>(Operator.OR, orConditionals);
 			return this;
@@ -116,6 +115,41 @@ public class ConditionalBuilder<T> {
 	}
 
 	/**
+	 * Adds a negated conditional to the root node via the AND and NOT operators: {@code (existing) && !new}.
+	 * @param conditional The conditional to negate and add.
+	 * @return the builder
+	 */
+	@Contract("_ -> this")
+	public DNFConditionalBuilder<T> andNot(Conditional<T> conditional) {
+		return and(negate(conditional));
+	}
+
+	/**
+	 * Adds a negated conditional to the root node via the OR and NOT operators: {@code (existing) || !new}.
+	 * @param conditional The conditional to negate and add.
+	 * @return the builder
+	 */
+	@Contract("_ -> this")
+	public DNFConditionalBuilder<T> orNot(Conditional<T> conditional) {
+		return or(negate(conditional));
+	}
+
+	/**
+	 * Adds conditionals to the root node via the AND or OR operators.
+	 * A helper for dynamically adding conditionals.
+	 * @param or Whether to use OR (true) or AND (false)
+	 * @param conditionals The conditional to add.
+	 * @return the builder
+	 */
+	@SafeVarargs
+	@Contract("_,_ -> this")
+	public final DNFConditionalBuilder<T> add(boolean or, Conditional<T>... conditionals) {
+		if (or)
+			return or(conditionals);
+		return and(conditionals);
+	}
+
+	/**
 	 * Unrolls nested conditionals which are superfluous:
 	 * {@code a || (b || c) -> a || b || c}
 	 * @param conditionals A collection of conditionals to unroll.
@@ -133,41 +167,6 @@ public class ConditionalBuilder<T> {
 			}
 		}
 		return newConditionals;
-	}
-
-	/**
-	 * Adds a negated conditional to the root node via the AND and NOT operators: {@code (existing) && !new}.
-	 * @param conditional The conditional to negate and add.
-	 * @return the builder
-	 */
-	@Contract("_ -> this")
-	public ConditionalBuilder<T> andNot(Conditional<T> conditional) {
-		return and(negate(conditional));
-	}
-
-	/**
-	 * Adds a negated conditional to the root node via the OR and NOT operators: {@code (existing) || !new}.
-	 * @param conditional The conditional to negate and add.
-	 * @return the builder
-	 */
-	@Contract("_ -> this")
-	public ConditionalBuilder<T> orNot(Conditional<T> conditional) {
-		return or(negate(conditional));
-	}
-
-	/**
-	 * Adds conditionals to the root node via the AND or OR operators.
-	 * A helper for dynamically adding conditionals.
-	 * @param or Whether to use OR (true) or AND (false)
-	 * @param conditionals The conditional to add.
-	 * @return the builder
-	 */
-	@SafeVarargs
-	@Contract("_,_ -> this")
-	public final ConditionalBuilder<T> add(boolean or, Conditional<T>... conditionals) {
-		if (or)
-			return or(conditionals);
-		return and(conditionals);
 	}
 
 }
