@@ -14,17 +14,19 @@ public class SparkHook extends Hook<Plugin> {
 
 	public static Spark spark;
 
+	public static Spark getSparkInstance() {
+		return SparkProvider.get();
+	}
+
 	@Override
 	protected boolean init() {
-		spark = SparkProvider.get();
+		spark = getSparkInstance();
 		return spark != null;
 	}
 
 	@Override
 	protected void loadClasses() throws IOException {
-		if (spark != null) {
-			Skript.getAddonInstance().loadClasses(getClass().getPackage().getName() + ".spark");
-		}
+		Skript.getAddonInstance().loadClasses(getClass().getPackage().getName());
 	}
 
 	@Override
