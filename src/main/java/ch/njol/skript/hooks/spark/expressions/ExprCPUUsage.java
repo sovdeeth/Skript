@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 public class ExprCPUUsage extends SimpleExpression<Number> {
 
 	private String expr = "cpu usage";
-	private static final Spark spark = SparkHook.getSparkInstance();
+	private static final Spark spark = (Spark) SparkHook.getSparkInstance();
 	private StatisticWindow.CpuUsage window;
 
 	static {

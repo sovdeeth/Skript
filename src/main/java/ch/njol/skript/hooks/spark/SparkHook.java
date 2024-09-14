@@ -12,10 +12,13 @@ public class SparkHook extends Hook<Plugin> {
 
 	public SparkHook() throws IOException {}
 
-	public static Spark spark;
+	public static Object spark;
 
-	public static Spark getSparkInstance() {
-		return SparkProvider.get();
+	public static Object getSparkInstance() {
+		if (Skript.classExists("me.lucko.spark.api.SparkProvider")) {
+			return SparkProvider.get();
+		}
+		return null;
 	}
 
 	@Override

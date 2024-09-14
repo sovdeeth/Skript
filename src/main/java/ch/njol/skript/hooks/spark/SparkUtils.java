@@ -7,7 +7,7 @@ import me.lucko.spark.api.statistic.types.GenericStatistic;
 
 public class SparkUtils {
 
-	private static final Spark spark = SparkHook.getSparkInstance();
+	private static final Spark spark = (Spark) SparkHook.getSparkInstance();
 
 	public static Number[] getMSPTStats(int index) {
 		return switch (index) {

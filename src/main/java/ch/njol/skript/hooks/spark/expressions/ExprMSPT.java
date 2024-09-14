@@ -29,7 +29,7 @@ public class ExprMSPT extends SimpleExpression<Number> {
 
 	private int index;
 	private String expr = "server tick";
-	private static final Spark spark = SparkHook.getSparkInstance();
+	private static final Spark spark = (Spark) SparkHook.getSparkInstance();
 
 	static {
 		if (spark != null) {
