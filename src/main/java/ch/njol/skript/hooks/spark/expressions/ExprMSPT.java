@@ -1,6 +1,10 @@
 package ch.njol.skript.hooks.spark.expressions;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.RequiredPlugins;
 import ch.njol.skript.hooks.spark.SparkHook;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
@@ -14,6 +18,12 @@ import me.lucko.spark.api.statistic.types.GenericStatistic;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
+@Name("MSPT Usage")
+@RequiredPlugins("Spark")
+@Description("Returns the MSPT usage readings, like the MSPT information from Spark's /mspt command. \n This expression is only supported with servers that have Spark on their server.")
+@Examples({
+	"broadcast server tick"
+})
 public class ExprMSPT extends SimpleExpression<Number> {
 
 	private int index;
@@ -23,10 +33,10 @@ public class ExprMSPT extends SimpleExpression<Number> {
 	static {
 		if (spark != null) {
 			Skript.registerExpression(ExprMSPT.class, Number.class, ExpressionType.SIMPLE,
-				"[the] server tick (duration|time) (within|from) the last 10[ ]s[econds]",
-				"[the] server tick (duration|time) (within|from) the last ([1] minute|1[ ]m[inute])",
-				"[the] server tick (duration|time) (within|from) the last 5[ ]m[inutes]",
-				"[the] server tick [(duration|time[s])]");
+				"[the] (server tick|mspt) (duration|time) (within|from) the last 10[ ]s[econds]",
+				"[the] (server tick|mspt) (duration|time) (within|from) the last ([1] minute|1[ ]m[inute])",
+				"[the] (server tick|mspt) (duration|time) (within|from) the last 5[ ]m[inutes]",
+				"[the] (server tick|mspt) [(duration[s]|time[s])]");
 		}
 	}
 
