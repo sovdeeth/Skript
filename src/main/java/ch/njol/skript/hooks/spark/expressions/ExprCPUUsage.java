@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 @Name("CPU Usage")
 @RequiredPlugins("Spark")
-@Description("Returns the CPU usage readings, like the cpu information from Spark's /tps command. \n This expression is only supported with servers that have Spark on their server.")
+@Description("Returns the CPU usage readings, like the cpu information from Spark's /tps command. \n This expression can only be used if the server has the Spark plugin installed.")
 @Examples({
 	"broadcast cpu usage"
 })

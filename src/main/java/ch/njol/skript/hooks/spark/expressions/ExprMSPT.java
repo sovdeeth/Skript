@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 @Name("MSPT Usage")
 @RequiredPlugins("Spark")
-@Description("Returns the MSPT usage readings, like the MSPT information from Spark's /mspt command. \n This expression is only supported with servers that have Spark on their server.")
+@Description("Returns the MSPT (Milliseconds per tick) readings from the last 10 seconds, 1 minute and 5 minutes. \n This expression can only be used if the server has the Spark plugin installed.")
 @Examples({
 	"broadcast server tick"
 })
