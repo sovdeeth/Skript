@@ -38,10 +38,10 @@ public class ExprMSPT extends SimpleExpression<Number> {
 		if (Skript.classExists("me.lucko.spark.api.SparkProvider")) {
 			spark = SparkProvider.get();
 			Skript.registerExpression(ExprMSPT.class, Number.class, ExpressionType.SIMPLE,
-				"[the] (server tick|mspt) (duration|time) (within|from) the last 10[ ]s[econds]",
-				"[the] (server tick|mspt) (duration|time) (within|from) the last ([1] minute|1[ ]m[inute])",
-				"[the] (server tick|mspt) (duration|time) (within|from) the last 5[ ]m[inutes]",
-				"[the] (server tick|mspt) [(duration[s]|time[s])]");
+				"[the] (server tick (duration|time)|mspt) (from|of) the last 10 seconds",
+				"[the] (server tick (duration|time)|mspt) (from|of) the last [(1|one) ]minute",
+				"[the] (server tick (duration|time)|mspt) (from|of) the last (5|five) minutes",
+				"[the] (server tick (durations|times)|mspt values)");
 		}
 	}
 
