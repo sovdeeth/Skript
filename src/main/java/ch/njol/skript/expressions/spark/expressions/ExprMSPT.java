@@ -20,7 +20,7 @@ import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
 @Name("MSPT Usage")
-@RequiredPlugins("Spark")
+@RequiredPlugins("Paper 1.21+ or Spark")
 @Description({
     "Returns the MSPT (milliseconds per tick) readings from the last 10 seconds, 1 minute and 5 minutes.",
     "This expression can only be used if the server has Spark or you have Spark installed as a plugin."

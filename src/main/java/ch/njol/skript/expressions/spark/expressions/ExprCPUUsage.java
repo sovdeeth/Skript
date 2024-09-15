@@ -19,7 +19,7 @@ import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
 @Name("CPU Usage")
-@RequiredPlugins("Spark")
+@RequiredPlugins("Paper 1.21+ or Spark")
 @Description("Returns the CPU usage readings, like the cpu information from Spark's /tps command. \n This expression can only be used if the server has the Spark plugin installed.")
 @Examples({
 	"broadcast cpu usage"
