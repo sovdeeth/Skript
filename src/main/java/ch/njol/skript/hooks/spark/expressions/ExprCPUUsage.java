@@ -6,13 +6,13 @@ import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.RequiredPlugins;
 import ch.njol.skript.doc.Since;
-import ch.njol.skript.hooks.spark.SparkHook;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
 import me.lucko.spark.api.Spark;
+import me.lucko.spark.api.SparkProvider;
 import me.lucko.spark.api.statistic.StatisticWindow;
 import me.lucko.spark.api.statistic.types.DoubleStatistic;
 import org.bukkit.event.Event;
@@ -28,11 +28,11 @@ import org.jetbrains.annotations.Nullable;
 public class ExprCPUUsage extends SimpleExpression<Number> {
 
 	private String expr = "cpu usage";
-	private static final Spark spark = (Spark) SparkHook.getSparkInstance();
+	private static Spark spark;
 	private StatisticWindow.CpuUsage window;
 
 	static {
-		if (spark != null) {
+		if (Skript.classExists("me.lucko.spark.api.Spark")) {
 			Skript.registerExpression(ExprCPUUsage.class, Number.class, ExpressionType.SIMPLE,
 				"[the] cpu usage from [the] last 10[ ]s[econds]",
 				"[the] cpu usage from [the] last ([1] minute|1[ ]m[inute])",
@@ -43,6 +43,7 @@ public class ExprCPUUsage extends SimpleExpression<Number> {
 
 	@Override
 	public boolean init(Expression<?>[] expressions, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
+		spark = SparkProvider.get();
 		DoubleStatistic<StatisticWindow.CpuUsage> cpuUsage = spark.cpuSystem();
 		expr = parseResult.expr;
 		switch (matchedPattern) {
@@ -56,6 +57,7 @@ public class ExprCPUUsage extends SimpleExpression<Number> {
 
 	@Override
 	protected Number @Nullable [] get(Event event) {
+		spark = SparkProvider.get();
 		DoubleStatistic<StatisticWindow.CpuUsage> cpuUsage = spark.cpuSystem();
 		if (window != null) {
 			return new Number[]{cpuUsage.poll(window) * 100};

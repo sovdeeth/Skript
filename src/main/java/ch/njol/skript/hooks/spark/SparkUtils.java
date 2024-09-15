@@ -1,13 +1,14 @@
 package ch.njol.skript.hooks.spark;
 
 import me.lucko.spark.api.Spark;
+import me.lucko.spark.api.SparkProvider;
 import me.lucko.spark.api.statistic.StatisticWindow;
 import me.lucko.spark.api.statistic.misc.DoubleAverageInfo;
 import me.lucko.spark.api.statistic.types.GenericStatistic;
 
 public class SparkUtils {
 
-	private static final Spark spark = (Spark) SparkHook.getSparkInstance();
+	private static Spark spark;
 
 	public static Number[] getMSPTStats(int index) {
 		return switch (index) {
@@ -19,6 +20,7 @@ public class SparkUtils {
 	}
 
 	private static Number[] getMSPTForWindow(StatisticWindow.MillisPerTick window) {
+		spark = SparkProvider.get();
 		GenericStatistic<DoubleAverageInfo, StatisticWindow.MillisPerTick> mspt = spark.mspt();
 		DoubleAverageInfo info = mspt.poll(window);
 		double msptMinRounded = Math.round(info.min() * 100.0) / 100.0;
@@ -29,6 +31,7 @@ public class SparkUtils {
 	}
 
 	private static Number[] getAllMSPTStats() {
+		spark = SparkProvider.get();
 		GenericStatistic<DoubleAverageInfo, StatisticWindow.MillisPerTick> mspt = spark.mspt();
 		DoubleAverageInfo mspt10Sec = mspt.poll(StatisticWindow.MillisPerTick.SECONDS_10);
 		double msptMinRounded10Sec = Math.round(mspt10Sec.min() * 100.0) / 100.0;
