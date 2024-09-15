@@ -1,11 +1,11 @@
-package ch.njol.skript.hooks.spark.expressions;
+package ch.njol.skript.expressions.spark.expressions;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.RequiredPlugins;
-import ch.njol.skript.hooks.spark.SparkUtils;
+import ch.njol.skript.expressions.spark.SparkUtils;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -33,6 +33,7 @@ public class ExprMSPT extends SimpleExpression<Number> {
 
 	static {
 		if (Skript.classExists("me.lucko.spark.api.SparkProvider")) {
+			spark = SparkProvider.get();
 			Skript.registerExpression(ExprMSPT.class, Number.class, ExpressionType.SIMPLE,
 				"[the] (server tick|mspt) (duration|time) (within|from) the last 10[ ]s[econds]",
 				"[the] (server tick|mspt) (duration|time) (within|from) the last ([1] minute|1[ ]m[inute])",
@@ -50,7 +51,6 @@ public class ExprMSPT extends SimpleExpression<Number> {
 
 	@Override
 	protected Number @Nullable [] get(Event event) {
-		spark = SparkProvider.get();
 		GenericStatistic<DoubleAverageInfo, StatisticWindow.MillisPerTick> mspt = spark.mspt();
 		return SparkUtils.getMSPTStats(index);
 	}
