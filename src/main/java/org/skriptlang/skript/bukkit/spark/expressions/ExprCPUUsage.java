@@ -1,4 +1,4 @@
-package ch.njol.skript.expressions.spark.expressions;
+package org.skriptlang.skript.bukkit.spark.expressions;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -34,7 +34,7 @@ public class ExprCPUUsage extends SimpleExpression<Number> {
 	static {
 		if (Skript.classExists("me.lucko.spark.api.Spark")) {
 			Skript.registerExpression(ExprCPUUsage.class, Number.class, ExpressionType.SIMPLE,
-				"[the] cpu usage from [the] last 10[ ]s[econds]",
+				"[the] cpu usage (from|of) the last 10 seconds",
 				"[the] cpu usage from [the] last ([1] minute|1[ ]m[inute])",
 				"[the] cpu usage from [the] last 15[ ]m[inutes]",
 				"[the] cpu usage");

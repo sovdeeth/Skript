@@ -1,4 +1,4 @@
-package ch.njol.skript.expressions.spark;
+package org.skriptlang.skript.bukkit.spark;
 
 import me.lucko.spark.api.Spark;
 import me.lucko.spark.api.SparkProvider;

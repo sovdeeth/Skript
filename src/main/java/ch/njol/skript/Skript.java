@@ -541,6 +541,10 @@ public final class Skript extends JavaPlugin implements Listener {
 		try {
 			getAddonInstance().loadClasses("ch.njol.skript",
 				"conditions", "effects", "events", "expressions", "entity", "sections", "structures");
+			if (Skript.classExists("me.lucko.spark.api.SparkProvider")) {
+				getAddonInstance().loadClasses("org.skriptlang.skript.bukkit",
+					"spark");
+			}
 		} catch (final Exception e) {
 			exception(e, "Could not load required .class files: " + e.getLocalizedMessage());
 			setEnabled(false);
