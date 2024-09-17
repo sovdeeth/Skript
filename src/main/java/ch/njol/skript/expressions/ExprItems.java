@@ -36,7 +36,7 @@ import java.util.stream.StreamSupport;
 public class ExprItems extends SimpleExpression<ItemType> {
 
 	private static final ItemType[] ALL_BLOCKS = Arrays.stream(Material.values())
-		.filter((material -> !material.isLegacy() && material.isBlock()))
+		.filter(material -> !material.isLegacy() && material.isBlock())
 		.map(ItemType::new)
 		.toArray(ItemType[]::new);
 
