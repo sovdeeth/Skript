@@ -18,13 +18,8 @@
  */
 package ch.njol.skript.effects;
 
-import java.util.Arrays;
-import java.util.Objects;
-import java.util.stream.Stream;
-
 import ch.njol.skript.Skript;
-import ch.njol.skript.bukkitutil.PaperTeleportFlags;
-import ch.njol.skript.bukkitutil.PaperTeleportFlags.SkriptTeleportFlag;
+import ch.njol.skript.bukkitutil.SkriptTeleportFlag;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
@@ -40,17 +35,20 @@ import ch.njol.skript.timings.SkriptTimings;
 import ch.njol.skript.util.Direction;
 import ch.njol.skript.variables.Variables;
 import ch.njol.util.Kleenean;
-
 import io.papermc.lib.PaperLib;
 import io.papermc.lib.environments.PaperEnvironment;
-
+import io.papermc.paper.entity.TeleportFlag;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.event.Event;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 @Name("Teleport")
 @Description({
@@ -131,7 +129,7 @@ public class EffTeleport extends Effect {
 			if (event instanceof PlayerRespawnEvent playerRespawnEvent && entityArray.length == 1 && entityArray[0].equals(playerRespawnEvent.getPlayer())) {
 				if (unknownWorld)
 					return next;
-					playerRespawnEvent.setRespawnLocation(location);
+				playerRespawnEvent.setRespawnLocation(location);
 				return next;
 			}
 
@@ -160,7 +158,7 @@ public class EffTeleport extends Effect {
 		if (!async) {
 			SkriptTeleportFlag[] teleportFlags = this.teleportFlags == null ? null : this.teleportFlags.getArray(event);
 			for (Entity entity : entityArray) {
-				teleport(TELEPORT_FLAGS_SUPPORTED ? Entity::teleport : null, entity, location, teleportFlags);
+				teleport(entity, location, teleportFlags);
 			}
 			return next;
 		}
@@ -174,7 +172,7 @@ public class EffTeleport extends Effect {
 			// The following is now on the main thread
 			SkriptTeleportFlag[] teleportFlags = this.teleportFlags == null ? null : this.teleportFlags.getArray(event);
 			for (Entity entity : entityArray) {
-				teleport(TELEPORT_FLAGS_SUPPORTED ? Entity::teleport : null, entity, fixed, teleportFlags);
+				teleport(entity, fixed, teleportFlags);
 			}
 
 			// Re-set local variables
@@ -207,25 +205,24 @@ public class EffTeleport extends Effect {
 	@Override
 	public String toString(@Nullable Event event, boolean debug) {
 		return "teleport " + entities.toString(event, debug) + " to " + location.toString(event, debug) +
-				teleportFlags == null ? "" : " retaining " + teleportFlags.toString(event, debug);
+			(teleportFlags == null ? "" : " retaining " + teleportFlags.toString(event, debug));
 	}
 
-	private void teleport(@Nullable PaperTeleportFlags paperTeleportFlags, @NotNull Entity entity, @NotNull Location location, SkriptTeleportFlag... skriptTeleportFlags) {
+	private void teleport(@NotNull Entity entity, @NotNull Location location, SkriptTeleportFlag... skriptTeleportFlags) {
 		if (location.getWorld() == null) {
 			location = location.clone();
 			location.setWorld(entity.getWorld());
 		}
-		if (!TELEPORT_FLAGS_SUPPORTED || paperTeleportFlags == null || skriptTeleportFlags == null) {
+
+		if (!TELEPORT_FLAGS_SUPPORTED || skriptTeleportFlags == null) {
 			entity.teleport(location);
 			return;
 		}
-		Stream<io.papermc.paper.entity.TeleportFlag> teleportFlags = Arrays.stream(skriptTeleportFlags).flatMap(teleportFlag -> {
-			if (teleportFlag == SkriptTeleportFlag.RETAIN_DIRECTION)
-				return Stream.of(io.papermc.paper.entity.TeleportFlag.Relative.PITCH, io.papermc.paper.entity.TeleportFlag.Relative.YAW);
-			return Stream.of(teleportFlag.getTeleportFlag());
-		}).filter(Objects::nonNull);
 
-		paperTeleportFlags.teleport(entity, location, teleportFlags.toArray(io.papermc.paper.entity.TeleportFlag[]::new));
+		Stream<TeleportFlag> teleportFlags = Arrays.stream(skriptTeleportFlags)
+				.flatMap(teleportFlag -> Stream.of(teleportFlag.getTeleportFlags()))
+				.filter(Objects::nonNull);
+		entity.teleport(location, teleportFlags.toArray(TeleportFlag[]::new));
 	}
 
 }

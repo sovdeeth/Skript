@@ -2283,6 +2283,7 @@ teleport flags:
 	retain_direction: direction
 	retain_pitch: pitch
 	retain_yaw: yaw
+	retain_movement: movement, motion, momentum, velocity
 	retain_x: x coordinate, x-coordinate
 	retain_y: y coordinate, y-coordinate
 	retain_z: z coordinate, z-coordinate
