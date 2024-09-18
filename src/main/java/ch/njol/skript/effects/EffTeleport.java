@@ -23,8 +23,8 @@ import java.util.Objects;
 import java.util.stream.Stream;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.bukkitutil.TeleportFlags;
-import ch.njol.skript.bukkitutil.TeleportFlags.SkriptTeleportFlag;
+import ch.njol.skript.bukkitutil.PaperTeleportFlags;
+import ch.njol.skript.bukkitutil.PaperTeleportFlags.SkriptTeleportFlag;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
@@ -43,14 +43,13 @@ import ch.njol.util.Kleenean;
 
 import io.papermc.lib.PaperLib;
 import io.papermc.lib.environments.PaperEnvironment;
-import io.papermc.paper.entity.TeleportFlag;
 
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.event.Event;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
-import org.eclipse.jdt.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
 @Name("Teleport")
@@ -129,19 +128,19 @@ public class EffTeleport extends Effect {
 			return next;
 
 		if (!delayed) {
-			if (event instanceof PlayerRespawnEvent && entityArray.length == 1 && entityArray[0].equals(((PlayerRespawnEvent) event).getPlayer())) {
+			if (event instanceof PlayerRespawnEvent playerRespawnEvent && entityArray.length == 1 && entityArray[0].equals(playerRespawnEvent.getPlayer())) {
 				if (unknownWorld)
 					return next;
-				((PlayerRespawnEvent) event).setRespawnLocation(location);
+					playerRespawnEvent.setRespawnLocation(location);
 				return next;
 			}
 
-			if (event instanceof PlayerMoveEvent && entityArray.length == 1 && entityArray[0].equals(((PlayerMoveEvent) event).getPlayer())) {
+			if (event instanceof PlayerMoveEvent playerMoveEvent && entityArray.length == 1 && entityArray[0].equals(playerMoveEvent.getPlayer())) {
 				if (unknownWorld) { // we can approximate the world
 					location = location.clone();
-					location.setWorld(((PlayerMoveEvent) event).getFrom().getWorld());
+					location.setWorld(playerMoveEvent.getFrom().getWorld());
 				}
-				((PlayerMoveEvent) event).setTo(location);
+				playerMoveEvent.setTo(location);
 				return next;
 			}
 		}
@@ -161,7 +160,7 @@ public class EffTeleport extends Effect {
 		if (!async) {
 			SkriptTeleportFlag[] teleportFlags = this.teleportFlags == null ? null : this.teleportFlags.getArray(event);
 			for (Entity entity : entityArray) {
-				teleport(Entity::teleport, TELEPORT_FLAGS_SUPPORTED ? Entity::teleport : null, entity, location, teleportFlags);
+				teleport(TELEPORT_FLAGS_SUPPORTED ? Entity::teleport : null, entity, location, teleportFlags);
 			}
 			return next;
 		}
@@ -175,7 +174,7 @@ public class EffTeleport extends Effect {
 			// The following is now on the main thread
 			SkriptTeleportFlag[] teleportFlags = this.teleportFlags == null ? null : this.teleportFlags.getArray(event);
 			for (Entity entity : entityArray) {
-				teleport(Entity::teleport, TELEPORT_FLAGS_SUPPORTED ? Entity::teleport : null, entity, fixed, teleportFlags);
+				teleport(TELEPORT_FLAGS_SUPPORTED ? Entity::teleport : null, entity, fixed, teleportFlags);
 			}
 
 			// Re-set local variables
@@ -211,37 +210,22 @@ public class EffTeleport extends Effect {
 				teleportFlags == null ? "" : " retaining " + teleportFlags.toString(event, debug);
 	}
 
-	private void teleport(@NotNull Teleport teleport, @Nullable TeleportFlags paperTeleportFlags, @NotNull Entity entity, @NotNull Location location, SkriptTeleportFlag... skriptTeleportFlags) {
+	private void teleport(@Nullable PaperTeleportFlags paperTeleportFlags, @NotNull Entity entity, @NotNull Location location, SkriptTeleportFlag... skriptTeleportFlags) {
+		if (location.getWorld() == null) {
+			location = location.clone();
+			location.setWorld(entity.getWorld());
+		}
 		if (!TELEPORT_FLAGS_SUPPORTED || paperTeleportFlags == null || skriptTeleportFlags == null) {
-			teleport.teleport(entity, location);
+			entity.teleport(location);
 			return;
 		}
-		Stream<TeleportFlag> teleportFlags = Arrays.stream(skriptTeleportFlags).flatMap(teleportFlag -> {
+		Stream<io.papermc.paper.entity.TeleportFlag> teleportFlags = Arrays.stream(skriptTeleportFlags).flatMap(teleportFlag -> {
 			if (teleportFlag == SkriptTeleportFlag.RETAIN_DIRECTION)
-				return Stream.of(TeleportFlag.Relative.PITCH, TeleportFlag.Relative.YAW);
+				return Stream.of(io.papermc.paper.entity.TeleportFlag.Relative.PITCH, io.papermc.paper.entity.TeleportFlag.Relative.YAW);
 			return Stream.of(teleportFlag.getTeleportFlag());
 		}).filter(Objects::nonNull);
 
-		paperTeleportFlags.teleport(entity, location, teleportFlags.toArray(TeleportFlag[]::new));
-	}
-
-	@FunctionalInterface
-	public interface Teleport {
-		void teleport(
-			@NotNull Entity entity, @NotNull Location location
-		);
-
-		static <T, E> void teleport(
-			@NotNull Teleport teleport,
-			@NotNull Entity entity, @NotNull Location location
-		) {
-			if (location.getWorld() == null) {
-				location = location.clone();
-				location.setWorld(entity.getWorld());
-			}
-
-			teleport.teleport(entity, location);
-		}
+		paperTeleportFlags.teleport(entity, location, teleportFlags.toArray(io.papermc.paper.entity.TeleportFlag[]::new));
 	}
 
 }

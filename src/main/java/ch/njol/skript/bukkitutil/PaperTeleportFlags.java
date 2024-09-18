@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
  * A utility interface to access the Entity::teleport with TeleportFlag vararg in Paper 1.19+.
  */
 @FunctionalInterface
-public interface TeleportFlags {
+public interface PaperTeleportFlags {
 
 	public enum SkriptTeleportFlag {
 		RETAIN_OPEN_INVENTORY(TeleportFlag.EntityState.RETAIN_OPEN_INVENTORY),
@@ -44,7 +44,7 @@ public interface TeleportFlags {
 	);
 
 	static void teleport(
-		@NotNull TeleportFlags teleportFlagsInterface, @NotNull Entity entity, @NotNull Location location, @NotNull TeleportFlag... teleportFlags
+		@NotNull PaperTeleportFlags teleportFlagsInterface, @NotNull Entity entity, @NotNull Location location, @NotNull TeleportFlag... teleportFlags
 	) {
 		if (location.getWorld() == null) {
 			location = location.clone();
