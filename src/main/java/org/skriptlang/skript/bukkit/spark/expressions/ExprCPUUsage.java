@@ -30,13 +30,14 @@ public class ExprCPUUsage extends SimpleExpression<Number> {
 	private String expr = "cpu usage";
 	private static Spark spark;
 	private StatisticWindow.CpuUsage window;
+	private int index;
 
 	static {
 		if (Skript.classExists("me.lucko.spark.api.Spark")) {
 			Skript.registerExpression(ExprCPUUsage.class, Number.class, ExpressionType.SIMPLE,
-				"[the] cpu usage (from|of) the last 10 seconds",
-				"[the] cpu usage (from|of) the last [(1|one) ]minute",
-				"[the] cpu usage (from|of) the last (15|fifteen) minutes",
+				"[the] cpu usage (from|of) [the] last (10|ten) seconds",
+				"[the] cpu usage (from|of) [the] last [(1|one) ]minute",
+				"[the] cpu usage (from|of) [the] last (15|fifteen) minutes",
 				"[the] cpu usage");
 		}
 	}
@@ -44,36 +45,32 @@ public class ExprCPUUsage extends SimpleExpression<Number> {
 	@Override
 	public boolean init(Expression<?>[] expressions, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
 		spark = SparkProvider.get();
-		DoubleStatistic<StatisticWindow.CpuUsage> cpuUsage = spark.cpuSystem();
 		expr = parseResult.expr;
-		switch (matchedPattern) {
-			case 0 -> window = StatisticWindow.CpuUsage.SECONDS_10;
-			case 1 -> window = StatisticWindow.CpuUsage.MINUTES_1;
-			case 2 -> window = StatisticWindow.CpuUsage.MINUTES_15;
-			case 3 -> window = null;
-		}
+		index = matchedPattern;
+		window = switch (matchedPattern) {
+			case 0 -> StatisticWindow.CpuUsage.SECONDS_10;
+			case 1 -> StatisticWindow.CpuUsage.MINUTES_1;
+			case 2 -> StatisticWindow.CpuUsage.MINUTES_15;
+			default -> null;
+		};
 		return true;
 	}
 
 	@Override
 	protected Number @Nullable [] get(Event event) {
-		spark = SparkProvider.get();
 		DoubleStatistic<StatisticWindow.CpuUsage> cpuUsage = spark.cpuSystem();
 		if (window != null) {
 			return new Number[]{cpuUsage.poll(window) * 100};
 		}
-		double usageLast10Seconds = cpuUsage.poll(StatisticWindow.CpuUsage.SECONDS_10);
-		double usageLast1Minute = cpuUsage.poll(StatisticWindow.CpuUsage.MINUTES_1);
-		double usageLast15Minutes = cpuUsage.poll(StatisticWindow.CpuUsage.MINUTES_15);
-		double usageLast10SecondsRounded = (double) Math.round(usageLast10Seconds * 100);
-		double usageLast1MinuteRounded = (double) Math.round(usageLast1Minute * 100);
-		double usageLast15MinutesRounded = (double) Math.round(usageLast15Minutes * 100);
-		return new Number[]{usageLast10SecondsRounded, usageLast1MinuteRounded, usageLast15MinutesRounded};
+		Number usageLast10Seconds = cpuUsage.poll(StatisticWindow.CpuUsage.SECONDS_10) * 100;
+		Number usageLast1Minute = cpuUsage.poll(StatisticWindow.CpuUsage.MINUTES_1) * 100;
+		Number usageLast15Minutes = cpuUsage.poll(StatisticWindow.CpuUsage.MINUTES_15) * 100;
+		return new Number[]{usageLast10Seconds, usageLast1Minute, usageLast15Minutes};
 	}
 
 	@Override
 	public boolean isSingle() {
-		return true;
+		return index != 3;
 	}
 
 	@Override
@@ -83,7 +80,7 @@ public class ExprCPUUsage extends SimpleExpression<Number> {
 
 	@Override
 	public String toString(@Nullable Event event, boolean debug) {
-		return expr;
+		return expr + "from the last " + window.toString();
 	}
 
 }
