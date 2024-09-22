@@ -20,7 +20,11 @@ import org.jetbrains.annotations.Nullable;
 
 @Name("CPU Usage")
 @RequiredPlugins("Paper 1.21+ or Spark")
-@Description("Returns the CPU usage readings, like the cpu information from Spark's /tps command. \n This expression can only be used if the server has the Spark plugin installed.")
+@Description({
+	"Returns the CPU usage readings, like the cpu information from Spark's /tps command.",
+	"These values return a percentage of how much of the cpu was being used in each specified time.",
+	"This expression can only be used if the server has the Spark plugin installed."
+})
 @Examples({
 	"broadcast cpu usage"
 })
@@ -36,7 +40,7 @@ public class ExprCPUUsage extends SimpleExpression<Number> {
 		if (Skript.classExists("me.lucko.spark.api.Spark")) {
 			Skript.registerExpression(ExprCPUUsage.class, Number.class, ExpressionType.SIMPLE,
 				"[the] cpu usage (from|of) [the] last (10|ten) seconds",
-				"[the] cpu usage (from|of) [the] last [(1|one) ]minute",
+				"[the] cpu usage (from|of) [the] last [1|one] minute",
 				"[the] cpu usage (from|of) [the] last (15|fifteen) minutes",
 				"[the] cpu usage");
 		}
@@ -80,7 +84,7 @@ public class ExprCPUUsage extends SimpleExpression<Number> {
 
 	@Override
 	public String toString(@Nullable Event event, boolean debug) {
-		return expr + "from the last " + window.toString();
+		return expr;
 	}
 
 }
