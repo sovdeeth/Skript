@@ -2,59 +2,148 @@ package org.skriptlang.skript.bukkit.spark;
 
 import me.lucko.spark.api.Spark;
 import me.lucko.spark.api.SparkProvider;
-import me.lucko.spark.api.statistic.StatisticWindow;
+import me.lucko.spark.api.statistic.StatisticWindow.CpuUsage;
+import me.lucko.spark.api.statistic.StatisticWindow.MillisPerTick;
+import me.lucko.spark.api.statistic.StatisticWindow.TicksPerSecond;
 import me.lucko.spark.api.statistic.misc.DoubleAverageInfo;
+import me.lucko.spark.api.statistic.types.DoubleStatistic;
 import me.lucko.spark.api.statistic.types.GenericStatistic;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnknownNullability;
 
+import java.util.Arrays;
+
+/**
+ * Utility class for accessing Spark's API.
+ */
 public class SparkUtils {
 
-	private static Spark spark;
+	private static Spark sparkInstance;
+	private static DoubleStatistic<CpuUsage> cpuProcess;
+	private static DoubleStatistic<CpuUsage> cpuSystem;
+	private static GenericStatistic<DoubleAverageInfo, MillisPerTick> mspt;
+	private static DoubleStatistic<TicksPerSecond> tps;
 
-	public static Number[] getMSPTStats(int index) {
-		spark = SparkProvider.get();
-		return switch (index) {
-			case 0 -> getMSPTForWindow(StatisticWindow.MillisPerTick.SECONDS_10);
-			case 1 -> getMSPTForWindow(StatisticWindow.MillisPerTick.MINUTES_1);
-			case 2 -> getMSPTForWindow(StatisticWindow.MillisPerTick.MINUTES_5);
-			default -> getAllMSPTStats();
-		};
+	private static Spark spark() {
+		if (sparkInstance == null)
+			sparkInstance = SparkProvider.get();
+		return sparkInstance;
 	}
 
-	private static Number[] getMSPTForWindow(StatisticWindow.MillisPerTick window) {
-		GenericStatistic<DoubleAverageInfo, StatisticWindow.MillisPerTick> mspt = spark.mspt();
-		DoubleAverageInfo info = mspt.poll(window);
-		double msptMinRounded = Math.round(info.min() * 100.0) / 100.0;
-		double msptMedianRounded = Math.round(info.median() * 100.0) / 100.0;
-		double mspt95PercentileRounded = Math.round(info.percentile95th() * 100.0) / 100.0;
-		double msptMaxRounded = Math.round(info.max() * 100.0) / 100.0;
-		return new Number[]{msptMinRounded, msptMedianRounded, mspt95PercentileRounded, msptMaxRounded};
+	/**
+	 * Checks for MSPT support. This should be checked before using the MSPT methods.
+	 * @return whether MSPT statistics are supported.
+	 */
+	public static boolean supportsMspt() {
+		return mspt() != null;
 	}
 
-	private static Number[] getAllMSPTStats() {
-		GenericStatistic<DoubleAverageInfo, StatisticWindow.MillisPerTick> mspt = spark.mspt();
-		DoubleAverageInfo mspt10Sec = mspt.poll(StatisticWindow.MillisPerTick.SECONDS_10);
-		double msptMinRounded10Sec = Math.round(mspt10Sec.min() * 100.0) / 100.0;
-		double msptMeanRounded10Sec = Math.round(mspt10Sec.median() * 100.0) / 100.0;
-		double mspt95PercentileRounded10Sec = Math.round(mspt10Sec.percentile95th() * 100.0) / 100.0;
-		double msptMaxRounded10Sec = Math.round(mspt10Sec.max() * 100.0) / 100.0;
+	private static @UnknownNullability GenericStatistic<DoubleAverageInfo, MillisPerTick> mspt() {
+		if (mspt == null) {
+			mspt = spark().mspt();
+			if (mspt == null)
+				return null;
+		}
+		return mspt;
+	}
 
-		DoubleAverageInfo mspt1Min = mspt.poll(StatisticWindow.MillisPerTick.MINUTES_1);
-		double msptMinRoundedLastMin = Math.round(mspt1Min.min() * 100.0) / 100.0;
-		double msptMeanRoundedLastMin = Math.round(mspt1Min.median() * 100.0) / 100.0;
-		double mspt95PercentileRoundedLastMin = Math.round(mspt1Min.percentile95th() * 100.0) / 100.0;
-		double msptMaxRoundedLastMin = Math.round(mspt1Min.max() * 100.0) / 100.0;
+	/**
+	 * Get the MSPT stat info block for the given window.
+	 * {@link #supportsMspt()} should be checked prior to using this.
+	 *
+	 * @param window the window for which to gather statistics from.
+	 * @return the MSPT info block.
+	 */
+	public static @Nullable DoubleAverageInfo mspt(MillisPerTick window) {
+		GenericStatistic<DoubleAverageInfo, MillisPerTick> mspt = mspt();
+		return mspt.poll(window);
+	}
 
-		DoubleAverageInfo mspt5Mins = mspt.poll(StatisticWindow.MillisPerTick.MINUTES_5);
-		double msptMinRounded5Mins = Math.round(mspt5Mins.min() * 100.0) / 100.0;
-		double msptMeanRounded5Mins = Math.round(mspt5Mins.median() * 100.0) / 100.0;
-		double mspt95PercentileRounded5Mins = Math.round(mspt5Mins.percentile95th() * 100.0) / 100.0;
-		double msptMaxRounded5Mins = Math.round(mspt5Mins.max() * 100.0) / 100.0;
+	/**
+	 * Get the MSPT stat info block for the given windows.
+	 * {@link #supportsMspt()} should be checked prior to using this.
+	 *
+	 * @param windows the windows for which to gather statistics from.
+	 * @return the MSPT info blocks.
+	 */
+	public static DoubleAverageInfo @Nullable [] mspt(MillisPerTick... windows) {
+		GenericStatistic<DoubleAverageInfo, MillisPerTick> mspt = mspt();
+		return Arrays.stream(windows).map(mspt::poll).toArray(DoubleAverageInfo[]::new);
+	}
 
-		return new Number[]{
-			msptMinRounded10Sec, msptMeanRounded10Sec, mspt95PercentileRounded10Sec, msptMaxRounded10Sec,
-			msptMinRoundedLastMin, msptMeanRoundedLastMin, mspt95PercentileRoundedLastMin, msptMaxRoundedLastMin,
-			msptMinRounded5Mins, msptMeanRounded5Mins, mspt95PercentileRounded5Mins, msptMaxRounded5Mins
-		};
+	private static DoubleStatistic<CpuUsage> cpuProcess() {
+		if (cpuProcess == null)
+			cpuProcess = spark().cpuProcess();
+		return cpuProcess;
+	}
+
+	/**
+	 * Get the process CPU usage for the given window.
+	 * @param window the window for which to gather statistics from.
+	 * @return the process cpu usage.
+	 */
+	public static double cpuProcess(CpuUsage window) {
+		return cpuProcess().poll(window);
+	}
+
+	/**
+	 * Get the process CPU usage for the given windows.
+	 * @param windows the windows for which to gather statistics from.
+	 * @return the process cpu usages.
+	 */
+	public static Double[] cpuProcess(CpuUsage... windows) {
+		DoubleStatistic<CpuUsage> cpu = cpuProcess();
+		return Arrays.stream(windows).map(cpu::poll).toArray(Double[]::new);
+	}
+
+	private static DoubleStatistic<CpuUsage> cpuSystem() {
+		if (cpuSystem == null)
+			cpuSystem = spark().cpuSystem();
+		return cpuSystem;
+	}
+
+	/**
+	 * Get the system CPU usage for the given window.
+	 * @param window the window for which to gather statistics from.
+	 * @return the system cpu usage.
+	 */
+	public static double cpuSystem(CpuUsage window) {
+		return cpuSystem().poll(window);
+	}
+
+	/**
+	 * Get the system CPU usage for the given windows.
+	 * @param windows the windows for which to gather statistics from.
+	 * @return the system cpu usages.
+	 */
+	public static Double[] cpuSystem(CpuUsage... windows) {
+		DoubleStatistic<CpuUsage> cpu = cpuSystem();
+		return Arrays.stream(windows).map(cpu::poll).toArray(Double[]::new);
+	}
+
+	private static DoubleStatistic<TicksPerSecond> tps() {
+		if (tps == null)
+			tps = spark().tps();
+		return tps;
+	}
+
+	/**
+	 * Get the TPS for the given windows.
+	 * @param window the window for which to gather statistics from.
+	 * @return the TPS value.
+	 */
+	public static double tps(TicksPerSecond window) {
+		return tps().poll(window);
+	}
+
+	/**
+	 * Get the TPS for the given windows.
+	 * @param windows the windows for which to gather statistics from.
+	 * @return the TPS values.
+	 */
+	public static Double[] tps(TicksPerSecond... windows) {
+		DoubleStatistic<TicksPerSecond> tps = tps();
+		return Arrays.stream(windows).map(tps::poll).toArray(Double[]::new);
 	}
 
 }
