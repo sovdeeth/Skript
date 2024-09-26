@@ -137,7 +137,7 @@ public class EffTransform extends Effect implements InputSource {
 
 	@Override
 	public String toString(@Nullable Event event, boolean debug) {
-		return "transform " + unmappedObjects.toString(event, debug) + "using " + mappingExpr.toString(event, debug);
+		return "transform " + unmappedObjects.toString(event, debug) + " using " + mappingExpr.toString(event, debug);
 	}
 
 }
