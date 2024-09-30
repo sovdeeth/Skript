@@ -381,12 +381,12 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	 *
 	 * @param event The event to use for local variables and evaluation
 	 * @param changeFunction A 1-to-1 function that transforms a single input to a single output.
-	 * @param all Whether to evaluate with {@link #getAll(Event)} or {@link #getArray(Event)}.
+	 * @param getAll Whether to evaluate with {@link #getAll(Event)} or {@link #getArray(Event)}.
 	 * @param <R> The output type of the change function. Must be a type returned
 	 *              by {{@link #acceptChange(ChangeMode)}} for {@link ChangeMode#SET}.
 	 */
-	default <R> void changeInPlace(Event event, Function<T, R> changeFunction, boolean all) {
-		T[] values = all ? getAll(event) : getArray(event);
+	default <R> void changeInPlace(Event event, Function<T, R> changeFunction, boolean getAll) {
+		T[] values = getAll ? getAll(event) : getArray(event);
 		if (values.length == 0)
 			return;
 		List<R> newValues = new ArrayList<>();

@@ -73,6 +73,7 @@ public class EffEnchant extends Effect {
 	@Override
 	protected void execute(Event event) {
 		Function<ItemType, ItemType> changeFunction;
+
 		if (enchantments != null) {
 			EnchantmentType[] types = enchantments.getArray(event);
 			if (types.length == 0)
@@ -81,7 +82,6 @@ public class EffEnchant extends Effect {
 				item.addEnchantments(types);
 				return item;
 			};
-
 		} else {
 			changeFunction = item -> {
 				item.clearEnchantments();

@@ -133,18 +133,17 @@ public class EffReplace extends Effect {
 		Function<String, String> replaceFunction;
 		if (replaceFirst) {
 			replaceFunction = haystackString -> {
-				for (Object n : needles) {
-					assert n != null;
-					haystackString = StringUtils.replaceFirst(haystackString, (String)n, Matcher.quoteReplacement(replacement), caseSensitive);
+				for (Object needle : needles) {
+					assert needle != null;
+					haystackString = StringUtils.replaceFirst(haystackString, (String) needle, Matcher.quoteReplacement(replacement), caseSensitive);
 				}
 				return haystackString;
 			};
-
 		} else {
 			replaceFunction = haystackString -> {
-				for (Object n : needles) {
-					assert n != null;
-					haystackString = StringUtils.replace(haystackString, (String) n, replacement, caseSensitive);
+				for (Object needle : needles) {
+					assert needle != null;
+					haystackString = StringUtils.replace(haystackString, (String) needle, replacement, caseSensitive);
 				}
 				return haystackString;
 			};
@@ -155,10 +154,10 @@ public class EffReplace extends Effect {
 	@Override
 	public String toString(@Nullable Event event, boolean debug) {
 		if (replaceFirst)
-			return "replace first " + needles.toString(event, debug) + " in " + haystack.toString(event, debug) + " with " + replacement.toString(event, debug)
-					+ "(case sensitive: " + caseSensitive + ")";
-		return "replace " + needles.toString(event, debug) + " in " + haystack.toString(event, debug) + " with " + replacement.toString(event, debug)
-				+ "(case sensitive: " + caseSensitive + ")";
+			return "replace first " + needles.toString(event, debug) + " in " + haystack.toString(event, debug) +
+					" with " + replacement.toString(event, debug) + "(case sensitive: " + caseSensitive + ")";
+		return "replace " + needles.toString(event, debug) + " in " + haystack.toString(event, debug) +
+				" with " + replacement.toString(event, debug) + "(case sensitive: " + caseSensitive + ")";
 	}
 	
 }
