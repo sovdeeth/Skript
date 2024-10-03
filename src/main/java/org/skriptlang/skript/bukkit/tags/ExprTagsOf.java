@@ -43,9 +43,9 @@ public class ExprTagsOf extends PropertyExpression<Object, Tag> {
 
 	@Override
 	protected Tag<?> @Nullable [] get(Event event, Object[] source) {
-		//noinspection DataFlowIssue
-		Object object = getExpr().getSingle(event);
-		Keyed value = TagModule.getKeyed(object);
+		if (source.length == 0)
+			return null;
+		Keyed value = TagModule.getKeyed(source[0]);
 		if (value == null)
 			return null;
 
@@ -114,7 +114,8 @@ public class ExprTagsOf extends PropertyExpression<Object, Tag> {
 
 	@Override
 	public String toString(@Nullable Event event, boolean debug) {
+		String registry = type == -1 ? "" : REGISTRIES.get(type).pattern() + " ";
 		//noinspection DataFlowIssue
-		return "minecraft tags of " + getExpr().toString(event, debug);
+		return "minecraft " + registry + "tags of " + getExpr().toString(event, debug);
 	}
 }
