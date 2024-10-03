@@ -1,21 +1,13 @@
 package org.skriptlang.skript.bukkit.tags;
 
-import ch.njol.skript.aliases.ItemType;
-import ch.njol.skript.bukkitutil.EntityUtils;
 import ch.njol.skript.conditions.base.PropertyCondition;
-import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.util.slot.Slot;
 import ch.njol.util.Kleenean;
 import org.bukkit.Keyed;
 import org.bukkit.Tag;
-import org.bukkit.block.Block;
-import org.bukkit.block.data.BlockData;
-import org.bukkit.entity.Entity;
 import org.bukkit.event.Event;
-import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 public class CondIsTagged extends Condition {
@@ -45,26 +37,7 @@ public class CondIsTagged extends Condition {
 			return isNegated();
 		boolean and = this.tags.getAnd();
  		return elements.check(event, element -> {
-			 Keyed value = null;
-			 if (element instanceof Entity entity) {
-				 value = entity.getType();
-			 } if (element instanceof EntityData<?> data) {
-				value = EntityUtils.toBukkitEntityType(data);
-			} else if (element instanceof ItemType itemType) {
-				 value = itemType.getMaterial();
-			 } else if (element instanceof ItemStack itemStack) {
-				 value = itemStack.getType();
-			 } else if (element instanceof Slot slot) {
-				 ItemStack stack = slot.getItem();
-				 if (stack == null)
-					 return false;
-				 value = stack.getType();
-			 } else if (element instanceof Block block) {
-				 value = block.getType();
-			 } else if (element instanceof BlockData data) {
-				 value = data.getMaterial();
-			 }
-
+			Keyed value = TagModule.getKeyed(element);
 			 if (value == null)
 				 return false;
 

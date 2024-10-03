@@ -6,8 +6,8 @@ import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
+import org.skriptlang.skript.bukkit.tags.TagModule.RegistryInfo;
 import org.bukkit.Bukkit;
-import org.bukkit.Keyed;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Tag;
@@ -15,34 +15,16 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static org.skriptlang.skript.bukkit.tags.TagModule.REGISTRIES;
+
 public class ExprTag extends SimpleExpression<Tag> {
 
-	private record RegistryInfo(String registry, String pattern, Class<? extends Keyed> type) {}
-
-	// Fluid and GameEvent registries also exist, but are not useful at this time.
-	// Any new types added here must be handled in CondIsTagged
-	private static final List<RegistryInfo> REGISTRIES = new ArrayList<>(List.of(
-			new RegistryInfo(Tag.REGISTRY_ITEMS, "item", Material.class),
-			new RegistryInfo(Tag.REGISTRY_BLOCKS, "block", Material.class),
-			new RegistryInfo(Tag.REGISTRY_ENTITY_TYPES, "entity [type]", EntityType.class)
-		));
 
 	static {
-		// build pattern
-		StringBuilder registriesPattern = new StringBuilder("[");
-		int numRegistries = REGISTRIES.size();
-		for (int i = 0; i < numRegistries; i++) {
-			registriesPattern.append(i + 1).append(":").append(REGISTRIES.get(i).pattern());
-			if (i + 1 != numRegistries)
-				registriesPattern.append("|");
-		}
-		registriesPattern.append("]");
-
-		Skript.registerExpression(ExprTag.class, Tag.class, ExpressionType.COMBINED, "[minecraft] " + registriesPattern + " tag %string%");
+		Skript.registerExpression(ExprTag.class, Tag.class, ExpressionType.COMBINED, "[minecraft] " + TagModule.REGISTRIES_PATTERN + " tag %string%");
 	}
 
 	Expression<String> name;
@@ -81,6 +63,29 @@ public class ExprTag extends SimpleExpression<Tag> {
 			tag = Bukkit.getTag(registry.registry(), key, registry.type());
 			if (tag != null)
 				return new Tag[]{tag};
+		}
+
+		// try paper keys if they exist
+		if (!TagModule.PAPER_TAGS_EXIST)
+			return null;
+
+
+		key = new NamespacedKey("paper", key.value() + "_settag");
+
+		// fallback to paper material tags
+		if (type == -1 || REGISTRIES.get(type).type() == Material.class) {
+			for (Tag<Material> paperMaterialTag : TagModule.PAPER_MATERIAL_TAGS) {
+				if (paperMaterialTag.getKey().equals(key))
+					return new Tag[]{paperMaterialTag};
+			}
+		}
+
+		// fallback to paper entity tags
+		if (type == -1 || REGISTRIES.get(type).type() == EntityType.class) {
+			for (Tag<EntityType> paperEntityTag : TagModule.PAPER_ENTITY_TAGS) {
+				if (paperEntityTag.getKey().equals(key))
+					return new Tag[]{paperEntityTag};
+			}
 		}
 
 		return null;
