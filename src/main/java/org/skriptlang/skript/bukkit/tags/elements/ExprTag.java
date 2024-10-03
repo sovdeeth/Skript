@@ -3,8 +3,10 @@ package org.skriptlang.skript.bukkit.tags.elements;
 import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
+import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.util.Kleenean;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Tag;
@@ -88,6 +90,13 @@ public class ExprTag extends SimpleExpression<Tag> {
 	public String toString(@Nullable Event event, boolean debug) {
 		String registry = type == -1 ? "" : TagType.getType(type)[0].pattern();
 		return origin.toString(datapackOnly) + registry + "tag " + name.toString(event, debug);
+	}
+
+	@Override
+	public Expression<? extends Tag> simplify() {
+		if (name instanceof Literal<String>)
+			return new SimpleLiteral<>(getArray(null), Tag.class, true);
+		return this;
 	}
 
 }
