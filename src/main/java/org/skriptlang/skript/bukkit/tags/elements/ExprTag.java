@@ -42,7 +42,19 @@ public class ExprTag extends SimpleExpression<Tag> {
 		if (name == null)
 			return null;
 
-		NamespacedKey key = NamespacedKey.fromString(name);
+		// get key
+		NamespacedKey key;
+		if (name.contains(":")) {
+			key = NamespacedKey.fromString(name);
+		} else {
+			// populate namespace if not provided
+			String namespace = switch (origin) {
+				case ANY, BUKKIT -> "minecraft";
+				case PAPER -> "paper";
+				case SKRIPT -> "skript";
+			};
+			key = new NamespacedKey(namespace, name);
+		}
 		if (key == null)
 			return null;
 
