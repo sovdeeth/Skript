@@ -9,8 +9,6 @@ import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.slot.Slot;
-import com.destroystokyo.paper.MaterialSetTag;
-import io.papermc.paper.tag.EntitySetTag;
 import org.bukkit.Keyed;
 import org.bukkit.Tag;
 import org.bukkit.block.Block;
@@ -52,18 +50,12 @@ public class TagModule {
 
 				@Override
 				public String toString(Tag<?> tag, int flags) {
-					String key = tag.getKey().toString();
-					if (TagModule.PAPER_TAGS_EXIST && (tag instanceof MaterialSetTag || tag instanceof EntitySetTag))
-						key = key.replace("_settag", "");
-					return "minecraft tag \"" + key + "\"";
+					return "tag \"" + tag.getKey() + "\"";
 				}
 
 				@Override
 				public String toVariableNameString(Tag<?> tag) {
-					String key = tag.getKey().toString();
-					if (TagModule.PAPER_TAGS_EXIST && (tag instanceof MaterialSetTag || tag instanceof EntitySetTag))
-						key = key.replace("_settag", "");
-					return "minecraft tag: " + key;
+					return "tag: " + tag.getKey();
 				}
 			}));
 

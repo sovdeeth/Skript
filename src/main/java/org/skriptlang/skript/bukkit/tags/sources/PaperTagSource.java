@@ -22,7 +22,7 @@ public class PaperTagSource<T extends Keyed> extends CustomTagSource<T> {
 
 	@SafeVarargs
 	public PaperTagSource(Iterable<Tag<T>> tags, TagType<T>... types) {
-		super(getPaperTags(tags), types);
+		super(TagOrigin.PAPER, getPaperTags(tags), types);
 	}
 
 	/**

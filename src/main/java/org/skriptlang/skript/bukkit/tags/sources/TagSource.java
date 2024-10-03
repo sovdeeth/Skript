@@ -20,10 +20,12 @@ import java.util.function.Predicate;
 public abstract class TagSource<T extends Keyed> {
 
 	private final TagType<T>[] types;
+	private final TagOrigin origin;
 
 	@SafeVarargs
-	protected TagSource(TagType<T>... types) {
+	protected TagSource(TagOrigin origin, TagType<T>... types) {
 		this.types = types;
+		this.origin = origin;
 	}
 
 	/**
@@ -47,6 +49,8 @@ public abstract class TagSource<T extends Keyed> {
 		return types;
 	}
 
-
+	public TagOrigin getOrigin() {
+		return origin;
+	}
 
 }

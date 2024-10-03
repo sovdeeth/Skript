@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.skriptlang.skript.bukkit.tags.TagModule;
 import org.skriptlang.skript.bukkit.tags.TagType;
+import org.skriptlang.skript.bukkit.tags.sources.TagOrigin;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,16 +28,20 @@ public class ExprTagsOf extends PropertyExpression<Object, Tag> {
 
 	static {
 		Skript.registerExpression(ExprTagsOf.class, Tag.class, ExpressionType.PROPERTY,
-				"[all [[of] the]] [minecraft] " + TagType.getFullPattern() + " tags of %itemtype/entity/entitydata%",
-				"%itemtype/entity/entitydata%'[s] [minecraft] tags");
+				"[all [[of] the]] " + TagOrigin.getFullPattern() + " " + TagType.getFullPattern() + " tags of %itemtype/entity/entitydata%",
+				"%itemtype/entity/entitydata%'[s] [:minecraft|:paper|:custom] tags");
 	}
 
 	int type;
+	TagOrigin origin;
+	boolean datapackOnly;
 
 	@Override
 	public boolean init(Expression<?>[] expressions, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
 		this.setExpr(expressions[0]);
 		type = parseResult.mark - 1;
+		origin = TagOrigin.fromParseTags(parseResult.tags);
+		datapackOnly = origin == TagOrigin.BUKKIT && parseResult.hasTag("datapack");
 		return true;
 	}
 
@@ -59,14 +64,18 @@ public class ExprTagsOf extends PropertyExpression<Object, Tag> {
 			tags.addAll(getTags(value));
 		}
 
-		return tags.toArray(new Tag[0]);
+		return tags.stream()
+				.filter(tag ->
+					// ensures that only datapack/minecraft tags are sent when specifically requested
+					(origin != TagOrigin.BUKKIT || (datapackOnly ^ tag.getKey().getNamespace().equals("minecraft"))))
+				.toArray(Tag[]::new);
 	}
 
 	public <T extends Keyed> Collection<Tag<T>> getTags(T value) {
 		List<Tag<T>> tags = new ArrayList<>();
 		//noinspection unchecked
 		Class<T> clazz = (Class<T>) value.getClass();
-		for (Tag<T> tag : TagModule.TAGS.getTags(clazz)) {
+		for (Tag<T> tag : TagModule.TAGS.getTags(origin, clazz)) {
 			if (tag.isTagged(value))
 				tags.add(tag);
 		}
@@ -87,6 +96,6 @@ public class ExprTagsOf extends PropertyExpression<Object, Tag> {
 	public String toString(@Nullable Event event, boolean debug) {
 		String registry = type == -1 ? "" : TagType.getType(type)[0].pattern();
 		//noinspection DataFlowIssue
-		return "minecraft " + registry + "tags of " + getExpr().toString(event, debug);
+		return  origin.toString(datapackOnly) + registry + "tags of " + getExpr().toString(event, debug);
 	}
 }

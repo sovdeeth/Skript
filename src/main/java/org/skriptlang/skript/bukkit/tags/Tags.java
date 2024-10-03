@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.skriptlang.skript.bukkit.tags.sources.BukkitTagSource;
 import org.skriptlang.skript.bukkit.tags.sources.PaperTagSource;
+import org.skriptlang.skript.bukkit.tags.sources.TagOrigin;
 import org.skriptlang.skript.bukkit.tags.sources.TagSource;
 
 import java.lang.reflect.Field;
@@ -55,12 +56,12 @@ public class Tags {
 		}
 	}
 
-	public <T extends Keyed>  Iterable<Tag<T>> getTags(Class<T> typeClass) {
+	public <T extends Keyed>  Iterable<Tag<T>> getTags(TagOrigin origin, Class<T> typeClass) {
 		List<Iterator<Tag<T>>> tagIterators = new ArrayList<>();
 		for (TagType<?> type : tagSourceMap.map.keys()) {
 			if (type.type() == typeClass)
 				//noinspection unchecked
-				tagIterators.add(getTags((TagType<T>) type).iterator());
+				tagIterators.add(getTags(origin, (TagType<T>) type).iterator());
 		}
 		return new Iterable<>() {
 			@Override
@@ -70,12 +71,12 @@ public class Tags {
 		};
 	}
 
-	public <T extends Keyed> Iterable<Tag<T>> getTags(TagType<T> type) {
+	public <T extends Keyed> Iterable<Tag<T>> getTags(TagOrigin origin, TagType<T> type) {
 		if (!tagSourceMap.containsKey(type))
-			return null;
-		Iterator<TagSource<T>> tagSources = tagSourceMap.get(type).iterator();
+			return List.of();
+		Iterator<TagSource<T>> tagSources = tagSourceMap.get(origin, type).iterator();
 		if (!tagSources.hasNext())
-			return null;
+			return List.of();
 		return new Iterable<>() {
 			@Override
 			public @NotNull Iterator<Tag<T>> iterator() {
@@ -120,8 +121,8 @@ public class Tags {
 		};
 	}
 
-	public <T extends Keyed> Iterable<Tag<T>> getTagsMatching(TagType<T> type, Predicate<Tag<T>> predicate) {
-		Iterator<Tag<T>> tagIterator = getTags(type).iterator();
+	public <T extends Keyed> Iterable<Tag<T>> getTagsMatching(TagOrigin origin, TagType<T> type, Predicate<Tag<T>> predicate) {
+		Iterator<Tag<T>> tagIterator = getTags(origin, type).iterator();
 		return new Iterable<>() {
 			@Override
 			public @NotNull Iterator<Tag<T>> iterator() {
@@ -130,9 +131,9 @@ public class Tags {
 		};
 	}
 
-	public <T extends Keyed> @Nullable Tag<T> getTag(TagType<T> type, NamespacedKey key) {
+	public <T extends Keyed> @Nullable Tag<T> getTag(TagOrigin origin, TagType<T> type, NamespacedKey key) {
 		Tag<T> tag;
-		for (TagSource<T> source : tagSourceMap.get(type)) {
+		for (TagSource<T> source : tagSourceMap.get(origin, type)) {
 			tag = source.getTag(key);
 			if (tag != null)
 				return tag;
@@ -147,14 +148,18 @@ public class Tags {
 			map.put(key, value);
 		}
 
-		public <T extends Keyed> @NotNull List<TagSource<T>> get(TagType<T> key) {
-			//noinspection unchecked
-			return (List<TagSource<T>>) (List<? extends TagSource<?>>) map.get(key);
+		public <T extends Keyed> @NotNull List<TagSource<T>> get(TagOrigin origin, TagType<T> key) {
+			List<TagSource<T>> sources = new ArrayList<>();
+			for (TagSource<?> source : map.get(key)) {
+				if (source.getOrigin().matches(origin))
+					//noinspection unchecked
+					sources.add((TagSource<T>) source);
+			}
+			return sources;
 		}
 
 		public <T extends Keyed> boolean containsKey(TagType<T> type) {
 			return map.containsKey(type);
 		}
-
 	}
 }

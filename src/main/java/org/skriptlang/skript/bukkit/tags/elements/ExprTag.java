@@ -12,22 +12,27 @@ import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 import org.skriptlang.skript.bukkit.tags.TagModule;
 import org.skriptlang.skript.bukkit.tags.TagType;
+import org.skriptlang.skript.bukkit.tags.sources.TagOrigin;
 
 public class ExprTag extends SimpleExpression<Tag> {
 
 	static {
 		Skript.registerExpression(ExprTag.class, Tag.class, ExpressionType.COMBINED,
-				"[minecraft] " + TagType.getFullPattern() + " tag %string%");
+				TagOrigin.getFullPattern() + " " + TagType.getFullPattern() + " tag %string%");
 	}
 
 	Expression<String> name;
 	int type;
+	TagOrigin origin;
+	boolean datapackOnly;
 
 	@Override
 	public boolean init(Expression<?>[] expressions, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
 		//noinspection unchecked
 		name = (Expression<String>) expressions[0];
 		type = parseResult.mark - 1;
+		origin = TagOrigin.fromParseTags(parseResult.tags);
+		datapackOnly = origin == TagOrigin.BUKKIT && parseResult.hasTag("datapack");
 		return true;
 	}
 
@@ -44,9 +49,13 @@ public class ExprTag extends SimpleExpression<Tag> {
 		Tag<?> tag;
 		TagType<?>[] types = TagType.getType(type);
 		for (TagType<?> type : types) {
-			tag = TagModule.TAGS.getTag(type, key);
-			if (tag != null)
+			tag = TagModule.TAGS.getTag(origin, type, key);
+			if (tag != null
+				// ensures that only datapack/minecraft tags are sent when specifically requested
+				&& (origin != TagOrigin.BUKKIT || (datapackOnly ^ tag.getKey().getNamespace().equals("minecraft")))
+			) {
 				return new Tag[]{tag};
+			}
 		}
 
 		return null;
@@ -66,7 +75,7 @@ public class ExprTag extends SimpleExpression<Tag> {
 	@Override
 	public String toString(@Nullable Event event, boolean debug) {
 		String registry = type == -1 ? "" : TagType.getType(type)[0].pattern();
-		return "minecraft " + registry + "tag " + name.toString(event, debug);
+		return origin.toString(datapackOnly) + registry + "tag " + name.toString(event, debug);
 	}
 
 }

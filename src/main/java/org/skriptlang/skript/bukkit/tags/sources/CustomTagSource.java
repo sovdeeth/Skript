@@ -16,8 +16,8 @@ public class CustomTagSource<T extends Keyed> extends TagSource<T> {
 	final Map<NamespacedKey, Tag<T>> tags;
 
 	@SafeVarargs
-	public CustomTagSource(@NotNull Iterable<Tag<T>> tags, TagType<T>... types) {
-		super(types);
+	public CustomTagSource(TagOrigin origin, @NotNull Iterable<Tag<T>> tags, TagType<T>... types) {
+		super(origin, types);
 		this.tags = new HashMap<>();
 		for (Tag<T> tag : tags) {
 			this.tags.put(tag.getKey(), tag);

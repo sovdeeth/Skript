@@ -13,7 +13,7 @@ public class BukkitTagSource<T extends Keyed> extends TagSource<T> {
 	private final String registry;
 
 	public BukkitTagSource(String registry, TagType<T> type) {
-		super(type);
+		super(TagOrigin.BUKKIT, type);
 		this.registry = registry;
 	}
 
