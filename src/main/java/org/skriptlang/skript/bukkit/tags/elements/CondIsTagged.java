@@ -1,5 +1,6 @@
-package org.skriptlang.skript.bukkit.tags;
+package org.skriptlang.skript.bukkit.tags.elements;
 
+import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.conditions.base.PropertyCondition;
 import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
@@ -8,7 +9,9 @@ import ch.njol.util.Kleenean;
 import org.bukkit.Keyed;
 import org.bukkit.Tag;
 import org.bukkit.event.Event;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.skriptlang.skript.bukkit.tags.TagModule;
 
 public class CondIsTagged extends Condition {
 
@@ -37,12 +40,13 @@ public class CondIsTagged extends Condition {
 			return isNegated();
 		boolean and = this.tags.getAnd();
  		return elements.check(event, element -> {
-			Keyed value = TagModule.getKeyed(element);
-			 if (value == null)
+			boolean isAny = (element instanceof ItemType itemType && !itemType.isAll());
+			Keyed[] values = TagModule.getKeyed(element);
+			 if (values == null)
 				 return false;
 
 			for (Tag<Keyed> tag : tags) {
-				 if (tag.isTagged(value)) {
+				 if (isTagged(tag, values, !isAny)) {
 					 if (!and)
 						 return true;
 				 } else if (and) {
@@ -51,6 +55,18 @@ public class CondIsTagged extends Condition {
 			 }
 			return and;
 		}, isNegated());
+	}
+
+	private boolean isTagged(Tag<Keyed> tag, Keyed @NotNull [] values, boolean allTagged) {
+		for (Keyed value : values) {
+			if (tag.isTagged(value)) {
+				if (!allTagged)
+					return true;
+			} else if (allTagged) {
+				return false;
+			}
+		}
+		return allTagged;
 	}
 
 	@Override

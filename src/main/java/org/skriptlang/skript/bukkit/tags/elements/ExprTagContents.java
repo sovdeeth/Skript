@@ -1,4 +1,4 @@
-package org.skriptlang.skript.bukkit.tags;
+package org.skriptlang.skript.bukkit.tags.elements;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.aliases.ItemType;
