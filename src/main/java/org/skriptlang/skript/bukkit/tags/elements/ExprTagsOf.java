@@ -6,6 +6,7 @@ import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Keywords;
 import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.RequiredPlugins;
 import ch.njol.skript.doc.Since;
 import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
@@ -43,6 +44,7 @@ import java.util.concurrent.ThreadLocalRandom;
 	"broadcast player's tool's block tags"
 })
 @Since("INSERT VERSION")
+@RequiredPlugins("Paper (paper tags)")
 @Keywords({"blocks", "minecraft tag", "type", "category"})
 public class ExprTagsOf extends PropertyExpression<Object, Tag> {
 

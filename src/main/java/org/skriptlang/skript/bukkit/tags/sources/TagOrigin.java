@@ -3,6 +3,7 @@ package org.skriptlang.skript.bukkit.tags.sources;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.skriptlang.skript.bukkit.tags.TagModule;
 
 import java.util.List;
 
@@ -26,12 +27,15 @@ public enum TagOrigin {
 
 	/**
 	 * Returns an optional choice of all the origins (minecraft, datapack, paper, and custom).
+	 * Will not include paper on non-paper servers.
 	 * Contains parse tags.
 	 * @see #fromParseTags(List)
 	 */
 	@Contract(pure = true)
 	public static @NotNull String getFullPattern() {
-		return "[:minecraft|:datapack|:paper|:custom]";
+		if (TagModule.PAPER_TAGS_EXIST)
+			return "[:minecraft|:datapack|:paper|:custom]";
+		return "[:minecraft|:datapack|:custom]";
 	}
 
 	/**
