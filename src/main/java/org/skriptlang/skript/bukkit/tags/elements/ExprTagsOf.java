@@ -122,7 +122,7 @@ public class ExprTagsOf extends PropertyExpression<Object, Tag> {
 
 	@Override
 	public String toString(@Nullable Event event, boolean debug) {
-		String registry = type == -1 ? "" : TagType.getType(type)[0].pattern();
+		String registry = type == -1 ? "" : TagType.getType(type)[0].toString();
 		//noinspection DataFlowIssue
 		return  origin.toString(datapackOnly) + registry + "tags of " + getExpr().toString(event, debug);
 	}

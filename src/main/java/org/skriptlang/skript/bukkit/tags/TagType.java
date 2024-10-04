@@ -21,20 +21,56 @@ import java.util.List;
  * <br>
  * This class also contains a static registry of all tag types.
  *
- * @param pattern The pattern to use when construction the selection Skript pattern.
- * @param type The class this tag type applies to.
  * @param <T> see type.
  */
-public record TagType<T extends Keyed>(String pattern, Class<T> type) {
+public class TagType<T extends Keyed> {
 
 	private static final List<TagType<?>> REGISTERED_TAG_TYPES = new ArrayList<>();
 
 	public static final TagType<Material> ITEMS = new TagType<>("item", Material.class);
 	public static final TagType<Material> BLOCKS = new TagType<>("block", Material.class);
-	public static final TagType<EntityType> ENTITIES = new TagType<>("entity [type]", EntityType.class);
+	public static final TagType<EntityType> ENTITIES = new TagType<>("entity [type]", "entity type", EntityType.class);
 
 	static {
 		TagType.addType(ITEMS, BLOCKS, ENTITIES);
+	}
+
+	private final String pattern;
+	private final String toString;
+	private final Class<T> type;
+
+	/**
+	 * @param pattern The pattern to use when construction the selection Skript pattern.
+	 * @param type The class this tag type applies to.
+	 */
+	public TagType(String pattern, Class<T> type) {
+		this.pattern = pattern;
+		this.type = type;
+		this.toString = pattern;
+	}
+
+	/**
+	 * @param pattern The pattern to use when construction the selection Skript pattern.
+	 * @param toString The string to use when printing a toString.
+	 * @param type The class this tag type applies to.
+	 */
+	public TagType(String pattern, String toString, Class<T> type) {
+		this.pattern = pattern;
+		this.type = type;
+		this.toString = toString;
+	}
+
+	public String pattern() {
+		return pattern;
+	}
+
+	public Class<T> type() {
+		return type;
+	}
+
+	@Override
+	public String toString() {
+		return toString;
 	}
 
 	/**
@@ -71,14 +107,24 @@ public record TagType<T extends Keyed>(String pattern, Class<T> type) {
 	 *			{@link ch.njol.skript.lang.SyntaxElement#init(Expression[], int, Kleenean, SkriptParser.ParseResult)}.
 	 */
 	public static @NotNull String getFullPattern() {
-		StringBuilder fullPattern = new StringBuilder("[");
+		return getFullPattern(false);
+	}
+	/**
+	 * @param required whether the choice should be optional or required.
+	 * @return Returns a choice pattern for use in Skript patterns. Contains parse marks.
+	 *			Subtract 1 from the parse mark and pass the value to {@link #getType(int)} to get the
+	 *			selected tag type in
+	 *			{@link ch.njol.skript.lang.SyntaxElement#init(Expression[], int, Kleenean, SkriptParser.ParseResult)}.
+	 */
+	public static @NotNull String getFullPattern(boolean required) {
+		StringBuilder fullPattern = new StringBuilder(required ? "(" : "[");
 		int numRegistries = REGISTERED_TAG_TYPES.size();
 		for (int i = 0; i < numRegistries; i++) {
 			fullPattern.append(i + 1).append(":").append(REGISTERED_TAG_TYPES.get(i).pattern());
 			if (i + 1 != numRegistries)
 				fullPattern.append("|");
 		}
-		fullPattern.append("]");
+		fullPattern.append(required ? ")" : "]");
 		return fullPattern.toString();
 	}
 

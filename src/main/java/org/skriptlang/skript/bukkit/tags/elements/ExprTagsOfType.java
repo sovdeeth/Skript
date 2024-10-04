@@ -85,7 +85,7 @@ public class ExprTagsOfType extends SimpleExpression<Tag> {
 
 	@Override
 	public String toString(@Nullable Event event, boolean debug) {
-		String registry = type == -1 ? "" : TagType.getType(type)[0].pattern();
+		String registry = type == -1 ? "" : TagType.getType(type)[0].toString();
 		return "all of the " + origin.toString(datapackOnly) + registry + "tags";
 	}
 }

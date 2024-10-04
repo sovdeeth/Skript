@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.skriptlang.skript.bukkit.tags.sources.BukkitTagSource;
 import org.skriptlang.skript.bukkit.tags.sources.PaperTagSource;
+import org.skriptlang.skript.bukkit.tags.sources.SkriptTagSource;
 import org.skriptlang.skript.bukkit.tags.sources.TagOrigin;
 import org.skriptlang.skript.bukkit.tags.sources.TagSource;
 
@@ -60,6 +61,10 @@ public class Tags {
 				tagSourceMap.put(TagType.ENTITIES, paperEntityTags);
 			} catch (IllegalAccessException ignored) {}
 		}
+
+		tagSourceMap.put(TagType.ITEMS, SkriptTagSource.ITEMS);
+		tagSourceMap.put(TagType.BLOCKS, SkriptTagSource.BLOCKS);
+		tagSourceMap.put(TagType.ENTITIES, SkriptTagSource.ENTITIES);
 	}
 
 	/**
