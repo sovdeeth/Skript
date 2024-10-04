@@ -2,6 +2,11 @@ package org.skriptlang.skript.bukkit.tags.elements;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.aliases.ItemType;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Keywords;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
@@ -24,12 +29,27 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ThreadLocalRandom;
 
+@Name("Tags of X")
+@Description({
+	"Returns all the tags of an item, block, or entity.",
+	"`minecraft tag` will return only the vanilla tags, `datapack tag` will return only datapack-provided tags, " +
+	"`paper tag` will return only Paper's custom tags (if you are running Paper), " +
+	"and `custom tag` will look in the \"skript\" namespace for custom tags you've registered.",
+	"You can also filter by tag types using \"item\", \"block\", or \"entity\"."
+})
+@Examples({
+	"broadcast minecraft tags of dirt",
+	"send true if paper item tags of target block contains paper tag \"doors\"",
+	"broadcast player's tool's block tags"
+})
+@Since("INSERT VERSION")
+@Keywords({"blocks", "minecraft tag", "type", "category"})
 public class ExprTagsOf extends PropertyExpression<Object, Tag> {
 
 	static {
 		Skript.registerExpression(ExprTagsOf.class, Tag.class, ExpressionType.PROPERTY,
 				"[all [[of] the]] " + TagOrigin.getFullPattern() + " " + TagType.getFullPattern() + " tags of %itemtype/entity/entitydata%",
-				"%itemtype/entity/entitydata%'[s] [:minecraft|:paper|:custom] tags");
+				"%itemtype/entity/entitydata%'[s] " + TagOrigin.getFullPattern() + " " + TagType.getFullPattern() + " tags");
 	}
 
 	int type;
@@ -71,7 +91,13 @@ public class ExprTagsOf extends PropertyExpression<Object, Tag> {
 				.toArray(Tag[]::new);
 	}
 
-	public <T extends Keyed> Collection<Tag<T>> getTags(T value) {
+	/**
+	 * Helper method for getting the tags of a value.
+	 * @param value The value to get the tags of.
+	 * @return The tags the value is a part of.
+	 * @param <T> The type of the value.
+	 */
+	public <T extends Keyed> Collection<Tag<T>> getTags(@NotNull T value) {
 		List<Tag<T>> tags = new ArrayList<>();
 		//noinspection unchecked
 		Class<T> clazz = (Class<T>) value.getClass();

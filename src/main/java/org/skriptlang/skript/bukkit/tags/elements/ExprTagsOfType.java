@@ -1,6 +1,11 @@
 package org.skriptlang.skript.bukkit.tags.elements;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Keywords;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -18,6 +23,21 @@ import java.util.Comparator;
 import java.util.Set;
 import java.util.TreeSet;
 
+@Name("All Tags of a Type")
+@Description({
+	"Returns all the tags.",
+	"`minecraft tag` will return only the vanilla tags, `datapack tag` will return only datapack-provided tags, " +
+		"`paper tag` will return only Paper's custom tags (if you are running Paper), " +
+		"and `custom tag` will look in the \"skript\" namespace for custom tags you've registered.",
+	"You can also filter by tag types using \"item\", \"block\", or \"entity\"."
+})
+@Examples({
+	"broadcast minecraft tags",
+	"send paper entity tags",
+	"broadcast all block tags"
+})
+@Since("INSERT VERSION")
+@Keywords({"blocks", "minecraft tag", "type", "category"})
 public class ExprTagsOfType extends SimpleExpression<Tag> {
 
 	static {

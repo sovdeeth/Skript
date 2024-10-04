@@ -22,6 +22,10 @@ public abstract class TagSource<T extends Keyed> {
 	private final TagType<T>[] types;
 	private final TagOrigin origin;
 
+	/**
+	 * @param origin The origin of this source.
+	 * @param types The tag types this source represents.
+	 */
 	@SafeVarargs
 	protected TagSource(TagOrigin origin, TagType<T>... types) {
 		this.types = types;
@@ -33,6 +37,11 @@ public abstract class TagSource<T extends Keyed> {
 	 */
 	public abstract Iterable<Tag<T>> getAllTags();
 
+	/**
+	 * For use in getting specific subsets of tags.
+	 * @param predicate A Predicate used to filter tags.
+	 * @return All the tags from this source, filtered based on the predicate.
+	 */
 	public Iterable<Tag<T>> getAllTagsMatching(Predicate<Tag<T>> predicate) {
 		Iterator<Tag<T>> tagIterator = getAllTags().iterator();
  		return new Iterable<>() {
@@ -43,12 +52,23 @@ public abstract class TagSource<T extends Keyed> {
 		};
 	}
 
+	/**
+	 * Gets a specific tag by the key.
+	 * @param key The key to use to find the tag.
+	 * @return The tag associated with the key. Null if no such tag exists.
+	 */
 	public abstract @Nullable Tag<T> getTag(NamespacedKey key);
 
+	/**
+	 * @return All the tag types that are represented by this source.
+	 */
 	public TagType<T>[] getTypes() {
 		return types;
 	}
 
+	/**
+	 * @return The origin of this source.
+	 */
 	public TagOrigin getOrigin() {
 		return origin;
 	}

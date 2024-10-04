@@ -10,8 +10,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * A set of tags provided by Paper.
+ * @param <T> The class of tag this source provides.
+ */
 public class PaperTagSource<T extends Keyed> extends CustomTagSource<T> {
 
+	/**
+	 * Creates {@link PaperTag}s from the raw tags. Removes _settag.
+	 * @param tags The raw tags provided by Paper.
+	 * @return The modified tags with _settag removed from their keys.
+	 * @param <T> The class of the tags.
+	 */
 	private static <T extends Keyed> @NotNull Iterable<Tag<T>> getPaperTags(@NotNull Iterable<Tag<T>> tags) {
 		List<Tag<T>> modified_tags = new ArrayList<>();
 		for (Tag<T> tag : tags) {
@@ -20,6 +30,10 @@ public class PaperTagSource<T extends Keyed> extends CustomTagSource<T> {
 		return modified_tags;
 	}
 
+	/**
+	 * @param tags The raw tags from Paper.
+	 * @param types The tag types this source represents.
+	 */
 	@SafeVarargs
 	public PaperTagSource(Iterable<Tag<T>> tags, TagType<T>... types) {
 		super(TagOrigin.PAPER, getPaperTags(tags), types);
@@ -27,7 +41,7 @@ public class PaperTagSource<T extends Keyed> extends CustomTagSource<T> {
 
 	/**
 	 * Wrapper for Paper tags to remove "_settag" from their key.
-	 * @param <T1>
+	 * @param <T1> The class of the tag.
 	 */
 	private static class PaperTag<T1 extends Keyed> implements Tag<T1> {
 

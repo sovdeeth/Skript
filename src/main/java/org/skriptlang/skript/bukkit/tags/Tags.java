@@ -23,10 +23,16 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.function.Predicate;
 
+/**
+ * A class in charge of storing and handling all the tags Skript can access.
+ */
 public class Tags {
 
 	private final TagSourceMap tagSourceMap = new TagSourceMap();
 
+	/**
+	 * Each new instance will create a new set of tag sources, in an effort to be reload safe.
+	 */
 	public Tags() {
 		tagSourceMap.put(TagType.ITEMS, new BukkitTagSource<>("items", TagType.ITEMS));
 		tagSourceMap.put(TagType.BLOCKS, new BukkitTagSource<>("blocks", TagType.BLOCKS));
@@ -56,6 +62,13 @@ public class Tags {
 		}
 	}
 
+	/**
+	 * Gets all the tags of a specific origin that are applicable to a given class.
+	 * @param origin The origin to filter by.
+	 * @param typeClass The class the tags should be applicable to.
+	 * @return Tags from the given origin that apply to the given class.
+	 * @param <T> see typeClass.
+	 */
 	public <T extends Keyed>  Iterable<Tag<T>> getTags(TagOrigin origin, Class<T> typeClass) {
 		List<Iterator<Tag<T>>> tagIterators = new ArrayList<>();
 		for (TagType<?> type : tagSourceMap.map.keys()) {
@@ -71,6 +84,13 @@ public class Tags {
 		};
 	}
 
+	/**
+	 * Gets all the tags of a specific origin that are of a specific type.
+	 * @param origin The origin to filter by.
+	 * @param type The type of tags to get.
+	 * @return Tags from the given origin that are of the given type.
+	 * @param <T> The class these tags apply to.
+	 */
 	public <T extends Keyed> Iterable<Tag<T>> getTags(TagOrigin origin, TagType<T> type) {
 		if (!tagSourceMap.containsKey(type))
 			return List.of();
@@ -121,6 +141,15 @@ public class Tags {
 		};
 	}
 
+	/**
+	 * Gets all the tags of a specific origin that are of a specific type. Filters the resulting tags using the given
+	 * predicate.
+	 * @param origin The origin to filter by.
+	 * @param type The type of tags to get.
+	 * @param predicate A predicate to filter the tags with.
+	 * @return Tags from the given origin that are of the given type and that pass the filter.
+	 * @param <T> The class these tags apply to.
+	 */
 	public <T extends Keyed> Iterable<Tag<T>> getTagsMatching(TagOrigin origin, TagType<T> type, Predicate<Tag<T>> predicate) {
 		Iterator<Tag<T>> tagIterator = getTags(origin, type).iterator();
 		return new Iterable<>() {
@@ -131,6 +160,14 @@ public class Tags {
 		};
 	}
 
+	/**
+	 * Gets a specific tag of a specific origin that is of a specific type.
+	 * @param origin The origin to filter by.
+	 * @param type The type of tags to get.
+	 * @param key The key of the tag to get.
+	 * @return The tag that matched the above values. Null if no tag is found.
+	 * @param <T> The class these tags apply to.
+	 */
 	public <T extends Keyed> @Nullable Tag<T> getTag(TagOrigin origin, TagType<T> type, NamespacedKey key) {
 		Tag<T> tag;
 		for (TagSource<T> source : tagSourceMap.get(origin, type)) {
@@ -141,6 +178,9 @@ public class Tags {
 		return null;
 	}
 
+	/**
+	 * A MultiMap that maps TagTypes to multiple TagSources, matching generics.
+	 */
 	private static class TagSourceMap {
 		private final ArrayListMultimap<TagType<?>, TagSource<?>> map = ArrayListMultimap.create();
 

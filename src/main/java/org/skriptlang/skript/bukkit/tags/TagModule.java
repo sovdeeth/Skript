@@ -63,7 +63,15 @@ public class TagModule {
 		TAGS = new Tags();
 	}
 
-
+	/**
+	 * Retrieves a Keyed array based on the type of the provided input object.
+	 *
+	 * @param input the input object to determine the keyed value, can be of type Entity,
+	 *              EntityData, ItemType, ItemStack, Slot, Block, or BlockData.
+	 * @return a Keyed array corresponding to the input's type, or null if the input is null
+	 *         or if no corresponding Keyed value can be determined. ItemTypes may return multiple values,
+	 *         though everything else will return a single element array.
+	 */
 	@Contract(value = "null -> null", pure = true)
 	public static @Nullable Keyed[] getKeyed(Object input) {
 		Keyed value = null;

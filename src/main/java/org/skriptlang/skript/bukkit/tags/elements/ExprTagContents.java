@@ -3,6 +3,11 @@ package org.skriptlang.skript.bukkit.tags.elements;
 import ch.njol.skript.Skript;
 import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.bukkitutil.EntityUtils;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Keywords;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -17,6 +22,18 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
+@Name("Tags Contents")
+@Description({
+		"Returns all the values that a tag contains.",
+		"For item and block tags, this will return items. For entity tags, " +
+		"it will return entity datas (a creeper, a zombie)."
+})
+@Examples({
+		"broadcast tag values of minecraft tag \"dirt\"",
+		"broadcast (first element of player's tool's block tags)'s tag contents"
+})
+@Since("INSERT VERSION")
+@Keywords({"blocks", "minecraft tag", "type", "category"})
 public class ExprTagContents extends SimpleExpression<Object> {
 
 	static {
