@@ -19,6 +19,8 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 import org.skriptlang.skript.lang.comparator.Comparators;
 import org.skriptlang.skript.lang.comparator.Relation;
+import org.skriptlang.skript.lang.converter.Converter;
+import org.skriptlang.skript.lang.converter.Converters;
 
 import java.io.IOException;
 
@@ -63,6 +65,9 @@ public class TagModule {
 
 		// compare tags by keys, not by object instance.
 		Comparators.registerComparator(Tag.class, Tag.class, (a, b) -> Relation.get(a.getKey().equals(b.getKey())));
+
+		// converter to String
+		Converters.registerConverter(Tag.class, String.class, tag -> tag.getKey().toString(), Converter.NO_LEFT_CHAINING);
 
 		// init tags
 		TAGS = new Tags();
