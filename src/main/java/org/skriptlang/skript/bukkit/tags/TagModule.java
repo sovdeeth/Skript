@@ -17,6 +17,8 @@ import org.bukkit.entity.Entity;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
+import org.skriptlang.skript.lang.comparator.Comparators;
+import org.skriptlang.skript.lang.comparator.Relation;
 
 import java.io.IOException;
 
@@ -58,6 +60,9 @@ public class TagModule {
 					return "tag: " + tag.getKey();
 				}
 			}));
+
+		// compare tags by keys, not by object instance.
+		Comparators.registerComparator(Tag.class, Tag.class, (a, b) -> Relation.get(a.getKey().equals(b.getKey())));
 
 		// init tags
 		TAGS = new Tags();
