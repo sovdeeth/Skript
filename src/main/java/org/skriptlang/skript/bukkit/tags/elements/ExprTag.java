@@ -38,10 +38,11 @@ import org.skriptlang.skript.bukkit.tags.sources.TagOrigin;
 		"minecraft tag \"dirt\" # minecraft:dirt",
 		"paper tag \"doors\" # paper:doors",
 		"tag \"skript:custom_dirt\" # skript:custom_dirt",
-		"skript tag \"dirt\" # skript:dirt",
-		"datapack tag \"dirt\" # minecraft:dirt",
+		"custom tag \"dirt\" # skript:dirt",
+		"datapack block tag \"dirt\" # minecraft:dirt",
 		"datapack tag \"my_pack:custom_dirt\" # my_pack:custom_dirt",
 		"tag \"minecraft:mineable/pickaxe\" # minecraft:mineable/pickaxe",
+		"custom item tag \"blood_magic/sacrificial\" # skript:blood_magic/sacrificial"
 })
 @Since("INSERT VERSION")
 @RequiredPlugins("Paper (paper tags)")
