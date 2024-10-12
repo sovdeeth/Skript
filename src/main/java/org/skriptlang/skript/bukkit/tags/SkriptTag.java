@@ -35,4 +35,5 @@ public class SkriptTag<T extends Keyed> implements Tag<T> {
 	public @NotNull NamespacedKey getKey() {
 		return key;
 	}
+
 }

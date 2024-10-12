@@ -71,15 +71,21 @@ public class Tags {
 	 * Gets all the tags of a specific origin that are applicable to a given class.
 	 * @param origin The origin to filter by.
 	 * @param typeClass The class the tags should be applicable to.
-	 * @return Tags from the given origin that apply to the given class.
+	 * @param types Tag types to check with. Leaving this empty will check all tag types.
+	 * @return Tags from the given origin and types that apply to the given class.
 	 * @param <T> see typeClass.
 	 */
-	public <T extends Keyed>  Iterable<Tag<T>> getTags(TagOrigin origin, Class<T> typeClass) {
+	public <T extends Keyed> Iterable<Tag<T>> getTags(TagOrigin origin, Class<T> typeClass, TagType<?>... types) {
 		List<Iterator<Tag<T>>> tagIterators = new ArrayList<>();
-		for (TagType<?> type : tagSourceMap.map.keys()) {
-			if (type.type() == typeClass)
+		if (types == null)
+			types = tagSourceMap.map.keys().toArray(new TagType[0]);
+		for (TagType<?> type : types) {
+			if (type.type() == typeClass) {
 				//noinspection unchecked
-				tagIterators.add(getTags(origin, (TagType<T>) type).iterator());
+				Iterator<Tag<T>> iterator = getTags(origin, (TagType<T>) type).iterator();
+				if (iterator.hasNext())
+					tagIterators.add(iterator);
+			}
 		}
 		return new Iterable<>() {
 			@Override
@@ -155,7 +161,7 @@ public class Tags {
 	 * @return Tags from the given origin that are of the given type and that pass the filter.
 	 * @param <T> The class these tags apply to.
 	 */
-	public <T extends Keyed> Iterable<Tag<T>> getTagsMatching(TagOrigin origin, TagType<T> type, Predicate<Tag<T>> predicate) {
+	public <T extends Keyed> Iterable<Tag<T>> getMatchingTags(TagOrigin origin, TagType<T> type, Predicate<Tag<T>> predicate) {
 		Iterator<Tag<T>> tagIterator = getTags(origin, type).iterator();
 		return new Iterable<>() {
 			@Override
@@ -207,4 +213,5 @@ public class Tags {
 			return map.containsKey(type);
 		}
 	}
+
 }

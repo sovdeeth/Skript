@@ -20,7 +20,7 @@ import org.skriptlang.skript.bukkit.tags.TagModule;
 
 @Name("Is Tagged")
 @Description({
-	"Checks whether an item, block, entity, or entitydata is tagged as the given tag."
+	"Checks whether an item, block, entity, or entitydata is tagged with the given tag."
 })
 @Examples({
 	"if player's tool is tagged with minecraft tag \"enchantable/sharp_weapon\":",

@@ -41,7 +41,7 @@ import java.util.concurrent.ThreadLocalRandom;
 @Examples({
 	"broadcast minecraft tags of dirt",
 	"send true if paper item tags of target block contains paper tag \"doors\"",
-	"broadcast player's tool's block tags"
+	"broadcast the block tags of player's tool"
 })
 @Since("INSERT VERSION")
 @RequiredPlugins("Paper (paper tags)")
@@ -50,18 +50,18 @@ public class ExprTagsOf extends PropertyExpression<Object, Tag> {
 
 	static {
 		Skript.registerExpression(ExprTagsOf.class, Tag.class, ExpressionType.PROPERTY,
-				"[all [[of] the]] " + TagOrigin.getFullPattern() + " " + TagType.getFullPattern() + " tags of %itemtype/entity/entitydata%",
+				"[all [of]] [the] " + TagOrigin.getFullPattern() + " " + TagType.getFullPattern() + " tags of %itemtype/entity/entitydata%",
 				"%itemtype/entity/entitydata%'[s] " + TagOrigin.getFullPattern() + " " + TagType.getFullPattern() + " tags");
 	}
 
-	int type;
+	TagType<?>[] types;
 	TagOrigin origin;
 	boolean datapackOnly;
 
 	@Override
 	public boolean init(Expression<?>[] expressions, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
 		this.setExpr(expressions[0]);
-		type = parseResult.mark - 1;
+		types = TagType.fromParseMark(parseResult.mark);
 		origin = TagOrigin.fromParseTags(parseResult.tags);
 		datapackOnly = origin == TagOrigin.BUKKIT && parseResult.hasTag("datapack");
 		return true;
@@ -103,7 +103,7 @@ public class ExprTagsOf extends PropertyExpression<Object, Tag> {
 		List<Tag<T>> tags = new ArrayList<>();
 		//noinspection unchecked
 		Class<T> clazz = (Class<T>) value.getClass();
-		for (Tag<T> tag : TagModule.TAGS.getTags(origin, clazz)) {
+		for (Tag<T> tag : TagModule.TAGS.getTags(origin, clazz, types)) {
 			if (tag.isTagged(value))
 				tags.add(tag);
 		}
@@ -122,7 +122,7 @@ public class ExprTagsOf extends PropertyExpression<Object, Tag> {
 
 	@Override
 	public String toString(@Nullable Event event, boolean debug) {
-		String registry = type == -1 ? "" : TagType.getType(type)[0].toString();
+		String registry = types.length > 1 ? "" : types[0].toString();
 		//noinspection DataFlowIssue
 		return  origin.toString(datapackOnly) + registry + "tags of " + getExpr().toString(event, debug);
 	}

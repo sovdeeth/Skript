@@ -40,7 +40,7 @@ public class TagType<T extends Keyed> {
 	private final Class<T> type;
 
 	/**
-	 * @param pattern The pattern to use when construction the selection Skript pattern.
+	 * @param pattern The pattern to use when constructing the selection Skript pattern.
 	 * @param type The class this tag type applies to.
 	 */
 	public TagType(String pattern, Class<T> type) {
@@ -50,7 +50,7 @@ public class TagType<T extends Keyed> {
 	}
 
 	/**
-	 * @param pattern The pattern to use when construction the selection Skript pattern.
+	 * @param pattern The pattern to use when constructing the selection Skript pattern.
 	 * @param toString The string to use when printing a toString.
 	 * @param type The class this tag type applies to.
 	 */
@@ -101,8 +101,19 @@ public class TagType<T extends Keyed> {
 	}
 
 	/**
+	 * Gets tag types by parser mark. Equivalent to {@code getType(i - 1)}.
+	 * @param i The index of the type to get.
+	 * @return The type at that index, or all tags if index < 0.
+	 * @see #getType(int)
+	 * @see #getFullPattern()
+	 */
+	public static TagType<?> @NotNull [] fromParseMark(int i) {
+		return getType(i - 1);
+	}
+
+	/**
 	 * @return Returns an optional choice pattern for use in Skript patterns. Contains parse marks.
-	 *			Subtract 1 from the parse mark and pass the value to {@link #getType(int)} to get the
+	 *			Pass the parse mark to {@link #fromParseMark(int)} to get the
 	 *			selected tag type in
 	 *			{@link ch.njol.skript.lang.SyntaxElement#init(Expression[], int, Kleenean, SkriptParser.ParseResult)}.
 	 */
@@ -112,7 +123,7 @@ public class TagType<T extends Keyed> {
 	/**
 	 * @param required whether the choice should be optional or required.
 	 * @return Returns a choice pattern for use in Skript patterns. Contains parse marks.
-	 *			Subtract 1 from the parse mark and pass the value to {@link #getType(int)} to get the
+	 *			Pass the parse mark to {@link #fromParseMark(int)} to get the
 	 *			selected tag type in
 	 *			{@link ch.njol.skript.lang.SyntaxElement#init(Expression[], int, Kleenean, SkriptParser.ParseResult)}.
 	 */

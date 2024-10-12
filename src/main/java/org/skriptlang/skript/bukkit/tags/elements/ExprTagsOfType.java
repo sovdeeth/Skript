@@ -47,13 +47,13 @@ public class ExprTagsOfType extends SimpleExpression<Tag> {
 				"[all [[of] the]] " + TagOrigin.getFullPattern() + " " + TagType.getFullPattern() + " tags");
 	}
 
-	int type;
+	TagType<?>[] types;
 	TagOrigin origin;
 	boolean datapackOnly;
 
 	@Override
 	public boolean init(Expression<?>[] expressions, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
-		type = parseResult.mark - 1;
+		types = TagType.fromParseMark(parseResult.mark);
 		origin = TagOrigin.fromParseTags(parseResult.tags);
 		datapackOnly = origin == TagOrigin.BUKKIT && parseResult.hasTag("datapack");
 		return true;
@@ -61,10 +61,9 @@ public class ExprTagsOfType extends SimpleExpression<Tag> {
 
 	@Override
 	protected Tag<?> @Nullable [] get(Event event) {
-		TagType<?>[] types = TagType.getType(type);
 		Set<Tag<?>> tags = new TreeSet<>(Comparator.comparing(Keyed::key));
 		for (TagType<?> type : types) {
-			for (Tag<?> tag : TagModule.TAGS.getTagsMatching(origin, type,
+			for (Tag<?> tag : TagModule.TAGS.getMatchingTags(origin, type,
 				tag -> (origin != TagOrigin.BUKKIT || (datapackOnly ^ tag.getKey().getNamespace().equals("minecraft"))))
 			) {
 				tags.add(tag);
@@ -85,7 +84,7 @@ public class ExprTagsOfType extends SimpleExpression<Tag> {
 
 	@Override
 	public String toString(@Nullable Event event, boolean debug) {
-		String registry = type == -1 ? "" : TagType.getType(type)[0].toString();
+		String registry = types.length > 1 ? "" : types[0].toString();
 		return "all of the " + origin.toString(datapackOnly) + registry + "tags";
 	}
 }

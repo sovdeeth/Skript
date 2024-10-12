@@ -21,21 +21,21 @@ public class Pair<T1, T2> implements Entry<T1, T2>, Cloneable, Serializable {
 		second = null;
 	}
 	
-	public Pair(final @Nullable T1 first, final @Nullable T2 second) {
+	public Pair(@Nullable T1 first, @Nullable T2 second) {
 		this.first = first;
 		this.second = second;
 	}
 	
-	public Pair(final @NotNull Entry<T1, T2> e) {
-		this.first = e.getKey();
-		this.second = e.getValue();
+	public Pair(@NotNull Entry<T1, T2> entry) {
+		this.first = entry.getKey();
+		this.second = entry.getValue();
 	}
 
 	public @UnknownNullability T1 getFirst() {
 		return first;
 	}
 	
-	public void setFirst(final @Nullable T1 first) {
+	public void setFirst(@Nullable T1 first) {
 		this.first = first;
 	}
 
@@ -43,7 +43,7 @@ public class Pair<T1, T2> implements Entry<T1, T2>, Cloneable, Serializable {
 		return second;
 	}
 	
-	public void setSecond(final @Nullable T2 second) {
+	public void setSecond(@Nullable T2 second) {
 		this.second = second;
 	}
 	
@@ -64,8 +64,8 @@ public class Pair<T1, T2> implements Entry<T1, T2>, Cloneable, Serializable {
 			return true;
 		if (!(obj instanceof Entry<?, ?> entry))
 			return false;
-		final T1 first = this.first;
-		final T2 second = this.second;
+		T1 first = this.first;
+		T2 second = this.second;
 		return (first == null ? entry.getKey() == null : first.equals(entry.getKey())) &&
 				(second == null ? entry.getValue() == null : second.equals(entry.getValue()));
 	}

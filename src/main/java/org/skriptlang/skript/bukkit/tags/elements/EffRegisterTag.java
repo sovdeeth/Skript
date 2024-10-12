@@ -10,7 +10,7 @@ import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.Literal;
-import ch.njol.skript.lang.SkriptParser;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.util.Kleenean;
 import org.bukkit.Keyed;
 import org.bukkit.Material;
@@ -67,10 +67,10 @@ public class EffRegisterTag extends Effect {
 
 	private Expression<String> name;
 	private Expression<?> contents;
-	TagType<?> type;
+	private TagType<?> type;
 
 	@Override
-	public boolean init(Expression<?>[] expressions, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult) {
+	public boolean init(Expression<?>[] expressions, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
 		//noinspection unchecked
 		name = (Expression<String>) expressions[0];
 		if (name instanceof Literal<String> literal) {

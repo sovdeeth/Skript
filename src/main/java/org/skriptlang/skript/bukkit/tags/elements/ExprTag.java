@@ -42,7 +42,7 @@ import org.skriptlang.skript.bukkit.tags.sources.TagOrigin;
 		"datapack block tag \"dirt\" # minecraft:dirt",
 		"datapack tag \"my_pack:custom_dirt\" # my_pack:custom_dirt",
 		"tag \"minecraft:mineable/pickaxe\" # minecraft:mineable/pickaxe",
-		"custom item tag \"blood_magic/sacrificial\" # skript:blood_magic/sacrificial"
+		"custom item tag \"blood_magic_sk/can_sacrifice_with\" # skript:blood_magic_sk/can_sacrifice_with"
 })
 @Since("INSERT VERSION")
 @RequiredPlugins("Paper (paper tags)")
@@ -54,16 +54,16 @@ public class ExprTag extends SimpleExpression<Tag> {
 				TagOrigin.getFullPattern() + " " + TagType.getFullPattern() + " tag %string%");
 	}
 
-	Expression<String> name;
-	int type;
-	TagOrigin origin;
-	boolean datapackOnly;
+	private Expression<String> name;
+	TagType<?>[] types;
+	private TagOrigin origin;
+	private boolean datapackOnly;
 
 	@Override
 	public boolean init(Expression<?>[] expressions, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
 		//noinspection unchecked
 		name = (Expression<String>) expressions[0];
-		type = parseResult.mark - 1;
+		types = TagType.fromParseMark(parseResult.mark);
 		origin = TagOrigin.fromParseTags(parseResult.tags);
 		datapackOnly = origin == TagOrigin.BUKKIT && parseResult.hasTag("datapack");
 		return true;
@@ -92,7 +92,6 @@ public class ExprTag extends SimpleExpression<Tag> {
 			return null;
 
 		Tag<?> tag;
-		TagType<?>[] types = TagType.getType(type);
 		for (TagType<?> type : types) {
 			tag = TagModule.TAGS.getTag(origin, type, key);
 			if (tag != null
@@ -119,7 +118,7 @@ public class ExprTag extends SimpleExpression<Tag> {
 
 	@Override
 	public String toString(@Nullable Event event, boolean debug) {
-		String registry = type == -1 ? "" : TagType.getType(type)[0].toString();
+		String registry = types.length > 1 ? "" : types[0].toString();
 		return origin.toString(datapackOnly) + registry + "tag " + name.toString(event, debug);
 	}
 

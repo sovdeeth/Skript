@@ -12,6 +12,7 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.skript.util.Utils;
 import ch.njol.util.Kleenean;
 import org.bukkit.Material;
 import org.bukkit.Tag;
@@ -19,6 +20,7 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.skriptlang.skript.bukkit.tags.TagType;
 
 import java.util.Objects;
 
@@ -43,11 +45,19 @@ public class ExprTagContents extends SimpleExpression<Object> {
 	}
 
 	private Expression<Tag<?>> tag;
+	private TagType<?> @Nullable [] tagTypes;
 
 	@Override
 	public boolean init(Expression<?> @NotNull [] expressions, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
 		//noinspection unchecked
 		tag = (Expression<Tag<?>>) expressions[0];
+		if (expressions[0] instanceof ExprTag exprTag) {
+			tagTypes = exprTag.types;
+		} else if (expressions[0] instanceof ExprTagsOf exprTagsOf) {
+			tagTypes = exprTagsOf.types;
+		} else if (expressions[0] instanceof ExprTagsOfType exprTagsOfType) {
+			tagTypes = exprTagsOfType.types;
+		}
 		return true;
 	}
 
@@ -76,6 +86,13 @@ public class ExprTagContents extends SimpleExpression<Object> {
 
 	@Override
 	public Class<?> getReturnType() {
+		if (tagTypes != null) {
+			Class<?>[] possibleTypes = new Class<?>[tagTypes.length];
+			for (int i = 0; i < tagTypes.length; i++) {
+				possibleTypes[i] = tagTypes[i].type();
+			}
+			return Utils.getSuperType(possibleTypes);
+		}
 		return Object.class;
 	}
 
