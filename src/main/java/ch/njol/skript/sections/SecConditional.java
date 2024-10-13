@@ -53,7 +53,6 @@ import java.util.List;
 	""
 })
 @Since("1.0")
-@SuppressWarnings("NotNullFieldNotInitialized")
 public class SecConditional extends Section {
 
 	private static final SkriptPattern THEN_PATTERN = PatternCompiler.compile("then [run]");
@@ -282,10 +281,6 @@ public class SecConditional extends Section {
 		return getSkippedNext();
 	}
 
-	public @Nullable TriggerItem getActualNext() {
-		return super.getNext();
-	}
-
 	@Override
 	protected @Nullable TriggerItem walk(Event event) {
 		if (type == ConditionalType.THEN || (parseIf && !parseIfPassed)) {
@@ -318,7 +313,7 @@ public class SecConditional extends Section {
 	@Nullable
 	private TriggerItem getSkippedNext() {
 		TriggerItem next = getActualNext();
-		while (next instanceof SecConditional && ((SecConditional) next).type != ConditionalType.IF)
+		while (next instanceof SecConditional nextSecCond && nextSecCond.type != ConditionalType.IF)
 			next = next.getActualNext();
 		return next;
 	}
