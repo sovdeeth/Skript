@@ -170,7 +170,7 @@ public class LogEntry {
 			from = ChatColor.GRAY + "   " + from + "\n";
 
 		return
-			String.format(lineInfoMsg, node.getLine(), c.getFileName()) + // String.valueOf is to convert the line number (int) to a String
+			String.format(lineInfoMsg, node.getLine(), c.getFileName()) +
 			String.format(detailsMsg, message.replaceAll("§", "&")) + from +
 			String.format(lineDetailsMsg, node.save().trim().replaceAll("§", "&"));
 	}
