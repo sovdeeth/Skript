@@ -140,8 +140,9 @@ public class LogEntry {
 	}
 
 	public String toFormattedString() {
+		String message = Utils.replaceEnglishChatStyles(this.message);
 		if (level.intValue() < Level.WARNING.intValue())
-			return Utils.replaceEnglishChatStyles(message);
+			return message;
 
 		ArgsMessage details;
 		ArgsMessage lineInfo = WARNING_LINE_INFO;
