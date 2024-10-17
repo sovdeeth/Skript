@@ -51,7 +51,7 @@ public class ItemUtils {
 	public static final boolean HAS_RESET = Skript.methodExists(Damageable.class, "resetDamage");
 	public static final boolean CAN_CREATE_PLAYER_PROFILE = Skript.methodExists(Bukkit.class, "createPlayerProfile", UUID.class, String.class);
 	// paper does not do texture lookups by default
-	public static final boolean REQUIRES_TEXTURE_LOOKUP = Skript.classExists("com.destroystokyo.paper.profile.PlayerProfile");
+	public static final boolean REQUIRES_TEXTURE_LOOKUP = Skript.classExists("com.destroystokyo.paper.profile.PlayerProfile") && Skript.isRunningMinecraft(1, 19, 4);
 
 	/**
 	 * Gets damage/durability of an item, or 0 if it does not have damage.
