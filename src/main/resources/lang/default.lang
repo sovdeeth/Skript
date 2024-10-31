@@ -2237,8 +2237,8 @@ attribute types:
 	player.sneaking_speed: player sneaking speed, sneaking speed
 	player.submerged_mining_speed: player submerged mining speed, submerged mining speed
 	player.sweeping_damage_ratio: player sweeping damage ratio, sweeping damage ratio
-	zombie.spawn_reinforcements: zombie spawn reinforcementsgeneric.armor: generic armor, armor
-	# 1.21.3 removes prefixes, adds armor and tempt range
+	zombie.spawn_reinforcements: zombie spawn reinforcements
+	# 1.21.3 removes prefixes, adds tempt range
 	armor: generic armor, armor
 	armor_toughness: generic armor toughness, armor toughness
 	attack_damage: generic attack damage, attack damage
