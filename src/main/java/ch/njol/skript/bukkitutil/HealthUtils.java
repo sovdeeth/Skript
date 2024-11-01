@@ -18,9 +18,9 @@ import java.lang.reflect.InvocationTargetException;
 
 public class HealthUtils {
 
-	private static Attribute MAX_HEALTH;
+	private static final Attribute MAX_HEALTH;
 	static {
-		if (Skript.isRunningMinecraft(1, 21, 3)) {
+		if (Skript.isRunningMinecraft(1, 21, 3)) { // In 1.21.3, Attribute became an Interface
 			MAX_HEALTH = Attribute.valueOf("MAX_HEALTH");
 		} else {
 			MAX_HEALTH = (Attribute) Enum.valueOf((Class) Attribute.class, "GENERIC_MAX_HEALTH");
