@@ -18,7 +18,14 @@ import java.lang.reflect.InvocationTargetException;
 
 public class HealthUtils {
 
-	private static final Attribute MAX_HEALTH = Skript.isRunningMinecraft(1, 21, 3) ? Attribute.valueOf("MAX_HEALTH") : Attribute.valueOf("GENERIC_MAX_HEALTH");
+	private static Attribute MAX_HEALTH;
+	static {
+		if (Skript.isRunningMinecraft(1, 21, 3)) {
+			MAX_HEALTH = Attribute.valueOf("MAX_HEALTH");
+		} else {
+			MAX_HEALTH = Attribute.valueOf("GENERIC_MAX_HEALTH");
+		}
+	}
 
 	/**
 	 * Get the health of an entity
