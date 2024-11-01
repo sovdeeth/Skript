@@ -1267,8 +1267,12 @@ entities:
 		name: armadillo¦s @an
 		pattern: <age> armadillo(|1¦s)|(4¦)armadillo (kid(|1¦s)|child(|1¦ren))
 	bogged:
-		name: bogged
-		pattern: bogged
+		name: bogged¦s
+		pattern: bogged[1:s]
+	# 1.21.3 Entities
+	creaking:
+		name: creaking¦s
+		pattern: creaking[1:s]
 
 # -- Heal Reasons --
 heal reasons:
