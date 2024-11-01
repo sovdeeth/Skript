@@ -23,7 +23,7 @@ public class HealthUtils {
 		if (Skript.isRunningMinecraft(1, 21, 3)) {
 			MAX_HEALTH = Attribute.valueOf("MAX_HEALTH");
 		} else {
-			MAX_HEALTH = Attribute.valueOf("GENERIC_MAX_HEALTH");
+			MAX_HEALTH = (Attribute) Enum.valueOf((Class) Attribute.class, "NAME");
 		}
 	}
 
