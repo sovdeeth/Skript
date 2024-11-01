@@ -1,21 +1,3 @@
-/**
- *   This file is part of Skript.
- *
- *  Skript is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  Skript is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
- *
- * Copyright Peter Güttinger, SkriptLang team and contributors
- */
 package ch.njol.skript.bukkitutil;
 
 import ch.njol.skript.Skript;
@@ -35,6 +17,8 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
 public class HealthUtils {
+
+	private static final Attribute MAX_HEALTH = Skript.isRunningMinecraft(1, 21, 3) ? Attribute.valueOf("MAX_HEALTH") : Attribute.valueOf("GENERIC_MAX_HEALTH");
 
 	/**
 	 * Get the health of an entity
@@ -62,7 +46,7 @@ public class HealthUtils {
 	 * @return How many hearts the entity can have at most
 	 */
 	public static double getMaxHealth(Damageable e) {
-		AttributeInstance attributeInstance = ((Attributable) e).getAttribute(Attribute.GENERIC_MAX_HEALTH);
+		AttributeInstance attributeInstance = ((Attributable) e).getAttribute(MAX_HEALTH);
 		assert attributeInstance != null;
 		return attributeInstance.getValue() / 2;
 	}
@@ -73,7 +57,7 @@ public class HealthUtils {
 	 * @param health How many hearts the entity can have at most
 	 */
 	public static void setMaxHealth(Damageable e, double health) {
-		AttributeInstance attributeInstance = ((Attributable) e).getAttribute(Attribute.GENERIC_MAX_HEALTH);
+		AttributeInstance attributeInstance = ((Attributable) e).getAttribute(MAX_HEALTH);
 		assert attributeInstance != null;
 		attributeInstance.setBaseValue(health * 2);
 	}
