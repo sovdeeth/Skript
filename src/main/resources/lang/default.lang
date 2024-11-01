@@ -722,7 +722,7 @@ entities:
 		pattern: spider(|1¦s)
 	squid:
 		name: squid¦s
-		pattern: squid(|1¦s)
+		pattern: <age> squid(|1¦s)
 	bottle of enchanting:
 		name: bottle¦ of enchanting¦s of enchanting
 		pattern: [thrown] bottle(|1¦s) o(f|') enchanting|[e]xp[erience] bottle(|1¦s)
@@ -1072,7 +1072,7 @@ entities:
 		pattern: <age> drowned(|1¦s)|(4¦)drowned (kid(|1¦s)|child(|1¦ren))
 	dolphin:
 		name: dolphin¦s
-		pattern: dolphin(|1¦s)
+		pattern: <age> dolphin(|1¦s)
 	phantom:
 		name: phantom¦s
 		pattern: phantom(|1¦s)
@@ -1158,7 +1158,7 @@ entities:
 		pattern: <age> quiet goat(|1¦s)|(4¦)quiet goat (kid(|1¦s)|child(|1¦ren))
 	glow squid:
 		name: glow squid¦s
-		pattern: glow squid(|1¦s)
+		pattern: <age> glow squid(|1¦s)
 	axolotl:
 		name: axolotl¦s @an
 		pattern: <age> axolotl(|1¦s)|(4¦)axolotl (kid(|1¦s)|child(|1¦ren))
