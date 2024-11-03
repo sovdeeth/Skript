@@ -25,6 +25,26 @@ import ch.njol.util.Kleenean;
 import ch.njol.yggdrasil.Fields;
 import org.bukkit.World;
 import org.bukkit.entity.*;
+import org.bukkit.entity.boat.AcaciaBoat;
+import org.bukkit.entity.boat.AcaciaChestBoat;
+import org.bukkit.entity.boat.BambooChestRaft;
+import org.bukkit.entity.boat.BambooRaft;
+import org.bukkit.entity.boat.BirchBoat;
+import org.bukkit.entity.boat.BirchChestBoat;
+import org.bukkit.entity.boat.CherryBoat;
+import org.bukkit.entity.boat.CherryChestBoat;
+import org.bukkit.entity.boat.DarkOakBoat;
+import org.bukkit.entity.boat.DarkOakChestBoat;
+import org.bukkit.entity.boat.JungleBoat;
+import org.bukkit.entity.boat.JungleChestBoat;
+import org.bukkit.entity.boat.MangroveBoat;
+import org.bukkit.entity.boat.MangroveChestBoat;
+import org.bukkit.entity.boat.OakBoat;
+import org.bukkit.entity.boat.OakChestBoat;
+import org.bukkit.entity.boat.PaleOakBoat;
+import org.bukkit.entity.boat.PaleOakChestBoat;
+import org.bukkit.entity.boat.SpruceBoat;
+import org.bukkit.entity.boat.SpruceChestBoat;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.NotSerializableException;
@@ -212,6 +232,33 @@ public class SimpleEntityData extends EntityData<Entity> {
 
 		if (Skript.isRunningMinecraft(1,21,3)) {
 			addSimpleEntity("creaking", Creaking.class);
+			// boats
+			addSimpleEntity("oak boat", OakBoat.class);
+			addSimpleEntity("dark oak boat", DarkOakBoat.class);
+			addSimpleEntity("pale oak boat", PaleOakBoat.class);
+			addSimpleEntity("acacia boat", AcaciaBoat.class);
+			addSimpleEntity("birch boat", BirchBoat.class);
+			addSimpleEntity("spruce boat", SpruceBoat.class);
+			addSimpleEntity("jungle boat", JungleBoat.class);
+			addSimpleEntity("bamboo raft", BambooRaft.class);
+			addSimpleEntity("mangrove boat", MangroveBoat.class);
+			addSimpleEntity("cherry boat", CherryBoat.class);
+			// chest boats
+			addSimpleEntity("oak chest boat", OakChestBoat.class);
+			addSimpleEntity("dark oak chest boat", DarkOakChestBoat.class);
+			addSimpleEntity("pale oak chest boat", PaleOakChestBoat.class);
+			addSimpleEntity("acacia chest boat", AcaciaChestBoat.class);
+			addSimpleEntity("birch chest boat", BirchChestBoat.class);
+			addSimpleEntity("spruce chest boat", SpruceChestBoat.class);
+			addSimpleEntity("jungle chest boat", JungleChestBoat.class);
+			addSimpleEntity("bamboo chest raft", BambooChestRaft.class);
+			addSimpleEntity("mangrove chest boat", MangroveChestBoat.class);
+			addSimpleEntity("cherry chest boat", CherryChestBoat.class);
+			// supers
+			addSuperEntity("boat", Boat.class);
+			addSuperEntity("any boat", Boat.class);
+			addSuperEntity("chest boat", ChestBoat.class);
+			addSuperEntity("any chest boat", ChestBoat.class);
 		}
 
 		// Register zombie after Husk and Drowned to make sure both work
