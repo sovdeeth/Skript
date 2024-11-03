@@ -95,7 +95,7 @@ public class BoatData extends EntityData<Boat> {
 	@Override
 	protected boolean equals_i(EntityData<?> obj) {
 		if (obj instanceof BoatData boatData)
-			return matchedPattern == boatData.matchedPattern || matchedPattern <= 1 || obj.matchedPattern <= 1;
+			return matchedPattern == boatData.matchedPattern;
 		return false;
 	}
 
