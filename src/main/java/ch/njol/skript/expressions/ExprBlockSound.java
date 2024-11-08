@@ -74,13 +74,19 @@ public class ExprBlockSound extends SimpleExpression<String> {
 		public abstract @Nullable Sound getSound(SoundGroup group);
 	}
 
+	private static final boolean SOUND_IS_INTERFACE;
+
 	static {
+		try {
+			Class<?> SOUND_CLASS = Class.forName("org.bukkit.Sound");
+			SOUND_IS_INTERFACE = SOUND_CLASS.isInterface();
+		} catch (ClassNotFoundException e) {
+			throw new RuntimeException(e);
+		}
 		SimplePropertyExpression.register(ExprBlockSound.class, String.class, "(1:break|2:fall|3:hit|4:place|5:step) sound[s]", "blocks/blockdatas/itemtypes");
 	}
 
-	@SuppressWarnings("NotNullFieldNotInitialized")
 	private SoundType soundType;
-	@SuppressWarnings("NotNullFieldNotInitialized")
 	private Expression<?> objects;
 
 	@Override
@@ -92,11 +98,12 @@ public class ExprBlockSound extends SimpleExpression<String> {
 
 	@Override
 	protected String @Nullable [] get(Event event) {
+		//noinspection rawtypes,deprecation
 		return objects.stream(event)
 			.map(this::convertAndGetSound)
 			.filter(Objects::nonNull)
 			.distinct()
-			.map(Sound::name)
+			.map(SOUND_IS_INTERFACE ? (sound -> sound.getKey().getKey()) : (sound -> ((Enum) sound).name()))
 			.toArray(String[]::new);
 	}
 
