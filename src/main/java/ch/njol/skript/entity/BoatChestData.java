@@ -31,10 +31,11 @@ public class BoatChestData extends EntityData<ChestBoat> {
 			patterns[1] = "any chest boat";
 			for (Boat.Type boat : types) {
 				String boatName;
-				if (boat == Boat.Type.BAMBOO)
+				if (boat == Boat.Type.BAMBOO) {
 					boatName = "bamboo chest raft";
-				else
+				} else {
 					boatName = boat.toString().replace("_", " ").toLowerCase(Locale.ENGLISH) + " chest boat";
+				}
 				patterns[boat.ordinal() + 2] = boatName;
 			}
 
