@@ -8,7 +8,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
 
-public class SoundUtils {
+/**
+ * Utility class for working with sounds.
+ */
+public final class SoundUtils {
 
 	// Sound.class is an interface (rather than an enum) as of MC 1.21.3
 	private static final boolean SOUND_IS_INTERFACE = Sound.class.isInterface();
@@ -50,4 +53,5 @@ public class SoundUtils {
 			return ((Keyed) sound).getKey();
 		}
 	}
+
 }
