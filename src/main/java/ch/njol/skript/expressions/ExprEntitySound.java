@@ -2,6 +2,7 @@ package ch.njol.skript.expressions;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.aliases.ItemType;
+import ch.njol.skript.bukkitutil.SoundUtils;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
@@ -114,15 +115,8 @@ public class ExprEntitySound extends SimpleExpression<String> {
 		{"[the] ambient sound[s] of %livingentities%", SoundType.AMBIENT},
 		{"%livingentities%'[s] ambient sound[s]", SoundType.AMBIENT}
 	});
-	private static final boolean SOUND_IS_INTERFACE;
 
 	static {
-		try {
-			Class<?> SOUND_CLASS = Class.forName("org.bukkit.Sound");
-			SOUND_IS_INTERFACE = SOUND_CLASS.isInterface();
-		} catch (ClassNotFoundException e) {
-			throw new RuntimeException(e);
-		}
 		if (Skript.methodExists(LivingEntity.class, "getDeathSound"))
 			Skript.registerExpression(ExprEntitySound.class, String.class, ExpressionType.COMBINED, patterns.getPatterns());
 	}
@@ -153,12 +147,11 @@ public class ExprEntitySound extends SimpleExpression<String> {
 		ItemStack defaultItem = new ItemStack(soundType == SoundType.EAT ? Material.COOKED_BEEF : Material.POTION);
         ItemStack item = this.item == null ? defaultItem : this.item.getOptionalSingle(event).map(ItemType::getRandom).orElse(defaultItem);
 
-		//noinspection rawtypes,deprecation
 		return entities.stream(event)
 			.map(entity -> soundType.getSound(entity, height, item, bigOrSpeedy))
 			.filter(Objects::nonNull)
 			.distinct()
-			.map(SOUND_IS_INTERFACE ? (sound -> sound.getKey().getKey()) : (sound -> ((Enum) sound).name()))
+			.map(sound ->SoundUtils.getKey(sound).getKey())
 			.toArray(String[]::new);
 	}
 

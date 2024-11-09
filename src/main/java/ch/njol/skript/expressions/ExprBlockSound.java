@@ -1,6 +1,7 @@
 package ch.njol.skript.expressions;
 
 import ch.njol.skript.aliases.ItemType;
+import ch.njol.skript.bukkitutil.SoundUtils;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
@@ -74,15 +75,7 @@ public class ExprBlockSound extends SimpleExpression<String> {
 		public abstract @Nullable Sound getSound(SoundGroup group);
 	}
 
-	private static final boolean SOUND_IS_INTERFACE;
-
 	static {
-		try {
-			Class<?> SOUND_CLASS = Class.forName("org.bukkit.Sound");
-			SOUND_IS_INTERFACE = SOUND_CLASS.isInterface();
-		} catch (ClassNotFoundException e) {
-			throw new RuntimeException(e);
-		}
 		SimplePropertyExpression.register(ExprBlockSound.class, String.class, "(1:break|2:fall|3:hit|4:place|5:step) sound[s]", "blocks/blockdatas/itemtypes");
 	}
 
@@ -98,12 +91,11 @@ public class ExprBlockSound extends SimpleExpression<String> {
 
 	@Override
 	protected String @Nullable [] get(Event event) {
-		//noinspection rawtypes,deprecation
 		return objects.stream(event)
 			.map(this::convertAndGetSound)
 			.filter(Objects::nonNull)
 			.distinct()
-			.map(SOUND_IS_INTERFACE ? (sound -> sound.getKey().getKey()) : (sound -> ((Enum) sound).name()))
+			.map(sound ->SoundUtils.getKey(sound).getKey())
 			.toArray(String[]::new);
 	}
 
