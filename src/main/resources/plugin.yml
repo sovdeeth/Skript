@@ -56,4 +56,4 @@ permissions:
         description: Shows when others are reloading script files.
     skript.admin:
         default: op
-        description: Allows to use administrative commands and to receive notifications of new versions.
+        description: Allows use of administrative commands and receiving notifications of new versions.
