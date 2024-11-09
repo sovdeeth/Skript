@@ -95,7 +95,7 @@ public class ExprBlockSound extends SimpleExpression<String> {
 			.map(this::convertAndGetSound)
 			.filter(Objects::nonNull)
 			.distinct()
-			.map(sound ->SoundUtils.getKey(sound).getKey())
+			.map(sound -> SoundUtils.getKey(sound).getKey())
 			.toArray(String[]::new);
 	}
 

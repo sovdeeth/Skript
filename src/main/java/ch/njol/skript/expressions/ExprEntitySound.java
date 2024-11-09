@@ -151,7 +151,7 @@ public class ExprEntitySound extends SimpleExpression<String> {
 			.map(entity -> soundType.getSound(entity, height, item, bigOrSpeedy))
 			.filter(Objects::nonNull)
 			.distinct()
-			.map(sound ->SoundUtils.getKey(sound).getKey())
+			.map(sound -> SoundUtils.getKey(sound).getKey())
 			.toArray(String[]::new);
 	}
 
