@@ -10,16 +10,8 @@ import java.util.Locale;
 
 public class SoundUtils {
 
-	private static final boolean SOUND_IS_INTERFACE;
-
-	static {
-		try {
-			Class<?> SOUND_CLASS = Class.forName("org.bukkit.Sound");
-			SOUND_IS_INTERFACE = SOUND_CLASS.isInterface();
-		} catch (ClassNotFoundException e) {
-			throw new RuntimeException(e);
-		}
-	}
+	// Sound.class is an interface (rather than an enum) as of MC 1.21.3
+	private static final boolean SOUND_IS_INTERFACE = Sound.class.isInterface();
 
 	/**
 	 * Gets the key of a sound, given its enum-name-style name.
@@ -28,7 +20,6 @@ public class SoundUtils {
 	 */
 	public static @Nullable NamespacedKey getKey(String soundString) {
 		soundString = soundString.toUpperCase(Locale.ENGLISH);
-		// Sound.class is an Interface (rather than an enum) as of MC 1.21.3
 		if (SOUND_IS_INTERFACE) {
 			try {
 				//noinspection deprecation
