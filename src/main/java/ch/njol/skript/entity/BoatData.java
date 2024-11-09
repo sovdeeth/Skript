@@ -17,12 +17,10 @@ import java.util.Random;
 // For <1.21.3 compatability only. 1.21.3+ boats are SimpleEntityDatas
 public class BoatData extends EntityData<Boat> {
 
-	private static final boolean IS_RUNNING_1_21_2 = Skript.isRunningMinecraft(1, 21, 2);
-
 	private static final Boat.Type[] types = Boat.Type.values();
 
 	static {
-		if (!IS_RUNNING_1_21_2) {
+		if (!Skript.isRunningMinecraft(1, 21, 2)) {
 			// This ensures all boats are registered
 			// As well as in the correct order via 'ordinal'
 			String[] patterns = new String[types.length + 2];
