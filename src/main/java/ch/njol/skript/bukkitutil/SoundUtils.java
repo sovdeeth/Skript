@@ -1,25 +1,22 @@
 package ch.njol.skript.bukkitutil;
 
+import org.bukkit.Keyed;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Sound;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.Locale;
 
 public class SoundUtils {
 
 	private static final boolean SOUND_IS_INTERFACE;
-	private static final Method SOUND_GET_KEY;
 
 	static {
 		try {
 			Class<?> SOUND_CLASS = Class.forName("org.bukkit.Sound");
 			SOUND_IS_INTERFACE = SOUND_CLASS.isInterface();
-			SOUND_GET_KEY = SOUND_CLASS.getDeclaredMethod("getKey");
-		} catch (ClassNotFoundException | NoSuchMethodException e) {
+		} catch (ClassNotFoundException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -42,8 +39,8 @@ public class SoundUtils {
 			try {
 				//noinspection unchecked,rawtypes
 				Enum soundEnum = Enum.valueOf((Class) Sound.class, soundString);
-				return ((NamespacedKey) SOUND_GET_KEY.invoke(soundEnum));
-			} catch (IllegalArgumentException | IllegalAccessException | InvocationTargetException ignore) {
+				return ((Keyed) soundEnum).getKey();
+			} catch (IllegalArgumentException ignore) {
 			}
 		}
 		return null;
@@ -59,11 +56,7 @@ public class SoundUtils {
 			//noinspection deprecation
 			return sound.getKey();
 		} else {
-			try {
-				return ((NamespacedKey) SOUND_GET_KEY.invoke(sound));
-			} catch (IllegalAccessException | InvocationTargetException e) {
-				throw new RuntimeException(e);
-			}
+			return ((Keyed) sound).getKey();
 		}
 	}
 }
