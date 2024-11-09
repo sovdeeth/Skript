@@ -4,29 +4,31 @@ test "block sounds (1.20+)":
 
 	set {_before} to blockdata of (block at (spawn of world "world"))
 	set {_20} to whether running minecraft "1.20"
-	set {_empty} to "INTENTIONALLY_EMPTY" if running minecraft "1.20" else "BLOCK_STONE_PLACE"
+	set {_stone-prefix} to "block.stone." if running minecraft "1.21.2" else "BLOCK_STONE_"
+	set {_wool-prefix} to "block.wool." if running minecraft "1.21.2" else "BLOCK_WOOL_"
+	set {_empty} to "INTENTIONALLY_EMPTY" if running minecraft "1.20" else "%{_stone-prefix}%PLACE"
 
 	# === TESTS ===
 
 	set {_stone::*} to getObjects(stone)
-	assert break sound of {_stone::*} is "BLOCK_STONE_BREAK" with "break sound of stone wasn't BLOCK_STONE_BREAK"
-	assert fall sound of {_stone::*} is "BLOCK_STONE_FALL" with "fall sound of stone wasn't BLOCK_STONE_FALL"
-	assert hit sound of {_stone::*} is "BLOCK_STONE_HIT" with "hit sound of stone wasn't BLOCK_STONE_HIT"
-	assert place sound of {_stone::*} is "BLOCK_STONE_PLACE" with "place sound of stone wasn't BLOCK_STONE_PLACE"
-	assert step sound of {_stone::*} is "BLOCK_STONE_STEP" with "step sound of stone wasn't BLOCK_STONE_STEP"
+	assert break sound of {_stone::*} is "%{_stone-prefix}%BREAK" with "break sound of stone wasn't %{_stone-prefix}%BREAK"
+	assert fall sound of {_stone::*} is "%{_stone-prefix}%FALL" with "fall sound of stone wasn't %{_stone-prefix}%FALL"
+	assert hit sound of {_stone::*} is "%{_stone-prefix}%HIT" with "hit sound of stone wasn't %{_stone-prefix}%HIT"
+	assert place sound of {_stone::*} is "%{_stone-prefix}%PLACE" with "place sound of stone wasn't %{_stone-prefix}%PLACE"
+	assert step sound of {_stone::*} is "%{_stone-prefix}%STEP" with "step sound of stone wasn't %{_stone-prefix}%STEP"
 
 	set {_wool::*} to getObjects(wool)
-	assert break sound of {_wool::*} is "BLOCK_WOOL_BREAK" with "break sound of stone wasn't BLOCK_WOOL_BREAK"
-	assert fall sound of {_wool::*} is "BLOCK_WOOL_FALL" with "fall sound of stone wasn't BLOCK_WOOL_FALL"
-	assert hit sound of {_wool::*} is "BLOCK_WOOL_HIT" with "hit sound of stone wasn't BLOCK_WOOL_HIT"
-	assert place sound of {_wool::*} is "BLOCK_WOOL_PLACE" with "place sound of stone wasn't BLOCK_WOOL_PLACE"
-	assert step sound of {_wool::*} is "BLOCK_WOOL_STEP" with "step sound of stone wasn't BLOCK_WOOL_STEP"
+	assert break sound of {_wool::*} is "%{_wool-prefix}%BREAK" with "break sound of stone wasn't BLOCK_WOOL_BREAK"
+	assert fall sound of {_wool::*} is "%{_wool-prefix}%FALL" with "fall sound of stone wasn't BLOCK_WOOL_FALL"
+	assert hit sound of {_wool::*} is "%{_wool-prefix}%HIT" with "hit sound of stone wasn't BLOCK_WOOL_HIT"
+	assert place sound of {_wool::*} is "%{_wool-prefix}%PLACE" with "place sound of stone wasn't BLOCK_WOOL_PLACE"
+	assert step sound of {_wool::*} is "%{_wool-prefix}%STEP" with "step sound of stone wasn't BLOCK_WOOL_STEP"
 
-	assert break sound of (water, lava and bubble column) is ("INTENTIONALLY_EMPTY" if {_20} is true else "BLOCK_STONE_BREAK") with "break sound of water, lava, or bubble column wasn't INTENTIONALLY_EMPTY"
-	assert fall sound of (water, lava and bubble column) is ("INTENTIONALLY_EMPTY" if {_20} is true else "BLOCK_STONE_FALL") with "fall sound of water, lava, or bubble column wasn't INTENTIONALLY_EMPTY"
-	assert hit sound of (water, lava and bubble column) is ("INTENTIONALLY_EMPTY" if {_20} is true else "BLOCK_STONE_HIT") with "hit sound of water, lava, or bubble column wasn't INTENTIONALLY_EMPTY"
-	assert place sound of (water, lava and bubble column) is ("INTENTIONALLY_EMPTY" if {_20} is true else "BLOCK_STONE_PLACE") with "place sound of water, lava, or bubble column wasn't INTENTIONALLY_EMPTY"
-	assert step sound of (water, lava and bubble column) is ("INTENTIONALLY_EMPTY" if {_20} is true else "BLOCK_STONE_STEP") with "step sound of water, lava, or bubble column wasn't INTENTIONALLY_EMPTY"
+	assert break sound of (water, lava and bubble column) is ("INTENTIONALLY_EMPTY" if {_20} is true else "%{_stone-prefix}%BREAK") with "break sound of water, lava, or bubble column wasn't INTENTIONALLY_EMPTY"
+	assert fall sound of (water, lava and bubble column) is ("INTENTIONALLY_EMPTY" if {_20} is true else "%{_stone-prefix}%FALL") with "fall sound of water, lava, or bubble column wasn't INTENTIONALLY_EMPTY"
+	assert hit sound of (water, lava and bubble column) is ("INTENTIONALLY_EMPTY" if {_20} is true else "%{_stone-prefix}%HIT") with "hit sound of water, lava, or bubble column wasn't INTENTIONALLY_EMPTY"
+	assert place sound of (water, lava and bubble column) is ("INTENTIONALLY_EMPTY" if {_20} is true else "%{_stone-prefix}%PLACE") with "place sound of water, lava, or bubble column wasn't INTENTIONALLY_EMPTY"
+	assert step sound of (water, lava and bubble column) is ("INTENTIONALLY_EMPTY" if {_20} is true else "%{_stone-prefix}%STEP") with "step sound of water, lava, or bubble column wasn't INTENTIONALLY_EMPTY"
 
 	assert break sound of (diamond, diamond sword and {_none}) is not set with "break sound of non-block item shouldn't be set"
 	assert fall sound of (diamond, diamond sword and {_none}) is not set with "fall sound of non-block item shouldn't be set"
