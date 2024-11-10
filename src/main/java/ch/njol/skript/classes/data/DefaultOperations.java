@@ -36,7 +36,7 @@ public class DefaultOperations {
 				long result = left.longValue() + right.longValue();
 				// catches overflow, from Math.addExact(long, long)
 				if (((left.longValue() ^ result) & (right.longValue() ^ result)) >= 0)
-					return (result);
+					return result;
 			}
 			return left.doubleValue() + right.doubleValue();
 		});
@@ -45,7 +45,7 @@ public class DefaultOperations {
 				long result = left.longValue() - right.longValue();
 				// catches overflow, from Math.addExact(long, long)
 				if (((left.longValue() ^ result) & (right.longValue() ^ result)) >= 0)
-					return (result);
+					return result;
 			}
 			return left.doubleValue() - right.doubleValue();
 		});
