@@ -32,26 +32,30 @@ public class DefaultOperations {
 	static {
 		// Number - Number
 		Arithmetics.registerOperation(Operator.ADDITION, Number.class, (left, right) -> {
-			if (Utils.isInteger(left, right))
-				return left.longValue() + right.longValue();
-			return left.doubleValue() + right.doubleValue();
+			double result = left.doubleValue() + right.doubleValue();
+			if (Utils.isInteger(left, right) && result < Long.MAX_VALUE && result > Long.MIN_VALUE)
+				return (long) result;
+			return result;
 		});
 		Arithmetics.registerOperation(Operator.SUBTRACTION, Number.class, (left, right) -> {
-			if (Utils.isInteger(left, right))
-				return left.longValue() - right.longValue();
-			return left.doubleValue() - right.doubleValue();
+			double result = left.doubleValue() - right.doubleValue();
+			if (Utils.isInteger(left, right) && result < Long.MAX_VALUE && result > Long.MIN_VALUE)
+				return (long) result;
+			return result;
 		});
 		Arithmetics.registerOperation(Operator.MULTIPLICATION, Number.class, (left, right) -> {
-			if (Utils.isInteger(left, right))
-				return left.longValue() * right.longValue();
-			return left.doubleValue() * right.doubleValue();
+			double result = left.doubleValue() * right.doubleValue();
+			if (Utils.isInteger(left, right) && result < Long.MAX_VALUE && result > Long.MIN_VALUE)
+				return (long) result;
+			return result;
 		});
 		Arithmetics.registerOperation(Operator.DIVISION, Number.class, (left, right) -> left.doubleValue() / right.doubleValue());
 		Arithmetics.registerOperation(Operator.EXPONENTIATION, Number.class, (left, right) -> Math.pow(left.doubleValue(), right.doubleValue()));
 		Arithmetics.registerDifference(Number.class, (left, right) -> {
-			if (Utils.isInteger(left, right))
-				return Math.abs(left.longValue() - right.longValue());
-			return Math.abs(left.doubleValue() - right.doubleValue());
+			double result = Math.abs(left.doubleValue() - right.doubleValue());
+			if (Utils.isInteger(left, right) && result < Long.MAX_VALUE && result > Long.MIN_VALUE)
+				return (long) result;
+			return result;
 		});
 		Arithmetics.registerDefaultValue(Number.class, () -> 0L);
 
