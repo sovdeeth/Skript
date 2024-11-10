@@ -54,12 +54,12 @@ public class TagModule {
 
 				@Override
 				public String toString(Tag<?> tag, int flags) {
-					return "tag \"" + tag.getKey() + "\"";
+					return "tag " + tag.getKey();
 				}
 
 				@Override
 				public String toVariableNameString(Tag<?> tag) {
-					return "tag: " + tag.getKey();
+					return toString(tag, 0);
 				}
 			}));
 

@@ -22,6 +22,9 @@ import org.skriptlang.skript.bukkit.tags.TagModule;
 import org.skriptlang.skript.bukkit.tags.TagType;
 import org.skriptlang.skript.bukkit.tags.sources.TagOrigin;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Name("Tag")
 @Description({
 		"Represents a tag which can be used to classify items, blocks, or entities.",
@@ -30,7 +33,7 @@ import org.skriptlang.skript.bukkit.tags.sources.TagOrigin;
 		"For example, `tag \"doors\"` will be the tag \"minecraft:doors\", " +
 		"while `paper tag \"doors\"` will be \"paper:doors\".",
 		"`minecraft tag` will search through the vanilla tags, `datapack tag` will search for datapack-provided tags " +
-		"(a  namespace is required here!), `paper tag` will search for Paper's custom tags if you are running Paper, " +
+		"(a namespace is required here!), `paper tag` will search for Paper's custom tags if you are running Paper, " +
 		"and `custom tag` will look in the \"skript\" namespace for custom tags you've registered.",
 		"You can also filter by tag types using \"item\", \"block\", or \"entity\"."
 })
@@ -51,10 +54,10 @@ public class ExprTag extends SimpleExpression<Tag> {
 
 	static {
 		Skript.registerExpression(ExprTag.class, Tag.class, ExpressionType.COMBINED,
-				TagOrigin.getFullPattern() + " " + TagType.getFullPattern() + " tag %string%");
+				TagOrigin.getFullPattern() + " " + TagType.getFullPattern() + " tag %strings%");
 	}
 
-	private Expression<String> name;
+	private Expression<String> names;
 	TagType<?>[] types;
 	private TagOrigin origin;
 	private boolean datapackOnly;
@@ -62,7 +65,7 @@ public class ExprTag extends SimpleExpression<Tag> {
 	@Override
 	public boolean init(Expression<?>[] expressions, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
 		//noinspection unchecked
-		name = (Expression<String>) expressions[0];
+		names = (Expression<String>) expressions[0];
 		types = TagType.fromParseMark(parseResult.mark);
 		origin = TagOrigin.fromParseTags(parseResult.tags);
 		datapackOnly = origin == TagOrigin.BUKKIT && parseResult.hasTag("datapack");
@@ -71,43 +74,45 @@ public class ExprTag extends SimpleExpression<Tag> {
 
 	@Override
 	protected Tag<?> @Nullable [] get(Event event) {
-		String name = this.name.getSingle(event);
-		if (name == null)
-			return null;
+		String[] names = this.names.getArray(event);
+		List<Tag<?>> tags = new ArrayList<>();
 
-		// get key
-		NamespacedKey key;
-		if (name.contains(":")) {
-			key = NamespacedKey.fromString(name);
-		} else {
-			// populate namespace if not provided
-			String namespace = switch (origin) {
-				case ANY, BUKKIT -> "minecraft";
-				case PAPER -> "paper";
-				case SKRIPT -> "skript";
-			};
-			key = new NamespacedKey(namespace, name);
-		}
-		if (key == null)
-			return null;
+		String namespace = switch (origin) {
+			case ANY, BUKKIT -> "minecraft";
+			case PAPER -> "paper";
+			case SKRIPT -> "skript";
+		};
 
-		Tag<?> tag;
-		for (TagType<?> type : types) {
-			tag = TagModule.TAGS.getTag(origin, type, key);
-			if (tag != null
-				// ensures that only datapack/minecraft tags are sent when specifically requested
-				&& (origin != TagOrigin.BUKKIT || (datapackOnly ^ tag.getKey().getNamespace().equals("minecraft")))
-			) {
-				return new Tag[]{tag};
+		nextName: for (String name : names) {
+			// get key
+			NamespacedKey key;
+			if (name.contains(":")) {
+				key = NamespacedKey.fromString(name);
+			} else {
+				// populate namespace if not provided
+				key = new NamespacedKey(namespace, name);
+			}
+			if (key == null)
+				continue;
+
+			Tag<?> tag;
+			for (TagType<?> type : types) {
+				tag = TagModule.TAGS.getTag(origin, type, key);
+				if (tag != null
+					// ensures that only datapack/minecraft tags are sent when specifically requested
+					&& (origin != TagOrigin.BUKKIT || (datapackOnly ^ tag.getKey().getNamespace().equals("minecraft")))
+				) {
+					tags.add(tag);
+					continue nextName; // ensure 1:1
+				}
 			}
 		}
-
-		return null;
+		return tags.toArray(new Tag[0]);
 	}
 
 	@Override
 	public boolean isSingle() {
-		return true;
+		return names.isSingle();
 	}
 
 	@Override
@@ -119,12 +124,12 @@ public class ExprTag extends SimpleExpression<Tag> {
 	@Override
 	public String toString(@Nullable Event event, boolean debug) {
 		String registry = types.length > 1 ? "" : types[0].toString();
-		return origin.toString(datapackOnly) + registry + "tag " + name.toString(event, debug);
+		return origin.toString(datapackOnly) + registry + "tag " + names.toString(event, debug);
 	}
 
 	@Override
 	public Expression<? extends Tag> simplify() {
-		if (name instanceof Literal<String>)
+		if (names instanceof Literal<String>)
 			return new SimpleLiteral<>(getArray(null), Tag.class, true);
 		return this;
 	}
