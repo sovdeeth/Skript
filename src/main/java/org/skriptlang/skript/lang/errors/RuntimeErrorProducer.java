@@ -10,10 +10,8 @@ import ch.njol.skript.lang.Section;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.SyntaxElement;
 import ch.njol.skript.lang.parser.ParserInstance;
-import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Kleenean;
-import org.bukkit.Bukkit;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.skriptlang.skript.lang.structure.Structure;
@@ -27,6 +25,8 @@ import java.util.logging.Level;
 public interface RuntimeErrorProducer {
 
 	// todo: try/catch
+
+	RuntimeErrorManager ERROR_MANAGER = new RuntimeErrorManager();
 
 	/**
 	 * Returns the {@link Node} that this is a part of. Used for accessing the line contents via {@link Node#getKey()}
@@ -63,7 +63,7 @@ public interface RuntimeErrorProducer {
 	 */
 	default void error(String message) {
 		String formatted = toFormattedString(Level.SEVERE, message, getNode(), toUnderline());
-		SkriptLogger.sendFormatted(Bukkit.getConsoleSender(), formatted);
+		ERROR_MANAGER.error(getNode(), formatted);
 		// todo: check if error should be suppressed, set last error field for users
 		// todo: send notif to online players with permission. "Script x.sk produced a runtime error! Check console."
 	}
@@ -77,7 +77,8 @@ public interface RuntimeErrorProducer {
 	 */
 	default void warning(String message) {
 		String formatted = toFormattedString(Level.WARNING, message, getNode(), toUnderline());
-		SkriptLogger.sendFormatted(Bukkit.getConsoleSender(), formatted);
+		ERROR_MANAGER.warning(getNode(), formatted);
+//		SkriptLogger.sendFormatted(Bukkit.getConsoleSender(), formatted);
 		// todo: check if error should be suppressed, set last error field for users
 		// todo: send notif to online players with permission. "Script x.sk produced a runtime warning! Check console."
 	}
