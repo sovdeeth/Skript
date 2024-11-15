@@ -98,7 +98,7 @@ public interface RuntimeErrorProducer {
 		// todo: add lang entries, handle error vs warning
 		String skriptInfo = replaceNewline(Utils.replaceEnglishChatStyles("<light red>The script '<gray>%s<light red>' encountered an error while executing the '<gray>%s<light red>' %s:\n"));
 		String errorInfo = replaceNewline(Utils.replaceEnglishChatStyles("\t<light red>%s<reset>\n"));
-		String lineInfo = replaceNewline(Utils.replaceEnglishChatStyles("\t<gold>Line %s<white>: <gray>%s\n"));
+		String lineInfo = replaceNewline(Utils.replaceEnglishChatStyles("\t<gold>Line %s<white>: <gray>%s\n \n"));
 
 		if (node == null)
 			return "handle null nodes";

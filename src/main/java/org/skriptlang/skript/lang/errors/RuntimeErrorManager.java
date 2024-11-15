@@ -5,103 +5,132 @@ import ch.njol.skript.config.Node;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.util.Utils;
 import org.bukkit.Bukkit;
-import org.skriptlang.skript.lang.script.Script;
 
-import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * Handles duplicate and spammed runtime errors.
  */
 public class RuntimeErrorManager {
 
-	/*
-	a) route all errors through here
-	b) handle formatting and sending
-	c) keep track of source and frequency to prevent spam/duplicates
-	d) config option to limit error count per tick, and # of ticks before a node can trigger another error.
+	private static class Frame {
 
-	plan:
-	per-node counter
-	global counter
+		final static String plural = "s were";
+		final static String singular= " was";
 
-	if global counter for current tick > config (8) && warning, don't send more
-	if global counter for current tick > config (16) && error, don't send more
+		final String type;
+		int totalLimit;
+		int lineLimit;
+		int lineTimeoutLimit;
 
-	if per-node counter > config (1) && warning, don't send more from this node
-	if per-node counter > config (2) && error, don't send more from this node
+		int skipped;
+		int printed;
+		Map<Node, Integer> lineTotals;
+		Map<Node, Integer> lineSkipped;
+		Map<Node, Integer> timeouts;
 
-	all unsent errors/warnings tallied up and total sent at end of tick
+		public Frame(String type, int totalLimit, int lineLimit, int lineTimeoutLimit) {
+			this.type = type;
+			this.totalLimit = totalLimit;
+			this.lineLimit = lineLimit;
+			this.lineTimeoutLimit = lineTimeoutLimit;
+			lineTotals = new ConcurrentHashMap<>();
+			lineSkipped = new ConcurrentHashMap<>();
+			timeouts = new ConcurrentHashMap<>();
+		}
 
-	if a node errors config (10 ticks) in a row, notify user and pause this node's warning for config (5 seconds)
+		boolean add(Node node) {
+			// increment counter
+			int lineTotal = lineTotals.compute(node, (key, count) -> (count == null ? 1 : count + 1));
 
-	Use annotations to allow per-node configuration?
+			// don't print if in timeout
+			if (timeouts.containsKey(node)) {
+				skipped++;
+				lineSkipped.compute(node, (key, count) -> (count == null ? 1 : count + 1));
+				return false;
+			}
 
-	 */
+			// decide whether to print
+			if (printed < totalLimit && lineTotal <= lineLimit) {
+				printed++;
+				return true;
+			} else {
+				skipped++;
+				lineSkipped.compute(node, (key, count) -> (count == null ? 1 : count + 1));
+				if (lineTotal == lineTimeoutLimit) {
+					timeouts.put(node, 10);
+				}
+				return false;
+			}
+		}
 
-	final int globalErrorLimit = 4;
-	final int globalWarningLimit = 4;
+		void nextFrame() {
+			skipped = 0;
+			printed = 0;
+			lineTotals.clear();
+			lineSkipped.clear();
+			for (Iterator<Map.Entry<Node, Integer>> it = timeouts.entrySet().iterator(); it.hasNext(); ) {
+				Map.Entry<Node, Integer> entry = it.next();
+				if (entry.getValue() > 0)
+					entry.setValue(entry.getValue() - 1);
+				else
+					it.remove();
+			}
+		}
 
-	final int perNodeErrorLimit = 1;
-	final int perNodeWarningLimit = 1;
+		void printFrame() {
+			if (skipped > 0) {
+				String linesNotDisplayed = lineSkipped.entrySet().stream()
+						.map(entry -> "'"+ entry.getKey().getConfig().getFileName() + "' line " + entry.getKey().getLine() + " (" + entry.getValue() + ")")
+						.collect(Collectors.joining(", "));
 
-	int globalErrors;
-	int globalWarnings;
-	final Map<Node, Integer> perLineErrors = new ConcurrentHashMap<>();
-	final Map<Node, Integer> perLineWarnings = new ConcurrentHashMap<>();
+				SkriptLogger.sendFormatted(Bukkit.getConsoleSender(), Utils.replaceEnglishChatStyles(
+						"<gold>" + (skipped) + "<light red> runtime " + type + (skipped > 1 ? plural : singular) +
+						" thrown in the last second but not displayed. From: " +
+						"<gray>" + linesNotDisplayed + "\n \n"));
+			}
 
+			for (Map.Entry<Node, Integer> entry : timeouts.entrySet()) {
+				if (entry.getValue() == 10) {
+					Node node = entry.getKey();
+					SkriptLogger.sendFormatted(Bukkit.getConsoleSender(), Utils.replaceEnglishChatStyles(
+						"<gold>Line " + node.getLine() + "<light red> of script '<gray>" + node.getConfig().getFileName() +
+							"<light red>' produced too many runtime errors (<gray>" + lineTimeoutLimit +
+							"<light red> allowed per second). No errors from this line will be printed for 10 seconds.\n \n"));
+				}
+			}
+		}
+	}
 
-	final Set<Node> lineTimeouts = new HashSet<>();
-
+	private final Frame errorFrame, warningFrame;
 
 	public RuntimeErrorManager() {
-		Bukkit.getScheduler().scheduleSyncRepeatingTask(Skript.getInstance(), ()->{
-			if (globalErrors > globalErrorLimit) {
-				SkriptLogger.sendFormatted(Bukkit.getConsoleSender(), Utils.replaceEnglishChatStyles("\n<gold>" + (globalErrors - globalErrorLimit) + "<light red> runtime errors were thrown but not displayed this tick.\n"));
-			}
-			if (globalWarnings > globalWarningLimit) {
-				SkriptLogger.sendFormatted(Bukkit.getConsoleSender(), Utils.replaceEnglishChatStyles("\n<gold>" + (globalWarnings - globalWarningLimit) + "<light red> runtime warnings were thrown but not displayed this tick.\n"));
-			}
-			globalErrors = 0;
-			globalWarnings = 0;
-			perLineErrors.clear();
-			perLineWarnings.clear();
-		}, 1, 1);
+		errorFrame = new Frame("error", 8, 2, 4);
+		warningFrame = new Frame("warning", 8, 2, 4);
+		Bukkit.getScheduler().scheduleSyncRepeatingTask(Skript.getInstance(), () -> {
+			errorFrame.printFrame();
+			errorFrame.nextFrame();
+
+			warningFrame.printFrame();
+			warningFrame.nextFrame();
+		}, 20, 20);
 	}
 
 	void error(Node node, String message) {
-		// ignore nodes that have been put in timeout.
-		if (lineTimeouts.contains(node))
-			return;
-		// increment counters
-		++globalErrors;
-		int lineErrors = perLineErrors.compute(node, (key, count) -> (count == null ? 0 : count + 1));
 		// print if < limit
-		if (globalErrors <= globalErrorLimit && lineErrors <= perNodeErrorLimit) {
+		if (errorFrame.add(node)) {
 			SkriptLogger.sendFormatted(Bukkit.getConsoleSender(), message);
-		}
-		// timeout if too many
-		if (lineErrors > perNodeErrorLimit * 2) {
-			lineTimeouts.add(node);
-			SkriptLogger.sendFormatted(Bukkit.getConsoleSender(), Utils.replaceEnglishChatStyles("<gold>Line " + node.getLine() + "<light red> of script '<gray>" + node.getConfig().getFileName() + "<light red>' produced too many runtime errors in one tick (<gray>" + perNodeErrorLimit * 2 + "<light red> allowed per tick). No further errors from this line will be printed until the script is reloaded."));
 		}
 	}
 
-	public void warning(Node node, String message) {
-		// increment counters
-		++globalWarnings;
-		int lineWarnings = perLineWarnings.compute(node, (key, count) -> (count == null ? 0 : count + 1));
+	void warning(Node node, String message){
 		// print if < limit
-		if (globalWarnings <= globalWarningLimit && lineWarnings <= perNodeWarningLimit) {
+		if (warningFrame.add(node)) {
 			SkriptLogger.sendFormatted(Bukkit.getConsoleSender(), message);
 		}
-
-	}
-
-	public void unlockNodes(Script script) {
-		lineTimeouts.removeIf((node -> node.getConfig().equals(script.getConfig())));
 	}
 
 }

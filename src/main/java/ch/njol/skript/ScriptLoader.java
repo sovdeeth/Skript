@@ -47,11 +47,10 @@ import ch.njol.util.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
-import org.skriptlang.skript.lang.errors.RuntimeErrorProducer;
-import org.skriptlang.skript.util.event.EventRegistry;
 import org.skriptlang.skript.lang.script.Script;
 import org.skriptlang.skript.lang.script.ScriptWarning;
 import org.skriptlang.skript.lang.structure.Structure;
+import org.skriptlang.skript.util.event.EventRegistry;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -888,9 +887,6 @@ public class ScriptLoader {
 		// finish unloading + data collection
 		ScriptInfo info = new ScriptInfo();
 		for (Script script : scripts) {
-			// clear nodes from runtime error tracking
-			RuntimeErrorProducer.ERROR_MANAGER.unlockNodes(script);
-
 			List<Structure> structures = script.getStructures();
 
 			info.files++;
