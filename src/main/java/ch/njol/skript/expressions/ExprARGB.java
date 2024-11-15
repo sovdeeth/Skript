@@ -28,7 +28,7 @@ import java.util.function.Function;
 public class ExprARGB extends SimplePropertyExpression<Color, Integer> {
 
 	static {
-		register(ExprARGB.class, Integer.class, "(:alpha|:red|:green|:blue) [value]", "colors");
+		register(ExprARGB.class, Integer.class, "(:alpha|:red|:green|:blue) value", "colors");
 	}
 
 	RGB color;
