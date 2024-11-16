@@ -58,29 +58,30 @@ public interface RuntimeErrorProducer {
 	 * Dispatches a runtime error with the given text.
 	 * Metadata will be provided along with the message, including line number, the docs name of the producer,
 	 * and the line content.
+	 * <br>
+	 * Implementations should ensure they call super() to print the error.
 	 *
 	 * @param message The text to display as the error message.
 	 */
 	default void error(String message) {
-		String formatted = toFormattedString(Level.SEVERE, message, getNode(), toUnderline());
+		String formatted = toFormattedErrorString(Level.SEVERE, message, getNode(), toUnderline());
 		ERROR_MANAGER.error(getNode(), formatted);
-		// todo: check if error should be suppressed, set last error field for users
-		// todo: send notif to online players with permission. "Script x.sk produced a runtime error! Check console."
+		// todo: check if error should be suppressed
 	}
 
 	/**
 	 * Dispatches a runtime warning with the given text.
 	 * Metadata will be provided along with the message, including line number, the docs name of the producer,
 	 * and the line content.
+	 * <br>
+	 * Implementations should ensure they call super() to print the warning.
 	 *
 	 * @param message The text to display as the error message.
 	 */
 	default void warning(String message) {
-		String formatted = toFormattedString(Level.WARNING, message, getNode(), toUnderline());
+		String formatted = toFormattedErrorString(Level.WARNING, message, getNode(), toUnderline());
 		ERROR_MANAGER.warning(getNode(), formatted);
-//		SkriptLogger.sendFormatted(Bukkit.getConsoleSender(), formatted);
-		// todo: check if error should be suppressed, set last error field for users
-		// todo: send notif to online players with permission. "Script x.sk produced a runtime warning! Check console."
+		// todo: check if error should be suppressed
 	}
 
 	/**
@@ -93,7 +94,7 @@ public interface RuntimeErrorProducer {
 	 * @return A formatted string that includes metadata such as the script filename, error message,
 	 * 			and the specific line that caused the error.
 	 */
-	default String toFormattedString(Level level, String message, Node node, String toUnderline) {
+	private @NotNull String toFormattedErrorString(Level level, String message, Node node, String toUnderline) {
 		// Replace configured messages chat styles without user variables
 		// todo: add lang entries, handle error vs warning
 		String skriptInfo = replaceNewline(Utils.replaceEnglishChatStyles("<light red>The script '<gray>%s<light red>' encountered an error while executing the '<gray>%s<light red>' %s:\n"));
