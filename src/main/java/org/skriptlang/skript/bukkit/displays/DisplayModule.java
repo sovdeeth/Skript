@@ -54,7 +54,7 @@ public class DisplayModule {
 			.since("INSERT VERSION"));
 
 		Converters.registerConverter(Entity.class, Display.class,
-				(entity) -> entity instanceof Display display ? display : null,
+				entity -> entity instanceof Display display ? display : null,
 				Converter.NO_RIGHT_CHAINING);
 	}
 
