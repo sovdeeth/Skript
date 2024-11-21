@@ -53,7 +53,7 @@ permissions:
         description: Allows to use effects as commands, e.g. '!set health to 10'
     skript.reloadnotify:
         default: false
-        description: Shows when others are reloading script files.
+        description: Notifies when others are reloading script files.
     skript.admin:
         default: op
         description: Allows use of administrative commands and receiving notifications of new versions.
