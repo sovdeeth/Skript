@@ -1,6 +1,7 @@
 package org.skriptlang.skript.lang.condition;
 
 import ch.njol.util.Kleenean;
+import com.google.common.base.Preconditions;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,10 +38,10 @@ class CompoundConditional<T> implements Conditional<T> {
 	 *                     or exactly 1 if {@link Operator#NOT} is used.
 	 */
 	CompoundConditional(Operator operator, @NotNull Collection<Conditional<T>> conditionals) {
-		if (conditionals.isEmpty())
-			throw new IllegalArgumentException("CompoundConditionals must contain at least 1 component conditional.");
-		if (operator == Operator.NOT && conditionals.size() != 1)
-			throw new IllegalArgumentException("The NOT operator cannot be applied to multiple Conditionals.");
+		Preconditions.checkArgument(!conditionals.isEmpty(),
+				"CompoundConditionals must contain at least 1 component conditional.");
+		Preconditions.checkArgument(!(operator == Operator.NOT && conditionals.size() != 1),
+				"The NOT operator cannot be applied to multiple Conditionals.");
 
 		this.componentConditionals.addAll(conditionals);
 		useCache = conditionals.stream().anyMatch(cond -> cond instanceof CompoundConditional);
@@ -100,8 +101,7 @@ class CompoundConditional<T> implements Conditional<T> {
 	/**
 	 * @return An immutable list of the component conditionals of this object.
 	 */
-	@Unmodifiable
-	public List<Conditional<T>> getConditionals() {
+	public @Unmodifiable List<Conditional<T>> getConditionals() {
 		return componentConditionals.stream().toList();
 	}
 

@@ -1,5 +1,6 @@
 package org.skriptlang.skript.lang.condition;
 
+import com.google.common.base.Preconditions;
 import org.jetbrains.annotations.Contract;
 import org.skriptlang.skript.lang.condition.Conditional.Operator;
 
@@ -10,7 +11,7 @@ import java.util.List;
 import static org.skriptlang.skript.lang.condition.Conditional.negate;
 
 /**
- * Builds a DNF {@link CompoundConditional}, meaning it is solely composed of groups of ANDs all ORed together,
+ * Builds a Disjunctive Normal Form {@link CompoundConditional}, meaning it is solely composed of groups of ANDs all ORed together,
  * ex. {@code (a && !b && c) || b || (!c && d)}.
  * <br>
  * A builder should no longer be used after calling {@link #build()}.
@@ -45,8 +46,7 @@ public class DNFConditionalBuilder<T> {
 	 * @throws IllegalStateException if the builder is empty.
 	 */
 	public Conditional<T> build() {
-		if (root == null)
-			throw new IllegalStateException("Cannot build an empty conditional!");
+		Preconditions.checkState(root != null, "Cannot build an empty conditional!");
 		return root;
 	}
 
