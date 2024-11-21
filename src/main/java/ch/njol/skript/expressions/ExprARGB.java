@@ -31,7 +31,7 @@ public class ExprARGB extends SimplePropertyExpression<Color, Integer> {
 		register(ExprARGB.class, Integer.class, "(:alpha|:red|:green|:blue) (value|component)", "colors");
 	}
 
-	RGB color;
+	private RGB color;
 
 	@Override
 	public boolean init(Expression<?>[] expressions, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
