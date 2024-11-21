@@ -92,7 +92,7 @@ public class ExprVectorXYZ extends SimplePropertyExpression<Vector, Number> {
 				deltaValue = -deltaValue;
 				//$FALL-THROUGH$
 			case ADD:
-				double finalDeltaValue1 = deltaValue;
+				final double finalDeltaValue1 = deltaValue;
 				changeFunction = vector -> {
 					if (axis == 0) {
 						vector.setX(vector.getX() + finalDeltaValue1);
@@ -105,7 +105,7 @@ public class ExprVectorXYZ extends SimplePropertyExpression<Vector, Number> {
 				};
 				break;
 			case SET:
-				double finalDeltaValue = deltaValue;
+				final double finalDeltaValue = deltaValue;
 				changeFunction = vector -> {
 					if (axis == 0) {
 						vector.setX(finalDeltaValue);

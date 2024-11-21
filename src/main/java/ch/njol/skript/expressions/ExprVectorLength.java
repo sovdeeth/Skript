@@ -73,8 +73,8 @@ public class ExprVectorLength extends SimplePropertyExpression<Vector, Number> {
 				deltaLength = -deltaLength;
 				//$FALL-THROUGH$
 			case ADD:
-				double finalDeltaLength = deltaLength;
-				double finalDeltaLengthSquared = deltaLength * deltaLength;
+				final double finalDeltaLength = deltaLength;
+				final double finalDeltaLengthSquared = deltaLength * deltaLength;
 				changeFunction = vector -> {
 					if (VectorMath.isZero(vector) || (finalDeltaLength < 0 && vector.lengthSquared() < finalDeltaLengthSquared)) {
 						vector.zero();
@@ -88,7 +88,7 @@ public class ExprVectorLength extends SimplePropertyExpression<Vector, Number> {
 				};
 				break;
 			case SET:
-				double finalDeltaLength1 = deltaLength;
+				final double finalDeltaLength1 = deltaLength;
 				changeFunction = vector -> {
 					if (finalDeltaLength1 < 0 || VectorMath.isZero(vector)) {
 						vector.zero();
