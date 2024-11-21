@@ -24,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 public interface Color extends YggdrasilExtendedSerializable {
 
-
 	/**
 	 * Gets Bukkit color representing this color.
 	 * @return Bukkit color.
