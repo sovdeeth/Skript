@@ -46,8 +46,7 @@ public class DNFConditionalBuilder<T> {
 	 * @throws IllegalStateException if the builder is empty.
 	 */
 	public Conditional<T> build() {
-		Preconditions.checkState(root != null, "Cannot build an empty conditional!");
-		return root;
+		return Preconditions.checkNotNull(root, "Cannot build an empty conditional!");
 	}
 
 	/**

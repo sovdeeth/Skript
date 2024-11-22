@@ -209,7 +209,6 @@ public interface Conditional<T> extends Debuggable {
 		return compound(operator, List.of(conditionals));
 	}
 
-
 	/**
 	 * Provides a builder for conditions in disjunctive normal form. ex: {@code (A && B) || C || (!D &&E)}
 	 * @param ignoredContextClass The class of the context to use for the built condition.
