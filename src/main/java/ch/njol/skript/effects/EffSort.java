@@ -29,10 +29,13 @@ import java.util.Map;
 import java.util.Set;
 
 @Name("Sort")
-@Description({
-	"Sorts a list variable using either the natural ordering of the contents or the results of the given expression.",
-	"Be warned, this will overwrite the indices of the list variable."
-})
+@Description("""
+	Sorts a list variable using either the natural ordering of the contents or the results of the given expression.
+	Be warned, this will overwrite the indices of the list variable.
+	
+	When using the full <code>sort %~objects% (by|based on) &lt;expression&gt;</code> pattern,
+	the input expression can be used to refer to the current item being sorted.
+	(See input expression for more information.)""")
 @Examples({
 	"set {_words::*} to \"pineapple\", \"banana\", \"yoghurt\", and \"apple\"",
 	"sort {_words::*} # alphabetical sort",
