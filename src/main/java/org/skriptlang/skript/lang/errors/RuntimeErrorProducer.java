@@ -1,5 +1,6 @@
 package org.skriptlang.skript.lang.errors;
 
+import ch.njol.skript.Skript;
 import ch.njol.skript.config.Config;
 import ch.njol.skript.config.Node;
 import ch.njol.skript.doc.Name;
@@ -10,6 +11,7 @@ import ch.njol.skript.lang.Section;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.SyntaxElement;
 import ch.njol.skript.lang.parser.ParserInstance;
+import ch.njol.skript.localization.ArgsMessage;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Kleenean;
 import org.jetbrains.annotations.Contract;
@@ -24,9 +26,7 @@ import java.util.logging.Level;
  */
 public interface RuntimeErrorProducer {
 
-	// todo: try/catch
-
-	RuntimeErrorManager ERROR_MANAGER = new RuntimeErrorManager();
+	// todo: try/catch, suppression when annotations are added
 
 	/**
 	 * Returns the {@link Node} that this is a part of. Used for accessing the line contents via {@link Node#getKey()}
@@ -65,8 +65,7 @@ public interface RuntimeErrorProducer {
 	 */
 	default void error(String message) {
 		String formatted = toFormattedErrorString(Level.SEVERE, message, getNode(), toUnderline());
-		ERROR_MANAGER.error(getNode(), formatted);
-		// todo: check if error should be suppressed
+		Skript.getRuntimeErrorManager().error(getNode(), formatted);
 	}
 
 	/**
@@ -80,9 +79,16 @@ public interface RuntimeErrorProducer {
 	 */
 	default void warning(String message) {
 		String formatted = toFormattedErrorString(Level.WARNING, message, getNode(), toUnderline());
-		ERROR_MANAGER.warning(getNode(), formatted);
-		// todo: check if error should be suppressed
+		Skript.getRuntimeErrorManager().warning(getNode(), formatted);
 	}
+
+	String CONFIG_NODE = "skript command.reload";
+	ArgsMessage WARNING_DETAILS = new ArgsMessage(CONFIG_NODE + ".warning details");
+	ArgsMessage ERROR_DETAILS = new ArgsMessage(CONFIG_NODE + ".error details");
+	ArgsMessage OTHER_DETAILS = new ArgsMessage(CONFIG_NODE + ".other details");
+	ArgsMessage ERROR_INFO = new ArgsMessage(CONFIG_NODE + ".runtime.error");
+	ArgsMessage WARNING_INFO = new ArgsMessage(CONFIG_NODE + ".runtime.warning");
+	ArgsMessage LINE_INFO = new ArgsMessage(CONFIG_NODE + ".runtime.line info");
 
 	/**
 	 * Generates a formatted string based on the provided log level, message, node information, and text to underline.
@@ -97,12 +103,27 @@ public interface RuntimeErrorProducer {
 	private @NotNull String toFormattedErrorString(Level level, String message, Node node, String toUnderline) {
 		// Replace configured messages chat styles without user variables
 		// todo: add lang entries, handle error vs warning
-		String skriptInfo = replaceNewline(Utils.replaceEnglishChatStyles("<light red>The script '<gray>%s<light red>' encountered an error while executing the '<gray>%s<light red>' %s:\n"));
-		String errorInfo = replaceNewline(Utils.replaceEnglishChatStyles("\t<light red>%s<reset>\n"));
-		String lineInfo = replaceNewline(Utils.replaceEnglishChatStyles("\t<gold>Line %s<white>: <gray>%s\n \n"));
+
+
+		ArgsMessage details;
+		ArgsMessage info;
+		if (level.intValue() == Level.WARNING.intValue()) { // warnings
+			details = WARNING_DETAILS;
+			info = WARNING_INFO;
+		} else if (level.intValue() == Level.SEVERE.intValue()) { // errors
+			details = ERROR_DETAILS;
+			info = ERROR_INFO;
+		} else { // anything else
+			details = OTHER_DETAILS;
+			info = WARNING_INFO;
+		}
+
+		String skriptInfo = replaceNewline(Utils.replaceEnglishChatStyles(info.getValue() == null ? info.key : info.getValue()));
+		String errorInfo = replaceNewline(Utils.replaceEnglishChatStyles(details.getValue() == null ? details.key : details.getValue()));
+		String lineInfo = replaceNewline(Utils.replaceEnglishChatStyles(LINE_INFO.getValue() == null ? LINE_INFO.key : LINE_INFO.getValue()));
 
 		if (node == null)
-			return "handle null nodes";
+			return "effect command produced error"; // TODO
 
 		Config c = node.getConfig();
 		String from = this.getClass().getAnnotation(Name.class).value().trim().replaceAll("\n", "");
