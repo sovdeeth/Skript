@@ -314,7 +314,7 @@ public class ItemUtils {
 			TREE_TO_SAPLING_MAP.put(TreeType.CHERRY, Material.CHERRY_SAPLING);
 
 		// mega pine (2x2 spruce tree with minimal leaves at top)
-		if (Skript.isRunningMinecraft(1, 20,5))
+		if (Skript.isRunningMinecraft(1, 20, 5))
 			TREE_TO_SAPLING_MAP.put(TreeType.MEGA_PINE, Material.SPRUCE_SAPLING);
 
 		// pale oak
