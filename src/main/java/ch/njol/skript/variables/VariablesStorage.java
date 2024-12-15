@@ -20,11 +20,14 @@ package ch.njol.skript.variables;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import org.eclipse.jdt.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptAddon;
@@ -48,6 +51,7 @@ import ch.njol.util.Closeable;
  * @see DatabaseStorage
  */
 // FIXME ! large databases (>25 MB) cause the server to be unresponsive instead of loading slowly
+@SuppressWarnings("SuspiciousIndentAfterControlStatement")
 public abstract class VariablesStorage implements Closeable {
 
 	/**
@@ -68,9 +72,14 @@ public abstract class VariablesStorage implements Closeable {
 	protected volatile boolean closed = false;
 
 	/**
-	 * The name of the database, i.e. this storage.
+	 * The name of the database
 	 */
-	protected final String databaseName;
+	private String databaseName;
+
+	/**
+	 * The type of the database, i.e. CSV.
+	 */
+	private final String databaseType;
 
 	/**
 	 * The file associated with this variable storage.
@@ -99,11 +108,11 @@ public abstract class VariablesStorage implements Closeable {
 	 * This will also create the {@link #writeThread}, but it must be started
 	 * with {@link #load_i(SectionNode)}.
 	 *
-	 * @param name the name.
+	 * @param type the database type i.e. CSV.
 	 */
-	protected VariablesStorage(SkriptAddon source, String name) {
-		assert name != null;
-		databaseName = name;
+	protected VariablesStorage(SkriptAddon source, String type) {
+		assert type != null;
+		databaseType = type;
 		this.source = source;
 
 		writeThread = Skript.newThread(() -> {
@@ -122,7 +131,29 @@ public abstract class VariablesStorage implements Closeable {
 					// Ignored as the `closed` field will indicate whether the thread actually needs to stop
 				}
 			}
-		}, "Skript variable save thread for database '" + name + "'");
+		}, "Skript variable save thread for database '" + type + "'");
+	}
+
+	/**
+	 * Get the config name of a database
+	 * <p>
+	 * Note: Returns the user set name for the database, ex:
+	 * <pre>{@code
+	 * default: <- Config Name
+	 *    type: CSV
+	 * }</pre>
+	 * @return name of database
+	 */
+	protected final String getUserConfigurationName() {
+		return databaseName;
+	}
+
+	/**
+	 * Get the config type of a database
+	 * @return type of databse
+	 */
+	protected final String getDatabaseType() {
+		return databaseType;
 	}
 
 	/**
@@ -213,6 +244,8 @@ public abstract class VariablesStorage implements Closeable {
 		}
 	}
 
+	private static final Set<File> registeredFiles = new HashSet<>();
+
 	/**
 	 * Loads the configuration for this variable storage
 	 * from the given section node. Loads internal required values first in load_i.
@@ -222,6 +255,8 @@ public abstract class VariablesStorage implements Closeable {
 	 * @return whether the loading succeeded.
 	 */
 	public final boolean load_i(SectionNode sectionNode) {
+		databaseName = sectionNode.getKey();
+
 		String pattern = getValue(sectionNode, "pattern");
 		if (pattern == null)
 			return false;
@@ -266,12 +301,33 @@ public abstract class VariablesStorage implements Closeable {
 				return false;
 			}
 
+			if (registeredFiles.contains(file)) {
+				Skript.error("Database `" + databaseName + "` failed to load. The file `" + fileName + "` is already registered to another database.");
+				return false;
+			}
+			registeredFiles.add(file);
+
 			// Set the backup interval, if present & enabled
 			if (!"0".equals(getValue(sectionNode, "backup interval"))) {
 				Timespan backupInterval = getValue(sectionNode, "backup interval", Timespan.class);
-
+				int toKeep = getValue(sectionNode, "backups to keep", Integer.class);
+				boolean removeBackups = false;
+				boolean startBackup = true;
 				if (backupInterval != null)
-					startBackupTask(backupInterval);
+					if (toKeep == 0) {
+						startBackup = false;
+					} else if (toKeep >= 1) {
+						removeBackups = true;
+					}
+					if (startBackup) {
+						startBackupTask(backupInterval, removeBackups, toKeep);
+					} else {
+						try {
+							FileUtils.backupPurge(file, toKeep);
+						} catch (IOException e) {
+							Skript.error("Variables backup wipe failed: " + e.getLocalizedMessage());
+						}
+					}
 			}
 		}
 
@@ -352,12 +408,11 @@ public abstract class VariablesStorage implements Closeable {
 	 *
 	 * @param backupInterval the backup interval.
 	 */
-	public void startBackupTask(Timespan backupInterval) {
+	public void startBackupTask(Timespan backupInterval, boolean removeBackups, int toKeep) {
 		// File is null or backup interval is invalid
-		if (file == null || backupInterval.getTicks() == 0)
+		if (file == null || backupInterval.getAs(Timespan.TimePeriod.TICK) == 0)
 			return;
-
-		backupTask = new Task(Skript.getInstance(), backupInterval.getTicks(), backupInterval.getTicks(), true) {
+		backupTask = new Task(Skript.getInstance(), backupInterval.getAs(Timespan.TimePeriod.TICK), backupInterval.getAs(Timespan.TimePeriod.TICK), true) {
 			@Override
 			public void run() {
 				synchronized (connectionLock) {
@@ -366,6 +421,13 @@ public abstract class VariablesStorage implements Closeable {
 					try {
 						// ..., then backup
 						FileUtils.backup(file);
+						if (removeBackups) {
+							try {
+								FileUtils.backupPurge(file, toKeep);
+							} catch (IOException | IllegalArgumentException e) {
+								Skript.error("Automatic variables backup purge failed: " + e.getLocalizedMessage());
+							}
+						}
 					} catch (IOException e) {
 						Skript.error("Automatic variables backup failed: " + e.getLocalizedMessage());
 					} finally {

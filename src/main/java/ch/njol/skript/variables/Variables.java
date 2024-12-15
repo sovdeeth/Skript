@@ -18,38 +18,6 @@
  */
 package ch.njol.skript.variables;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.Queue;
-import java.util.TreeMap;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.regex.Pattern;
-
-import org.bukkit.Bukkit;
-import org.bukkit.configuration.serialization.ConfigurationSerializable;
-import org.bukkit.configuration.serialization.ConfigurationSerialization;
-import org.bukkit.event.Event;
-import org.eclipse.jdt.annotation.NonNull;
-import org.eclipse.jdt.annotation.Nullable;
-import org.skriptlang.skript.lang.converter.Converters;
-import org.skriptlang.skript.variables.storage.H2Storage;
-import org.skriptlang.skript.variables.storage.MySQLStorage;
-import org.skriptlang.skript.variables.storage.SQLiteStorage;
-
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptAPIException;
 import ch.njol.skript.SkriptAddon;
@@ -65,8 +33,44 @@ import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.variables.SerializedVariable.Value;
 import ch.njol.util.Kleenean;
 import ch.njol.util.NonNullPair;
+import ch.njol.util.Pair;
+import ch.njol.util.StringUtils;
 import ch.njol.util.SynchronizedReference;
+import ch.njol.util.coll.iterator.EmptyIterator;
 import ch.njol.yggdrasil.Yggdrasil;
+import org.bukkit.Bukkit;
+import org.bukkit.configuration.serialization.ConfigurationSerializable;
+import org.bukkit.configuration.serialization.ConfigurationSerialization;
+import org.bukkit.event.Event;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.skriptlang.skript.lang.converter.Converters;
+import org.skriptlang.skript.variables.storage.H2Storage;
+import org.skriptlang.skript.variables.storage.MySQLStorage;
+import org.skriptlang.skript.variables.storage.SQLiteStorage;
+
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.Queue;
+import java.util.TreeMap;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.regex.Pattern;
 
 /**
  * Handles all things related to variables.
@@ -122,7 +126,7 @@ public class Variables {
 
 			@Override
 			@Nullable
-			public String getID(@NonNull Class<?> c) {
+			public String getID(@NotNull Class<?> c) {
 				if (ConfigurationSerializable.class.isAssignableFrom(c)
 						&& Classes.getSuperClassInfo(c) == Classes.getExactClassInfo(Object.class))
 					return CONFIGURATION_SERIALIZABLE_PREFIX +
@@ -133,7 +137,7 @@ public class Variables {
 
 			@Override
 			@Nullable
-			public Class<? extends ConfigurationSerializable> getClass(@NonNull String id) {
+			public Class<? extends ConfigurationSerializable> getClass(@NotNull String id) {
 				if (id.startsWith(CONFIGURATION_SERIALIZABLE_PREFIX))
 					return ConfigurationSerialization.getClassByAlias(
 							id.substring(CONFIGURATION_SERIALIZABLE_PREFIX.length()));
@@ -216,8 +220,7 @@ public class Variables {
 			boolean successful = true;
 
 			for (Node node : (SectionNode) databases) {
-				if (node instanceof SectionNode) {
-					SectionNode sectionNode = (SectionNode) node;
+				if (node instanceof SectionNode sectionNode) {
 
 					String type = sectionNode.getValue("type");
 					if (type == null) {
@@ -425,13 +428,26 @@ public class Variables {
 	 * @param event the event to copy local variables from.
 	 * @return the copy.
 	 */
-	@Nullable
-	public static Object copyLocalVariables(Event event) {
+	public static @Nullable Object copyLocalVariables(Event event) {
 		VariablesMap from = localVariables.get(event);
 		if (from == null)
 			return null;
 
 		return from.copy();
+	}
+
+	/**
+	 * Copies local variables from provider to user, runs action, then copies variables back to provider.
+	 * Removes local variables from user after action is finished.
+	 * @param provider The originator of the local variables.
+	 * @param user The event to copy the variables to and back from.
+	 * @param action The code to run while the variables are copied.
+	 */
+	public static void withLocalVariables(Event provider, Event user, @NotNull Runnable action) {
+		Variables.setLocalVariables(user, Variables.copyLocalVariables(provider));
+		action.run();
+		Variables.setLocalVariables(provider, Variables.copyLocalVariables(user));
+		Variables.removeLocals(user);
 	}
 
 	/**
@@ -488,6 +504,67 @@ public class Variables {
 				variablesLock.readLock().unlock();
 			}
 		}
+	}
+
+	/**
+	 * Returns an iterator over the values of this list variable.
+	 *
+	 * @param name the variable's name. This must be the name of a list variable, ie. it must end in *.
+	 * @param event if {@code local} is {@code true}, this is the event
+	 *                 the local variable resides in.
+	 * @param local if this variable is a local or global variable.
+	 * @return an {@link Iterator} of {@link Pair}s, containing the {@link String} index and {@link Object} value of the
+	 * 			elements of the list. An empty iterator is returned if the variable does not exist.
+	 */
+	public static Iterator<Pair<String, Object>> getVariableIterator(String name, boolean local, @Nullable Event event) {
+		assert name.endsWith("*");
+		Object val = getVariable(name, event, local);
+		String subName = StringUtils.substring(name, 0, -1);
+
+		if (val == null)
+			return new EmptyIterator<>();
+		assert val instanceof TreeMap;
+		// temporary list to prevent CMEs
+		@SuppressWarnings("unchecked")
+		Iterator<String> keys = new ArrayList<>(((Map<String, Object>) val).keySet()).iterator();
+		return new Iterator<>() {
+			@Nullable
+			private String key;
+			@Nullable
+			private Object next = null;
+
+			@Override
+			public boolean hasNext() {
+				if (next != null)
+					return true;
+				while (keys.hasNext()) {
+					key = keys.next();
+					if (key != null) {
+						next = Variable.convertIfOldPlayer(subName + key, local, event, Variables.getVariable(subName + key, event, local));
+						if (next != null && !(next instanceof TreeMap))
+							return true;
+					}
+				}
+				next = null;
+				return false;
+			}
+
+			@Override
+			public Pair<String, Object> next() {
+				if (!hasNext())
+					throw new NoSuchElementException();
+				Pair<String, Object> n = new Pair<>(key, next);
+				next = null;
+				return n;
+			}
+
+			@Override
+			public void remove() {
+				if (key == null)
+					throw new IllegalStateException();
+				Variables.deleteVariable(key, event, local);
+			}
+		};
 	}
 
 	/**
@@ -575,32 +652,11 @@ public class Variables {
 
 	/**
 	 * A variable change name-value pair.
+	 *
+	 * @param name  The name of the changed variable.
+	 * @param value The (possibly {@code null}) value of the variable change.
 	 */
-	private static class VariableChange {
-
-		/**
-		 * The name of the changed variable.
-		 */
-		public final String name;
-
-		/**
-		 * The (possibly {@code null}) value of the variable change.
-		 */
-		@Nullable
-		public final Object value;
-
-		/**
-		 * Creates a new {@link VariableChange} with the given name and value.
-		 *
-		 * @param name the variable name.
-		 * @param value the new variable value.
-		 */
-		public VariableChange(String name, @Nullable Object value) {
-			this.name = name;
-			this.value = value;
-		}
-
-	}
+	private record VariableChange(String name, @Nullable Object value) {}
 
 	/**
 	 * Queues a variable change. Only to be called when direct write is not
@@ -696,8 +752,8 @@ public class Variables {
 					// Warn if needed
 					if (loadConflicts <= MAX_CONFLICT_WARNINGS) {
 						Skript.warning("The variable {" + name + "} was loaded twice from different databases (" +
-							existingVariableStorage.databaseName + " and " + source.databaseName +
-							"), only the one from " + source.databaseName + " will be kept.");
+							existingVariableStorage.getUserConfigurationName() + " and " + source.getUserConfigurationName() +
+							"), only the one from " + source.getUserConfigurationName() + " will be kept.");
 					} else if (loadConflicts == MAX_CONFLICT_WARNINGS + 1) {
 						Skript.warning("[!] More than " + MAX_CONFLICT_WARNINGS +
 							" variables were loaded more than once from different databases, " +
