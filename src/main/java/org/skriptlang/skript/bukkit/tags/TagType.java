@@ -44,9 +44,7 @@ public class TagType<T extends Keyed> {
 	 * @param type The class this tag type applies to.
 	 */
 	public TagType(String pattern, Class<T> type) {
-		this.pattern = pattern;
-		this.type = type;
-		this.toString = pattern;
+		this(pattern, pattern, type);
 	}
 
 	/**
@@ -77,7 +75,7 @@ public class TagType<T extends Keyed> {
 	 * Adds types to the registered tag types.
 	 * @param type The types to add.
 	 */
-	private static void addType(TagType<?>... type) {
+	public static void addType(TagType<?>... type) {
 		REGISTERED_TAG_TYPES.addAll(List.of(type));
 	}
 
@@ -120,6 +118,7 @@ public class TagType<T extends Keyed> {
 	public static @NotNull String getFullPattern() {
 		return getFullPattern(false);
 	}
+
 	/**
 	 * @param required whether the choice should be optional or required.
 	 * @return Returns a choice pattern for use in Skript patterns. Contains parse marks.

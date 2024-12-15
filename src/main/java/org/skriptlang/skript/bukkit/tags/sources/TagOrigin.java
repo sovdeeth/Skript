@@ -7,6 +7,10 @@ import org.skriptlang.skript.bukkit.tags.TagModule;
 
 import java.util.List;
 
+/**
+ * The origin of a tag, eg. from Bukkit, from Paper, from a custom Skript tag, or from anywhere.
+ * Used for classification and filtering tags.
+ */
 public enum TagOrigin {
 	/**
 	 * Bukkit supplies both native minecraft tags and datapack tags.
@@ -84,4 +88,5 @@ public enum TagOrigin {
 			case ANY -> "";
 		};
 	}
+
 }

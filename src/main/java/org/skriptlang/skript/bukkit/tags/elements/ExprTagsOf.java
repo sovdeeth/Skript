@@ -50,7 +50,7 @@ public class ExprTagsOf extends PropertyExpression<Object, Tag> {
 
 	static {
 		Skript.registerExpression(ExprTagsOf.class, Tag.class, ExpressionType.PROPERTY,
-				"[all [of]] [the] " + TagOrigin.getFullPattern() + " " + TagType.getFullPattern() + " tags of %itemtype/entity/entitydata%",
+				"[all [[of] the]|the] " + TagOrigin.getFullPattern() + " " + TagType.getFullPattern() + " tags of %itemtype/entity/entitydata%",
 				"%itemtype/entity/entitydata%'[s] " + TagOrigin.getFullPattern() + " " + TagType.getFullPattern() + " tags");
 	}
 
@@ -103,7 +103,7 @@ public class ExprTagsOf extends PropertyExpression<Object, Tag> {
 		List<Tag<T>> tags = new ArrayList<>();
 		//noinspection unchecked
 		Class<T> clazz = (Class<T>) value.getClass();
-		for (Tag<T> tag : TagModule.TAGS.getTags(origin, clazz, types)) {
+		for (Tag<T> tag : TagModule.tagRegistry.getTags(origin, clazz, types)) {
 			if (tag.isTagged(value))
 				tags.add(tag);
 		}
@@ -126,4 +126,5 @@ public class ExprTagsOf extends PropertyExpression<Object, Tag> {
 		//noinspection DataFlowIssue
 		return  origin.toString(datapackOnly) + registry + "tags of " + getExpr().toString(event, debug);
 	}
+
 }

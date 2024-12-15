@@ -44,7 +44,7 @@ public class ExprTagsOfType extends SimpleExpression<Tag> {
 
 	static {
 		Skript.registerExpression(ExprTagsOfType.class, Tag.class, ExpressionType.SIMPLE,
-				"[all [[of] the]] " + TagOrigin.getFullPattern() + " " + TagType.getFullPattern() + " tags");
+				"[all [[of] the]|the] " + TagOrigin.getFullPattern() + " " + TagType.getFullPattern() + " tags");
 	}
 
 	TagType<?>[] types;
@@ -63,7 +63,7 @@ public class ExprTagsOfType extends SimpleExpression<Tag> {
 	protected Tag<?> @Nullable [] get(Event event) {
 		Set<Tag<?>> tags = new TreeSet<>(Comparator.comparing(Keyed::key));
 		for (TagType<?> type : types) {
-			for (Tag<?> tag : TagModule.TAGS.getMatchingTags(origin, type,
+			for (Tag<?> tag : TagModule.tagRegistry.getMatchingTags(origin, type,
 				tag -> (origin != TagOrigin.BUKKIT || (datapackOnly ^ tag.getKey().getNamespace().equals("minecraft"))))
 			) {
 				tags.add(tag);
@@ -87,4 +87,5 @@ public class ExprTagsOfType extends SimpleExpression<Tag> {
 		String registry = types.length > 1 ? "" : types[0].toString();
 		return "all of the " + origin.toString(datapackOnly) + registry + "tags";
 	}
+
 }

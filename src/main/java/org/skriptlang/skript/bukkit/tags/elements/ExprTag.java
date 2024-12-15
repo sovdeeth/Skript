@@ -97,7 +97,7 @@ public class ExprTag extends SimpleExpression<Tag> {
 
 			Tag<?> tag;
 			for (TagType<?> type : types) {
-				tag = TagModule.TAGS.getTag(origin, type, key);
+				tag = TagModule.tagRegistry.getTag(origin, type, key);
 				if (tag != null
 					// ensures that only datapack/minecraft tags are sent when specifically requested
 					&& (origin != TagOrigin.BUKKIT || (datapackOnly ^ tag.getKey().getNamespace().equals("minecraft")))

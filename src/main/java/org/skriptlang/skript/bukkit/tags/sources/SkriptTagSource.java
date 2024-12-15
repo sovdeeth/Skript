@@ -14,7 +14,7 @@ public class SkriptTagSource<T extends Keyed> extends CustomTagSource<T> {
 	public static final SkriptTagSource<EntityType> ENTITIES = new SkriptTagSource<>(TagType.ENTITIES);
 
 	/**
-	 * @param types  The tag types this source will represent.
+	 * @param types The tag types this source will represent.
 	 */
 	@SafeVarargs
 	public SkriptTagSource(TagType<T>... types) {
@@ -24,4 +24,5 @@ public class SkriptTagSource<T extends Keyed> extends CustomTagSource<T> {
 	public void addTag(Tag<T> tag) {
 		tags.put(tag.getKey(), tag);
 	}
+
 }

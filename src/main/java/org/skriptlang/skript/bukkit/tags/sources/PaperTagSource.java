@@ -23,11 +23,11 @@ public class PaperTagSource<T extends Keyed> extends CustomTagSource<T> {
 	 * @param <T> The class of the tags.
 	 */
 	private static <T extends Keyed> @NotNull Iterable<Tag<T>> getPaperTags(@NotNull Iterable<Tag<T>> tags) {
-		List<Tag<T>> modified_tags = new ArrayList<>();
+		List<Tag<T>> modifiedTags = new ArrayList<>();
 		for (Tag<T> tag : tags) {
-			modified_tags.add(new PaperTag<>(tag));
+			modifiedTags.add(new PaperTag<>(tag));
 		}
-		return modified_tags;
+		return modifiedTags;
 	}
 
 	/**

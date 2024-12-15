@@ -34,4 +34,5 @@ public class BukkitTagSource<T extends Keyed> extends TagSource<T> {
 	public @Nullable Tag<T> getTag(NamespacedKey key) {
 		return Bukkit.getTag(registry, key, getTypes()[0].type());
 	}
+
 }

@@ -27,14 +27,14 @@ import java.util.function.Predicate;
 /**
  * A class in charge of storing and handling all the tags Skript can access.
  */
-public class Tags {
+public class TagRegistry {
 
 	private final TagSourceMap tagSourceMap = new TagSourceMap();
 
 	/**
 	 * Each new instance will create a new set of tag sources, in an effort to be reload safe.
 	 */
-	public Tags() {
+	TagRegistry() {
 		tagSourceMap.put(TagType.ITEMS, new BukkitTagSource<>("items", TagType.ITEMS));
 		tagSourceMap.put(TagType.BLOCKS, new BukkitTagSource<>("blocks", TagType.BLOCKS));
 		tagSourceMap.put(TagType.ENTITIES, new BukkitTagSource<>("entity_types", TagType.ENTITIES));
@@ -72,7 +72,7 @@ public class Tags {
 	 * @param origin The origin to filter by.
 	 * @param typeClass The class the tags should be applicable to.
 	 * @param types Tag types to check with. Leaving this empty will check all tag types.
-	 * @return Tags from the given origin and types that apply to the given class.
+	 * @return TagRegistry from the given origin and types that apply to the given class.
 	 * @param <T> see typeClass.
 	 */
 	public <T extends Keyed> Iterable<Tag<T>> getTags(TagOrigin origin, Class<T> typeClass, TagType<?>... types) {
@@ -80,7 +80,7 @@ public class Tags {
 		if (types == null)
 			types = tagSourceMap.map.keys().toArray(new TagType[0]);
 		for (TagType<?> type : types) {
-			if (type.type() == typeClass) {
+			if (typeClass.isAssignableFrom(type.type())) {
 				//noinspection unchecked
 				Iterator<Tag<T>> iterator = getTags(origin, (TagType<T>) type).iterator();
 				if (iterator.hasNext())
@@ -99,7 +99,7 @@ public class Tags {
 	 * Gets all the tags of a specific origin that are of a specific type.
 	 * @param origin The origin to filter by.
 	 * @param type The type of tags to get.
-	 * @return Tags from the given origin that are of the given type.
+	 * @return TagRegistry from the given origin that are of the given type.
 	 * @param <T> The class these tags apply to.
 	 */
 	public <T extends Keyed> Iterable<Tag<T>> getTags(TagOrigin origin, TagType<T> type) {
@@ -114,21 +114,16 @@ public class Tags {
 				return new Iterator<>() {
 					//<editor-fold desc="iterator over tagSources, returning each individual tag">
 					private Iterator<Tag<T>> currentTagIter = tagSources.next().getAllTags().iterator();
-					private Iterator<Tag<T>> nextTagIter;
 
 					@Override
 					public boolean hasNext() {
 						// does the current source have more tags
 						if (currentTagIter.hasNext())
 							return true;
-						// is there another source in the pipeline? if so, check it.
-						if (nextTagIter != null)
-							return nextTagIter.hasNext();
-						// if there's no known next source, check if have one.
-						// if we do, mark it as the next source.
+						// if we have another tag source, mark it as the next source.
 						if (tagSources.hasNext()) {
-							nextTagIter = tagSources.next().getAllTags().iterator();
-							return nextTagIter.hasNext();
+							currentTagIter = tagSources.next().getAllTags().iterator();
+							return currentTagIter.hasNext();
 						}
 						return false;
 					}
@@ -138,12 +133,6 @@ public class Tags {
 						// if current source has more, get more.
 						if (currentTagIter.hasNext())
 							return currentTagIter.next();
-						// if current source is dry, switch to using the next source
-						if (nextTagIter != null && nextTagIter.hasNext()) {
-							currentTagIter = nextTagIter;
-							nextTagIter = null;
-							return currentTagIter.next();
-						}
 						throw new IllegalStateException("Called next without calling hasNext to set the next tag iterator.");
 					}
 					//</editor-fold>
@@ -158,7 +147,7 @@ public class Tags {
 	 * @param origin The origin to filter by.
 	 * @param type The type of tags to get.
 	 * @param predicate A predicate to filter the tags with.
-	 * @return Tags from the given origin that are of the given type and that pass the filter.
+	 * @return TagRegistry from the given origin that are of the given type and that pass the filter.
 	 * @param <T> The class these tags apply to.
 	 */
 	public <T extends Keyed> Iterable<Tag<T>> getMatchingTags(TagOrigin origin, TagType<T> type, Predicate<Tag<T>> predicate) {

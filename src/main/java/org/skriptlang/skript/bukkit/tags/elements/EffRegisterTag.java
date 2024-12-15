@@ -61,7 +61,7 @@ public class EffRegisterTag extends Effect {
 
 	static {
 		Skript.registerEffect(EffRegisterTag.class,
-				"register [a[n]] [new] [custom] " + TagType.getFullPattern(true) +
+				"register [a[n]] [custom] " + TagType.getFullPattern(true) +
 					" tag named %string% (containing|using) %entitydatas/itemtypes%");
 	}
 
@@ -74,9 +74,7 @@ public class EffRegisterTag extends Effect {
 		//noinspection unchecked
 		name = (Expression<String>) expressions[0];
 		if (name instanceof Literal<String> literal) {
-			String key = literal.getSingle();
-			if (key.startsWith("skript:"))
-				key = key.substring(7);
+			String key = removeSkriptNamespace(literal.getSingle());
 			if (!KEY_PATTERN.matcher(key).matches()) {
 				Skript.error("Tag names can only contain the following characters: 'a-z', '0-9', '/', '.', '_', and '-'.");
 				return false;
@@ -94,8 +92,7 @@ public class EffRegisterTag extends Effect {
 		if (name == null)
 			return;
 
-		if (name.startsWith("skript:"))
-			name = name.substring(7);
+		name = removeSkriptNamespace(name);
 
 		if (!KEY_PATTERN.matcher(name).matches())
 			return;
@@ -121,6 +118,12 @@ public class EffRegisterTag extends Effect {
 		}
 	}
 
+	private static @NotNull String removeSkriptNamespace(@NotNull String key) {
+		if (key.startsWith("skript:"))
+			key = key.substring(7);
+		return key;
+	}
+
 	@Contract("_, _ -> new")
 	private @NotNull Tag<Material> getMaterialTag(NamespacedKey key, Object @NotNull [] contents) {
 		ThreadLocalRandom random = ThreadLocalRandom.current();
@@ -132,7 +135,8 @@ public class EffRegisterTag extends Effect {
 				tagContents.add((Material) values[random.nextInt(0, values.length)]);
 			} else {
 				for (Keyed value : values) {
-					tagContents.add((Material) value);
+					if (value instanceof Material material)
+						tagContents.add(material);
 				}
 			}
 		}
@@ -144,7 +148,8 @@ public class EffRegisterTag extends Effect {
 		List<EntityType> tagContents = new ArrayList<>();
 		for (Object object : contents) {
 			for (Keyed value : TagModule.getKeyed(object)) {
-				tagContents.add((EntityType) value);
+				if (value instanceof EntityType entityType)
+					tagContents.add(entityType);
 			}
 		}
 		return new SkriptTag<>(key, tagContents);
@@ -155,4 +160,5 @@ public class EffRegisterTag extends Effect {
 		return "register a new " + type.toString() + " tag named " + name.toString(event, debug) + " containing " +
 				contents.toString(event, debug);
 	}
+
 }

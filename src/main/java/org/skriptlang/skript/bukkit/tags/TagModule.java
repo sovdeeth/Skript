@@ -19,8 +19,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 import org.skriptlang.skript.lang.comparator.Comparators;
 import org.skriptlang.skript.lang.comparator.Relation;
-import org.skriptlang.skript.lang.converter.Converter;
-import org.skriptlang.skript.lang.converter.Converters;
 
 import java.io.IOException;
 
@@ -30,15 +28,13 @@ public class TagModule {
 	public static final boolean PAPER_TAGS_EXIST = Skript.classExists("com.destroystokyo.paper.MaterialTags");
 
 	// tag object
-	public static Tags TAGS;
+	public static TagRegistry tagRegistry;
 
 	public static void load() throws IOException {
 		// abort if no class exists
 		if (!Skript.classExists("org.bukkit.Tag"))
 			return;
 
-		// load classes (todo: replace with registering methods after regitration api
-		Skript.getAddonInstance().loadClasses("org.skriptlang.skript.bukkit", "tags");
 
 		// Classes
 		Classes.registerClass(new ClassInfo<>(Tag.class, "minecrafttag")
@@ -63,14 +59,14 @@ public class TagModule {
 				}
 			}));
 
+		// load classes (todo: replace with registering methods after registration api
+		Skript.getAddonInstance().loadClasses("org.skriptlang.skript.bukkit", "tags");
+
 		// compare tags by keys, not by object instance.
 		Comparators.registerComparator(Tag.class, Tag.class, (a, b) -> Relation.get(a.getKey().equals(b.getKey())));
 
-		// converter to String
-		Converters.registerConverter(Tag.class, String.class, tag -> tag.getKey().toString(), Converter.NO_LEFT_CHAINING);
-
 		// init tags
-		TAGS = new Tags();
+		tagRegistry = new TagRegistry();
 	}
 
 	/**
