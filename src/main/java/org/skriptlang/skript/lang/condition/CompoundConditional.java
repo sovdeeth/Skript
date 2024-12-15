@@ -131,9 +131,14 @@ class CompoundConditional<T> implements Conditional<T> {
 	//TODO: replace event with context object in debuggable rework pr
 	@Override
 	public String toString(@Nullable Event event, boolean debug) {
+		String output = joinConditionals(event, debug);
+
+		if (componentConditionals.size() > 1)
+			output = "(" + output + ")";
+
 		if (operator == Operator.NOT)
-			return "!" + joinConditionals(event, debug);
-		return "(" + joinConditionals(event, debug) + ")";
+			return "!" + output;
+		return output;
 	}
 
 	private String joinConditionals(@Nullable Event event, boolean debug) {
