@@ -40,7 +40,7 @@ public class ExprTagContents extends SimpleExpression<Object> {
 
 	static {
 		Skript.registerExpression(ExprTagContents.class, Object.class, ExpressionType.PROPERTY,
-				"tag (contents|values) of %minecrafttag%",
+				"[the] tag (contents|values) of %minecrafttag%",
 				"%minecrafttag%'[s] tag (contents|values)");
 	}
 

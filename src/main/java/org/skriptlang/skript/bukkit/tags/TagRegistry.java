@@ -62,6 +62,7 @@ public class TagRegistry {
 			} catch (IllegalAccessException ignored) {}
 		}
 
+		SkriptTagSource.makeDefaultSources();
 		tagSourceMap.put(TagType.ITEMS, SkriptTagSource.ITEMS);
 		tagSourceMap.put(TagType.BLOCKS, SkriptTagSource.BLOCKS);
 		tagSourceMap.put(TagType.ENTITIES, SkriptTagSource.ENTITIES);
@@ -111,32 +112,17 @@ public class TagRegistry {
 		return new Iterable<>() {
 			@Override
 			public @NotNull Iterator<Tag<T>> iterator() {
-				return new Iterator<>() {
-					//<editor-fold desc="iterator over tagSources, returning each individual tag">
-					private Iterator<Tag<T>> currentTagIter = tagSources.next().getAllTags().iterator();
-
+				return Iterators.concat(new Iterator<Iterator<Tag<T>>>() {
 					@Override
 					public boolean hasNext() {
-						// does the current source have more tags
-						if (currentTagIter.hasNext())
-							return true;
-						// if we have another tag source, mark it as the next source.
-						if (tagSources.hasNext()) {
-							currentTagIter = tagSources.next().getAllTags().iterator();
-							return currentTagIter.hasNext();
-						}
-						return false;
+						return tagSources.hasNext();
 					}
 
 					@Override
-					public Tag<T> next() {
-						// if current source has more, get more.
-						if (currentTagIter.hasNext())
-							return currentTagIter.next();
-						throw new IllegalStateException("Called next without calling hasNext to set the next tag iterator.");
+					public Iterator<Tag<T>> next() {
+						return tagSources.next().getAllTags().iterator();
 					}
-					//</editor-fold>
-				};
+				});
 			}
 		};
 	}

@@ -76,7 +76,9 @@ public class TagType<T extends Keyed> {
 	 * @param type The types to add.
 	 */
 	public static void addType(TagType<?>... type) {
-		REGISTERED_TAG_TYPES.addAll(List.of(type));
+		synchronized (REGISTERED_TAG_TYPES) {
+			REGISTERED_TAG_TYPES.addAll(List.of(type));
+		}
 	}
 
 	/**

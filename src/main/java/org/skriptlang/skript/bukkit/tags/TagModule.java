@@ -35,7 +35,6 @@ public class TagModule {
 		if (!Skript.classExists("org.bukkit.Tag"))
 			return;
 
-
 		// Classes
 		Classes.registerClass(new ClassInfo<>(Tag.class, "minecrafttag")
 			.user("minecraft ?tags?")

@@ -5,7 +5,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.skriptlang.skript.bukkit.tags.TagModule;
 
-import java.util.List;
+import java.util.Collection;
 
 /**
  * The origin of a tag, eg. from Bukkit, from Paper, from a custom Skript tag, or from anywhere.
@@ -16,14 +16,17 @@ public enum TagOrigin {
 	 * Bukkit supplies both native minecraft tags and datapack tags.
 	 */
 	BUKKIT,
+
 	/**
 	 * Paper supplies a set of custom tags they curate.
 	 */
 	PAPER,
+
 	/**
 	 * Custom tags registered via Skript.
 	 */
 	SKRIPT,
+
 	/**
 	 * Used when asking for tags, matches all origins.
 	 */
@@ -33,7 +36,7 @@ public enum TagOrigin {
 	 * Returns an optional choice of all the origins (minecraft, datapack, paper, and custom).
 	 * Will not include paper on non-paper servers.
 	 * Contains parse tags.
-	 * @see #fromParseTags(List)
+	 * @see #fromParseTags(Collection)
 	 */
 	@Contract(pure = true)
 	public static @NotNull String getFullPattern() {
@@ -51,7 +54,7 @@ public enum TagOrigin {
 	 * @see #getFullPattern()
 	 */
 	@Contract(value = "_ -> new", pure = true)
-	public static TagOrigin fromParseTags(@NotNull List<String> tags) {
+	public static TagOrigin fromParseTags(@NotNull Collection<String> tags) {
 		TagOrigin origin = TagOrigin.ANY;
 		if (tags.contains("minecraft") || tags.contains("datapack")) {
 			origin = TagOrigin.BUKKIT;
@@ -75,16 +78,15 @@ public enum TagOrigin {
 
 	/**
 	 * Returns a string for use in {@link ch.njol.skript.lang.Debuggable#toString(Event, boolean)} methods.
-	 * Includes a trailing space.
 	 * @param datapackOnly Whether to output "datapack " or "minecraft " for {@link #BUKKIT}.
 	 * @return a string representing the origin, with a trailing space.
 	 */
 	@Contract(pure = true)
 	public @NotNull String toString(boolean datapackOnly) {
 		return switch (this) {
-			case BUKKIT -> datapackOnly ? "datapack " : "minecraft ";
-			case PAPER -> "paper ";
-			case SKRIPT -> "custom ";
+			case BUKKIT -> datapackOnly ? "datapack" : "minecraft";
+			case PAPER -> "paper";
+			case SKRIPT -> "custom";
 			case ANY -> "";
 		};
 	}

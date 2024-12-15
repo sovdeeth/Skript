@@ -2,6 +2,7 @@ package org.skriptlang.skript.bukkit.tags.elements;
 
 import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.conditions.base.PropertyCondition;
+import ch.njol.skript.conditions.base.PropertyCondition.PropertyType;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Keywords;
@@ -95,9 +96,8 @@ public class CondIsTagged extends Condition {
 
 	@Override
 	public String toString(@Nullable Event event, boolean debug) {
-		String plural = elements.isSingle() ? "is" : "are";
-		String negated = isNegated() ? " not" : "";
-		return elements.toString(event, debug) + " " + plural + negated + " tagged as " + tags.toString(event, debug);
+		return PropertyCondition.toString(this, PropertyType.BE, event, debug, elements,
+				" tagged as " + tags.toString(event, debug));
 	}
 
 }

@@ -14,7 +14,7 @@ import java.util.Set;
  * A set of tags provided by Paper.
  * @param <T> The class of tag this source provides.
  */
-public class PaperTagSource<T extends Keyed> extends CustomTagSource<T> {
+public final class PaperTagSource<T extends Keyed> extends CustomTagSource<T> {
 
 	/**
 	 * Creates {@link PaperTag}s from the raw tags. Removes _settag.
@@ -67,6 +67,7 @@ public class PaperTagSource<T extends Keyed> extends CustomTagSource<T> {
 		public @NotNull NamespacedKey getKey() {
 			return key;
 		}
+
 	}
 
 }

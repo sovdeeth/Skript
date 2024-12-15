@@ -7,17 +7,23 @@ import org.bukkit.Tag;
 import org.bukkit.entity.EntityType;
 import org.skriptlang.skript.bukkit.tags.TagType;
 
-public class SkriptTagSource<T extends Keyed> extends CustomTagSource<T> {
+public final class SkriptTagSource<T extends Keyed> extends CustomTagSource<T> {
 
-	public static final SkriptTagSource<Material> ITEMS = new SkriptTagSource<>(TagType.ITEMS);
-	public static final SkriptTagSource<Material> BLOCKS = new SkriptTagSource<>(TagType.BLOCKS);
-	public static final SkriptTagSource<EntityType> ENTITIES = new SkriptTagSource<>(TagType.ENTITIES);
+	public static SkriptTagSource<Material> ITEMS;
+	public static SkriptTagSource<Material> BLOCKS;
+	public static SkriptTagSource<EntityType> ENTITIES;
+
+	public static void makeDefaultSources() {
+		ITEMS = new SkriptTagSource<>(TagType.ITEMS);
+		BLOCKS = new SkriptTagSource<>(TagType.BLOCKS);
+		ENTITIES = new SkriptTagSource<>(TagType.ENTITIES);
+	}
 
 	/**
 	 * @param types The tag types this source will represent.
 	 */
 	@SafeVarargs
-	public SkriptTagSource(TagType<T>... types) {
+	private SkriptTagSource(TagType<T>... types) {
 		super(TagOrigin.SKRIPT, new EmptyIterable<>(), types);
 	}
 

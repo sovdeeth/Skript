@@ -48,8 +48,8 @@ public class ExprTagsOfType extends SimpleExpression<Tag> {
 	}
 
 	TagType<?>[] types;
-	TagOrigin origin;
-	boolean datapackOnly;
+	private TagOrigin origin;
+	private boolean datapackOnly;
 
 	@Override
 	public boolean init(Expression<?>[] expressions, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
@@ -84,8 +84,8 @@ public class ExprTagsOfType extends SimpleExpression<Tag> {
 
 	@Override
 	public String toString(@Nullable Event event, boolean debug) {
-		String registry = types.length > 1 ? "" : types[0].toString();
-		return "all of the " + origin.toString(datapackOnly) + registry + "tags";
+		String registry = types.length > 1 ? "" : " " + types[0].toString();
+		return "all of the " + origin.toString(datapackOnly) + registry + " tags";
 	}
 
 }

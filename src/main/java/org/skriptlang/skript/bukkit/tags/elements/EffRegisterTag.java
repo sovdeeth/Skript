@@ -11,6 +11,7 @@ import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.lang.SyntaxStringBuilder;
 import ch.njol.util.Kleenean;
 import org.bukkit.Keyed;
 import org.bukkit.Material;
@@ -76,7 +77,8 @@ public class EffRegisterTag extends Effect {
 		if (name instanceof Literal<String> literal) {
 			String key = removeSkriptNamespace(literal.getSingle());
 			if (!KEY_PATTERN.matcher(key).matches()) {
-				Skript.error("Tag names can only contain the following characters: 'a-z', '0-9', '/', '.', '_', and '-'.");
+				Skript.error("Tag names can only contain the following characters: letters, numbers, and some symbols: " +
+						"'/', '.', '_', and '-'");
 				return false;
 			}
 		}
@@ -157,8 +159,9 @@ public class EffRegisterTag extends Effect {
 
 	@Override
 	public String toString(@Nullable Event event, boolean debug) {
-		return "register a new " + type.toString() + " tag named " + name.toString(event, debug) + " containing " +
-				contents.toString(event, debug);
+		return new SyntaxStringBuilder(event, debug)
+			.append("register a new", type.toString(), "tag named", name, "containing", contents)
+			.toString();
 	}
 
 }

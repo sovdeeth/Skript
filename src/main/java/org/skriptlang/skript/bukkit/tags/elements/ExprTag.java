@@ -123,8 +123,8 @@ public class ExprTag extends SimpleExpression<Tag> {
 
 	@Override
 	public String toString(@Nullable Event event, boolean debug) {
-		String registry = types.length > 1 ? "" : types[0].toString();
-		return origin.toString(datapackOnly) + registry + "tag " + names.toString(event, debug);
+		String registry = types.length > 1 ? "" : " " + types[0].toString();
+		return origin.toString(datapackOnly) + registry + " tag " + names.toString(event, debug);
 	}
 
 	@Override
