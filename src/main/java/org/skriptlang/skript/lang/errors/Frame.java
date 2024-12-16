@@ -4,21 +4,33 @@ import ch.njol.skript.config.Node;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.util.Utils;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+/**
+ * Stores the accumulated runtime errors over a span of time, then prints them.
+ */
 public class Frame {
+
+	/**
+	 * Store limits for the number of issues a frame can print per frame.
+	 * @param totalLimit total issues printed per frame
+	 * @param lineLimit issues printed by one line per frame
+	 * @param lineTimeoutLimit the limit at which a line will be put in timeout for exceeding.
+	 * @param timeoutDuration the duration a line will stay in timeout, in frames.
+	 */
+	public record FrameLimit(int totalLimit, int lineLimit, int lineTimeoutLimit, int timeoutDuration) {}
 
 	final static String plural = "s were";
 	final static String singular= " was";
 
 	final String type;
-	int totalLimit;
-	int lineLimit;
-	int lineTimeoutLimit;
+	final FrameLimit limits;
 
 	int skipped;
 	int printed;
@@ -26,11 +38,9 @@ public class Frame {
 	Map<Node, Integer> lineSkipped;
 	Map<Node, Integer> timeouts;
 
-	public Frame(String type, int totalLimit, int lineLimit, int lineTimeoutLimit) {
+	public Frame(String type, FrameLimit limits) {
 		this.type = type;
-		this.totalLimit = totalLimit;
-		this.lineLimit = lineLimit;
-		this.lineTimeoutLimit = lineTimeoutLimit;
+		this.limits = limits;
 		lineTotals = new ConcurrentHashMap<>();
 		lineSkipped = new ConcurrentHashMap<>();
 		timeouts = new ConcurrentHashMap<>();
@@ -48,14 +58,14 @@ public class Frame {
 		}
 
 		// decide whether to print
-		if (printed < totalLimit && lineTotal <= lineLimit) {
+		if (printed < limits.totalLimit && lineTotal <= limits.lineLimit) {
 			printed++;
 			return true;
 		} else {
 			skipped++;
 			lineSkipped.compute(node, (key, count) -> (count == null ? 1 : count + 1));
-			if (lineTotal == lineTimeoutLimit) {
-				timeouts.put(node, 10);
+			if (lineTotal == limits.lineTimeoutLimit) {
+				timeouts.put(node, limits.timeoutDuration);
 			}
 			return false;
 		}
@@ -88,16 +98,32 @@ public class Frame {
 		}
 
 		for (Map.Entry<Node, Integer> entry : timeouts.entrySet()) {
-			if (entry.getValue() == 10) {
+			if (entry.getValue() == limits.timeoutDuration) {
 				Node node = entry.getKey();
 				SkriptLogger.sendFormatted(Bukkit.getConsoleSender(), Utils.replaceEnglishChatStyles(
 					"<gold>Line " + node.getLine() + "<light red> of script '<gray>" + node.getConfig().getFileName() +
-						"<light red>' produced too many runtime errors (<gray>" + lineTimeoutLimit +
-						"<light red> allowed per second). No errors from this line will be printed for 10 seconds.\n \n"));
+						"<light red>' produced too many runtime errors (<gray>" + limits.lineTimeoutLimit +
+						"<light red> allowed per second). No errors from this line will be printed for " + limits.timeoutDuration + " frames.\n \n"));
 			}
 		}
 
-		// todo: send notif to online players with permission. "Script x.sk produced a runtime error! Check console."
+		if (printed > 0) {
+			// get various scripts from nodes
+			Set<String> scripts = lineTotals.keySet().stream()
+				.map((node) -> node.getConfig().getFileName())
+				.collect(Collectors.toSet());
+			String message = "<light red>Script '<gray>" + scripts.iterator().next();
+			if (scripts.size() > 1) {
+				message += "<light red>' and " + (scripts.size() - 1) + " others";
+			}
+			message += "<light red> produced runtime errors. Please check console logs for details.";
+
+			for (Player player : Bukkit.getOnlinePlayers()) {
+				if (player.hasPermission(RuntimeErrorManager.ERROR_NOTIF_PERMISSION))
+					SkriptLogger.sendFormatted(player, message);
+			}
+		}
 
 	}
+
 }

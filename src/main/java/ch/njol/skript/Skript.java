@@ -388,10 +388,8 @@ public final class Skript extends JavaPlugin implements Listener {
 
 
 	// ================ RUNTIME ERRORS ================
-	private static RuntimeErrorManager runtimeErrorManager;
-
 	public static RuntimeErrorManager getRuntimeErrorManager() {
-		return runtimeErrorManager;
+		return RuntimeErrorManager.getInstance();
 	}
 	// =================================================
 
@@ -580,7 +578,7 @@ public final class Skript extends JavaPlugin implements Listener {
 
 		Commands.registerListeners();
 
-		runtimeErrorManager = new RuntimeErrorManager();
+		RuntimeErrorManager.refresh();
 
 		if (logNormal())
 			info(" " + Language.get("skript.copyright"));

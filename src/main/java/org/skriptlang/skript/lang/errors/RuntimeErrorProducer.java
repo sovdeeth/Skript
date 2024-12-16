@@ -100,7 +100,7 @@ public interface RuntimeErrorProducer {
 	 * @return A formatted string that includes metadata such as the script filename, error message,
 	 * 			and the specific line that caused the error.
 	 */
-	private @NotNull String toFormattedErrorString(Level level, String message, Node node, String toUnderline) {
+	private @NotNull String toFormattedErrorString(@NotNull Level level, String message, Node node, String toUnderline) {
 		// Replace configured messages chat styles without user variables
 		// todo: add lang entries, handle error vs warning
 

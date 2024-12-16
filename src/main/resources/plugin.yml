@@ -53,6 +53,6 @@ permissions:
     skript.admin:
         default: op
         description: Allows to use administrative commands and to recieve notifications of new versions.
-#    skript.config:
-#        description: allows to modify the configuration files via commands
-#        default: false
+    skript.see_runtime_errors:
+        default: op
+        description: Shows notifications in chat when runtime errors occur.

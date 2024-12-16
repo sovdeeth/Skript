@@ -45,6 +45,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.jetbrains.annotations.Nullable;
+import org.skriptlang.skript.lang.errors.RuntimeErrorManager;
 import org.skriptlang.skript.lang.script.Script;
 
 import java.io.File;
@@ -158,6 +159,7 @@ public class SkriptCommand implements CommandExecutor {
 				if (args[1].equalsIgnoreCase("all")) {
 					reloading(sender, "config, aliases and scripts", logHandler);
 					SkriptConfig.load();
+					RuntimeErrorManager.refresh();
 					Aliases.clear();
 					Aliases.load();
 
@@ -181,6 +183,7 @@ public class SkriptCommand implements CommandExecutor {
 				} else if (args[1].equalsIgnoreCase("config")) {
 					reloading(sender, "main config", logHandler);
 					SkriptConfig.load();
+					RuntimeErrorManager.refresh();
 					reloaded(sender, logHandler, timingLogHandler, "main config");
 				} else if (args[1].equalsIgnoreCase("aliases")) {
 					reloading(sender, "aliases", logHandler);
