@@ -1,15 +1,14 @@
-package org.skriptlang.skript.lang.errors;
+package org.skriptlang.skript.log.runtime;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptConfig;
-import ch.njol.skript.config.Node;
-import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.util.Task;
 import ch.njol.skript.util.Timespan;
-import org.bukkit.Bukkit;
-import org.skriptlang.skript.lang.errors.Frame.FrameLimit;
+import org.skriptlang.skript.log.runtime.Frame.FrameLimit;
 
 import java.io.Closeable;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Handles duplicate and spammed runtime errors.
@@ -44,13 +43,19 @@ public class RuntimeErrorManager implements Closeable {
 		int warningTimeoutLength = Math.max(SkriptConfig.runtimeWarningTimeoutDuration.value(), 1);
 		FrameLimit warningFrame = new FrameLimit(warningLimit, warningLineLimit, warningLineTimeout, warningTimeoutLength);
 
-		if (instance != null)
+		List<RuntimeErrorConsumer> oldConsumers = List.of();
+		if (instance != null) {
 			instance.close();
+			oldConsumers = instance.consumers;
+		}
 		instance = new RuntimeErrorManager(Math.max((int) frameLength, 1), errorFrame, warningFrame);
+		oldConsumers.forEach(consumer -> instance.addConsumer(consumer));
 	}
 
 	private final Frame errorFrame, warningFrame;
 	private final Task task;
+
+	private final List<RuntimeErrorConsumer> consumers = new ArrayList<>();
 
 	/**
 	 * Creates a new error manager, which also creates its own frames.
@@ -67,27 +72,26 @@ public class RuntimeErrorManager implements Closeable {
 		task = new Task(Skript.getInstance(), frameLength, frameLength, true) {
 			@Override
 			public void run() {
-				errorFrame.printFrame();
+				consumers.forEach(consumer -> consumer.printFrameOutput(errorFrame.printFrame()));
 				errorFrame.nextFrame();
 
-				warningFrame.printFrame();
+				consumers.forEach(consumer -> consumer.printFrameOutput(warningFrame.printFrame()));
 				warningFrame.nextFrame();
 			}
 		};
 	}
 
-
-	void error(Node node, String message) {
+	public void error(RuntimeError error) {
 		// print if < limit
-		if (errorFrame.add(node)) {
-			SkriptLogger.sendFormatted(Bukkit.getConsoleSender(), message);
+		if (errorFrame.add(error)) {
+			consumers.forEach((consumer -> consumer.printError(error)));
 		}
 	}
 
-	void warning(Node node, String message){
+	public void warning(RuntimeError error){
 		// print if < limit
-		if (warningFrame.add(node)) {
-			SkriptLogger.sendFormatted(Bukkit.getConsoleSender(), message);
+		if (warningFrame.add(error)) {
+			consumers.forEach((consumer -> consumer.printError(error)));
 		}
 	}
 
@@ -97,6 +101,14 @@ public class RuntimeErrorManager implements Closeable {
 
 	public Frame getWarningFrame() {
 		return warningFrame;
+	}
+
+	public void addConsumer(RuntimeErrorConsumer consumer) {
+		consumers.add(consumer);
+	}
+
+	public void removeConsumer(RuntimeErrorConsumer consumer) {
+		consumers.remove(consumer);
 	}
 
 	@Override

@@ -8,7 +8,7 @@ import ch.njol.skript.util.LiteralUtils;
 import ch.njol.util.Kleenean;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
-import org.skriptlang.skript.lang.errors.RuntimeErrorProducer;
+import org.skriptlang.skript.log.runtime.RuntimeErrorProducer;
 
 /**
  * A base class for property expressions that requires only few overridden methods

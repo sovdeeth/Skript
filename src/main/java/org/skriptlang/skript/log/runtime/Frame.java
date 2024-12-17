@@ -1,14 +1,10 @@
-package org.skriptlang.skript.lang.errors;
+package org.skriptlang.skript.log.runtime;
 
-import ch.njol.skript.config.Node;
-import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.util.Utils;
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -26,6 +22,14 @@ public final class Frame {
 	 */
 	public record FrameLimit(int totalLimit, int lineLimit, int lineTimeoutLimit, int timeoutDuration) { }
 
+	/**
+	 * Stores outputs of a frame. Unused values will be empty strings or empty lists.
+	 * @param notDisplayed The text detailing what errors were not displayed.
+	 * @param timeouts A list of strings that detail which sources were put in timeout.
+	 * @param notification A string used to notify admins of runtime errors.
+	 */
+	public record FrameOutput(String notDisplayed, List<String> timeouts, String notification) { }
+
 	private final static String plural = "s were";
 	private final static String singular= " was";
 
@@ -34,9 +38,9 @@ public final class Frame {
 
 	private int skipped;
 	private int printed;
-	private final Map<Node, Integer> lineTotals;
-	private final Map<Node, Integer> lineSkipped;
-	private final Map<Node, Integer> timeouts;
+	private final Map<ErrorSource, Integer> lineTotals;
+	private final Map<ErrorSource, Integer> lineSkipped;
+	private final Map<ErrorSource, Integer> timeouts;
 
 	public Frame(String type, FrameLimit limits) {
 		this.type = type;
@@ -46,14 +50,15 @@ public final class Frame {
 		timeouts = new ConcurrentHashMap<>();
 	}
 
-	boolean add(Node node) {
+	public boolean add(@NotNull RuntimeError error) {
+		ErrorSource source = error.source();
 		// increment counter
-		int lineTotal = lineTotals.compute(node, (key, count) -> (count == null ? 1 : count + 1));
+		int lineTotal = lineTotals.compute(source, (key, count) -> (count == null ? 1 : count + 1));
 
 		// don't print if in timeout
-		if (timeouts.containsKey(node)) {
+		if (timeouts.containsKey(source)) {
 			skipped++;
-			lineSkipped.compute(node, (key, count) -> (count == null ? 1 : count + 1));
+			lineSkipped.compute(source, (key, count) -> (count == null ? 1 : count + 1));
 			return false;
 		}
 
@@ -63,21 +68,21 @@ public final class Frame {
 			return true;
 		} else {
 			skipped++;
-			lineSkipped.compute(node, (key, count) -> (count == null ? 1 : count + 1));
+			lineSkipped.compute(source, (key, count) -> (count == null ? 1 : count + 1));
 			if (lineTotal == limits.lineTimeoutLimit) {
-				timeouts.put(node, limits.timeoutDuration);
+				timeouts.put(source, limits.timeoutDuration);
 			}
 			return false;
 		}
 	}
 
-	void nextFrame() {
+	public void nextFrame() {
 		skipped = 0;
 		printed = 0;
 		lineTotals.clear();
 		lineSkipped.clear();
-		for (Iterator<Map.Entry<Node, Integer>> it = timeouts.entrySet().iterator(); it.hasNext(); ) {
-			Map.Entry<Node, Integer> entry = it.next();
+		for (Iterator<Map.Entry<ErrorSource, Integer>> it = timeouts.entrySet().iterator(); it.hasNext(); ) {
+			Map.Entry<ErrorSource, Integer> entry = it.next();
 			if (entry.getValue() > 0)
 				entry.setValue(entry.getValue() - 1);
 			else
@@ -85,44 +90,45 @@ public final class Frame {
 		}
 	}
 
-	void printFrame() {
+	@Contract(" -> new")
+	public @NotNull FrameOutput printFrame() {
+		String skippedText = "";
 		if (skipped > 0) {
 			String linesNotDisplayed = lineSkipped.entrySet().stream()
-				.map(entry -> "'"+ entry.getKey().getConfig().getFileName() + "' line " + entry.getKey().getLine() + " (" + entry.getValue() + ")")
+				.map(entry -> "'"+ entry.getKey().script() + "' line " + entry.getKey().lineNumber() + " (" + entry.getValue() + ")")
 				.collect(Collectors.joining(", "));
 
-			SkriptLogger.sendFormatted(Bukkit.getConsoleSender(), Utils.replaceEnglishChatStyles(
+			skippedText = Utils.replaceEnglishChatStyles(
 				"<gold>" + (skipped) + "<light red> runtime " + type + (skipped > 1 ? plural : singular) +
 					" thrown in the last second but not displayed. From: " +
-					"<gray>" + linesNotDisplayed + "\n \n"));
+					"<gray>" + linesNotDisplayed + "\n \n");
 		}
 
-		for (Map.Entry<Node, Integer> entry : timeouts.entrySet()) {
+		List<String> timeoutTexts  = new ArrayList<>();
+		for (Map.Entry<ErrorSource, Integer> entry : timeouts.entrySet()) {
 			if (entry.getValue() == limits.timeoutDuration) {
-				Node node = entry.getKey();
-				SkriptLogger.sendFormatted(Bukkit.getConsoleSender(), Utils.replaceEnglishChatStyles(
-					"<gold>Line " + node.getLine() + "<light red> of script '<gray>" + node.getConfig().getFileName() +
+				ErrorSource source = entry.getKey();
+				timeoutTexts.add(Utils.replaceEnglishChatStyles(
+					"<gold>Line " + source.lineNumber() + "<light red> of script '<gray>" + source.script() +
 						"<light red>' produced too many runtime errors (<gray>" + limits.lineTimeoutLimit +
 						"<light red> allowed per second). No errors from this line will be printed for " + limits.timeoutDuration + " frames.\n \n"));
 			}
 		}
 
+		String notification = "";
 		if (printed > 0) {
 			// get various scripts from nodes
 			Set<String> scripts = lineTotals.keySet().stream()
-				.map((node) -> node.getConfig().getFileName())
+				.map(ErrorSource::script)
 				.collect(Collectors.toSet());
-			String message = "<light red>Script '<gray>" + scripts.iterator().next();
+			notification = "<light red>Script '<gray>" + scripts.iterator().next();
 			if (scripts.size() > 1) {
-				message += "<light red>' and " + (scripts.size() - 1) + " others";
+				notification += "<light red>' and " + (scripts.size() - 1) + " others";
 			}
-			message += "<light red> produced runtime errors. Please check console logs for details.";
-
-			for (Player player : Bukkit.getOnlinePlayers()) {
-				if (player.hasPermission(RuntimeErrorManager.ERROR_NOTIF_PERMISSION))
-					SkriptLogger.sendFormatted(player, message);
-			}
+			notification += "<light red> produced runtime errors. Please check console logs for details.";
 		}
+
+		return new FrameOutput(skippedText, timeoutTexts, notification);
 
 	}
 

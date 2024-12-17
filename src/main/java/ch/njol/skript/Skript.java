@@ -107,7 +107,7 @@ import org.skriptlang.skript.lang.comparator.Comparators;
 import org.skriptlang.skript.lang.converter.Converter;
 import org.skriptlang.skript.lang.converter.Converters;
 import org.skriptlang.skript.lang.entry.EntryValidator;
-import org.skriptlang.skript.lang.errors.RuntimeErrorManager;
+import org.skriptlang.skript.log.runtime.RuntimeErrorManager;
 import org.skriptlang.skript.lang.experiment.ExperimentRegistry;
 import org.skriptlang.skript.lang.script.Script;
 import org.skriptlang.skript.lang.structure.Structure;
@@ -512,6 +512,9 @@ public final class Skript extends JavaPlugin implements Listener {
 			}
 		}
 
+		// Register config load events.
+		SkriptConfig.eventRegistry().register(SkriptConfig.ReloadEvent.class, RuntimeErrorManager::refresh);
+
 		// Config must be loaded after Java and Skript classes are parseable
 		// ... but also before platform check, because there is a config option to ignore some errors
 		SkriptConfig.load();
@@ -567,8 +570,6 @@ public final class Skript extends JavaPlugin implements Listener {
 		}
 
 		Commands.registerListeners();
-
-		RuntimeErrorManager.refresh();
 
 		if (logNormal())
 			info(" " + Language.get("skript.copyright"));
