@@ -50,7 +50,7 @@ public abstract class SimplePropertyExpression<F, T> extends PropertyExpression<
 	}
 
 	@Override
-	public String toUnderline() {
+	public String toHighlight() {
 		return rawExpr;
 	}
 

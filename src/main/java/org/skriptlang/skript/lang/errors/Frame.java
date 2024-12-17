@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 /**
  * Stores the accumulated runtime errors over a span of time, then prints them.
  */
-public class Frame {
+public final class Frame {
 
 	/**
 	 * Store limits for the number of issues a frame can print per frame.
@@ -24,19 +24,19 @@ public class Frame {
 	 * @param lineTimeoutLimit the limit at which a line will be put in timeout for exceeding.
 	 * @param timeoutDuration the duration a line will stay in timeout, in frames.
 	 */
-	public record FrameLimit(int totalLimit, int lineLimit, int lineTimeoutLimit, int timeoutDuration) {}
+	public record FrameLimit(int totalLimit, int lineLimit, int lineTimeoutLimit, int timeoutDuration) { }
 
-	final static String plural = "s were";
-	final static String singular= " was";
+	private final static String plural = "s were";
+	private final static String singular= " was";
 
-	final String type;
-	final FrameLimit limits;
+	private final String type;
+	private final FrameLimit limits;
 
-	int skipped;
-	int printed;
-	Map<Node, Integer> lineTotals;
-	Map<Node, Integer> lineSkipped;
-	Map<Node, Integer> timeouts;
+	private int skipped;
+	private int printed;
+	private final Map<Node, Integer> lineTotals;
+	private final Map<Node, Integer> lineSkipped;
+	private final Map<Node, Integer> timeouts;
 
 	public Frame(String type, FrameLimit limits) {
 		this.type = type;

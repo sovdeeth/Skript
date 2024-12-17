@@ -1976,7 +1976,6 @@ public final class Skript extends JavaPlugin implements Listener {
 		sender.sendMessage(Utils.replaceEnglishChatStyles(getSkriptPrefix() + ChatColor.DARK_RED + error));
 	}
 
-
 	/**
 	 * Gets the updater instance currently used by Skript.
 	 * @return SkriptUpdater instance.

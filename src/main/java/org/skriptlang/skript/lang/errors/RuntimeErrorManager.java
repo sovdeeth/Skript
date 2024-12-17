@@ -4,6 +4,7 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptConfig;
 import ch.njol.skript.config.Node;
 import ch.njol.skript.log.SkriptLogger;
+import ch.njol.skript.util.Task;
 import ch.njol.skript.util.Timespan;
 import org.bukkit.Bukkit;
 import org.skriptlang.skript.lang.errors.Frame.FrameLimit;
@@ -49,7 +50,7 @@ public class RuntimeErrorManager implements Closeable {
 	}
 
 	private final Frame errorFrame, warningFrame;
-	private final int taskId;
+	private final Task task;
 
 	/**
 	 * Creates a new error manager, which also creates its own frames.
@@ -63,13 +64,16 @@ public class RuntimeErrorManager implements Closeable {
 	public RuntimeErrorManager(int frameLength, FrameLimit errorLimits, FrameLimit warningLimits) {
 		errorFrame = new Frame("error", errorLimits);
 		warningFrame = new Frame("warning", warningLimits);
-		taskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(Skript.getInstance(), () -> {
-			errorFrame.printFrame();
-			errorFrame.nextFrame();
+		task = new Task(Skript.getInstance(), frameLength, frameLength, true) {
+			@Override
+			public void run() {
+				errorFrame.printFrame();
+				errorFrame.nextFrame();
 
-			warningFrame.printFrame();
-			warningFrame.nextFrame();
-		}, frameLength, frameLength);
+				warningFrame.printFrame();
+				warningFrame.nextFrame();
+			}
+		};
 	}
 
 
@@ -97,6 +101,7 @@ public class RuntimeErrorManager implements Closeable {
 
 	@Override
 	public void close() {
-		Bukkit.getScheduler().cancelTask(taskId);
+		task.close();
 	}
+
 }

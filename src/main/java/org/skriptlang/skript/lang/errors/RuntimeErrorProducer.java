@@ -4,10 +4,7 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.config.Config;
 import ch.njol.skript.config.Node;
 import ch.njol.skript.doc.Name;
-import ch.njol.skript.lang.Condition;
-import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.Section;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.SyntaxElement;
 import ch.njol.skript.lang.parser.ParserInstance;
@@ -16,7 +13,6 @@ import ch.njol.skript.util.Utils;
 import ch.njol.util.Kleenean;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.skriptlang.skript.lang.structure.Structure;
 
 import java.util.logging.Level;
 
@@ -52,7 +48,7 @@ public interface RuntimeErrorProducer {
 	 *
 	 * @return The text to underline in the line that produced a runtime error.
 	 */
-	String toUnderline();
+	String toHighlight();
 
 	/**
 	 * Dispatches a runtime error with the given text.
@@ -64,7 +60,7 @@ public interface RuntimeErrorProducer {
 	 * @param message The text to display as the error message.
 	 */
 	default void error(String message) {
-		String formatted = toFormattedErrorString(Level.SEVERE, message, getNode(), toUnderline());
+		String formatted = toFormattedErrorString(Level.SEVERE, message, getNode(), toHighlight());
 		Skript.getRuntimeErrorManager().error(getNode(), formatted);
 	}
 
@@ -78,7 +74,7 @@ public interface RuntimeErrorProducer {
 	 * @param message The text to display as the error message.
 	 */
 	default void warning(String message) {
-		String formatted = toFormattedErrorString(Level.WARNING, message, getNode(), toUnderline());
+		String formatted = toFormattedErrorString(Level.WARNING, message, getNode(), toHighlight());
 		Skript.getRuntimeErrorManager().warning(getNode(), formatted);
 	}
 
@@ -129,25 +125,16 @@ public interface RuntimeErrorProducer {
 		String from = this.getClass().getAnnotation(Name.class).value().trim().replaceAll("\n", "");
 
 		return
-			String.format(skriptInfo, c.getFileName(), from, getSyntaxType()) +
+			String.format(skriptInfo, c.getFileName(), from, getSyntaxTypeName()) +
 			String.format(errorInfo, message.replaceAll("§", "&")) +
 			String.format(lineInfo, node.getLine(), node.save().trim().replaceAll("§", "&").replaceAll(toUnderline, "§f§n" + toUnderline + "§7"));
 	}
 
 	@Contract(pure = true)
-	private @NotNull String getSyntaxType() {
-		if (this instanceof Effect) {
-			return "effect";
-		} else if (this instanceof Condition) {
-			return "condition";
-		} else if (this instanceof Expression<?>) {
-			return "expression";
-		} else if (this instanceof Section) {
-			return "section";
-		} else if (this instanceof Structure) {
-			return "structure";
-		}
-		return "syntax";
+	private @NotNull String getSyntaxTypeName() {
+		if (this instanceof SyntaxElement syntaxElement)
+			return syntaxElement.getSyntaxTypeName();
+		return "unknown syntax type";
 	}
 
 	@Contract(pure = true)
