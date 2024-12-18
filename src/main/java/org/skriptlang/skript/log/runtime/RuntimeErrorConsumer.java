@@ -4,6 +4,8 @@ import java.util.logging.Level;
 
 /**
  * Consumes runtime errors. Some use cases include printing errors to console or redirecting to a Discord channel.
+ *
+ * @see org.skriptlang.skript.bukkit.log.runtime.BukkitRuntimeErrorConsumer
  */
 public interface RuntimeErrorConsumer {
 

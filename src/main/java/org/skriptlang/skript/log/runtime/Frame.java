@@ -43,6 +43,10 @@ public final class Frame {
 	private final Map<Location, Integer> lineSkipped;
 	private final Map<Location, Integer> timeouts;
 
+	/**
+	 * Creates a blank frame with the given limits
+	 * @param limits The limits to use for when to skip or timeout.
+	 */
 	public Frame(FrameLimit limits) {
 		this.limits = limits;
 		lineTotals = new ConcurrentHashMap<>();
@@ -50,6 +54,11 @@ public final class Frame {
 		timeouts = new ConcurrentHashMap<>();
 	}
 
+	/**
+	 * Adds an error to this frame.
+	 * @param error The error to add.
+	 * @return Whether the error should be printed immediately.
+	 */
 	public boolean add(@NotNull RuntimeError error) {
 		Location location = error.source().location();
 		// increment counter
@@ -74,6 +83,9 @@ public final class Frame {
 		}
 	}
 
+	/**
+	 * Advances the frame to the next frame, clearing all stored totals and decrementing timeout counters.
+	 */
 	public void nextFrame() {
 		printed = 0;
 		lineTotals.clear();
@@ -88,8 +100,13 @@ public final class Frame {
 		}
 	}
 
+	/**
+	 * Gets the output data for a frame.
+	 * Returned data contains unmodifiable views of frame data, which is not guaranteed to stay valid.
+	 * @return The current output data of this frame.
+	 */
 	@Contract(" -> new")
-	public @NotNull FrameOutput printFrame() {
+	public @NotNull FrameOutput getFrameOutput() {
 		Set<Location> newTimeouts = new HashSet<>();
 		for (Map.Entry<Location, Integer> entry : timeouts.entrySet()) {
 			if (entry.getValue() == limits.timeoutDuration) {

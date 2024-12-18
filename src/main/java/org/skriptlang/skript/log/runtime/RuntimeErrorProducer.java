@@ -1,11 +1,9 @@
 package org.skriptlang.skript.log.runtime;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.config.Node;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.SyntaxElement;
-import ch.njol.skript.lang.parser.ParserInstance;
 import ch.njol.util.Kleenean;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -15,32 +13,17 @@ import java.util.logging.Level;
 
 /**
  * A RuntimeErrorProducer can throw runtime errors in a standardized and controlled manner.
- * Only {@link SyntaxElement}s are intended to implement this interface.
  */
 public interface RuntimeErrorProducer {
 
-	// todo: try/catch, suppression when annotations are added
-
 	/**
-	 * Returns the source {@link Node} for any errors the implementing class emits.
-	 * <br>
-	 * Used for accessing the line contents via {@link Node#getKey()}
-	 * and the line number via {@link Node#getLine()}.
-	 * <br>
-	 * A standard implementation is to store the Node during
-	 * {@link SyntaxElement#init(Expression[], int, Kleenean, SkriptParser.ParseResult)}
-	 * via {@link ParserInstance#getNode()}.
-	 * @return The source that produced a runtime error.
-	 */
-	Node getNode();
-
-	/**
-	 * @return A source composed of the implementing {@link SyntaxElement} and the result of {@link #getNode()}
+	 * Gets the source of the errors produced by the implementing class.
+	 * Most extending interfaces should provide a default implementation of this method for ease of use.
+	 * @see SyntaxRuntimeErrorProducer
+	 * @return The source of the error.
 	 */
 	@Contract(" -> new")
-	private @NotNull ErrorSource getErrorSource() {
-		return ErrorSource.fromNodeAndElement(getNode(), (SyntaxElement) this);
-	}
+	@NotNull ErrorSource getErrorSource();
 
 	/**
 	 * Gets the text that should be underlined within the line contents. This should match the text the user wrote that
@@ -83,7 +66,7 @@ public interface RuntimeErrorProducer {
 	 * @param message The text to display as the error message.
 	 */
 	default void warning(String message) {
-		Skript.getRuntimeErrorManager().warning(
+		Skript.getRuntimeErrorManager().error(
 			new RuntimeError(Level.WARNING, getErrorSource(), message, toHighlight())
 		);
 	}

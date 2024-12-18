@@ -4,6 +4,7 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptConfig;
 import ch.njol.skript.util.Task;
 import ch.njol.skript.util.Timespan;
+import org.jetbrains.annotations.NotNull;
 import org.skriptlang.skript.log.runtime.Frame.FrameLimit;
 
 import java.io.Closeable;
@@ -12,7 +13,16 @@ import java.util.List;
 import java.util.logging.Level;
 
 /**
- * Handles duplicate and spammed runtime errors.
+ * Handles passing runtime errors between producers and consumers via a frame collection system.
+ * <br>
+ * The manager should be treated as a singleton and accessed via {@link #getInstance()}
+ * or {@link Skript#getRuntimeErrorManager()}. Changing the frame length or limits requires edits to the
+ * {@link SkriptConfig} values and a call to {@link #refresh()}. Reloading the config will automatically
+ * call {@link #refresh()}.
+ *
+ * @see RuntimeErrorConsumer
+ * @see RuntimeErrorProducer
+ * @see Frame
  */
 public class RuntimeErrorManager implements Closeable {
 
@@ -24,6 +34,7 @@ public class RuntimeErrorManager implements Closeable {
 
 	/**
 	 * Refreshes the runtime error manager for Skript, pulling from the config values.
+	 * Tracked consumers are maintained during refreshes.
 	 */
 	public static void refresh() {
 
@@ -70,43 +81,59 @@ public class RuntimeErrorManager implements Closeable {
 		task = new Task(Skript.getInstance(), frameLength, frameLength, true) {
 			@Override
 			public void run() {
-				consumers.forEach(consumer -> consumer.printFrameOutput(errorFrame.printFrame(), Level.SEVERE));
+				consumers.forEach(consumer -> consumer.printFrameOutput(errorFrame.getFrameOutput(), Level.SEVERE));
 				errorFrame.nextFrame();
 
-				consumers.forEach(consumer -> consumer.printFrameOutput(warningFrame.printFrame(), Level.WARNING));
+				consumers.forEach(consumer -> consumer.printFrameOutput(warningFrame.getFrameOutput(), Level.WARNING));
 				warningFrame.nextFrame();
 			}
 		};
 	}
 
-	public void error(RuntimeError error) {
+	/**
+	 * Emits a warning or error depending on severity. Errors are passed to their respective {@link Frame}s for processing.
+	 * @param error The error to emit.
+	 */
+	public void error(@NotNull RuntimeError error) {
 		// print if < limit
-		if (errorFrame.add(error)) {
+		if (error.level() == Level.SEVERE && errorFrame.add(error)) {
+			consumers.forEach((consumer -> consumer.printError(error)));
+		}
+
+		if (error.level() == Level.WARNING && warningFrame.add(error)) {
 			consumers.forEach((consumer -> consumer.printError(error)));
 		}
 	}
 
-	public void warning(RuntimeError error){
-		// print if < limit
-		if (warningFrame.add(error)) {
-			consumers.forEach((consumer -> consumer.printError(error)));
-		}
-	}
-
+	/**
+	 * @return The frame containing emitted errors.
+	 */
 	public Frame getErrorFrame() {
 		return errorFrame;
 	}
 
+	/**
+	 * @return The frame containing emitted warnings.
+	 */
 	public Frame getWarningFrame() {
 		return warningFrame;
 	}
 
+	/**
+	 * Adds a {@link RuntimeErrorConsumer} that will receive the emitted errors and frame output data.
+	 * Consumers will be maintained when the manager is refreshed.
+	 * @param consumer The consumer to add.
+	 */
 	public void addConsumer(RuntimeErrorConsumer consumer) {
 		synchronized (consumers) {
 			consumers.add(consumer);
 		}
 	}
 
+	/**
+	 * Removes a {@link RuntimeErrorConsumer} from the tracked list.
+	 * @param consumer The consumer to remove.
+	 */
 	public void removeConsumer(RuntimeErrorConsumer consumer) {
 		synchronized (consumers) {
 			consumers.remove(consumer);
