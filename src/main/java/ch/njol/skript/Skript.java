@@ -102,6 +102,7 @@ import org.skriptlang.skript.bukkit.SkriptMetrics;
 import org.skriptlang.skript.bukkit.breeding.BreedingModule;
 import org.skriptlang.skript.bukkit.displays.DisplayModule;
 import org.skriptlang.skript.bukkit.input.InputModule;
+import org.skriptlang.skript.bukkit.log.runtime.BukkitRuntimeErrorConsumer;
 import org.skriptlang.skript.lang.comparator.Comparator;
 import org.skriptlang.skript.lang.comparator.Comparators;
 import org.skriptlang.skript.lang.converter.Converter;
@@ -512,12 +513,17 @@ public final class Skript extends JavaPlugin implements Listener {
 			}
 		}
 
-		// Register config load events.
-		SkriptConfig.eventRegistry().register(SkriptConfig.ReloadEvent.class, RuntimeErrorManager::refresh);
 
 		// Config must be loaded after Java and Skript classes are parseable
 		// ... but also before platform check, because there is a config option to ignore some errors
 		SkriptConfig.load();
+
+		// Register the runtime error refresh after loading, so we can do the first instantiation manually.
+		SkriptConfig.eventRegistry().register(SkriptConfig.ReloadEvent.class, RuntimeErrorManager::refresh);
+
+		// init runtime error manager and add bukkit consumer.
+		RuntimeErrorManager.refresh();
+		RuntimeErrorManager.getInstance().addConsumer(new BukkitRuntimeErrorConsumer());
 
 		CompletableFuture<Boolean> aliases = Aliases.loadAsync();
 

@@ -3,14 +3,13 @@ package org.skriptlang.skript.log.runtime;
 import ch.njol.skript.config.Node;
 import ch.njol.skript.doc.Name;
 import ch.njol.skript.lang.SyntaxElement;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * A more versatile set of information about the source of an error.
  * Aims to avoid relying specifically on {@link Node}s for information.
- * <br>
- * Hashing is specifically based on line number and script name alone.
  *
  * @param syntaxType A string representing the type of syntax. See {@link SyntaxElement#getSyntaxTypeName()}.
  * @param syntaxName The name of the syntax emitting the error.
@@ -41,9 +40,19 @@ public record ErrorSource(
 		return new ErrorSource(element.getSyntaxTypeName(), elementName, node.getLine(), code, node.getConfig().getFileName());
 	}
 
-	@Override
-	public int hashCode() {
-		return 13 * lineNumber + 17 * script.hashCode();
+	/**
+	 * @return The code location (line number and script name) of the source of the error.
+	 *         Used for hash maps.
+	 */
+	@Contract(" -> new")
+	public @NotNull Location location() {
+		return new Location(script, lineNumber);
 	}
+
+	/**
+	 * A code location (line number and script name).
+	 * Used for hash maps.
+	 */
+	public record Location(String script, int lineNumber) { }
 
 }

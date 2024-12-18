@@ -9,14 +9,12 @@ import org.skriptlang.skript.log.runtime.Frame.FrameLimit;
 import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 
 /**
  * Handles duplicate and spammed runtime errors.
  */
 public class RuntimeErrorManager implements Closeable {
-
-
-	public final static String ERROR_NOTIF_PERMISSION = "skript.see_runtime_errors";
 
 	private static RuntimeErrorManager instance;
 
@@ -67,15 +65,15 @@ public class RuntimeErrorManager implements Closeable {
 	 * @param warningLimits The limits to the warning frame.
 	 */
 	public RuntimeErrorManager(int frameLength, FrameLimit errorLimits, FrameLimit warningLimits) {
-		errorFrame = new Frame("error", errorLimits);
-		warningFrame = new Frame("warning", warningLimits);
+		errorFrame = new Frame(errorLimits);
+		warningFrame = new Frame(warningLimits);
 		task = new Task(Skript.getInstance(), frameLength, frameLength, true) {
 			@Override
 			public void run() {
-				consumers.forEach(consumer -> consumer.printFrameOutput(errorFrame.printFrame()));
+				consumers.forEach(consumer -> consumer.printFrameOutput(errorFrame.printFrame(), Level.SEVERE));
 				errorFrame.nextFrame();
 
-				consumers.forEach(consumer -> consumer.printFrameOutput(warningFrame.printFrame()));
+				consumers.forEach(consumer -> consumer.printFrameOutput(warningFrame.printFrame(), Level.WARNING));
 				warningFrame.nextFrame();
 			}
 		};
@@ -104,11 +102,15 @@ public class RuntimeErrorManager implements Closeable {
 	}
 
 	public void addConsumer(RuntimeErrorConsumer consumer) {
-		consumers.add(consumer);
+		synchronized (consumers) {
+			consumers.add(consumer);
+		}
 	}
 
 	public void removeConsumer(RuntimeErrorConsumer consumer) {
-		consumers.remove(consumer);
+		synchronized (consumers) {
+			consumers.remove(consumer);
+		}
 	}
 
 	@Override
