@@ -8,7 +8,7 @@ import ch.njol.skript.util.LiteralUtils;
 import ch.njol.util.Kleenean;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
-import org.skriptlang.skript.log.runtime.RuntimeErrorProducer;
+import org.skriptlang.skript.log.runtime.SyntaxRuntimeErrorProducer;
 
 /**
  * A base class for property expressions that requires only few overridden methods
@@ -17,7 +17,7 @@ import org.skriptlang.skript.log.runtime.RuntimeErrorProducer;
  * @see PropertyExpression#register(Class, Class, String, String)
  */
 @SuppressWarnings("deprecation") // for backwards compatibility
-public abstract class SimplePropertyExpression<F, T> extends PropertyExpression<F, T> implements Converter<F, T>, RuntimeErrorProducer {
+public abstract class SimplePropertyExpression<F, T> extends PropertyExpression<F, T> implements Converter<F, T>, SyntaxRuntimeErrorProducer {
 
 	private Node node;
 	private String rawExpr;
