@@ -37,7 +37,6 @@ public class RuntimeErrorManager implements Closeable {
 	 * Tracked consumers are maintained during refreshes.
 	 */
 	public static void refresh() {
-
 		long frameLength = SkriptConfig.runtimeErrorFrameDuration.value().getAs(Timespan.TimePeriod.TICK);
 
 		int errorLimit = SkriptConfig.runtimeErrorLimitTotal.value();
