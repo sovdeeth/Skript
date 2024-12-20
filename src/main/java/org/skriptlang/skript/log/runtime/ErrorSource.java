@@ -36,7 +36,7 @@ public record ErrorSource(
 		if (node == null) {
 			return new ErrorSource(element.getSyntaxTypeName(), elementName, 0, "-unknown-", "-effect command-");
 		}
-		String code = node.save().trim().replaceAll("§", "&");
+		String code = node.save().trim();
 		return new ErrorSource(element.getSyntaxTypeName(), elementName, node.getLine(), code, node.getConfig().getFileName());
 	}
 

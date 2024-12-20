@@ -51,7 +51,7 @@ public interface RuntimeErrorProducer {
 	 * @param message The text to display as the error message.
 	 */
 	default void error(String message) {
-		Skript.getRuntimeErrorManager().error(
+		getRuntimeErrorManager().error(
 			new RuntimeError(Level.SEVERE, getErrorSource(), message, toHighlight())
 		);
 	}
@@ -66,9 +66,16 @@ public interface RuntimeErrorProducer {
 	 * @param message The text to display as the error message.
 	 */
 	default void warning(String message) {
-		Skript.getRuntimeErrorManager().error(
+		getRuntimeErrorManager().error(
 			new RuntimeError(Level.WARNING, getErrorSource(), message, toHighlight())
 		);
+	}
+
+	/**
+	 * @return The manager this producer will send errors to.
+	 */
+	default RuntimeErrorManager getRuntimeErrorManager() {
+		return Skript.getRuntimeErrorManager();
 	}
 
 }

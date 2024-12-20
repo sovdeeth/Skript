@@ -25,40 +25,49 @@ public class BukkitRuntimeErrorConsumer implements RuntimeErrorConsumer {
 
 	public final static String ERROR_NOTIF_PERMISSION = "skript.see_runtime_errors";
 
-	public static final ArgsMessage ERROR_SKIPPED = new ArgsMessage(RuntimeError.CONFIG_NODE + ".errors skipped");
-	public static final ArgsMessage ERROR_TIMEOUT = new ArgsMessage(RuntimeError.CONFIG_NODE + ".errors timed out");
-	public static final ArgsMessage ERROR_NOTIF = new ArgsMessage(RuntimeError.CONFIG_NODE + ".error notification");
-	public static final ArgsMessage ERROR_NOTIF_PLURAL = new ArgsMessage(RuntimeError.CONFIG_NODE + ".error notification plural");
+	public static final String CONFIG_NODE = "log.runtime";
+	public static final ArgsMessage WARNING_DETAILS = new ArgsMessage("skript command.reload.warning details");
+	public static final ArgsMessage ERROR_DETAILS = new ArgsMessage( "skript command.reload.error details");
+	public static final ArgsMessage OTHER_DETAILS = new ArgsMessage("skript command.reload.other details");
 
-	public static final ArgsMessage WARNING_SKIPPED = new ArgsMessage(RuntimeError.CONFIG_NODE + ".warnings skipped");
-	public static final ArgsMessage WARNING_TIMEOUT = new ArgsMessage(RuntimeError.CONFIG_NODE + ".warnings timed out");
-	public static final ArgsMessage WARNING_NOTIF = new ArgsMessage(RuntimeError.CONFIG_NODE + ".warning notification");
-	public static final ArgsMessage WARNING_NOTIF_PLURAL = new ArgsMessage(RuntimeError.CONFIG_NODE + ".warning notification plural");
+	public static final ArgsMessage ERROR_INFO = new ArgsMessage(CONFIG_NODE + ".error");
+	public static final ArgsMessage WARNING_INFO = new ArgsMessage(CONFIG_NODE + ".warning");
+	public static final ArgsMessage LINE_INFO = new ArgsMessage(CONFIG_NODE + ".line info");
+
+	public static final ArgsMessage ERROR_SKIPPED = new ArgsMessage(CONFIG_NODE + ".errors skipped");
+	public static final ArgsMessage ERROR_TIMEOUT = new ArgsMessage(CONFIG_NODE + ".errors timed out");
+	public static final ArgsMessage ERROR_NOTIF = new ArgsMessage(CONFIG_NODE + ".error notification");
+	public static final ArgsMessage ERROR_NOTIF_PLURAL = new ArgsMessage(CONFIG_NODE + ".error notification plural");
+
+	public static final ArgsMessage WARNING_SKIPPED = new ArgsMessage(CONFIG_NODE + ".warnings skipped");
+	public static final ArgsMessage WARNING_TIMEOUT = new ArgsMessage(CONFIG_NODE + ".warnings timed out");
+	public static final ArgsMessage WARNING_NOTIF = new ArgsMessage(CONFIG_NODE + ".warning notification");
+	public static final ArgsMessage WARNING_NOTIF_PLURAL = new ArgsMessage(CONFIG_NODE + ".warning notification plural");
 
 	@Override
 	public void printError(@NotNull RuntimeError error) {
 		ArgsMessage details;
 		ArgsMessage info;
 		if (error.level().intValue() == Level.WARNING.intValue()) { // warnings
-			details = RuntimeError.WARNING_DETAILS;
-			info = RuntimeError.WARNING_INFO;
+			details = WARNING_DETAILS;
+			info = WARNING_INFO;
 		} else if (error.level().intValue() == Level.SEVERE.intValue()) { // errors
-			details = RuntimeError.ERROR_DETAILS;
-			info = RuntimeError.ERROR_INFO;
+			details = ERROR_DETAILS;
+			info = ERROR_INFO;
 		} else { // anything else
-			details = RuntimeError.OTHER_DETAILS;
-			info = RuntimeError.WARNING_INFO;
+			details = OTHER_DETAILS;
+			info = WARNING_INFO;
 		}
 
 		String skriptInfo = replaceNewline(Utils.replaceEnglishChatStyles(info.getValue() == null ? info.key : info.getValue()));
 		String errorInfo = replaceNewline(Utils.replaceEnglishChatStyles(details.getValue() == null ? details.key : details.getValue()));
 		String lineInfo = replaceNewline(Utils.replaceEnglishChatStyles(
-				RuntimeError.LINE_INFO.getValue() == null ? RuntimeError.LINE_INFO.key : RuntimeError.LINE_INFO.getValue()));
+				LINE_INFO.getValue() == null ? LINE_INFO.key : LINE_INFO.getValue()));
 
 		ErrorSource source = error.source();
 		String code = source.lineText();
 		if (error.toHighlight() != null && !error.toHighlight().isEmpty())
-			code = code.replace(error.toHighlight(), "§f§n" + error.toHighlight() + "§7");
+			code = code.replace("§", "&").replace(error.toHighlight(), "§f§n" + error.toHighlight() + "§7");
 
 		SkriptLogger.sendFormatted(Bukkit.getConsoleSender(),
 				String.format(skriptInfo, source.script(), source.syntaxName(), source.syntaxType()) +
