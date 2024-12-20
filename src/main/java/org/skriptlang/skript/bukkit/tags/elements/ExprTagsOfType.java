@@ -13,6 +13,7 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
 import org.bukkit.Keyed;
+import org.bukkit.NamespacedKey;
 import org.bukkit.Tag;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
@@ -64,7 +65,7 @@ public class ExprTagsOfType extends SimpleExpression<Tag> {
 		Set<Tag<?>> tags = new TreeSet<>(Comparator.comparing(Keyed::key));
 		for (TagType<?> type : types) {
 			for (Tag<?> tag : TagModule.tagRegistry.getMatchingTags(origin, type,
-				tag -> (origin != TagOrigin.BUKKIT || (datapackOnly ^ tag.getKey().getNamespace().equals("minecraft"))))
+				tag -> (origin != TagOrigin.BUKKIT || (datapackOnly ^ tag.getKey().getNamespace().equals(NamespacedKey.MINECRAFT))))
 			) {
 				tags.add(tag);
 			}

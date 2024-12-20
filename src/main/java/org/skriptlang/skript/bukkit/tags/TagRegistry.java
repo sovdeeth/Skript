@@ -41,15 +41,39 @@ public class TagRegistry {
 
 		if (TagModule.PAPER_TAGS_EXIST) {
 			try {
-				List<Tag<Material>> materialTags = new ArrayList<>();
+				List<Tag<Material>> itemTags = new ArrayList<>();
+				List<Tag<Material>> blockTags = new ArrayList<>();
+				List<Tag<Material>> blockAndItemTag = new ArrayList<>();
 				for (Field field : MaterialTags.class.getDeclaredFields()) {
-					if (field.canAccess(null))
+					if (field.canAccess(null)) {
 						//noinspection unchecked
-						materialTags.add((Tag<Material>) field.get(null));
+						Tag<Material> tag = (Tag<Material>) field.get(null);
+						boolean hasItem = false;
+						boolean hasBlock = false;
+						for (Material material : tag.getValues()) {
+							if (!hasBlock && material.isBlock()) {
+								blockTags.add(tag);
+								hasBlock = true;
+							}
+							if (!hasItem && material.isItem()) {
+								itemTags.add(tag);
+								hasItem = true;
+							}
+							if (hasItem && hasBlock) {
+								blockAndItemTag.add(tag);
+								break;
+							}
+						}
+					}
 				}
-				PaperTagSource<Material> paperMaterialTags = new PaperTagSource<>(materialTags, TagType.BLOCKS, TagType.ITEMS);
+				PaperTagSource<Material> paperMaterialTags = new PaperTagSource<>(blockAndItemTag, TagType.BLOCKS, TagType.ITEMS);
+				PaperTagSource<Material> paperItemTags = new PaperTagSource<>(itemTags, TagType.ITEMS);
+				PaperTagSource<Material> paperBlockTags = new PaperTagSource<>(blockTags, TagType.BLOCKS);
 				tagSourceMap.put(TagType.BLOCKS, paperMaterialTags);
 				tagSourceMap.put(TagType.ITEMS, paperMaterialTags);
+
+				tagSourceMap.put(TagType.BLOCKS, paperBlockTags);
+				tagSourceMap.put(TagType.ITEMS, paperItemTags);
 
 				List<Tag<EntityType>> entityTags = new ArrayList<>();
 				for (Field field : EntityTags.class.getDeclaredFields()) {
@@ -63,9 +87,9 @@ public class TagRegistry {
 		}
 
 		SkriptTagSource.makeDefaultSources();
-		tagSourceMap.put(TagType.ITEMS, SkriptTagSource.ITEMS);
-		tagSourceMap.put(TagType.BLOCKS, SkriptTagSource.BLOCKS);
-		tagSourceMap.put(TagType.ENTITIES, SkriptTagSource.ENTITIES);
+		tagSourceMap.put(TagType.ITEMS, SkriptTagSource.ITEMS());
+		tagSourceMap.put(TagType.BLOCKS, SkriptTagSource.BLOCKS());
+		tagSourceMap.put(TagType.ENTITIES, SkriptTagSource.ENTITIES());
 	}
 
 	/**
@@ -168,6 +192,7 @@ public class TagRegistry {
 	 * A MultiMap that maps TagTypes to multiple TagSources, matching generics.
 	 */
 	private static class TagSourceMap {
+
 		private final ArrayListMultimap<TagType<?>, TagSource<?>> map = ArrayListMultimap.create();
 
 		public <T extends Keyed> void put(TagType<T> key, TagSource<T> value) {
@@ -187,6 +212,7 @@ public class TagRegistry {
 		public <T extends Keyed> boolean containsKey(TagType<T> type) {
 			return map.containsKey(type);
 		}
+
 	}
 
 }

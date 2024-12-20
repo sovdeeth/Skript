@@ -9,9 +9,9 @@ import org.skriptlang.skript.bukkit.tags.TagType;
 
 public final class SkriptTagSource<T extends Keyed> extends CustomTagSource<T> {
 
-	public static SkriptTagSource<Material> ITEMS;
-	public static SkriptTagSource<Material> BLOCKS;
-	public static SkriptTagSource<EntityType> ENTITIES;
+	private static SkriptTagSource<Material> ITEMS;
+	private static SkriptTagSource<Material> BLOCKS;
+	private static SkriptTagSource<EntityType> ENTITIES;
 
 	public static void makeDefaultSources() {
 		ITEMS = new SkriptTagSource<>(TagType.ITEMS);
@@ -29,6 +29,27 @@ public final class SkriptTagSource<T extends Keyed> extends CustomTagSource<T> {
 
 	public void addTag(Tag<T> tag) {
 		tags.put(tag.getKey(), tag);
+	}
+
+	/**
+	 * @return Skript tag source for item contexts
+	 */
+	public static SkriptTagSource<Material> ITEMS() {
+		return ITEMS;
+	}
+
+	/**
+	 * @return Skript tag source for block contexts
+	 */
+	public static SkriptTagSource<Material> BLOCKS() {
+		return BLOCKS;
+	}
+
+	/**
+	 * @return Skript tag source for entities
+	 */
+	public static SkriptTagSource<EntityType> ENTITIES() {
+		return ENTITIES;
 	}
 
 }

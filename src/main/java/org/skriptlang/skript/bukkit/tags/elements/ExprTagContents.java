@@ -98,7 +98,7 @@ public class ExprTagContents extends SimpleExpression<Object> {
 
 	@Override
 	public String toString(@Nullable Event event, boolean debug) {
-		return "tag contents of " + tag.toString(event, debug);
+		return "the tag contents of " + tag.toString(event, debug);
 	}
 
 }

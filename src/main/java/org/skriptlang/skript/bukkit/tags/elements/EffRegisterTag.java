@@ -109,14 +109,14 @@ public class EffRegisterTag extends Effect {
 		if (this.type.type() == Material.class) {
 			Tag<Material> tag = getMaterialTag(key, contents);
 			if (this.type == TagType.ITEMS) {
-				SkriptTagSource.ITEMS.addTag(tag);
+				SkriptTagSource.ITEMS().addTag(tag);
 			} else if (this.type == TagType.BLOCKS) {
-				SkriptTagSource.BLOCKS.addTag(tag);
+				SkriptTagSource.BLOCKS().addTag(tag);
 			}
 
 		} else if (this.type.type() == EntityType.class) {
 			Tag<EntityType> tag = getEntityTag(key, contents);
-			SkriptTagSource.ENTITIES.addTag(tag);
+			SkriptTagSource.ENTITIES().addTag(tag);
 		}
 	}
 

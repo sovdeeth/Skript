@@ -25,7 +25,7 @@ import java.util.List;
  */
 public class TagType<T extends Keyed> {
 
-	private static final List<TagType<?>> REGISTERED_TAG_TYPES = new ArrayList<>();
+	private static final List<TagType<?>> REGISTERED_TAG_TYPES = Collections.synchronizedList(new ArrayList<>());
 
 	public static final TagType<Material> ITEMS = new TagType<>("item", Material.class);
 	public static final TagType<Material> BLOCKS = new TagType<>("block", Material.class);
