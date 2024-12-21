@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
 import org.skriptlang.skript.lang.converter.Converters;
 
+import java.lang.reflect.Array;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -53,8 +54,8 @@ public class ExprTransform extends SimpleExpression<Object> implements InputSour
 
 	static {
 		Skript.registerExpression(ExprTransform.class, Object.class, ExpressionType.PATTERN_MATCHES_EVERYTHING,
-				"%~objects% (transformed|mapped) (using|with) \\[<.+>\\]",
-				"%~objects% (transformed|mapped) (using|with) \\(<.+>\\)"
+				"%objects% (transformed|mapped) (using|with) \\[<.+>\\]",
+				"%objects% (transformed|mapped) (using|with) \\(<.+>\\)"
 			);
 		if (!ParserInstance.isRegistered(InputData.class))
 			ParserInstance.registerData(InputData.class, InputData::new);
@@ -88,8 +89,8 @@ public class ExprTransform extends SimpleExpression<Object> implements InputSour
 
 	@Override
 	public @NotNull Iterator<?> iterator(Event event) {
-		if (unmappedObjects instanceof Variable<?>) {
-			Iterator<Pair<String, Object>> variableIterator = ((Variable<?>) unmappedObjects).variablesIterator(event);
+		if (unmappedObjects instanceof Variable<?> variable) {
+			Iterator<Pair<String, Object>> variableIterator = variable.variablesIterator(event);
 			return StreamSupport.stream(Spliterators.spliteratorUnknownSize(variableIterator, Spliterator.ORDERED), false)
 				.flatMap(pair -> {
 					currentValue = pair.getValue();
@@ -115,7 +116,7 @@ public class ExprTransform extends SimpleExpression<Object> implements InputSour
 		try {
 			return Converters.convertStrictly(Iterators.toArray(iterator(event), Object.class), getReturnType());
 		} catch (ClassCastException e1) {
-			return null;
+			return (Object[]) Array.newInstance(getReturnType(), 0);
 		}
 	}
 
