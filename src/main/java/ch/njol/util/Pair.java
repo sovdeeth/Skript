@@ -89,7 +89,6 @@ public class Pair<T1, T2> implements Entry<T1, T2>, Cloneable, Serializable {
 	}
 	
 	@Override
-
 	public @UnknownNullability T2 setValue(@Nullable T2 value) {
 		T2 old = second;
 		second = value;
