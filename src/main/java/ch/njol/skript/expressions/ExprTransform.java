@@ -107,7 +107,10 @@ public class ExprTransform extends SimpleExpression<Object> implements InputSour
 		if (unfilteredObjectIterator == null)
 			return Collections.emptyIterator();
 		return StreamSupport.stream(Spliterators.spliteratorUnknownSize(unfilteredObjectIterator, Spliterator.ORDERED), false)
-			.flatMap(value -> mappingExpr.stream(event))
+			.flatMap(value -> {
+				currentValue = value;
+				return mappingExpr.stream(event);
+			})
 			.iterator();
 	}
 
