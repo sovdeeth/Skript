@@ -42,7 +42,7 @@ public class ClassInfo<T> implements Debuggable {
 	@Nullable
 	private Cloner<T> cloner = null;
 
-	private Pattern @Nullable [] userInputPatterns = null;
+	Pattern @Nullable [] userInputPatterns = null;
   
 	@Nullable
 	private Changer<? super T> changer = null;
