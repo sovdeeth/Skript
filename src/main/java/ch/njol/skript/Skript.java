@@ -36,7 +36,6 @@ import ch.njol.util.coll.iterator.CheckedIterator;
 import ch.njol.util.coll.iterator.EnumerationIterable;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
-
 import com.google.gson.GsonBuilder;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.*;
@@ -55,22 +54,22 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
+import org.jetbrains.annotations.Unmodifiable;
 import org.junit.After;
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Result;
-import org.skriptlang.skript.bukkit.registration.BukkitRegistryKeys;
-import org.skriptlang.skript.bukkit.registration.BukkitSyntaxInfos;
 import org.junit.runner.notification.Failure;
 import org.skriptlang.skript.bukkit.SkriptMetrics;
 import org.skriptlang.skript.bukkit.breeding.BreedingModule;
 import org.skriptlang.skript.bukkit.displays.DisplayModule;
-import org.skriptlang.skript.bukkit.furnace.FurnaceModule;
 import org.skriptlang.skript.bukkit.fishing.FishingModule;
+import org.skriptlang.skript.bukkit.furnace.FurnaceModule;
 import org.skriptlang.skript.bukkit.input.InputModule;
 import org.skriptlang.skript.bukkit.loottables.LootTableModule;
+import org.skriptlang.skript.bukkit.registration.BukkitRegistryKeys;
+import org.skriptlang.skript.bukkit.registration.BukkitSyntaxInfos;
 import org.skriptlang.skript.lang.comparator.Comparator;
 import org.skriptlang.skript.lang.comparator.Comparators;
 import org.skriptlang.skript.lang.converter.Converter;
@@ -80,9 +79,9 @@ import org.skriptlang.skript.lang.experiment.ExperimentRegistry;
 import org.skriptlang.skript.lang.script.Script;
 import org.skriptlang.skript.lang.structure.Structure;
 import org.skriptlang.skript.lang.structure.StructureInfo;
+import org.skriptlang.skript.registration.SyntaxInfo;
 import org.skriptlang.skript.registration.SyntaxOrigin;
 import org.skriptlang.skript.registration.SyntaxRegistry;
-import org.skriptlang.skript.registration.SyntaxInfo;
 
 import java.io.File;
 import java.io.IOException;
@@ -109,7 +108,6 @@ import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
@@ -488,8 +486,6 @@ public final class Skript extends JavaPlugin implements Listener {
 		// ... but also before platform check, because there is a config option to ignore some errors
 		SkriptConfig.load();
 
-		CompletableFuture<Boolean> aliases = Aliases.loadAsync();
-
 		// Now override the verbosity if test mode is enabled
 		if (TestMode.VERBOSITY != null)
 			SkriptLogger.setVerbosity(Verbosity.valueOf(TestMode.VERBOSITY));
@@ -540,6 +536,9 @@ public final class Skript extends JavaPlugin implements Listener {
 			setEnabled(false);
 			return;
 		}
+
+		// todo: remove completely 2.11 or 2.12
+		CompletableFuture<Boolean> aliases = Aliases.loadAsync();
 
 		Commands.registerListeners();
 

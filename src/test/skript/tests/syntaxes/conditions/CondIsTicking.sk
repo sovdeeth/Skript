@@ -1,4 +1,4 @@
-test "is entity ticking":
+test "is entity ticking" when running minecraft "1.20":
 
 	spawn an adult zombie at location(512, 1, 512):
 		add entity to {_z::*}
