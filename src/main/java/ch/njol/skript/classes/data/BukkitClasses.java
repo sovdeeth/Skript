@@ -6,6 +6,7 @@ import ch.njol.skript.aliases.Aliases;
 import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.bukkitutil.BukkitUtils;
 import ch.njol.skript.bukkitutil.EnchantmentUtils;
+import ch.njol.skript.bukkitutil.EntityUtils;
 import ch.njol.skript.bukkitutil.ItemUtils;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.ConfigurationSerializer;
@@ -45,6 +46,7 @@ import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.DoubleChest;
+import org.bukkit.block.banner.PatternType;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.command.CommandSender;
 import org.bukkit.enchantments.Enchantment;
@@ -56,6 +58,7 @@ import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.entity.EntityPotionEffectEvent;
 import org.bukkit.event.entity.EntityRegainHealthEvent.RegainReason;
 import org.bukkit.event.entity.EntityTransformEvent.TransformReason;
+import org.bukkit.event.entity.EntityUnleashEvent;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryCloseEvent;
@@ -1506,6 +1509,12 @@ public class BukkitClasses {
 				.description("Represents a transform reason of an <a href='events.html#entity transform'>entity transform event</a>.")
 				.since("2.8.0"));
 
+		Classes.registerClass(new EnumClassInfo<>(EntityUnleashEvent.UnleashReason.class, "unleashreason", "unleash reasons")
+			.user("unleash ?(reason|cause)s?")
+			.name("Unleash Reason")
+			.description("Represents an unleash reason of an unleash event.")
+			.since("INSERT VERSION"));
+
 		Classes.registerClass(new EnumClassInfo<>(ItemFlag.class, "itemflag", "item flags")
 				.user("item ?flags?")
 				.name("Item Flag")
@@ -1542,6 +1551,19 @@ public class BukkitClasses {
 			.description("Represents a change reason of an <a href='events.html#experience cooldown change event'>experience cooldown change event</a>.")
 			.since("INSERT VERSION"));
 
+		Classes.registerClass(new RegistryClassInfo<>(Villager.Type.class, Registry.VILLAGER_TYPE, "villagertype", "villager types")
+			.user("villager ?types?")
+			.name("Villager Type")
+			.description("Represents the different types of villagers. These are usually the biomes a villager can be from.")
+			.after("biome")
+			.since("INSERT VERSION"));
+
+		Classes.registerClass(new RegistryClassInfo<>(Villager.Profession.class, Registry.VILLAGER_PROFESSION, "villagerprofession", "villager professions")
+			.user("villager ?professions?")
+			.name("Villager Profession")
+			.description("Represents the different professions of villagers.")
+			.since("INSERT VERSION"));
+
 		if (Skript.classExists("org.bukkit.entity.EntitySnapshot")) {
 			Classes.registerClass(new ClassInfo<>(EntitySnapshot.class, "entitysnapshot")
 				.user("entity ?snapshots?")
@@ -1552,8 +1574,58 @@ public class BukkitClasses {
 					"Individual attributes of a snapshot cannot be modified or retrieved.")
 				.requiredPlugins("Minecraft 1.20.2+")
 				.since("INSERT VERSION")
+				.parser(new Parser<>() {
+					@Override
+					public boolean canParse(ParseContext context) {
+						return false;
+					}
+
+					@Override
+					public String toString(EntitySnapshot snapshot, int flags) {
+						return EntityUtils.toSkriptEntityData(snapshot.getEntityType()).toString() + " snapshot";
+					}
+
+					@Override
+					public String toVariableNameString(EntitySnapshot snapshot) {
+						return toString(snapshot, 0);
+					}
+				})
 			);
 		}
+
+		Classes.registerClass(new ClassInfo<>(org.bukkit.block.banner.Pattern.class, "bannerpattern")
+			.user("banner ?patterns?")
+			.name("Banner Pattern")
+			.description("Represents a banner pattern.")
+			.since("INSERT VERSION")
+		);
+
+		ClassInfo<?> patternTypeInfo;
+		Registry<PatternType> patternRegistry = Bukkit.getRegistry(PatternType.class);
+		if (patternRegistry != null) {
+			patternTypeInfo = new RegistryClassInfo<>(PatternType.class, patternRegistry, "bannerpatterntype", "banner pattern types");
+		} else {
+			try {
+				Class<?> patternClass = Class.forName("org.bukkit.block.banner.PatternType");
+				if (patternClass.isEnum()) {
+					//noinspection unchecked,rawtypes
+					Class<? extends Enum> enumClass = (Class<? extends Enum>) patternClass;
+					//noinspection rawtypes,unchecked
+					patternTypeInfo = new EnumClassInfo<>(enumClass, "bannerpatterntype", "banner pattern types");
+				} else {
+					throw new IllegalStateException("PatternType is neither an enum nor a valid registry.");
+				}
+			} catch (ClassNotFoundException e) {
+				throw new RuntimeException(e);
+			}
+		}
+		Classes.registerClass(patternTypeInfo
+			.user("banner ?pattern ?types?")
+			.name("Banner Pattern Type")
+			.description("Represents the various banner patterns that can be applied to a banner.")
+			.since("INSERT VERSION")
+		);
+
 	}
 
 }
