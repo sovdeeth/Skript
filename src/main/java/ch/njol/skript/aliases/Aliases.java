@@ -59,12 +59,8 @@ public abstract class Aliases {
 	private static final boolean noHardExceptions = SkriptConfig.apiSoftExceptions.value();
 	static String itemSingular = "item";
 	static String itemPlural = "items";
-	@Nullable
-	static String itemGender = null;
 	static String blockSingular = "block";
 	static String blockPlural = "blocks";
-	@Nullable
-	static String blockGender = null;
 
 	static {
 		everything.setAll(true);
@@ -347,10 +343,10 @@ public abstract class Aliases {
 				itemType = itemType.clone();
 				// remove all non-item datas
 				for (int j = 0; j < itemType.numTypes(); j++) {
-					ItemData itemData = itemType.getTypes().get(j);
-					if (!itemData.isAnything && !itemData.getType().isItem()) {
-						itemType.remove(itemData);
-						j--;
+					ItemData data = itemType.getTypes().get(j);
+					if (!data.isAnything && !data.getType().isItem()) {
+						itemType.remove(data);
+						--j;
 					}
 				}
 				// if no item itemdatas were found, return null
