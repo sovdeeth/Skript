@@ -347,9 +347,9 @@ public abstract class Aliases {
 				itemType = itemType.clone();
 				// remove all non-item datas
 				for (int j = 0; j < itemType.numTypes(); j++) {
-					final ItemData d = itemType.getTypes().get(j);
-					if (!d.isAnything && !d.getType().isItem()) {
-						itemType.remove(d);
+					ItemData itemData = itemType.getTypes().get(j);
+					if (!itemData.isAnything && !itemData.getType().isItem()) {
+						itemType.remove(itemData);
 						j--;
 					}
 				}
