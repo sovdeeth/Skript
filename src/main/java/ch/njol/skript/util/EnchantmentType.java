@@ -4,6 +4,7 @@ import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.Parser;
 import ch.njol.skript.lang.ParseContext;
+import ch.njol.skript.lang.util.common.AnyTyped;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.yggdrasil.YggdrasilSerializable;
 import org.bukkit.enchantments.Enchantment;
@@ -14,7 +15,7 @@ import java.util.regex.Pattern;
 /**
  * @author Peter Güttinger
  */
-public class EnchantmentType implements YggdrasilSerializable {
+public class EnchantmentType implements AnyTyped<Enchantment>, YggdrasilSerializable {
 
 	private static @Nullable Parser<Enchantment> ENCHANTMENT_PARSER = null;
 	private final Enchantment type;
@@ -58,6 +59,11 @@ public class EnchantmentType implements YggdrasilSerializable {
 	@Nullable
 	public Enchantment getType() {
 		return type;
+	}
+
+	@Override
+	public @Nullable Enchantment type() {
+		return getType();
 	}
 
 	/**

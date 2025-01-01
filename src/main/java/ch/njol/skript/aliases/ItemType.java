@@ -6,6 +6,7 @@ import ch.njol.skript.bukkitutil.ItemUtils;
 import ch.njol.skript.lang.Unit;
 import ch.njol.skript.lang.util.common.AnyAmount;
 import ch.njol.skript.lang.util.common.AnyNamed;
+import ch.njol.skript.lang.util.common.AnyTyped;
 import ch.njol.skript.localization.Adjective;
 import ch.njol.skript.localization.GeneralWords;
 import ch.njol.skript.localization.Language;
@@ -37,8 +38,10 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnknownNullability;
 
 import java.io.NotSerializableException;
 import java.io.StreamCorruptedException;
@@ -59,7 +62,7 @@ import java.util.stream.Collectors;
 
 @ContainerType(ItemStack.class)
 public class ItemType implements Unit, Iterable<ItemData>, Container<ItemStack>, YggdrasilExtendedSerializable,
-	AnyNamed, AnyAmount {
+	AnyNamed, AnyAmount, AnyTyped<ItemType> {
 
 	static {
 		// This handles updating ItemType and ItemData variable records
@@ -1446,6 +1449,16 @@ public class ItemType implements Unit, Iterable<ItemData>, Container<ItemStack>,
 			copy.add_(data.aliasCopy());
 		}
 		return copy;
+	}
+
+	/**
+	 * Used for AnyTyped. Do not use directly. Use {@link #getBaseType()} instead.
+	 * @return Base item type.
+	 */
+	@Override
+	@ApiStatus.Internal
+	public @UnknownNullability ItemType type() {
+		return getBaseType();
 	}
 
 	@Override

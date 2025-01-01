@@ -1,51 +1,37 @@
 package ch.njol.skript.classes.data;
 
-import ch.njol.skript.classes.*;
-import ch.njol.skript.lang.util.common.AnyAmount;
-import ch.njol.skript.lang.util.common.AnyContains;
-import ch.njol.skript.lang.util.common.AnyNamed;
-import org.bukkit.Material;
-import org.bukkit.enchantments.Enchantment;
-import org.bukkit.inventory.ItemStack;
-import org.jetbrains.annotations.Nullable;
-
 import ch.njol.skript.Skript;
 import ch.njol.skript.aliases.Aliases;
 import ch.njol.skript.aliases.ItemData;
 import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.bukkitutil.EnchantmentUtils;
 import ch.njol.skript.bukkitutil.ItemUtils;
+import ch.njol.skript.classes.*;
 import ch.njol.skript.expressions.base.EventValueExpression;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.lang.util.SimpleLiteral;
+import ch.njol.skript.lang.util.common.AnyAmount;
+import ch.njol.skript.lang.util.common.AnyContains;
+import ch.njol.skript.lang.util.common.AnyNamed;
+import ch.njol.skript.lang.util.common.AnyTyped;
 import ch.njol.skript.localization.Noun;
 import ch.njol.skript.localization.RegexMessage;
 import ch.njol.skript.registrations.Classes;
-import ch.njol.skript.util.Color;
-import ch.njol.skript.util.ColorRGB;
-import ch.njol.skript.util.Date;
-import ch.njol.skript.util.Direction;
-import ch.njol.skript.util.EnchantmentType;
-import ch.njol.skript.util.Experience;
-import ch.njol.skript.util.GameruleValue;
-import ch.njol.skript.util.SkriptColor;
-import ch.njol.skript.util.StructureType;
-import ch.njol.skript.util.Time;
-import ch.njol.skript.util.Timeperiod;
-import ch.njol.skript.util.Timespan;
-import ch.njol.skript.util.Utils;
-import ch.njol.skript.util.WeatherType;
+import ch.njol.skript.util.*;
 import ch.njol.skript.util.slot.Slot;
 import ch.njol.skript.util.visual.VisualEffect;
 import ch.njol.skript.util.visual.VisualEffects;
 import ch.njol.yggdrasil.Fields;
+import org.bukkit.Material;
+import org.bukkit.enchantments.Enchantment;
+import org.bukkit.inventory.ItemStack;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.NotSerializableException;
 import java.io.StreamCorruptedException;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.regex.Pattern;
-import java.util.Arrays;
 
 @SuppressWarnings("rawtypes")
 public class SkriptClasses {
@@ -723,6 +709,14 @@ public class SkriptClasses {
 				.usage("")
 				.examples("{a} contains {b}")
 				.since("INSERT VERSION")
+		);
+
+		Classes.registerClass(new AnyInfo<>(AnyTyped.class, "typed")
+			.name("Anything with a Type")
+			.description("Something that has a specific type.")
+			.usage("")
+			.examples("type of {a}")
+			.since("INSERT VERSION")
 		);
 	}
 

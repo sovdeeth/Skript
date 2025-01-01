@@ -9,12 +9,14 @@ import ch.njol.skript.entity.EntityType;
 import ch.njol.skript.entity.XpOrbData;
 import ch.njol.skript.lang.util.common.AnyAmount;
 import ch.njol.skript.lang.util.common.AnyNamed;
+import ch.njol.skript.lang.util.common.AnyTyped;
 import ch.njol.skript.util.*;
 import ch.njol.skript.util.slot.Slot;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.DoubleChest;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.command.BlockCommandSender;
 import org.bukkit.command.CommandSender;
 import org.bukkit.enchantments.Enchantment;
@@ -28,6 +30,7 @@ import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.potion.PotionEffect;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Team;
 import org.bukkit.util.Vector;
@@ -230,6 +233,19 @@ public class DefaultConverters {
 				@Override
 				public void setAmount(Number amount) {
 					item.setAmount(amount != null ? amount.intValue() : 0);
+				}
+			},
+			//</editor-fold>
+			Converter.NO_RIGHT_CHAINING);
+
+		// Anything with a type -> AnyTyped
+		Converters.registerConverter(Inventory.class, AnyTyped.class, inventory -> inventory::getType, Converter.NO_RIGHT_CHAINING);
+		Converters.registerConverter(PotionEffect.class, AnyTyped.class, effect -> effect::getType, Converter.NO_RIGHT_CHAINING);
+		Converters.registerConverter(BlockData.class, AnyTyped.class, //<editor-fold desc="Converter" defaultstate="collapsed">
+			data -> new AnyTyped<ItemType>() {
+				@Override
+				public @UnknownNullability ItemType type() {
+					return new ItemType(data.getMaterial());
 				}
 			},
 			//</editor-fold>

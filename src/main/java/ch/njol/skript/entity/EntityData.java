@@ -9,6 +9,7 @@ import ch.njol.skript.classes.Serializer;
 import ch.njol.skript.lang.*;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleLiteral;
+import ch.njol.skript.lang.util.common.AnyTyped;
 import ch.njol.skript.localization.*;
 import ch.njol.skript.localization.Language.LanguageListenerPriority;
 import ch.njol.skript.registrations.Classes;
@@ -21,7 +22,9 @@ import org.bukkit.*;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnknownNullability;
 
 import java.io.NotSerializableException;
 import java.io.StreamCorruptedException;
@@ -36,7 +39,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("rawtypes")
-public abstract class EntityData<E extends Entity> implements SyntaxElement, YggdrasilExtendedSerializable {// TODO extended horse support, zombie villagers // REMIND unit
+public abstract class EntityData<E extends Entity> implements SyntaxElement, AnyTyped<EntityData>, YggdrasilExtendedSerializable {// TODO extended horse support, zombie villagers // REMIND unit
 
 	/*
 	 * In 1.20.2 Spigot deprecated org.bukkit.util.Consumer.
@@ -584,7 +587,17 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement, Ygg
 			return new SimpleEntityData(c);
 		}
 	}
-	
+
+	/**
+	 * Used for {@link AnyTyped}. Not meant to be used directly.
+	 * @return The entity type of this entity data
+	 */
+	@Override
+	@ApiStatus.Internal
+	public @UnknownNullability EntityData type() {
+		return getSuperType();
+	}
+
 	public static <E extends Entity> EntityData<? super E> fromClass(final Class<E> c) {
 		return getData(c, null);
 	}
