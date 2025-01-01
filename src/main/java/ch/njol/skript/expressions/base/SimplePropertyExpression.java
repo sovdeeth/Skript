@@ -1,6 +1,5 @@
 package ch.njol.skript.expressions.base;
 
-import ch.njol.skript.classes.Converter;
 import ch.njol.skript.config.Node;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -9,6 +8,7 @@ import ch.njol.util.Kleenean;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 import org.skriptlang.skript.log.runtime.SyntaxRuntimeErrorProducer;
+import org.skriptlang.skript.lang.converter.Converter;
 
 /**
  * A base class for property expressions that requires only few overridden methods
@@ -16,12 +16,11 @@ import org.skriptlang.skript.log.runtime.SyntaxRuntimeErrorProducer;
  * @see PropertyExpression
  * @see PropertyExpression#register(Class, Class, String, String)
  */
-@SuppressWarnings("deprecation") // for backwards compatibility
-public abstract class SimplePropertyExpression<F, T> extends PropertyExpression<F, T> implements Converter<F, T>, SyntaxRuntimeErrorProducer {
+public abstract class SimplePropertyExpression<F, T> extends PropertyExpression<F, T> implements Converter<F, T> {
 
 	private Node node;
 	private String rawExpr;
-
+  
 	@Override
 	@SuppressWarnings("unchecked")
 	public boolean init(Expression<?>[] expressions, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
