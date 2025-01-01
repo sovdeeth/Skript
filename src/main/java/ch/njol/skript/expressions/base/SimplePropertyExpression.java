@@ -16,7 +16,7 @@ import org.skriptlang.skript.lang.converter.Converter;
  * @see PropertyExpression
  * @see PropertyExpression#register(Class, Class, String, String)
  */
-public abstract class SimplePropertyExpression<F, T> extends PropertyExpression<F, T> implements Converter<F, T> {
+public abstract class SimplePropertyExpression<F, T> extends PropertyExpression<F, T> implements Converter<F, T>, SyntaxRuntimeErrorProducer {
 
 	private Node node;
 	private String rawExpr;
