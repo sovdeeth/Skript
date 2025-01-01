@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
  */
 public class BukkitRuntimeErrorConsumer implements RuntimeErrorConsumer {
 
-	public final static String ERROR_NOTIF_PERMISSION = "skript.see_runtime_errors";
+	public static final String ERROR_NOTIF_PERMISSION = "skript.see_runtime_errors";
 
 	public static final String CONFIG_NODE = "log.runtime";
 	public static final ArgsMessage WARNING_DETAILS = new ArgsMessage("skript command.reload.warning details");

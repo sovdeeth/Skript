@@ -4,6 +4,7 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptConfig;
 import ch.njol.skript.util.Task;
 import ch.njol.skript.util.Timespan;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.skriptlang.skript.log.runtime.Frame.FrameLimit;
 
@@ -28,6 +29,11 @@ public class RuntimeErrorManager implements Closeable {
 
 	private static RuntimeErrorManager instance;
 
+	/**
+	 * Prefer using {@link Skript#getRuntimeErrorManager()} instead.
+	 * @return The singleton instance of the runtime error manager.
+	 */
+	@ApiStatus.Internal
 	public static RuntimeErrorManager getInstance() {
 		return instance;
 	}
@@ -95,11 +101,8 @@ public class RuntimeErrorManager implements Closeable {
 	 */
 	public void error(@NotNull RuntimeError error) {
 		// print if < limit
-		if (error.level() == Level.SEVERE && errorFrame.add(error)) {
-			consumers.forEach((consumer -> consumer.printError(error)));
-		}
-
-		if (error.level() == Level.WARNING && warningFrame.add(error)) {
+		if ((error.level() == Level.SEVERE && errorFrame.add(error))
+			|| (error.level() == Level.WARNING && warningFrame.add(error))) {
 			consumers.forEach((consumer -> consumer.printError(error)));
 		}
 	}

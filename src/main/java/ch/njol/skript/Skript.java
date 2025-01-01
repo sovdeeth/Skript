@@ -526,7 +526,7 @@ public final class Skript extends JavaPlugin implements Listener {
 
 		// init runtime error manager and add bukkit consumer.
 		RuntimeErrorManager.refresh();
-		RuntimeErrorManager.getInstance().addConsumer(new BukkitRuntimeErrorConsumer());
+		getRuntimeErrorManager().addConsumer(new BukkitRuntimeErrorConsumer());
 
 		CompletableFuture<Boolean> aliases = Aliases.loadAsync();
 

@@ -34,7 +34,7 @@ public record ErrorSource(
 	public static @NotNull ErrorSource fromNodeAndElement(@Nullable Node node, @NotNull SyntaxElement element) {
 		String elementName = element.getClass().getAnnotation(Name.class).value().trim().replaceAll("\n", "");
 		if (node == null) {
-			return new ErrorSource(element.getSyntaxTypeName(), elementName, 0, "-unknown-", "-effect command-");
+			return new ErrorSource(element.getSyntaxTypeName(), elementName, 0, "-unknown-", "-unknown-");
 		}
 		String code = node.save().trim();
 		return new ErrorSource(element.getSyntaxTypeName(), elementName, node.getLine(), code, node.getConfig().getFileName());
