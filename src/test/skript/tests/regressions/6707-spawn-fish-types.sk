@@ -6,7 +6,6 @@ test "spawn fish types":
 
 	spawn a salmon at test-location:
 		set {_e} to entity
-	broadcast whether {_e} is a salmon
 	assert {_e} is a salmon with "failed to spawn a salmon"
 	delete entity within {_e}
 
