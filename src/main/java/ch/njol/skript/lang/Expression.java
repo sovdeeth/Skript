@@ -334,7 +334,7 @@ public interface Expression<T> extends SyntaxElement, Debuggable, Loopable<T> {
 	 * changing the expression. For example, {@code set vector length of {_v} to 1}, rather than
 	 * {@code set {_v} to vector(0,1,0)}.
 	 * <br>
-	 * This is a 1 to 1 transformation and should not add or remove elements.
+	 * This is a 1 to 1 transformation and should not add elements.
 	 * Returning null will remove the element.
 	 * Returning a type not accepted by {@link #acceptChange(ChangeMode)} for {@link ChangeMode#SET}
 	 * will depend on the implementer. The default implementation will remove the element.
