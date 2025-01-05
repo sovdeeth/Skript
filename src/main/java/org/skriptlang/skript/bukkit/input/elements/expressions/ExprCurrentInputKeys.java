@@ -29,9 +29,12 @@ public class ExprCurrentInputKeys extends PropertyExpression<Player, InputKey> {
 		register(ExprCurrentInputKeys.class, InputKey.class, "[current] (inputs|input keys)", "players");
 	}
 
+	private boolean delayed;
+
 	@Override
 	public boolean init(Expression<?>[] expressions, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
 		setExpr((Expression<? extends Player>) expressions[0]);
+		delayed = !isDelayed.isFalse();
 		return true;
 	}
 
@@ -43,7 +46,7 @@ public class ExprCurrentInputKeys extends PropertyExpression<Player, InputKey> {
 
 		List<InputKey> inputKeys = new ArrayList<>();
 		for (Player player : source) {
-			if (player.equals(eventPlayer)) {
+			if (!delayed && player.equals(eventPlayer)) {
 				inputKeys.addAll(InputKey.fromInput(((PlayerInputEvent) event).getInput()));
 			} else {
 				inputKeys.addAll(InputKey.fromInput(player.getCurrentInput()));
