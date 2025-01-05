@@ -2,6 +2,7 @@ package org.skriptlang.skript.bukkit.input.elements.conditions;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.*;
+import ch.njol.skript.effects.Delay;
 import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -72,6 +73,7 @@ public class CondIsPressingKey extends Condition {
 		Player eventPlayer = event instanceof PlayerInputEvent inputEvent ? inputEvent.getPlayer() : null;
 		InputKey[] inputKeys = this.inputKeys.getAll(event);
 		boolean and = this.inputKeys.getAnd();
+		boolean delayed = this.delayed || Delay.isDelayed(event);
 		return players.check(event, player -> {
 			Input input;
 			// If we want to get the new input of the event-player, we must get it from the event
