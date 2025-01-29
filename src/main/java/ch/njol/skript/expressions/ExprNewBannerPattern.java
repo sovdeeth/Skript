@@ -32,8 +32,7 @@ public class ExprNewBannerPattern extends SimpleExpression<Pattern> {
 
 	static {
 		Skript.registerExpression(ExprNewBannerPattern.class, Pattern.class, ExpressionType.PATTERN_MATCHES_EVERYTHING,
-			"[a] %bannerpatterntype% colo[u]red %color%",
-			"[a] %*color% %bannerpatterntype%");
+			"[a] %bannerpatterntype% colo[u]red %color%");
 	}
 
 	private Expression<PatternType> selectedPattern;
