@@ -100,8 +100,7 @@ public class ExprTag extends SimpleExpression<Tag> implements SyntaxRuntimeError
 					key = new NamespacedKey(namespace, name);
 				}
 			} catch (IllegalArgumentException e) {
-				error("Invalid tag key: '" + name + "'. Tags may only contain a-z, 0-9, _, ., /, or - characters.");
-				continue;
+				key = null;
 			}
 			if (key == null) {
 				error("Invalid tag key: '" + name + "'. Tags may only contain a-z, 0-9, _, ., /, or - characters.");
