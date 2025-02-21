@@ -7,6 +7,7 @@ import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
+import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.Loopable;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Utils;
@@ -22,7 +23,6 @@ import org.skriptlang.skript.lang.converter.Converter;
 import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.List;
 import java.util.function.Predicate;
 
 /**
@@ -331,11 +331,6 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 	}
 
 	@Override
-	public Expression<? extends T> simplify() {
-		return this;
-	}
-
-	@Override
 	public boolean getAnd() {
 		return true;
 	}
@@ -344,4 +339,17 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 	public boolean supportsLoopPeeking() {
 		return true;
 	}
+
+	/**
+	 * Attempts to create a Literal by evaluating the expression with a {@link ContextlessEvent}.
+	 * This should only be attempted IFF the expression's children are all literals and
+	 * {@link #getAll(Event)} does not rely on the event.
+	 *
+	 * @return A literal with the data from this expression's evaluation.
+	 */
+	protected Literal<T> getAsLiteral() {
+		//noinspection unchecked
+		return new SimpleLiteral<>(getAll(ContextlessEvent.get()), (Class<T>) getReturnType(), getAnd());
+	}
+
 }

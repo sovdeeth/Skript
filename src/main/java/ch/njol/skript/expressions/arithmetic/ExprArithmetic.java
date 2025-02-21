@@ -19,10 +19,12 @@ import ch.njol.skript.util.Patterns;
 import ch.njol.util.Kleenean;
 import com.google.common.collect.ImmutableSet;
 import org.bukkit.event.Event;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.skriptlang.skript.lang.arithmetic.Arithmetics;
 import org.skriptlang.skript.lang.arithmetic.OperationInfo;
 import org.skriptlang.skript.lang.arithmetic.Operator;
+import org.skriptlang.skript.lang.simplification.Simplifiable;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -347,9 +349,14 @@ public class ExprArithmetic<L, R, T> extends SimpleExpression<T> {
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
-	public Expression<? extends T> simplify() {
-		if (first instanceof Literal && second instanceof Literal)
+	public Expression<T> simplify(@NotNull Step step, @Nullable Simplifiable<?> source) {
+		// simplify children
+		first = simplifyChild(first, step, source);
+		second = simplifyChild(second, step, source);
+		// simplify this expression IFF it's the top-level arithmetic expression
+		if (step == Step.PARENT && !(source instanceof ExprArithmetic<?, ?, ?>)
+			&& first instanceof Literal && second instanceof Literal)
+			//noinspection unchecked
 			return new SimpleLiteral<>(getArray(null), (Class<T>) getReturnType(), false);
 		return this;
 	}

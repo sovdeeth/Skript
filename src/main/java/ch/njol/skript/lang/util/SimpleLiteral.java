@@ -17,6 +17,7 @@ import ch.njol.util.coll.iterator.NonNullIterator;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 import org.skriptlang.skript.lang.converter.Converters;
+import org.skriptlang.skript.lang.simplification.Simplifiable;
 
 import java.lang.reflect.Array;
 import java.util.Arrays;
@@ -224,7 +225,7 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 	}
 
 	@Override
-	public Expression<T> simplify() {
+	public Expression<T> simplify(Step step, @Nullable Simplifiable<?> source) {
 		return this;
 	}
 
