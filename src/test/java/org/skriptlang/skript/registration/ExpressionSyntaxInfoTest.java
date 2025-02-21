@@ -87,7 +87,7 @@ public class ExpressionSyntaxInfoTest extends BaseSyntaxInfoTests<MockExpression
 		}
 
 		@Override
-		public Expression<? extends String> simplify(Step step, @Nullable Simplifiable<?> source) {
+		public Expression<String> simplify(Step step, @Nullable Simplifiable<?> source) {
 			throw new UnsupportedOperationException();
 		}
 
