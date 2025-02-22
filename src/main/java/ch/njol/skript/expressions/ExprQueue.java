@@ -7,6 +7,7 @@ import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
+import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.registrations.Feature;
@@ -14,6 +15,7 @@ import ch.njol.skript.util.LiteralUtils;
 import ch.njol.util.Kleenean;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
+import org.skriptlang.skript.lang.simplification.Simplifiable;
 import org.skriptlang.skript.lang.util.SkriptQueue;
 
 import java.util.Iterator;
@@ -83,6 +85,14 @@ public class ExprQueue extends SimpleExpression<SkriptQueue> {
 	@Override
 	public Class<? extends SkriptQueue> getReturnType() {
 		return SkriptQueue.class;
+	}
+
+	@Override
+	public Expression<SkriptQueue> simplify(Step step, @Nullable Simplifiable<?> source) {
+		contents = simplifyChild(contents, step, source);
+		if (contents instanceof Literal<?>)
+			return getAsLiteral();
+		return this;
 	}
 
 	@Override

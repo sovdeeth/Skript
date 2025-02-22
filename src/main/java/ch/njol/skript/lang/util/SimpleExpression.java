@@ -343,7 +343,7 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 	/**
 	 * Attempts to create a Literal by evaluating the expression with a {@link ContextlessEvent}.
 	 * This should only be attempted IFF the expression's children are all literals and
-	 * {@link #getAll(Event)} does not rely on the event.
+	 * {@link #getAll(Event)} would always return the exact same value, no matter the context in which it is called.
 	 *
 	 * @return A literal with the data from this expression's evaluation.
 	 */
