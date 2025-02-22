@@ -67,7 +67,7 @@ public class ExprVectorFromYawAndPitch extends SimpleExpression<Vector> {
 		pitch = simplifyChild(pitch, step, source);
 		yaw = simplifyChild(yaw, step, source);
 		if (pitch instanceof Literal<Number> && yaw instanceof Literal<Number>)
-			return getAsLiteral();
+			return getAsSimplifiedLiteral();
 		return this;
 	}
 

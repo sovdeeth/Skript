@@ -62,7 +62,7 @@ public class ExprVectorProjection extends SimpleExpression<Vector> {
 		left = simplifyChild(left, step, source);
 		right = simplifyChild(right, step, source);
 		if (left instanceof Literal<Vector> && right instanceof Literal<Vector>)
-			return getAsLiteral();
+			return getAsSimplifiedLiteral();
 		return this;
 	}
 

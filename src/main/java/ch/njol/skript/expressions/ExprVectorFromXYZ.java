@@ -69,7 +69,7 @@ public class ExprVectorFromXYZ extends SimpleExpression<Vector> {
 		y = simplifyChild(y, step, source);
 		z = simplifyChild(z, step, source);
 		if (x instanceof Literal<Number> && y instanceof Literal<Number> && z instanceof Literal<Number>)
-			return getAsLiteral();
+			return getAsSimplifiedLiteral();
 		return this;
 	}
 

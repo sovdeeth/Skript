@@ -74,7 +74,7 @@ public class ExprVectorFromDirection extends SimpleExpression<Vector> {
 	public Expression<Vector> simplify(Step step, @Nullable Simplifiable<?> source) {
 		direction = simplifyChild(direction, step, source);
 		if (direction instanceof Literal<Direction>)
-			return getAsLiteral();
+			return getAsSimplifiedLiteral();
 		return this;
 	}
 

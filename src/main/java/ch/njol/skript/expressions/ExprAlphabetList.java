@@ -61,7 +61,7 @@ public class ExprAlphabetList extends SimpleExpression<String>{
 		if (texts.isSingle())
 			return texts;
 		if (texts instanceof Literal<String>)
-			return getAsLiteral();
+			return getAsSimplifiedLiteral();
 		return this;
 	}
 

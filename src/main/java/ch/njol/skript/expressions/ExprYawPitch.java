@@ -213,7 +213,7 @@ public class ExprYawPitch extends SimplePropertyExpression<Object, Float> {
 		super.simplify(step, source);
 		// don't simplify if it's an entity, since their yaw/pitch can change
 		if (getExpr() instanceof Literal<?> literal && (literal.getReturnType() == Location.class || literal.getReturnType() == Vector.class))
-			return getAsLiteral();
+			return getAsSimplifiedLiteral();
 		return this;
 	}
 

@@ -64,7 +64,7 @@ public class ExprVectorOfLocation extends SimpleExpression<Vector> {
 	public Expression<Vector> simplify(Step step, @Nullable Simplifiable<?> source) {
 		location = simplifyChild(location, step, source);
 		if (location instanceof Literal<Location>)
-			return getAsLiteral();
+			return getAsSimplifiedLiteral();
 		return this;
 	}
 

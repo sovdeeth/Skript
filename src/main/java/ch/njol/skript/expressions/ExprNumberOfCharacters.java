@@ -84,7 +84,7 @@ public class ExprNumberOfCharacters extends SimpleExpression<Long> {
 	public Expression<Long> simplify(Step step, @Nullable Simplifiable<?> source) {
 		expr = simplifyChild(expr, step, source);
 		if (expr instanceof Literal<String>)
-			return getAsLiteral();
+			return getAsSimplifiedLiteral();
 		return this;
 	}
 

@@ -38,7 +38,7 @@ public class ExprLength extends SimplePropertyExpression<String, Long> {
 	public Expression<Long> simplify(@NotNull Step step, @Nullable Simplifiable<?> source) {
 		setExpr(simplifyChild(getExpr(), step, source));
 		if (getExpr() instanceof Literal<? extends String>)
-			return getAsLiteral();
+			return getAsSimplifiedLiteral();
 		return this;
 	}
 

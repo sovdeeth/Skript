@@ -175,7 +175,7 @@ public class ExprNumbers extends SimpleExpression<Number> {
 		start = simplifyChild(start, step, source);
 		end = simplifyChild(end, step, source);
 		if (start instanceof Literal<Number> && end instanceof Literal<Number>)
-			return getAsLiteral();
+			return getAsSimplifiedLiteral();
 		return this;
 	}
 

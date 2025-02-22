@@ -101,7 +101,7 @@ public class ExprVectorLength extends SimplePropertyExpression<Vector, Number> {
 	public Expression<Number> simplify(@NotNull Step step, @Nullable Simplifiable<?> source) {
 		super.simplify(step, source);
 		if (getExpr() instanceof Literal<? extends Vector>)
-			return getAsLiteral();
+			return getAsSimplifiedLiteral();
 		return this;
 	}
 

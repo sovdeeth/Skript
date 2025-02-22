@@ -64,7 +64,7 @@ public class ExprRepeat extends SimpleExpression<String> {
 		strings = simplifyChild(strings, step, source);
 		repeatCount = simplifyChild(repeatCount, step, source);
 		if (strings instanceof Literal && repeatCount instanceof Literal)
-			return getAsLiteral();
+			return getAsSimplifiedLiteral();
 		return this;
 	}
 

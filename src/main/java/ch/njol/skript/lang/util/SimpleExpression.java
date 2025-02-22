@@ -19,6 +19,7 @@ import org.bukkit.event.Event;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.skriptlang.skript.lang.converter.Converter;
+import org.skriptlang.skript.lang.simplification.SimplifiedLiteral;
 
 import java.lang.reflect.Array;
 import java.util.Arrays;
@@ -341,15 +342,15 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 	}
 
 	/**
-	 * Attempts to create a Literal by evaluating the expression with a {@link ContextlessEvent}.
+	 * Attempts to create a {@link SimplifiedLiteral} by evaluating the expression with a {@link ContextlessEvent}.
 	 * This should only be attempted IFF the expression's children are all literals and
 	 * {@link #getAll(Event)} would always return the exact same value, no matter the context in which it is called.
+	 * The value of {@link #toString(Event, boolean)} will be evaluated and captured for the literal's toString methods.
 	 *
-	 * @return A literal with the data from this expression's evaluation.
+	 * @return A simplified literal with the data from this expression's evaluation.
 	 */
-	protected Literal<T> getAsLiteral() {
-		//noinspection unchecked
-		return new SimpleLiteral<>(getAll(ContextlessEvent.get()), (Class<T>) getReturnType(), getAnd());
+	protected Literal<T> getAsSimplifiedLiteral() {
+		return SimplifiedLiteral.fromExpression(this);
 	}
 
 }

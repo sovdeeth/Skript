@@ -3,6 +3,7 @@ package org.skriptlang.skript.lang.simplification;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.util.Kleenean;
+import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -39,10 +40,15 @@ public interface Simplifiable<S> {
 	 * become {@link Step#PARENT} calls on the children, with this object as the source.
 	 * <br>
 	 * References to the original object should be replaced with the simplified object.
+	 * <br>
+	 * Any returned object should attempt to maintain the original value of {@link ch.njol.skript.lang.Debuggable#toString(Event, boolean)}.
+	 * An addition indicating that the value was simplified can be added in the debug string. See {@link SimplifiedLiteral}
+	 * for an example.
 	 *
 	 * @param step the step at which simplify is called.
 	 * @param source the source of this simplification. Non-null when step is {@link Step#PARENT}, null otherwise.
 	 * @return the simplified object.
+	 * @see SimplifiedLiteral
 	 */
 	S simplify(Step step, @Nullable Simplifiable<?> source);
 

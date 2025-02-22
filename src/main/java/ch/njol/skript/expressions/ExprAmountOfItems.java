@@ -73,7 +73,7 @@ public class ExprAmountOfItems extends SimpleExpression<Long> {
 		items = simplifyChild(items, step, source);
 		inventories = simplifyChild(inventories, step, source);
 		if (items instanceof Literal<ItemType> && inventories instanceof Literal<Inventory>)
-			return getAsLiteral();
+			return getAsSimplifiedLiteral();
 		return this;
 	}
 

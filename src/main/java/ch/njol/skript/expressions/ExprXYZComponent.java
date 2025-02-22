@@ -199,7 +199,7 @@ public class ExprXYZComponent extends SimplePropertyExpression<Object, Number> {
 	public Expression<Number> simplify(@NotNull Step step, @Nullable Simplifiable<?> source) {
 		super.simplify(step, source);
 		if (getExpr() instanceof Literal<?>)
-			return getAsLiteral();
+			return getAsSimplifiedLiteral();
 		return this;
 	}
 

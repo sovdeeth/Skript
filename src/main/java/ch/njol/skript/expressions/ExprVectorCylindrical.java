@@ -73,7 +73,7 @@ public class ExprVectorCylindrical extends SimpleExpression<Vector> {
 		yaw = simplifyChild(yaw, step, source);
 		height = simplifyChild(height, step, source);
 		if (radius instanceof Literal<Number> && yaw instanceof Literal<Number> && height instanceof Literal<Number>)
-			return getAsLiteral();
+			return getAsSimplifiedLiteral();
 		return this;
 	}
 

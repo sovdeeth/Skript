@@ -65,7 +65,7 @@ public class ExprVectorBetweenLocations extends SimpleExpression<Vector> {
 		from = simplifyChild(from, step, source);
 		to = simplifyChild(to, step, source);
 		if (from instanceof Literal<Location> && to instanceof Literal<Location>)
-			return getAsLiteral();
+			return getAsSimplifiedLiteral();
 		return this;
 	}
 

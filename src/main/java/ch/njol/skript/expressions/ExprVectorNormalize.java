@@ -65,7 +65,7 @@ public class ExprVectorNormalize extends SimpleExpression<Vector> {
 	public Expression<Vector> simplify(Step step, @Nullable Simplifiable<?> source) {
 		vector = simplifyChild(vector, step, source);
 		if (vector instanceof Literal<Vector>)
-			return getAsLiteral();
+			return getAsSimplifiedLiteral();
 		return this;
 	}
 

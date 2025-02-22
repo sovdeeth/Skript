@@ -66,7 +66,7 @@ public class ExprVectorAngleBetween extends SimpleExpression<Number> {
 		first = simplifyChild(first, step, source);
 		second = simplifyChild(second, step, source);
 		if (first instanceof Literal<Vector> && second instanceof Literal<Vector>)
-			return getAsLiteral();
+			return getAsSimplifiedLiteral();
 		return this;
 	}
 

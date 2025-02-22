@@ -75,7 +75,7 @@ public class ExprVectorSpherical extends SimpleExpression<Vector> {
 		yaw = simplifyChild(yaw, step, source);
 		pitch = simplifyChild(pitch, step, source);
 		if (radius instanceof Literal<Number> && yaw instanceof Literal<Number> && pitch instanceof Literal<Number>)
-			return getAsLiteral();
+			return getAsSimplifiedLiteral();
 		return this;
 	}
 

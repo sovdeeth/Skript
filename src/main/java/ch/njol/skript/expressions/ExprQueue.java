@@ -91,7 +91,7 @@ public class ExprQueue extends SimpleExpression<SkriptQueue> {
 	public Expression<SkriptQueue> simplify(Step step, @Nullable Simplifiable<?> source) {
 		contents = simplifyChild(contents, step, source);
 		if (contents instanceof Literal<?>)
-			return getAsLiteral();
+			return getAsSimplifiedLiteral();
 		return this;
 	}
 

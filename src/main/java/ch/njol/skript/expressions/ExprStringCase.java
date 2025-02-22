@@ -140,7 +140,7 @@ public class ExprStringCase extends SimpleExpression<String> {
 	public Expression<String> simplify(Step step, @Nullable Simplifiable<?> source) {
 		expr = simplifyChild(expr, step, source);
 		if (expr instanceof Literal<String>)
-			return getAsLiteral();
+			return getAsSimplifiedLiteral();
 		return this;
 	}
 

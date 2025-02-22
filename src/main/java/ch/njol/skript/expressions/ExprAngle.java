@@ -75,7 +75,7 @@ public class ExprAngle extends SimpleExpression<Number> {
 	public Expression<Number> simplify(Step step, @Nullable Simplifiable<?> source) {
 		angle = simplifyChild(angle, step, source);
 		if (angle instanceof Literal<Number>)
-			return getAsLiteral();
+			return getAsSimplifiedLiteral();
 		return this;
 	}
 

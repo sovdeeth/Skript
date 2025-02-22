@@ -100,7 +100,7 @@ public class ExprLocationFromVector extends SimpleExpression<Location> {
 		yaw = simplifyChild(yaw, step, source);
 		pitch = simplifyChild(pitch, step, source);
 		if (vector instanceof Literal<?> && world instanceof Literal<?> && yaw instanceof Literal<?> && pitch instanceof Literal<?>)
-			return getAsLiteral();
+			return getAsSimplifiedLiteral();
 		return this;
 	}
 

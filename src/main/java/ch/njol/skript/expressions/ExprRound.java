@@ -64,7 +64,7 @@ public class ExprRound extends PropertyExpression<Number, Long> {
 	public Expression<Long> simplify(@NotNull Step step, @Nullable Simplifiable<?> source) {
 		super.simplify(step, source);
 		if (getExpr() instanceof Literal<? extends Number>)
-			return getAsLiteral();
+			return getAsSimplifiedLiteral();
 		return this;
 	}
 

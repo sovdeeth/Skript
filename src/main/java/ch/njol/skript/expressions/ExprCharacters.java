@@ -102,7 +102,7 @@ public class ExprCharacters extends SimpleExpression<String> {
 		start = simplifyChild(start, step, source);
 		end = simplifyChild(end, step, source);
 		if (start instanceof Literal<String> && end instanceof Literal<String>)
-			return getAsLiteral();
+			return getAsSimplifiedLiteral();
 		return this;
 	}
 

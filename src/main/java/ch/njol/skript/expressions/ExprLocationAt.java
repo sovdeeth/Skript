@@ -75,7 +75,7 @@ public class ExprLocationAt extends SimpleExpression<Location> {
 		y = simplifyChild(y, step, source);
 		z = simplifyChild(z, step, source);
 		if (world instanceof Literal<?> && x instanceof Literal<?> && y instanceof Literal<?> && z instanceof Literal<?>)
-			return getAsLiteral();
+			return getAsSimplifiedLiteral();
 		return this;
 	}
 

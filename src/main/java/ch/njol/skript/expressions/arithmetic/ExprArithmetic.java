@@ -12,7 +12,6 @@ import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.UnparsedLiteral;
 import ch.njol.skript.lang.util.SimpleExpression;
-import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.LiteralUtils;
 import ch.njol.skript.util.Patterns;
@@ -28,8 +27,8 @@ import org.skriptlang.skript.lang.simplification.Simplifiable;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Collection;
+import java.util.List;
 
 @Name("Arithmetic")
 @Description("Arithmetic expressions, e.g. 1 + 2, (health of player - 2) / 3, etc.")
@@ -356,8 +355,7 @@ public class ExprArithmetic<L, R, T> extends SimpleExpression<T> {
 		// simplify this expression IFF it's the top-level arithmetic expression
 		if (step == Step.PARENT && !(source instanceof ExprArithmetic<?, ?, ?>)
 			&& first instanceof Literal && second instanceof Literal)
-			//noinspection unchecked
-			return new SimpleLiteral<>(getArray(null), (Class<T>) getReturnType(), false);
+			return getAsSimplifiedLiteral();
 		return this;
 	}
 

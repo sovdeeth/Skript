@@ -102,7 +102,7 @@ public class ExprSubstring extends SimpleExpression<String> {
 		if (string instanceof Literal<String>
 				&& (start == null || start instanceof Literal<?>)
 				&& (end == null || end instanceof Literal<?>))
-			return getAsLiteral();
+			return getAsSimplifiedLiteral();
 		return this;
 	}
 
