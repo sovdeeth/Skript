@@ -8,7 +8,6 @@ import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
-import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
@@ -72,8 +71,6 @@ public class ExprAmountOfItems extends SimpleExpression<Long> {
 	public Expression<Long> simplify(Step step, @Nullable Simplifiable<?> source) {
 		items = simplifyChild(items, step, source);
 		inventories = simplifyChild(inventories, step, source);
-		if (items instanceof Literal<ItemType> && inventories instanceof Literal<Inventory>)
-			return getAsSimplifiedLiteral();
 		return this;
 	}
 

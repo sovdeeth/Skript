@@ -70,11 +70,12 @@ public class ExprLocationAt extends SimpleExpression<Location> {
 
 	@Override
 	public Expression<Location> simplify(Step step, @Nullable Simplifiable<?> source) {
+		//noinspection DuplicatedCode
 		world = simplifyChild(world, step, source);
 		x = simplifyChild(x, step, source);
 		y = simplifyChild(y, step, source);
 		z = simplifyChild(z, step, source);
-		if (world instanceof Literal<?> && x instanceof Literal<?> && y instanceof Literal<?> && z instanceof Literal<?>)
+		if (world instanceof Literal<World> && x instanceof Literal<Number> && y instanceof Literal<Number> && z instanceof Literal<Number>)
 			return getAsSimplifiedLiteral();
 		return this;
 	}

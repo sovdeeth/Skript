@@ -7,7 +7,6 @@ import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
-import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.registrations.Feature;
@@ -90,8 +89,6 @@ public class ExprQueue extends SimpleExpression<SkriptQueue> {
 	@Override
 	public Expression<SkriptQueue> simplify(Step step, @Nullable Simplifiable<?> source) {
 		contents = simplifyChild(contents, step, source);
-		if (contents instanceof Literal<?>)
-			return getAsSimplifiedLiteral();
 		return this;
 	}
 

@@ -163,7 +163,9 @@ public class ExprAmount extends SimpleExpression<Number> {
 		exprs = (ExpressionList<?>) simplifyChild(exprs, step, source);
 		any = simplifyChild(any, step, source);
 
-		if (any instanceof Literal<?> || exprs instanceof LiteralList<?>)
+		// todo: when can any be simplified safely?
+
+		if (exprs instanceof LiteralList<?>)
 			return getAsSimplifiedLiteral();
 		return this;
 	}

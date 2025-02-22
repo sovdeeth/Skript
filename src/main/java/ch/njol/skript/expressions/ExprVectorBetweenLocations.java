@@ -64,6 +64,7 @@ public class ExprVectorBetweenLocations extends SimpleExpression<Vector> {
 	public Expression<Vector> simplify(Step step, @Nullable Simplifiable<?> source) {
 		from = simplifyChild(from, step, source);
 		to = simplifyChild(to, step, source);
+		// todo: ensure entities can never be the source of location literals
 		if (from instanceof Literal<Location> && to instanceof Literal<Location>)
 			return getAsSimplifiedLiteral();
 		return this;

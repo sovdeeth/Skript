@@ -174,6 +174,7 @@ public class ExprNumbers extends SimpleExpression<Number> {
 	public Expression<Number> simplify(Step step, @Nullable Simplifiable<?> source) {
 		start = simplifyChild(start, step, source);
 		end = simplifyChild(end, step, source);
+		// todo: simplify into iterator literal?
 		if (start instanceof Literal<Number> && end instanceof Literal<Number>)
 			return getAsSimplifiedLiteral();
 		return this;

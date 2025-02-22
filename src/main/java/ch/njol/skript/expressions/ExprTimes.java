@@ -107,6 +107,7 @@ public class ExprTimes extends SimpleExpression<Long> {
 	@Override
 	public Expression<Long> simplify(Step step, @Nullable Simplifiable<?> source) {
 		end = simplifyChild(end, step, source);
+		// todo: iterator literal
 		if (end instanceof Literal<Number>)
 			return getAsSimplifiedLiteral();
 		return this;

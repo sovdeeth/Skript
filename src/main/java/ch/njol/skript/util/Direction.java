@@ -3,9 +3,7 @@ package ch.njol.skript.util;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.lang.util.ContextlessEvent;
 import ch.njol.skript.lang.util.SimpleExpression;
-import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.skript.localization.GeneralWords;
 import ch.njol.skript.localization.Language;
 import ch.njol.skript.localization.Message;
@@ -431,9 +429,8 @@ public class Direction implements YggdrasilRobustSerializable {
 					//noinspection unchecked
 					return (Expression<Location>) locs;
 				}
-				if (dirs instanceof Literal<?> literalDirs && locs instanceof Literal<?> literalLocs) {
-					return new SimpleLiteral<>(get(ContextlessEvent.get()), Location.class, getAnd());
-				}
+				if (dirs instanceof Literal<?> literalDirs && locs instanceof Literal<?> literalLocs)
+					return getAsSimplifiedLiteral();
 				return this;
 			}
 		};
