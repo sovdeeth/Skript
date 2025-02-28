@@ -113,7 +113,7 @@ public class DefaultOperations {
 		});
 		Arithmetics.registerOperation(Operator.DIVISION, Timespan.class, Number.class, (left, right) -> {
 			double scalar = right.doubleValue();
-			if (scalar < 0 || !Double.isFinite(scalar))
+			if (scalar <= 0 || !Double.isFinite(scalar))
 				return null;
 			double value = left.getAs(TimePeriod.MILLISECOND) / scalar;
 			return new Timespan((long) Math.min(value, Long.MAX_VALUE));
