@@ -62,4 +62,7 @@
 /src/main/java/org/skriptlang/skript/bukkit/input/ @UnderscoreTud
 
 # Documentation
-/src/main/java/ch/njol/skript/doc/ @Pikachu920 @AyhamAl-Ali @Efnilite 
+/src/main/java/ch/njol/skript/doc/ @Pikachu920 @AyhamAl-Ali @Efnilite
+
+# LootTable API
+/src/main/java/org/skriptlang/skript/bukkit/loottables/ @Burbulinis
