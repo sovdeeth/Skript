@@ -458,9 +458,9 @@ public class SkriptParser {
 
 						// Plural/singular sanity check
 						if (hasSingular && !parsedVariable.isSingle()) {
-							Skript.error("This expression can only accept a single "
+							Skript.error("'" + expr + "' can only be a single "
 								+ Classes.toString(Stream.of(exprInfo.classes).map(classInfo -> classInfo.getName().toString()).toArray(), false)
-								+ ", not more");
+								+ ", not more.");
 							log.printError();
 							return null;
 						}
@@ -494,7 +494,7 @@ public class SkriptParser {
 						// improper use in a script would result in an exception
 						if (((exprInfo.classes.length == 1 && !exprInfo.isPlural[0]) || Booleans.contains(exprInfo.isPlural, true))
 								&& !parsedVariable.isSingle()) {
-							Skript.error("This expression can only accept a single "
+							Skript.error("'" + expr + "' can only be a single "
 									+ Classes.toString(Stream.of(exprInfo.classes).map(classInfo -> classInfo.getName().toString()).toArray(), false)
 									+ ", not more.");
 							log.printError();
@@ -514,9 +514,9 @@ public class SkriptParser {
 				if (functionReference != null) {
 
 					if (onlySingular && !functionReference.isSingle()) {
-						Skript.error("This expression can only accept a single "
+						Skript.error("'" + expr + "' can only be a single "
 							+ Classes.toString(Stream.of(exprInfo.classes).map(classInfo -> classInfo.getName().toString()).toArray(), false)
-							+ ", not more");
+							+ ", not more.");
 						log.printError();
 						return null;
 					}
@@ -544,8 +544,11 @@ public class SkriptParser {
 								if (context == ParseContext.COMMAND) {
 									Skript.error(Commands.m_too_many_arguments.toString(exprInfo.classes[i].getName().getIndefiniteArticle(), exprInfo.classes[i].getName().toString()), ErrorQuality.SEMANTIC_ERROR);
 								} else {
-									Skript.error("'" + expr + "' can only accept a single " + exprInfo.classes[i].getName() + ", not more", ErrorQuality.SEMANTIC_ERROR);
+									Skript.error("'" + expr + "' can only be a single "
+										+ Classes.toString(Stream.of(exprInfo.classes).map(classInfo -> classInfo.getName().toString()).toArray(), false)
+										+ ", not more.");
 								}
+								log.printError();
 								return null;
 							}
 
@@ -555,7 +558,10 @@ public class SkriptParser {
 					}
 
 					if (onlySingular && !parsedExpression.isSingle()) {
-						Skript.error("'" + expr + "' can only accept singular expressions, not plural", ErrorQuality.SEMANTIC_ERROR);
+						Skript.error("'" + expr + "' can only be a single "
+							+ Classes.toString(Stream.of(exprInfo.classes).map(classInfo -> classInfo.getName().toString()).toArray(), false)
+							+ ", not more.");
+						log.printError();
 						return null;
 					}
 
