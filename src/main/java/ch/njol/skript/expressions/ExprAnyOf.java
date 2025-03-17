@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 public class ExprAnyOf extends WrapperExpression<Object> {
 
 	static {
-		Skript.registerExpression(ExprAnyOf.class, Object.class, ExpressionType.PATTERN_MATCHES_EVERYTHING, "any of [the] %objects%");
+		Skript.registerExpression(ExprAnyOf.class, Object.class, ExpressionType.PATTERN_MATCHES_EVERYTHING, "(any [one]|one) of [the] %objects%");
 	}
 
 	@Override
