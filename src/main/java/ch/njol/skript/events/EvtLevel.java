@@ -24,7 +24,7 @@ public class EvtLevel extends SkriptEvent {
 	
 	@Override
 	public boolean init(Literal<?>[] args, int matchedPattern, ParseResult parseResult) {
-		leveling = Kleenean.get(parseResult.mark);
+		leveling = Kleenean.get(parseResult.mark); asd
 		return true;
 	}
 	
