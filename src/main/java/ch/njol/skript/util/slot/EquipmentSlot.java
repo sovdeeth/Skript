@@ -2,6 +2,7 @@ package ch.njol.skript.util.slot;
 
 import ch.njol.skript.bukkitutil.PlayerUtils;
 import ch.njol.skript.registrations.Classes;
+import com.google.common.base.Preconditions;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
@@ -128,8 +129,7 @@ public class EquipmentSlot extends SlotWithIndex {
 		public abstract void set(EntityEquipment e, @Nullable ItemStack item);
 		
 	}
-	
-	private static final EquipSlot[] SKRIPT_VALUES = EquipSlot.values();
+
 	private static final org.bukkit.inventory.EquipmentSlot[] BUKKIT_VALUES = org.bukkit.inventory.EquipmentSlot.values();
 
 	private static final Map<org.bukkit.inventory.EquipmentSlot, Integer> BUKKIT_SLOT_INDICES = new HashMap<>();
@@ -153,12 +153,14 @@ public class EquipmentSlot extends SlotWithIndex {
 	 */
 	@Deprecated
 	public EquipmentSlot(@NotNull EntityEquipment entityEquipment, @NotNull EquipSlot skriptSlot, boolean slotToString) {
+		Preconditions.checkNotNull(entityEquipment, "entityEquipment cannot be null");
+		Preconditions.checkNotNull(skriptSlot, "skriptSlot cannot be null");
 		this.entityEquipment = entityEquipment;
 		int slotIndex = -1;
 		if (skriptSlot == EquipSlot.TOOL) {
 			Entity holder = entityEquipment.getHolder();
-			if (holder instanceof Player)
-				slotIndex = ((Player) holder).getInventory().getHeldItemSlot();
+			if (holder instanceof Player player)
+				slotIndex = player.getInventory().getHeldItemSlot();
 		}
 		this.slotIndex = slotIndex;
 		this.skriptSlot = skriptSlot;
@@ -173,11 +175,13 @@ public class EquipmentSlot extends SlotWithIndex {
 		this(entityEquipment, skriptSlot, false);
 	}
 
-	public EquipmentSlot(@NotNull EntityEquipment equipment, @NotNull org.bukkit.inventory.EquipmentSlot bukkitSlot, boolean slotToString) {
-		this.entityEquipment = equipment;
+	public EquipmentSlot(@NotNull EntityEquipment entityEquipment, @NotNull org.bukkit.inventory.EquipmentSlot bukkitSlot, boolean slotToString) {
+		Preconditions.checkNotNull(entityEquipment, "entityEquipment cannot be null");
+		Preconditions.checkNotNull(bukkitSlot, "bukkitSlot cannot be null");
+		this.entityEquipment = entityEquipment;
 		int slotIndex = -1;
 		if (bukkitSlot == org.bukkit.inventory.EquipmentSlot.HAND) {
-			Entity holder = equipment.getHolder();
+			Entity holder = entityEquipment.getHolder();
 			if (holder instanceof Player player)
 				slotIndex = player.getInventory().getHeldItemSlot();
 		}
