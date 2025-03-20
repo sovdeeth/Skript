@@ -80,7 +80,7 @@ public class ExprBeaconRange extends SimplePropertyExpression<Block, Double> {
 
 	@Override
 	protected String getPropertyName() {
-		return "beacon [effect] range";
+		return "beacon range";
 	}
 
 }
