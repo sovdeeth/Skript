@@ -37,7 +37,7 @@ public class ExprBeaconEffects extends PropertyExpression<Block, PotionEffectTyp
 	private static final boolean SUPPORTS_CHANGE_EVENT = Skript.classExists("io.papermc.paper.event.player.PlayerChangeBeaconEffectEvent");
 
 	static {
-		register(ExprBeaconEffects.class, PotionEffectType.class, "(:primary|secondary) [beacon] effect", "blocks");
+		registerDefault(ExprBeaconEffects.class, PotionEffectType.class, "(:primary|secondary) [beacon] effect", "blocks");
 	}
 
 	private boolean primary;
@@ -56,7 +56,9 @@ public class ExprBeaconEffects extends PropertyExpression<Block, PotionEffectTyp
 			if (!(block.getState() instanceof Beacon beacon))
 				return null;
 
-			if (SUPPORTS_CHANGE_EVENT && event instanceof PlayerChangeBeaconEffectEvent changeEvent)
+			if (SUPPORTS_CHANGE_EVENT
+					&& event instanceof PlayerChangeBeaconEffectEvent changeEvent
+					&& block.equals(changeEvent.getBeacon()))
 				return primary ? changeEvent.getPrimary() : changeEvent.getSecondary();
 
 			PotionEffect effect = primary ? beacon.getPrimaryEffect() : beacon.getSecondaryEffect();
