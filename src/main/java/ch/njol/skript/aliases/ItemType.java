@@ -42,7 +42,6 @@ import java.io.StreamCorruptedException;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @ContainerType(ItemStack.class)
@@ -561,30 +560,6 @@ public class ItemType implements Unit, Iterable<ItemData>, Container<ItemStack>,
 				return containerIterator();
 			}
 		};
-	}
-
-	/**
-	 * Determines whether this ItemType satisfies the given predicate.
-	 * If {@link #isAll()} is true, this will return true if the predicate is satisfied by all ItemDatas.
-	 * If {@link #isAll()} is false, this will return true if the predicate is satisfied by any ItemData.
- 	 * @param predicate A predicate to test items against
-	 * @return Whether this ItemType satisfies the predicate
-	 */
-	public boolean satisfies(Predicate<ItemStack> predicate) {
-		if (isAll()) {
-			for (Iterator<ItemStack> it = containerIterator(); it.hasNext(); ) {
-				ItemStack stack = it.next();
-				if (!predicate.test(stack))
-					return false;
-			}
-			return true;
-		}
-		for (Iterator<ItemStack> it = containerIterator(); it.hasNext(); ) {
-			ItemStack stack = it.next();
-			if (predicate.test(stack))
-				return true;
-		}
-		return false;
 	}
 
 	@Nullable
