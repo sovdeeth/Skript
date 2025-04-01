@@ -1,0 +1,30 @@
+test "operations single variable":
+	set {_num} to 1
+	multiply {_num} by 15
+	assert {_num} is 15 with "Failed multiplication for single"
+	divide {_num} by 5
+	assert {_num} is 3 with "Failed division for single"
+	raise {_num} to the power of 2
+	assert {_num} is 9 with "Failed exponentiation for single"
+
+test "operations list variable":
+	set {_nums::*} to 2, 3, 4 and 5
+	multiply {_nums::*} by 10
+	assert {_nums::*} is (20, 30, 40 and 50) with "Failed multiplication for list"
+	divide {_nums::*} by 5
+	assert {_nums::*} is (4, 6, 8 and 10) with "Failed division for list"
+	raise {_nums::*} to the power of 2
+	assert {_nums::*} is (16, 36, 64 and 100) with "Failed exponentiation for list"
+
+test "operations error":
+	parse:
+		multiply 1 by 2
+	assert last parse logs is set with "Operations should only work for variables - multiplication"
+
+	parse:
+		divide 20 by 4
+	assert last parse logs is set with "Operations should only work for variables - division"
+
+	parse:
+		raise 3 to the powwer of 100
+	assert last parse logs is set with "Operations should only work for variables - exponentiation"
