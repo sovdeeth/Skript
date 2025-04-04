@@ -126,9 +126,8 @@ public final class Arithmetics {
 	/**
 	 * @see #getConvertedOperation(Operator, Class, Class, Class)
 	 */
-	public static <L> @Nullable Operation<L, L, L> getConvertedOperation(Operator operator, Class<?> type) {
-		//noinspection unchecked
-		return (Operation<L, L, L>) getConvertedOperation(operator, type, type, type);
+	public static <L> @Nullable Operation<L, L, L> getConvertedOperation(Operator operator, Class<L> type) {
+		return getConvertedOperation(operator, type, type, type);
 	}
 
 	/**
