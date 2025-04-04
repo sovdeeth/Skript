@@ -1,20 +1,45 @@
-test "operations single variable":
+test "operations numbers":
 	set {_num} to 1
 	multiply {_num} by 15
-	assert {_num} is 15 with "Failed multiplication for single"
+	assert {_num} is 15 with "Failed multiplication for single number"
 	divide {_num} by 5
-	assert {_num} is 3 with "Failed division for single"
+	assert {_num} is 3 with "Failed division for single number"
 	raise {_num} to the power of 2
-	assert {_num} is 9 with "Failed exponentiation for single"
+	assert {_num} is 9 with "Failed exponentiation for single number"
 
-test "operations list variable":
 	set {_nums::*} to 2, 3, 4 and 5
 	multiply {_nums::*} by 10
-	assert {_nums::*} is (20, 30, 40 and 50) with "Failed multiplication for list"
+	assert {_nums::*} is (20, 30, 40 and 50) with "Failed multiplication for number list"
 	divide {_nums::*} by 5
-	assert {_nums::*} is (4, 6, 8 and 10) with "Failed division for list"
+	assert {_nums::*} is (4, 6, 8 and 10) with "Failed division for number list"
 	raise {_nums::*} to the power of 2
-	assert {_nums::*} is (16, 36, 64 and 100) with "Failed exponentiation for list"
+	assert {_nums::*} is (16, 36, 64 and 100) with "Failed exponentiation for number list"
+
+test "operations vectors by vectors":
+	set {_vector} to vector(1,1,1)
+	multiply {_vector} by vector(4,6,8)
+	assert {_vector} is vector(4,6,8) with "Failed multiplication for single vector"
+	divide {_vector} by vector(2,3,4)
+	assert {_vector} is vector(2,2,2) with "Failed division for single vector"
+
+	set {_vectors::*} to vector(2,2,2), vector(3,3,3) and vector(4,4,4)
+	multiply {_vectors::*} by vector(2,5,10)
+	assert {_vectors::*} is (vector(4,10,20), vector(6,15,30) and vector(8,20,40)) with "Failed multiplication for vector list"
+	divide {_vectors::*} by vector(1,5,5)
+	assert {_vectors::*} is (vector(4,2,4), vector(6,3,6) and vector(8,4,8))  with "Failed division for vector list"
+
+test "operations vectors by numbers":
+	set {_vector} to vector(1,1,1)
+	multiply {_vector} by 10
+	assert {_vector} is vector(10,10,10) with "Failed multiplication for single vector by number"
+	divide {_vector} by 2
+	assert {_vector} is vector(5,5,5) with "Failed division for single vector by number"
+
+	set {_vectors::*} to vector(2,2,2), vector(3,3,3) and vector(4,4,4)
+	multiply {_vectors::*} by 4
+	assert {_vectors::*} is (vector(8,8,8), vector(12,12,12) and vector(16,16,16)) with "Failed multiplication for vector list by number"
+	divide {_vectors::*} by 2
+	assert {_vectors::*} is (vector(4,4,4), vector(6,6,6) and vector(8,8,8)) with "Failed division for vector list by number"
 
 test "operations error":
 	parse:
