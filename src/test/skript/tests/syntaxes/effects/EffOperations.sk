@@ -18,15 +18,15 @@ test "operations numbers":
 test "operations vectors by vectors":
 	set {_vector} to vector(1,1,1)
 	multiply {_vector} by vector(4,6,8)
-	assert {_vector} is vector(4,6,8) with "Failed multiplication for single vector"
+	assert {_vector} is vector(4,6,8) with "Failed multiplication for single vector by vector"
 	divide {_vector} by vector(2,3,4)
-	assert {_vector} is vector(2,2,2) with "Failed division for single vector"
+	assert {_vector} is vector(2,2,2) with "Failed division for single vector by vector"
 
 	set {_vectors::*} to vector(2,2,2), vector(3,3,3) and vector(4,4,4)
 	multiply {_vectors::*} by vector(2,5,10)
-	assert {_vectors::*} is (vector(4,10,20), vector(6,15,30) and vector(8,20,40)) with "Failed multiplication for vector list"
+	assert {_vectors::*} is (vector(4,10,20), vector(6,15,30) and vector(8,20,40)) with "Failed multiplication for vector list by vector"
 	divide {_vectors::*} by vector(1,5,5)
-	assert {_vectors::*} is (vector(4,2,4), vector(6,3,6) and vector(8,4,8))  with "Failed division for vector list"
+	assert {_vectors::*} is (vector(4,2,4), vector(6,3,6) and vector(8,4,8))  with "Failed division for vector list by vector"
 
 test "operations vectors by numbers":
 	set {_vector} to vector(1,1,1)
@@ -40,6 +40,19 @@ test "operations vectors by numbers":
 	assert {_vectors::*} is (vector(8,8,8), vector(12,12,12) and vector(16,16,16)) with "Failed multiplication for vector list by number"
 	divide {_vectors::*} by 2
 	assert {_vectors::*} is (vector(4,4,4), vector(6,6,6) and vector(8,8,8)) with "Failed division for vector list by number"
+
+test "operations timespans by numbers":
+	set {_timespan} to 1 hour
+	multiply {_timespan} by 4
+	assert {_timespan} is 4 hours with "Failed multiplication for single timespan by number"
+	divide {_timespan} by 2
+	assert {_timespan} is 2 hours with "Failed division for single timespan by number"
+
+	set {_timespans::*} to (1 minute), (5 minutes) and (10 minutes)
+	multiply {_timespans::*} by 5
+	assert {_timespans::*} is ((5 minutes), (25 minutes) and (50 minutes)) with "Failed multiplication for timespan list by number"
+	divide {_timespans::*} by 2
+	assert {_timespans::*} is ((2 minutes and 30 seconds), (12 minutes and 30 seconds) and (25 minutes)) with "Failed division for timespan list by number"
 
 test "operations error":
 	parse:

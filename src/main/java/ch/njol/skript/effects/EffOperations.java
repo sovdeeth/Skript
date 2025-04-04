@@ -27,18 +27,28 @@ import org.skriptlang.skript.log.runtime.SyntaxRuntimeErrorProducer;
 import java.util.function.Function;
 
 @Name("Operations")
-@Description("Perform multiplcation, division, or exponentiation operations on variable numbers. Cannot use literals.")
+@Description("Perform multiplication, division, or exponentiation operations on variable objects " +
+	"(i.e. numbers, vectors, timespans, and other objects from addons). Cannot use literals.")
 @Example("""
 	set {_num} to 1
 	multiply {_num} by 10
+	divide {_num} by 5
+	raise {_num} to the power of 2
 	""")
 @Example("""
 	set {_nums::*} to 15, 21 and 30
 	divide {_nums::*} by 3
+	multiply {_nums::*} by 5
+	raise {_nums::*} to the power of 3
 	""")
 @Example("""
-	set {_num} to 2
-	raise {_num} to the power of 5
+	set {_vector} to vector(1,1,1)
+	multiply {_vector} by vector(4,8,16)
+	divide {_vector} by 2
+	""")
+@Example("""
+	set {_timespan} to 1 hour
+	multiply {_timespan} by 3
 	""")
 @Example("""
 	# Will error due to literal
