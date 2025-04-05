@@ -1,4 +1,4 @@
-test "operations numbers":
+test "operations effect numbers":
 	set {_num} to 1
 	multiply {_num} by 15
 	assert {_num} is 15 with "Failed multiplication for single number"
@@ -15,7 +15,7 @@ test "operations numbers":
 	raise {_nums::*} to the power of 2
 	assert {_nums::*} is (16, 36, 64 and 100) with "Failed exponentiation for number list"
 
-test "operations vectors by vectors":
+test "operations effect vectors by vectors":
 	set {_vector} to vector(1,1,1)
 	multiply {_vector} by vector(4,6,8)
 	assert {_vector} is vector(4,6,8) with "Failed multiplication for single vector by vector"
@@ -28,7 +28,7 @@ test "operations vectors by vectors":
 	divide {_vectors::*} by vector(1,5,5)
 	assert {_vectors::*} is (vector(4,2,4), vector(6,3,6) and vector(8,4,8))  with "Failed division for vector list by vector"
 
-test "operations vectors by numbers":
+test "operations effect vectors by numbers":
 	set {_vector} to vector(1,1,1)
 	multiply {_vector} by 10
 	assert {_vector} is vector(10,10,10) with "Failed multiplication for single vector by number"
@@ -41,7 +41,7 @@ test "operations vectors by numbers":
 	divide {_vectors::*} by 2
 	assert {_vectors::*} is (vector(4,4,4), vector(6,6,6) and vector(8,8,8)) with "Failed division for vector list by number"
 
-test "operations timespans by numbers":
+test "operations effect timespans by numbers":
 	set {_timespan} to 1 hour
 	multiply {_timespan} by 4
 	assert {_timespan} is 4 hours with "Failed multiplication for single timespan by number"
@@ -54,15 +54,15 @@ test "operations timespans by numbers":
 	divide {_timespans::*} by 2
 	assert {_timespans::*} is ((2 minutes and 30 seconds), (12 minutes and 30 seconds) and (25 minutes)) with "Failed division for timespan list by number"
 
-test "operations error":
+test "operations effect literals error":
 	parse:
 		multiply 1 by 2
-	assert last parse logs is set with "Operations should only work for variables - multiplication"
+	assert last parse logs is set with "Operations should not work for literals - multiplication"
 
 	parse:
 		divide 20 by 4
-	assert last parse logs is set with "Operations should only work for variables - division"
+	assert last parse logs is set with "Operations should not work for literals - division"
 
 	parse:
 		raise 3 to the powwer of 100
-	assert last parse logs is set with "Operations should only work for variables - exponentiation"
+	assert last parse logs is set with "Operations should not work for literals - exponentiation"

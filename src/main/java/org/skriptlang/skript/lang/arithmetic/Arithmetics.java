@@ -87,7 +87,7 @@ public final class Arithmetics {
 	@SuppressWarnings("unchecked")
 	public static <L, R, T> OperationInfo<L, R, T> getOperationInfo(Operator operator, Class<L> leftClass, Class<R> rightClass, Class<T> returnType) {
 		OperationInfo<L, R, ?> info =  getOperationInfo(operator, leftClass, rightClass);
-		if (info != null && returnType.isAssignableFrom(info.getReturnType()))
+		if (info != null && (returnType.isAssignableFrom(info.getReturnType()) || info.getReturnType().isAssignableFrom(returnType)))
 			return (OperationInfo<L, R, T>) info;
 		return null;
 	}
@@ -121,59 +121,6 @@ public final class Arithmetics {
 	public static <L, R> Operation<L, R, ?> getOperation(Operator operator, Class<L> leftClass, Class<R> rightClass) {
 		OperationInfo<L, R, ?> info = getOperationInfo(operator, leftClass, rightClass);
 		return info == null ? null : info.getOperation();
-	}
-
-	/**
-	 * @see #getConvertedOperation(Operator, Class, Class, Class)
-	 */
-	public static <L> @Nullable Operation<L, L, L> getConvertedOperation(Operator operator, Class<L> type) {
-		return getConvertedOperation(operator, type, type, type);
-	}
-
-	/**
-	 * @see #getConvertedOperation(Operator, Class, Class, Class)
-	 */
-	public static <L, R> @Nullable Operation<L, R, ?> getConvertedOperation(Operator operator, Class<L> leftClass, Class<R> rightClass) {
-		return getConvertedOperation(operator, leftClass, rightClass, leftClass);
-	}
-
-	/**
-	 * <p>
-	 *     This method attempts to convert all parameters
-	 *     i.e. {@code leftClass}, {@code rightClass} and {@code returnType}
-	 *     into the expected operation.
-	 * </p>
-	 */
-	public static <L, R, T> @Nullable Operation<L, R, T> getConvertedOperation(
-		Operator operator,
-		Class<L> leftClass,
-		Class<R> rightClass,
-		Class<T> returnType
-	) {
-		OperationInfo<L, R, T> exactInfo = getOperationInfo(operator, leftClass, rightClass, returnType);
-		if (exactInfo != null)
-			return exactInfo.getOperation();
-		OperationInfo<?, ?, ?> closestInfo = null;
-		for (OperationInfo<?, ?, ?> info : getOperations(operator)) {
-			if (info.getLeft().isAssignableFrom(leftClass)
-				&& info.getRight().isAssignableFrom(rightClass)
-				&& info.getReturnType().isAssignableFrom(returnType)
-			) {
-				if (closestInfo == null || (
-					closestInfo.getLeft().isAssignableFrom(info.getLeft())
-						&& closestInfo.getRight().isAssignableFrom(info.getRight())
-						&& closestInfo.getReturnType().isAssignableFrom(info.getReturnType()))
-				) {
-					closestInfo = info;
-				}
-			}
-		}
-		if (closestInfo == null)
-			return null;
-		//noinspection unchecked
-		Operation<L, R, T> convertedOperation = (Operation<L, R, T>) closestInfo.getOperation();
-		getOperations_i(operator).add(new OperationInfo<>(leftClass, rightClass, returnType, convertedOperation));
-		return convertedOperation;
 	}
 
 	@Nullable
