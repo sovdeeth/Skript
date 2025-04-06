@@ -7,10 +7,9 @@ import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Example;
 import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
-import ch.njol.skript.lang.Effect;
-import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.*;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.lang.SyntaxStringBuilder;
+import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.LiteralUtils;
 import ch.njol.skript.util.Patterns;
@@ -72,16 +71,33 @@ public class EffOperations extends Effect implements SyntaxRuntimeErrorProducer 
 	private Expression<?> base;
 	private Expression<?> operative;
 	private Node node;
+	private Operation<Object, Object, Object> operation = null;
 
 	@Override
 	public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
 		operator = PATTERNS.getInfo(matchedPattern);
 		base = exprs[0];
-		if (base.acceptChange(ChangeMode.SET) == null) {
+		if (!isOperable(null)) {
 			Skript.error("This expression cannot be operated on.");
 			return false;
 		}
 		operative = LiteralUtils.defendExpression(exprs[1]);
+		if (operative instanceof Literal<?> || operative instanceof SimpleExpression<?>) {
+			Class<?> operativeType = operative.getReturnType();
+			if (!isOperable(operativeType)) {
+				Skript.error("This expression cannot be " + getOperatorString() + " by "
+					+ Utils.a(getClassInfoCodeName(operativeType)) + ".");
+				return false;
+			}
+			if (base instanceof SimpleExpression<?> && !base.getReturnType().equals(Object.class)) {
+				operation = getOperation(base.getReturnType(), operative.getReturnType());
+				if (operation == null) {
+					Skript.error("This expression cannot be " + getOperatorString() + " by "
+						+ Utils.a(getClassInfoCodeName(operative.getReturnType())) + ".");
+					return false;
+				}
+			}
+		}
 		node = getParser().getNode();
 		return LiteralUtils.canInitSafely(operative);
 	}
@@ -92,20 +108,22 @@ public class EffOperations extends Effect implements SyntaxRuntimeErrorProducer 
 		if (operativeObject == null)
 			return;
 		Class<?> operativeClass = operativeObject.getClass();
-		Operation<Object, Object, Object> operation = null;
+		Operation<Object, Object, Object> operation = this.operation;
 		Function<?, Object> changerFunction = null;
-		if (base.isSingle()) {
-			// If the variable provided is single, then we can do some checks
-			// to ensure an operation is available; if not, we can produce a proper error.
-			Object baseObject = base.getSingle(event);
-			if (baseObject == null)
-				return;
-			Class<?> baseClass = baseObject.getClass();
-			operation = getOperation(baseClass, operativeClass);
+		if (base.isSingle() || (base instanceof SimpleExpression<?> && !base.getReturnType().equals(Object.class))) {
 			if (operation == null) {
-				error(Utils.A(getClassInfoCodeName(baseClass)) + " cannot be " + getOperatorString()
-					+ " with " + Utils.a(getClassInfoCodeName(operativeClass)));
-				return;
+				// If the variable provided is single, then we can do some checks
+				// to ensure an operation is available; if not, we can produce a proper error.
+				Object baseObject = base.getSingle(event);
+				if (baseObject == null)
+					return;
+				Class<?> baseClass = baseObject.getClass();
+				operation = getOperation(baseClass, operativeClass);
+				if (operation == null) {
+					error(Utils.A(getClassInfoCodeName(baseClass)) + " cannot be " + getOperatorString()
+						+ " with " + Utils.a(getClassInfoCodeName(operativeClass)) + ".");
+					return;
+				}
 			}
 			Operation<Object, Object, Object> finalOperation = operation;
 			changerFunction = object -> finalOperation.calculate(object, operativeObject);
@@ -128,13 +146,13 @@ public class EffOperations extends Effect implements SyntaxRuntimeErrorProducer 
 		return (Operation<Object, Object, Object>) Arithmetics.getOperation(operator, leftClass, rightClass, leftClass);
 	}
 
-	private String getClassInfoCodeName(Class<?> clazz) {
-		return Classes.getSuperClassInfo(clazz).getCodeName();
-	}
-
 	@Override
 	public Node getNode() {
 		return node;
+	}
+
+	private String getClassInfoCodeName(Class<?> clazz) {
+		return Classes.getSuperClassInfo(clazz).getCodeName();
 	}
 
 	private String getOperatorString() {
@@ -144,6 +162,27 @@ public class EffOperations extends Effect implements SyntaxRuntimeErrorProducer 
 			case EXPONENTIATION -> "exponentiated";
 			default -> "";
 		};
+	}
+
+	private boolean isOperable(@Nullable Class<?> objectClass) {
+		Class<?>[] classes = base.acceptChange(ChangeMode.SET);
+		if (classes == null) {
+			return false;
+		} else if (classes.length == 0) {
+			throw new IllegalStateException("A ChangeMode of 'SET' should never return an empty array.");
+		}
+		if (objectClass == null)
+			return true;
+		if (base.isSingle() || base instanceof SimpleExpression<?>) {
+			for (Class<?> clazz : classes) {
+				if (clazz.isAssignableFrom(objectClass)) {
+					return true;
+				}
+			}
+		} else if (base instanceof Variable<?>) {
+			return true;
+		}
+		return false;
 	}
 
 	@Override
