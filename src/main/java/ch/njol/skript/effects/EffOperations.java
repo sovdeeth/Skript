@@ -7,9 +7,10 @@ import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Example;
 import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
-import ch.njol.skript.lang.*;
+import ch.njol.skript.lang.Effect;
+import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.skript.lang.SyntaxStringBuilder;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.LiteralUtils;
 import ch.njol.skript.util.Patterns;
@@ -19,6 +20,7 @@ import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 import org.skriptlang.skript.lang.arithmetic.Arithmetics;
 import org.skriptlang.skript.lang.arithmetic.Operation;
+import org.skriptlang.skript.lang.arithmetic.OperationInfo;
 import org.skriptlang.skript.lang.arithmetic.Operator;
 import org.skriptlang.skript.log.runtime.SyntaxRuntimeErrorProducer;
 
@@ -77,28 +79,53 @@ public class EffOperations extends Effect implements SyntaxRuntimeErrorProducer 
 	public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
 		operator = PATTERNS.getInfo(matchedPattern);
 		base = exprs[0];
-		if (!isOperable(null)) {
+		Class<?>[] baseAccepted = base.acceptChange(ChangeMode.SET);
+		if (baseAccepted == null) {
 			Skript.error("This expression cannot be operated on.");
 			return false;
 		}
 		operative = LiteralUtils.defendExpression(exprs[1]);
-		if (operative instanceof Literal<?> || operative instanceof SimpleExpression<?>) {
-			Class<?> operativeType = operative.getReturnType();
-			if (!isOperable(operativeType)) {
+		node = getParser().getNode();
+		Class<?> operativeType = operative.getReturnType();
+		Class<?> baseType = base.getReturnType();
+		// Ensure 'baseType' is referencing a non-array class
+		if (baseType.isArray())
+			baseType = baseType.getComponentType();
+		if (operativeType.equals(Object.class) && baseType.equals(Object.class)) {
+			// Both are object, so we should do the checks within '#execute'
+			return LiteralUtils.canInitSafely(operative);
+		} else if (operativeType.equals(Object.class) || baseType.equals(Object.class)) {
+			// One is 'Object', so we can atleast see if the other has any operations registered
+			Class<?>[] returnTypes = null;
+			if (baseType.equals(Object.class)) {
+				returnTypes = Arithmetics.getOperations(operator).stream()
+					.filter(info -> info.getRight().isAssignableFrom(operativeType))
+					.map(OperationInfo::getReturnType)
+					.toArray(Class[]::new);
+				if (returnTypes.length == 0) {
+					Skript.error(operator.getName() + " cannot be performed with "
+						+ Utils.a(getClassInfoCodeName(operativeType)));
+					return false;
+				}
+			} else {
+				returnTypes = Arithmetics.getOperations(operator, baseType).stream()
+					.map(OperationInfo::getReturnType)
+					.toArray(Class[]::new);
+				if (returnTypes.length == 0) {
+					Skript.error("This expression can not be " + getOperatorString() + ".");
+					return false;
+				}
+			}
+		} else {
+			// We've deduced that the return types from both 'base' and 'operative' are guaranteed not to be 'Object.class'
+			// We can check to see if an operation exists, if not, parse error
+			operation = getOperation(baseType, operativeType);
+			if (operation == null) {
 				Skript.error("This expression cannot be " + getOperatorString() + " by "
 					+ Utils.a(getClassInfoCodeName(operativeType)) + ".");
 				return false;
 			}
-			if (base instanceof SimpleExpression<?> && !base.getReturnType().equals(Object.class)) {
-				operation = getOperation(base.getReturnType(), operative.getReturnType());
-				if (operation == null) {
-					Skript.error("This expression cannot be " + getOperatorString() + " by "
-						+ Utils.a(getClassInfoCodeName(operative.getReturnType())) + ".");
-					return false;
-				}
-			}
 		}
-		node = getParser().getNode();
 		return LiteralUtils.canInitSafely(operative);
 	}
 
@@ -107,31 +134,34 @@ public class EffOperations extends Effect implements SyntaxRuntimeErrorProducer 
 		Object operativeObject = operative.getSingle(event);
 		if (operativeObject == null)
 			return;
-		Class<?> operativeClass = operativeObject.getClass();
+		// Ensure 'operativeType' is not 'Object.class' by using '#getReturnType' or the class of the object
+		Class<?> operativeType = operative.getReturnType().equals(Object.class) ? operativeObject.getClass() : operative.getReturnType();
 		Operation<Object, Object, Object> operation = this.operation;
 		Function<?, Object> changerFunction = null;
-		if (base.isSingle() || (base instanceof SimpleExpression<?> && !base.getReturnType().equals(Object.class))) {
+		Class<?> baseType = base.getReturnType();
+		// Convert array classes to singular, allowing for easier checks
+		if (baseType.isArray())
+			baseType = baseType.getComponentType();
+		// If 'base' is single or the '#getReturnType' returns a non 'Object.class' we can use the same operation
+		if (base.isSingle() || !baseType.equals(Object.class)) {
 			if (operation == null) {
-				// If the variable provided is single, then we can do some checks
-				// to ensure an operation is available; if not, we can produce a proper error.
 				Object baseObject = base.getSingle(event);
 				if (baseObject == null)
 					return;
-				Class<?> baseClass = baseObject.getClass();
-				operation = getOperation(baseClass, operativeClass);
+				// If we reached here through 'base.isSingle()', need to ensure the class is not 'Object.class'
+				baseType = baseType.equals(Object.class) ? baseObject.getClass() : baseType;
+				operation = getOperation(baseType, operativeType);
 				if (operation == null) {
-					error(Utils.A(getClassInfoCodeName(baseClass)) + " cannot be " + getOperatorString()
-						+ " with " + Utils.a(getClassInfoCodeName(operativeClass)) + ".");
+					error(Utils.A(getClassInfoCodeName(baseType)) + " cannot be " + getOperatorString()
+						+ " with " + Utils.a(getClassInfoCodeName(operativeType)) + ".");
 					return;
 				}
 			}
 			Operation<Object, Object, Object> finalOperation = operation;
 			changerFunction = object -> finalOperation.calculate(object, operativeObject);
 		} else {
-			// In the case of a list variable, we should probably ignore throwing multiple errors for each object
-			// that is not applicable for an operation
 			changerFunction = object -> {
-				Operation<Object, Object, Object> thisOperation = getOperation(object.getClass(), operativeClass);
+				Operation<Object, Object, Object> thisOperation = getOperation(object.getClass(), operativeType);
 				if (thisOperation != null)
 					return thisOperation.calculate(object, operativeObject);
 				return object;
@@ -162,27 +192,6 @@ public class EffOperations extends Effect implements SyntaxRuntimeErrorProducer 
 			case EXPONENTIATION -> "exponentiated";
 			default -> "";
 		};
-	}
-
-	private boolean isOperable(@Nullable Class<?> objectClass) {
-		Class<?>[] classes = base.acceptChange(ChangeMode.SET);
-		if (classes == null) {
-			return false;
-		} else if (classes.length == 0) {
-			throw new IllegalStateException("A ChangeMode of 'SET' should never return an empty array.");
-		}
-		if (objectClass == null)
-			return true;
-		if (base.isSingle() || base instanceof SimpleExpression<?>) {
-			for (Class<?> clazz : classes) {
-				if (clazz.isAssignableFrom(objectClass)) {
-					return true;
-				}
-			}
-		} else if (base instanceof Variable<?>) {
-			return true;
-		}
-		return false;
 	}
 
 	@Override
