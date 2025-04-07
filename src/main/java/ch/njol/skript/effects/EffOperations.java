@@ -24,6 +24,7 @@ import org.skriptlang.skript.lang.arithmetic.OperationInfo;
 import org.skriptlang.skript.lang.arithmetic.Operator;
 import org.skriptlang.skript.log.runtime.SyntaxRuntimeErrorProducer;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
 @Name("Operations")
@@ -81,7 +82,7 @@ public class EffOperations extends Effect implements SyntaxRuntimeErrorProducer 
 		base = exprs[0];
 		Class<?>[] baseAccepted = base.acceptChange(ChangeMode.SET);
 		if (baseAccepted == null) {
-			Skript.error("This expression cannot be operated on.");
+			printError(null, null);
 			return false;
 		}
 		operative = LiteralUtils.defendExpression(exprs[1]);
@@ -92,7 +93,13 @@ public class EffOperations extends Effect implements SyntaxRuntimeErrorProducer 
 		if (baseType.isArray())
 			baseType = baseType.getComponentType();
 		if (operativeType.equals(Object.class) && baseType.equals(Object.class)) {
-			// Both are object, so we should do the checks within '#execute'
+			// Both are object, so we should check to see if '#getAllReturnTypes' contains a class
+			// that is accepted within 'baseAccepted'
+			Class<?>[] allReturnTypes = Arithmetics.getAllReturnTypes(operator).toArray(Class[]::new);
+			if (!isOfType(baseAccepted, allReturnTypes)) {
+				printError(null, null);
+				return false;
+			}
 			return LiteralUtils.canInitSafely(operative);
 		} else if (operativeType.equals(Object.class) || baseType.equals(Object.class)) {
 			// One is 'Object', so we can atleast see if the other has any operations registered
@@ -103,8 +110,7 @@ public class EffOperations extends Effect implements SyntaxRuntimeErrorProducer 
 					.map(OperationInfo::getReturnType)
 					.toArray(Class[]::new);
 				if (returnTypes.length == 0) {
-					Skript.error(operator.getName() + " cannot be performed with "
-						+ Utils.a(getClassInfoCodeName(operativeType)));
+					printError(null, operativeType);
 					return false;
 				}
 			} else {
@@ -112,19 +118,27 @@ public class EffOperations extends Effect implements SyntaxRuntimeErrorProducer 
 					.map(OperationInfo::getReturnType)
 					.toArray(Class[]::new);
 				if (returnTypes.length == 0) {
-					Skript.error("This expression can not be " + getOperatorString() + ".");
+					printError(null, null);
 					return false;
 				}
+			}
+			if (!isOfType(baseAccepted, returnTypes)) {
+				Skript.error("Blah");
+				return false;
 			}
 		} else {
 			// We've deduced that the return types from both 'base' and 'operative' are guaranteed not to be 'Object.class'
 			// We can check to see if an operation exists, if not, parse error
-			operation = getOperation(baseType, operativeType);
-			if (operation == null) {
-				Skript.error("This expression cannot be " + getOperatorString() + " by "
-					+ Utils.a(getClassInfoCodeName(operativeType)) + ".");
+			OperationInfo<Object, Object, Object> operationInfo = getOperationInfo(baseType, operativeType);
+			if (operationInfo == null) {
+				printError(null, operativeType);
 				return false;
 			}
+			if (!isOfType(baseAccepted, operationInfo.getReturnType())) {
+				printError(null, operativeType);
+				return false;
+			}
+			operation = operationInfo.getOperation();
 		}
 		return LiteralUtils.canInitSafely(operative);
 	}
@@ -139,6 +153,8 @@ public class EffOperations extends Effect implements SyntaxRuntimeErrorProducer 
 		Operation<Object, Object, Object> operation = this.operation;
 		Function<?, Object> changerFunction = null;
 		Class<?> baseType = base.getReturnType();
+		Class<?>[] baseAccepted = base.acceptChange(ChangeMode.SET);
+		assert baseAccepted != null;
 		// Convert array classes to singular, allowing for easier checks
 		if (baseType.isArray())
 			baseType = baseType.getComponentType();
@@ -150,20 +166,27 @@ public class EffOperations extends Effect implements SyntaxRuntimeErrorProducer 
 					return;
 				// If we reached here through 'base.isSingle()', need to ensure the class is not 'Object.class'
 				baseType = baseType.equals(Object.class) ? baseObject.getClass() : baseType;
-				operation = getOperation(baseType, operativeType);
-				if (operation == null) {
-					error(Utils.A(getClassInfoCodeName(baseType)) + " cannot be " + getOperatorString()
-						+ " with " + Utils.a(getClassInfoCodeName(operativeType)) + ".");
+				OperationInfo<Object, Object, Object> operationInfo = getOperationInfo(baseType, operativeType);
+				if (operationInfo == null || !isOfType(baseAccepted, operationInfo.getReturnType())) {
+					printError(baseType, operativeType);
 					return;
 				}
+				operation = operationInfo.getOperation();
 			}
 			Operation<Object, Object, Object> finalOperation = operation;
 			changerFunction = object -> finalOperation.calculate(object, operativeObject);
 		} else {
+			AtomicBoolean errorPrinted = new AtomicBoolean(false);
 			changerFunction = object -> {
-				Operation<Object, Object, Object> thisOperation = getOperation(object.getClass(), operativeType);
-				if (thisOperation != null)
-					return thisOperation.calculate(object, operativeObject);
+				OperationInfo<Object, Object, Object> operationInfo = getOperationInfo(object.getClass(), operativeType);
+				if (operationInfo != null) {
+					if (isOfType(baseAccepted, operationInfo.getReturnType())) {
+						return operationInfo.getOperation().calculate(object, operativeObject);
+					} else if (!errorPrinted.get()) {
+						errorPrinted.set(true);
+						printError(null, operativeType);
+					}
+				}
 				return object;
 			};
 		}
@@ -171,9 +194,29 @@ public class EffOperations extends Effect implements SyntaxRuntimeErrorProducer 
 		base.changeInPlace(event, (Function) changerFunction);
 	}
 
-	private @Nullable Operation<Object, Object, Object> getOperation(Class<?> leftClass, Class<?> rightClass) {
+	private @Nullable OperationInfo<Object, Object, Object> getOperationInfo(Class<?> leftClass, Class<?> rightClass) {
 		//noinspection unchecked
-		return (Operation<Object, Object, Object>) Arithmetics.getOperation(operator, leftClass, rightClass, leftClass);
+		return (OperationInfo<Object, Object, Object>) Arithmetics.lookupOperationInfo(operator, leftClass, rightClass);
+	}
+
+	private boolean isOfType(Class<?>[] acceptedTypes, Class<?>[] checkTypes) {
+		for (Class<?> check : checkTypes) {
+			if (isOfType(acceptedTypes, check)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private boolean isOfType(Class<?>[] acceptedTypes, Class<?> clazz) {
+		for (Class<?> type : acceptedTypes) {
+			if (type.isArray())
+				type = type.getComponentType();
+			if (type.equals(Object.class) || type.isAssignableFrom(clazz)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@Override
@@ -181,7 +224,7 @@ public class EffOperations extends Effect implements SyntaxRuntimeErrorProducer 
 		return node;
 	}
 
-	private String getClassInfoCodeName(Class<?> clazz) {
+	private String getCodeName(Class<?> clazz) {
 		return Classes.getSuperClassInfo(clazz).getCodeName();
 	}
 
@@ -192,6 +235,30 @@ public class EffOperations extends Effect implements SyntaxRuntimeErrorProducer 
 			case EXPONENTIATION -> "exponentiated";
 			default -> "";
 		};
+	}
+
+	private void printError(boolean parseError, @Nullable Class<?> baseClass, @Nullable Class<?> operativeClass) {
+		String message = "";
+		if (baseClass == null) {
+			if (operativeClass == null) {
+				message = "This expression cannot be operated on.";
+			} else {
+				message = "This expression cannot be " + getOperatorString() + " by "
+					+ Utils.a(getCodeName(operativeClass));
+			}
+		} else {
+			if (operativeClass == null) {
+				message = Utils.A(getCodeName(baseClass)) + " cannot be " + getOperatorString();
+			} else {
+				message = Utils.A(getCodeName(baseClass)) + " cannot be " + getOperatorString() + " by "
+					+ Utils.a(getCodeName(operativeClass));
+			}
+		}
+		if (parseError) {
+			Skript.error(message);
+		} else {
+			error(message);
+		}
 	}
 
 	@Override
