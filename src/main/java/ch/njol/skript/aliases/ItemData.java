@@ -11,6 +11,7 @@ import ch.njol.yggdrasil.Fields;
 import ch.njol.yggdrasil.YggdrasilSerializable.YggdrasilExtendedSerializable;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.data.BlockData;
@@ -564,7 +565,7 @@ public class ItemData implements Cloneable, YggdrasilExtendedSerializable {
 	@Override
 	public Fields serialize() throws NotSerializableException {
 		Fields fields = new Fields(this); // ItemStack is transient, will be ignored
-		fields.putPrimitive("id", type.ordinal());
+		fields.putObject("key", type.getKey());
 		fields.putObject("meta", stack != null ? stack.getItemMeta() : null);
 		return fields;
 	}
@@ -573,7 +574,16 @@ public class ItemData implements Cloneable, YggdrasilExtendedSerializable {
 
 	@Override
 	public void deserialize(Fields fields) throws StreamCorruptedException, NotSerializableException {
-		this.type = materials[fields.getAndRemovePrimitive("id", int.class)];
+		if (fields.hasField("key")) {
+			NamespacedKey key = fields.getAndRemoveObject("key", NamespacedKey.class);
+			if (key == null)
+				throw new StreamCorruptedException("Material key is null");
+			this.type = Material.matchMaterial(key.toString());
+		} else {
+			// attempt back compat deserialization, though using ordinals is not reliable
+			this.type = materials[fields.getAndRemovePrimitive("id", int.class)];
+		}
+
 		ItemMeta meta = fields.getAndRemoveObject("meta", ItemMeta.class);
 
 		// Initialize ItemStack
