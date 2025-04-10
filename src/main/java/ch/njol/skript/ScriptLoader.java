@@ -1002,8 +1002,14 @@ public class ScriptLoader {
 						break find_section;
 					Collection<LogEntry> errors = handler.getErrors();
 
-					// restore the failure log
-					if (errors.isEmpty() || errors.iterator().next().getMessage().contains("Can't understand this condition/effect:")) {
+					// restore the failure log if:
+					// 1. there are no errors from the statement parse
+					// 2. the error message is the default one from the statement parse
+					// 3. the backup log contains a message about the section being claimed
+					if (errors.isEmpty()
+						|| errors.iterator().next().getMessage().contains("Can't understand this condition/effect:")
+						|| backup.getErrors().iterator().next().getMessage().contains("tried to claim the current section, but it was already claimed by")
+					) {
 						handler.restore(backup);
 					}
 					continue;
