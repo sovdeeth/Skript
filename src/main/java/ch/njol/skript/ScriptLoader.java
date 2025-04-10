@@ -1003,7 +1003,7 @@ public class ScriptLoader {
 					Collection<LogEntry> errors = handler.getErrors();
 
 					// restore the failure log
-					if (errors.isEmpty()) {
+					if (errors.isEmpty() || errors.iterator().next().getMessage().contains("Can't understand this condition/effect:")) {
 						handler.restore(backup);
 					}
 					continue;
