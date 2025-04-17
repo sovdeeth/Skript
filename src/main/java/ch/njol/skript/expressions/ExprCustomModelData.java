@@ -3,10 +3,7 @@ package ch.njol.skript.expressions;
 import ch.njol.skript.Skript;
 import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.classes.Changer.ChangeMode;
-import ch.njol.skript.doc.Description;
-import ch.njol.skript.doc.Example;
-import ch.njol.skript.doc.Name;
-import ch.njol.skript.doc.Since;
+import ch.njol.skript.doc.*;
 import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
@@ -42,7 +39,8 @@ import java.util.List;
 @Example("""
 	set the full custom model data of {_item} to 10, "sword", and rgb(100, 200, 30)
 	""")
-@Since({"2.5","INSERT VERSION (component support)"})
+@RequiredPlugins("1.21.4+ (floats/flags/strings/colours/full model data)")
+@Since({"2.5","INSERT VERSION (floats/flags/strings/colours/full model data)"})
 public class ExprCustomModelData extends PropertyExpression<ItemType, Object> {
 
 	private static final boolean USE_NEW_CMD = Skript.classExists("org.bukkit.inventory.meta.components.CustomModelDataComponent");
