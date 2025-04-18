@@ -27,8 +27,8 @@ import org.skriptlang.skript.lang.arithmetic.Operator;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Collection;
+import java.util.List;
 
 @Name("Arithmetic")
 @Description("Arithmetic expressions, e.g. 1 + 2, (health of player - 2) / 3, etc.")
@@ -299,12 +299,19 @@ public class ExprArithmetic<L, R, T> extends SimpleExpression<T> {
 	}
 
 	private void printArgWarning(Expression<L> first, Expression<R> second, Operator operator) {
-		if (operator == Operator.SUBTRACTION // if the operator is '-'
+		if (operator == Operator.SUBTRACTION && !rightGrouped && !leftGrouped // if the operator is '-' and the user didn't use ()
 			&& first instanceof ExprArgument argument && argument.couldCauseArithmeticConfusion() // if the first expression is 'arg'
-			&& second instanceof ExprArithmetic<?, ?, ?> secondArith && secondArith.first instanceof Literal<?> // this ambiguity only occurs when the code is parsed as `arg - (1 * 2)` or a similar PEMDAS priority.
-			&& !rightGrouped && !leftGrouped) // if the user used (), the expression is not ambiguous
-			Skript.warning("This subtraction is ambiguous and could be interpreted either as 'arg-1' or as '(arg) - 1'. " +
+			&& second instanceof ExprArithmetic<?, ?, ?> secondArith && secondArith.first instanceof Literal<?> literal // this ambiguity only occurs when the code is parsed as `arg - (1 * 2)` or a similar PEMDAS priority.
+			&& literal.canReturn(Number.class)) {
+			// ensure that the second literal is a 1
+			Literal<?> secondLiteral = (Literal<?>) LiteralUtils.defendExpression(literal);
+			if (LiteralUtils.canInitSafely(secondLiteral)) {
+				double number = ((Number) secondLiteral.getSingle()).doubleValue();
+				if (number == 1)
+					Skript.warning("This subtraction is ambiguous and could be interpreted either as 'arg-1' or as '(arg) - 1'. " +
 					"If you meant to use 'arg-1', use 'arg 1' instead or use parentheses to clarify your intent.");
+			}
+		}
 	}
 
 	@Override
