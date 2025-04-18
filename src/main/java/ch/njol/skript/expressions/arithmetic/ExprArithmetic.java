@@ -6,6 +6,7 @@ import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
+import ch.njol.skript.expressions.ExprArgument;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.Literal;
@@ -112,6 +113,9 @@ public class ExprArithmetic<L, R, T> extends SimpleExpression<T> {
 		leftGrouped = patternInfo.leftGrouped;
 		rightGrouped = patternInfo.rightGrouped;
 		operator = patternInfo.operator;
+
+		// print warning for arg-1 confusion scenario
+		printArgWarning(first, second, operator);
 
 		/*
 		 * Step 1: UnparsedLiteral Resolving
@@ -292,6 +296,15 @@ public class ExprArithmetic<L, R, T> extends SimpleExpression<T> {
 
 		arithmeticGettable = ArithmeticChain.parse(chain);
 		return arithmeticGettable != null || error(firstClass, secondClass);
+	}
+
+	private void printArgWarning(Expression<L> first, Expression<R> second, Operator operator) {
+		if (operator == Operator.SUBTRACTION // if the operator is '-'
+			&& first instanceof ExprArgument argument && argument.couldCauseArithmeticConfusion() // if the first expression is 'arg'
+			&& second instanceof ExprArithmetic<?, ?, ?> secondArith && secondArith.first instanceof Literal<?> // this ambiguity only occurs when the code is parsed as `arg - (1 * 2)` or a similar PEMDAS priority.
+			&& !rightGrouped && !leftGrouped) // if the user used (), the expression is not ambiguous
+			Skript.warning("This subtraction is ambiguous and could be interpreted either as 'arg-1' or as '(arg) - 1'. " +
+					"If you meant to use 'arg-1', use 'arg 1' instead or use parentheses to clarify your intent.");
 	}
 
 	@Override
