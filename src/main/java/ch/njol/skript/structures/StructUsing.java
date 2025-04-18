@@ -36,7 +36,7 @@ public class StructUsing extends Structure {
 
 	@Override
 	public boolean init(Literal<?> @NotNull [] arguments, int pattern, ParseResult result, @Nullable EntryContainer container) {
-		this.enableExperiment(result.regexes.getFirst().group());
+		this.enableExperiment(result.regexes.get(0).group());
 		return true;
 	}
 
