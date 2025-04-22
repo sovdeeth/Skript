@@ -14,7 +14,7 @@ import java.util.Locale;
 
 @Name("Has Custom Model Data")
 @Description("Check if an item has a custom model data tag")
-@Examples("player's tool has custom model data")
+@Example("player's tool has custom model data")
 @Since("2.5, INSERT VERSION (expanded data types)")
 @RequiredPlugins("1.21.4+ (floats/flags/strings/colours)")
 public class CondHasCustomModelData extends PropertyCondition<ItemType> {

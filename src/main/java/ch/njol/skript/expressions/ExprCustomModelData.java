@@ -24,7 +24,7 @@ import java.util.List;
 @Name("Custom Model Data")
 @Description({
 	"Get/set the custom model data of an item. Using just `custom model data` will return an integer. Items without model data will return 0.",
-	"In 1.21.4+, though, custom model data is extended to include a list of numbers (floats), a list of booleans (flags), a list of strings, and a list of colours. " +
+	"Since 1.21.4, custom model data instead consists of a list of numbers (floats), a list of booleans (flags), a list of strings, and a list of colours. " +
 	"Accessing and modifying these lists can be done type-by-type, or all at once with `complete custom model data`. " +
 	"This is the more accurate and recommended method of using custom model data."
 })
@@ -40,7 +40,7 @@ import java.util.List;
 	set the full custom model data of {_item} to 10, "sword", and rgb(100, 200, 30)
 	""")
 @RequiredPlugins("1.21.4+ (floats/flags/strings/colours/full model data)")
-@Since({"2.5","INSERT VERSION (floats/flags/strings/colours/full model data)"})
+@Since({"2.5", "INSERT VERSION (floats/flags/strings/colours/full model data)"})
 public class ExprCustomModelData extends PropertyExpression<ItemType, Object> {
 
 	private static final boolean USE_NEW_CMD = Skript.classExists("org.bukkit.inventory.meta.components.CustomModelDataComponent");
