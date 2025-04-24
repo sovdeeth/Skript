@@ -43,8 +43,6 @@ public class SecCustomDefault extends Section {
 		}
 
 		DefaultValueData data = getParser().getData(DefaultValueData.class);
-		if (data == null)
-			throw new IllegalStateException("DefaultValueData did not exist");
 
 		// Add custom default value
 		//noinspection rawtypes,unchecked

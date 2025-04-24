@@ -285,11 +285,10 @@ public class SkriptParser {
 	}
 
 	private static @NotNull DefaultExpression<?> getDefaultExpression(ExprInfo exprInfo, String pattern) {
-		DefaultExpression<?> expr = null;
+		DefaultExpression<?> expr;
 		// check custom default values first.
 		DefaultValueData data = getParser().getData(DefaultValueData.class);
-		if (data != null)
-			expr = data.getDefaultValue(exprInfo.classes[0].getC());
+		expr = data.getDefaultValue(exprInfo.classes[0].getC());
 
 		// then check classinfo
 		if (expr == null)
