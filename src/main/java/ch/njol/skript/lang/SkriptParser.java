@@ -270,20 +270,28 @@ public class SkriptParser {
 	private boolean checkRestrictedEvents(SyntaxElement element, ParseResult parseResult) {
 		if (element instanceof EventRestrictedSyntax eventRestrictedSyntax) {
 			Class<? extends Event>[] supportedEvents = eventRestrictedSyntax.supportedEvents();
-			if (!getParser().isCurrentEvent(supportedEvents)) {
-				Iterator<String> iterator = Arrays.stream(supportedEvents)
-					.map(it -> "the " + it.getSimpleName()
-						.replaceAll("([A-Z])", " $1")
-						.toLowerCase()
-						.trim())
-					.iterator();
-
-				String events = StringUtils.join(iterator, ", ", " or ");
-				Skript.error("'" + parseResult.expr + "' can only be used in " + events);
-				return false;
-			}
+      if (!getParser().isCurrentEvent(supportedEvents)) {
+        Skript.error("'" + parseResult.expr + "' can only be used in " + supportedEventsNames(supportedEvents));
+        continue;
+      }
 		}
 		return true;
+	}
+
+	private static String supportedEventsNames(Class<? extends Event>[] supportedEvents) {
+		List<String> names = new ArrayList<>();
+
+		for (SkriptEventInfo<?> eventInfo : Skript.getEvents()) {
+			for (Class<? extends Event> eventClass : supportedEvents) {
+				for (Class<? extends Event> event : eventInfo.events) {
+					if (event.isAssignableFrom(eventClass)) {
+						names.add("the %s event".formatted(eventInfo.getName().toLowerCase()));
+					}
+				}
+			}
+		}
+
+		return StringUtils.join(names, ", ", " or ");
 	}
 
 	/**
@@ -296,7 +304,7 @@ public class SkriptParser {
 			return experimentalSyntax.isSatisfiedBy(getParser().getExperimentSet());
 		}
 		return true;
-	}
+  }
 
 	private static @NotNull DefaultExpression<?> getDefaultExpression(ExprInfo exprInfo, String pattern) {
 		DefaultExpression<?> expr = exprInfo.classes[0].getDefaultExpression();
