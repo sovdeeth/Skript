@@ -71,8 +71,8 @@ public class CondIsRiding extends Condition {
 
 	@Override
 	public Condition simplify(Step step, @Nullable Simplifiable<?> source) {
-		entities = simplifyChild(entities, step, source);
-		types = simplifyChild(types, step, source);
+		riders = simplifyChild(riders, step, source);
+		riding = simplifyChild(riding, step, source);
 		return this;
 	}
 
