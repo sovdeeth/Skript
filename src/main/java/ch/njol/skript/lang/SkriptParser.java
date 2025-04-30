@@ -71,6 +71,8 @@ public class SkriptParser {
 	public final static int ALL_FLAGS = PARSE_EXPRESSIONS | PARSE_LITERALS;
 	private final int flags;
 
+	public final boolean doSimplification = SkriptConfig.simplifySyntaxesOnParse.value();
+
 	public final ParseContext context;
 
 	public SkriptParser(String expr) {
@@ -253,7 +255,7 @@ public class SkriptParser {
 							boolean success = element.init(parseResult.exprs, patternIndex, getParser().getHasDelayBefore(), parseResult);
 							if (success) {
 								log.printLog();
-								if (element instanceof Simplifiable<?> simplifiable)
+								if (doSimplification && element instanceof Simplifiable<?> simplifiable)
 									//noinspection unchecked
 									return (T) simplifiable.simplify();
 								return element;

@@ -243,6 +243,12 @@ variable changes until save: 1000
 #          This setting can lag your server depending on how often variables get saved and
 #          the number of variables needing to be saved.
 
+simplify syntax on parse: true
+# This setting controls whether Skript should try to simplify the syntax of a statement
+#   when parsing it. For example, 'set {a} to 1 + 10 * 5^2' will be simplified to 'set {a} to 251'.
+# This can be useful for performance, but could cause issues with some older addons. If you are encountering strange
+# issues, try disabling this setting and see if it helps. Otherwise, you can leave it enabled for better performance.
+
 # ==== Runtime Errors ====
 
 runtime errors:
