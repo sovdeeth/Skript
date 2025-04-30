@@ -353,8 +353,35 @@ public class ExprArithmetic<L, R, T> extends SimpleExpression<T> {
 	@Override
 	public Expression<T> simplify() {
 		// simplify this expression IFF it's the top-level arithmetic expression
-		if ( isTopLevel && first instanceof Literal && second instanceof Literal)
+		if (isTopLevel)
+			return simplifyInternal();
+		return this;
+	}
+
+	/**
+	 * Simplifies an arithmetic expression regardless of whether it is the top-level expression.
+	 * @return the simplified expression
+	 */
+	private Expression<T> simplifyInternal() {
+		if (first instanceof ExprArithmetic<?,?,?> firstArith) {
+			//noinspection unchecked
+			first = (Expression<L>) firstArith.simplifyInternal();
+		} else {
+			//noinspection unchecked
+			first = (Expression<L>) first.simplify();
+		}
+
+		if (second instanceof ExprArithmetic<?,?,?> secondArith) {
+			//noinspection unchecked
+			second = (Expression<R>) secondArith.simplifyInternal();
+		} else {
+			//noinspection unchecked
+			second = (Expression<R>) second.simplify();
+		}
+
+		if (first instanceof Literal && second instanceof Literal)
 			return getAsSimplifiedLiteral();
+
 		return this;
 	}
 
