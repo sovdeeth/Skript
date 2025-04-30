@@ -5,7 +5,6 @@ import ch.njol.skript.classes.Changer;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.classes.Changer.ChangerUtils;
 import ch.njol.skript.conditions.CondIsSet;
-import ch.njol.skript.lang.util.ContextlessEvent;
 import ch.njol.skript.lang.util.ConvertedExpression;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.log.ErrorQuality;
@@ -18,7 +17,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.skriptlang.skript.lang.converter.Converter;
 import org.skriptlang.skript.lang.simplification.Simplifiable;
-import org.skriptlang.skript.lang.simplification.SimplifiedLiteral;
 
 import java.util.*;
 import java.util.function.Function;
@@ -248,18 +246,6 @@ public interface Expression<T> extends SyntaxElement, Debuggable, Loopable<T>, S
 	 * @return The unconverted source expression of this expression or this expression itself if it was never converted.
 	 */
 	Expression<?> getSource();
-
-	/**
-	 * Attempts to create a {@link SimplifiedLiteral} by evaluating the expression with a {@link ContextlessEvent}.
-	 * This should only be attempted IFF the expression's children are all literals and
-	 * {@link #getAll(Event)} would always return the exact same value, no matter the context in which it is called.
-	 * The value of {@link #toString(Event, boolean)} will be evaluated and captured for the literal's toString methods.
-	 *
-	 * @return A simplified literal with the data from this expression's evaluation.
-	 */
-	default Literal<T> getAsSimplifiedLiteral() {
-		return SimplifiedLiteral.fromExpression(this);
-	}
 
 	/**
 	 * Tests whether this expression supports the given mode, and if yes what type it expects the <code>delta</code> to be.

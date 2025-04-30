@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import org.skriptlang.skript.lang.arithmetic.Arithmetics;
 import org.skriptlang.skript.lang.arithmetic.OperationInfo;
 import org.skriptlang.skript.lang.arithmetic.Operator;
+import org.skriptlang.skript.lang.simplification.SimplifiedLiteral;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -380,7 +381,7 @@ public class ExprArithmetic<L, R, T> extends SimpleExpression<T> {
 		}
 
 		if (first instanceof Literal && second instanceof Literal)
-			return getAsSimplifiedLiteral();
+			return SimplifiedLiteral.fromExpression(this);
 
 		return this;
 	}

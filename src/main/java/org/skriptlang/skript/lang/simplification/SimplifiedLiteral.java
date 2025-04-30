@@ -14,6 +14,15 @@ import org.jetbrains.annotations.Nullable;
  */
 public class SimplifiedLiteral<T> extends SimpleLiteral<T> {
 
+	/**
+	 * Creates a new simplified literal from an expression by evaluating it with a {@link ContextlessEvent}.
+	 * Any expression that requires specific event data cannot be safely simplified to a literal.
+	 * The original expression is stored for later toString generation.
+	 *
+	 * @param original the original expression to simplify
+	 * @param <T> the type of the literal
+	 * @return a new simplified literal
+	 */
 	public static <T> SimplifiedLiteral<T> fromExpression(Expression<T> original) {
 		Event event = ContextlessEvent.get();
 

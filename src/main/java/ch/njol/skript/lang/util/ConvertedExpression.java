@@ -265,6 +265,7 @@ public class ConvertedExpression<F, T> implements Expression<T> {
 
 	@Override
 	public Expression<? extends T> simplify() {
+		source = source.simplify();
 		return this;
 	}
 
