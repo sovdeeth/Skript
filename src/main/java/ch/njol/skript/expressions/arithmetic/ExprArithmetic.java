@@ -386,4 +386,20 @@ public class ExprArithmetic<L, R, T> extends SimpleExpression<T> {
 		return this;
 	}
 
+	/**
+	 * For testing purposes only.
+	 * @return the first expression
+	 */
+	Expression<L> getFirst() {
+		return first;
+	}
+
+	/**
+	 * For testing purposes only.
+	 * @return the second expression
+	 */
+	Expression<R> getSecond() {
+		return second;
+	}
+
 }
