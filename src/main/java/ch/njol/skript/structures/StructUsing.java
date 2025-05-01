@@ -18,10 +18,7 @@ import org.skriptlang.skript.lang.structure.Structure;
 @Description({
 	"Place at the top of a script file to enable an optional experimental feature.",
 	"Experimental features may change behavior in Skript and may contain bugs. Use at your own discretion.",
-	"A non-exhaustive list of experiments as of INSERT VERSION:",
-	"- <code>using queues</code>: Enables experimental queue (FIFO).",
-	"- <code>using for loops</code>: Enables for loops.",
-	"- <code>using script reflection</code>: Enables script reflection, allowing dynamic function calls and more.",
+	"A list of the available experimental features can be found in the changelog for your version of Skript."
 })
 @Examples({
 	"using 1.21",
