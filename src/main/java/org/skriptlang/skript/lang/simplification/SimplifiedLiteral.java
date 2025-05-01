@@ -1,7 +1,6 @@
 package org.skriptlang.skript.lang.simplification;
 
 
-import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.util.ContextlessEvent;
@@ -18,9 +17,6 @@ import java.util.function.Function;
  */
 public class SimplifiedLiteral<T> extends SimpleLiteral<T> {
 
-	private static int counter = 0;
-	private static int evals = 0;
-
 	/**
 	 * Creates a new simplified literal from an expression by evaluating it with a {@link ContextlessEvent}.
 	 * Any expression that requires specific event data cannot be safely simplified to a literal.
@@ -35,9 +31,6 @@ public class SimplifiedLiteral<T> extends SimpleLiteral<T> {
 
 		if (original instanceof SimplifiedLiteral<T> literal)
 			return literal;
-
-		counter++;
-		Skript.info("Creating simplified literal #" + counter);
 
 		//noinspection unchecked
 		return new SimplifiedLiteral<>(
