@@ -268,7 +268,7 @@ public class SkriptParser {
 	 * @param parseResult The parse result for error information.
 	 * @return True if the element is allowed in the current event, false otherwise.
 	 */
-	private boolean checkRestrictedEvents(SyntaxElement element, ParseResult parseResult) {
+	private static boolean checkRestrictedEvents(SyntaxElement element, ParseResult parseResult) {
 		if (element instanceof EventRestrictedSyntax eventRestrictedSyntax) {
 			Class<? extends Event>[] supportedEvents = eventRestrictedSyntax.supportedEvents();
 			if (!getParser().isCurrentEvent(supportedEvents)) {
@@ -279,7 +279,13 @@ public class SkriptParser {
 		return true;
 	}
 
-	private static String supportedEventsNames(Class<? extends Event>[] supportedEvents) {
+	/**
+	 * Returns a string with the names of the supported skript events for the given class array.
+	 * If no events are found, returns an empty string.
+	 * @param supportedEvents The array of supported event classes.
+	 * @return A string with the names of the supported skript events, or an empty string if none are found.
+	 */
+	private static @NotNull String supportedEventsNames(Class<? extends Event>[] supportedEvents) {
 		List<String> names = new ArrayList<>();
 
 		for (SkriptEventInfo<?> eventInfo : Skript.getEvents()) {
@@ -297,10 +303,11 @@ public class SkriptParser {
 
 	/**
 	 * Checks whether the given element is experimental and if so, whether the current experiment set satisfies it.
+	 * Prints errors.
 	 * @param element The syntax element to check.
 	 * @return True if the element is allowed in the current experiment set, false otherwise.
 	 */
-	private boolean checkExperimentalSyntax(SyntaxElement element) {
+	private static boolean checkExperimentalSyntax(SyntaxElement element) {
 		if (element instanceof ExperimentalSyntax experimentalSyntax)
 			return experimentalSyntax.isSatisfiedBy(getParser().getExperimentSet());
 		return true;
