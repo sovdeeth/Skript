@@ -39,7 +39,7 @@ import java.util.List;
 @Example("""
 	set the full custom model data of {_item} to 10, "sword", and rgb(100, 200, 30)
 	""")
-@RequiredPlugins("1.21.4+ (floats/flags/strings/colours/full model data)")
+@RequiredPlugins("Minecraft 1.21.4+ (floats/flags/strings/colours/full model data)")
 @Since({"2.5", "INSERT VERSION (floats/flags/strings/colours/full model data)"})
 public class ExprCustomModelData extends PropertyExpression<ItemType, Object> {
 
