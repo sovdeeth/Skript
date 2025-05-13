@@ -18,8 +18,12 @@ import java.util.Locale;
 @Since("2.5, INSERT VERSION (expanded data types)")
 @RequiredPlugins("Minecraft 1.21.4+ (floats/flags/strings/colours)")
 public class CondHasCustomModelData extends PropertyCondition<ItemType> {
-	
+
+	// 1.21.5+
+	private static final boolean HAS_HAS_COMPONENT = Skript.methodExists(ItemMeta.class, "hasCustomModelDataComponent");
+
 	static {
+		// 1.21.4+
 		if (Skript.methodExists(ItemMeta.class, "getCustomModelDataComponent")) {
 			// new style
 			register(CondHasCustomModelData.class, PropertyType.HAVE, "[custom] model data [1:floats|2:flags|3:strings|4:colo[u]rs]", "itemtypes");
@@ -50,7 +54,7 @@ public class CondHasCustomModelData extends PropertyCondition<ItemType> {
 	public boolean check(ItemType item) {
 		ItemMeta meta = item.getItemMeta();
 		if (dataType == CMDType.ANY)
-			return meta.hasCustomModelData();
+			return HAS_HAS_COMPONENT ? meta.hasCustomModelDataComponent() : meta.hasCustomModelData();
 		CustomModelDataComponent component = meta.getCustomModelDataComponent();
 		return switch (dataType) {
 			case FLOATS -> !component.getFloats().isEmpty();
