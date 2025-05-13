@@ -51,8 +51,8 @@ public class ExprBeaconEffects extends PropertyExpression<Block, PotionEffectTyp
 	}
 
 	@Override
-	protected PotionEffectType[] get(Event event, Block[] source) {
-		return get(source, block -> {
+	protected PotionEffectType[] get(Event event, Block[] blocks) {
+		return get(blocks, block -> {
 			if (!(block.getState() instanceof Beacon beacon))
 				return null;
 
@@ -95,9 +95,7 @@ public class ExprBeaconEffects extends PropertyExpression<Block, PotionEffectTyp
 
 	@Override
 	public String toString(@Nullable Event event, boolean debug) {
-		if (primary)
-			return "primary beacon effect of " + getExpr().toString(event, debug);
-		return "secondary beacon effect of " + getExpr().toString(event, debug);
+		return (primary ? "primary" : "secondary") + " beacon effect of " + getExpr().toString(event, debug);
 	}
 
 }

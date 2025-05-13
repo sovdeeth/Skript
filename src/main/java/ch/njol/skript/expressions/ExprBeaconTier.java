@@ -26,8 +26,8 @@ public class ExprBeaconTier extends SimplePropertyExpression<Block, Integer> {
 	}
 
 	@Override
-	public @Nullable Integer convert(Block from) {
-		if (from.getState() instanceof Beacon beacon)
+	public @Nullable Integer convert(Block block) {
+		if (block.getState() instanceof Beacon beacon)
 			return beacon.getTier();
 		return null;
 	}

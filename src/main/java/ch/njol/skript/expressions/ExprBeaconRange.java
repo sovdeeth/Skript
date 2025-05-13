@@ -24,16 +24,14 @@ import org.jetbrains.annotations.Nullable;
 @Since("2.10")
 public class ExprBeaconRange extends SimplePropertyExpression<Block, Double> {
 
-	private static final boolean SUPPORTS_RANGE = Skript.methodExists(Beacon.class, "getEffectRange");
-
 	static {
-		if (SUPPORTS_RANGE)
+		if (Skript.methodExists(Beacon.class, "getEffectRange"))
 			register(ExprBeaconRange.class, Double.class, "beacon [effect] range", "blocks");
 	}
 
 	@Override
-	public @Nullable Double convert(Block from) {
-		if (from.getState() instanceof Beacon beacon)
+	public @Nullable Double convert(Block block) {
+		if (block.getState() instanceof Beacon beacon)
 			return beacon.getEffectRange();
 		return null;
 	}
