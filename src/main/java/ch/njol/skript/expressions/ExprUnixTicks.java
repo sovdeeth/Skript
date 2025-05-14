@@ -9,7 +9,7 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.util.Date;
 import org.jetbrains.annotations.Nullable;
-import org.skriptlang.skript.lang.simplification.SimplifiedLiteral;
+import ch.njol.skript.lang.simplification.SimplifiedLiteral;
 
 @Name("Unix Timestamp")
 @Description("Converts given date to Unix timestamp. This is roughly how many seconds have elapsed since 1 January 1970.")

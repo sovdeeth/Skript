@@ -12,7 +12,7 @@ import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 import org.skriptlang.skript.lang.converter.ConverterInfo;
 import org.skriptlang.skript.lang.converter.Converters;
-import org.skriptlang.skript.lang.simplification.SimplifiedLiteral;
+import ch.njol.skript.lang.simplification.SimplifiedLiteral;
 
 import java.util.Iterator;
 

@@ -16,7 +16,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.skriptlang.skript.lang.converter.Converter;
-import org.skriptlang.skript.lang.simplification.Simplifiable;
+import ch.njol.skript.lang.simplification.Simplifiable;
 
 import java.util.*;
 import java.util.function.Function;

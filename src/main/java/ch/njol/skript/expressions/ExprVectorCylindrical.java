@@ -15,7 +15,7 @@ import ch.njol.util.coll.CollectionUtils;
 import org.bukkit.event.Event;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
-import org.skriptlang.skript.lang.simplification.SimplifiedLiteral;
+import ch.njol.skript.lang.simplification.SimplifiedLiteral;
 
 @Name("Vectors - Cylindrical Shape")
 @Description("Forms a 'cylindrical shaped' vector using yaw to manipulate the current point.")

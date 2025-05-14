@@ -6,7 +6,7 @@ import ch.njol.skript.lang.util.ContextlessEvent;
 import ch.njol.skript.test.runner.SkriptJUnitTest;
 import org.junit.Assert;
 import org.junit.Test;
-import org.skriptlang.skript.lang.simplification.SimplifiedLiteral;
+import ch.njol.skript.lang.simplification.SimplifiedLiteral;
 
 /**
  * Check if arithmetic expressions are simplified correctly.

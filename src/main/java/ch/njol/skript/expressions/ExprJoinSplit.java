@@ -16,7 +16,7 @@ import ch.njol.util.Kleenean;
 import ch.njol.util.StringUtils;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
-import org.skriptlang.skript.lang.simplification.SimplifiedLiteral;
+import ch.njol.skript.lang.simplification.SimplifiedLiteral;
 
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;

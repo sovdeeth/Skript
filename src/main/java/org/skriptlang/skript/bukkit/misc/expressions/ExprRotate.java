@@ -21,7 +21,7 @@ import org.skriptlang.skript.bukkit.misc.rotation.NonMutatingQuaternionRotator;
 import org.skriptlang.skript.bukkit.misc.rotation.NonMutatingVectorRotator;
 import org.skriptlang.skript.bukkit.misc.rotation.Rotator;
 import org.skriptlang.skript.bukkit.misc.rotation.Rotator.Axis;
-import org.skriptlang.skript.lang.simplification.SimplifiedLiteral;
+import ch.njol.skript.lang.simplification.SimplifiedLiteral;
 
 import java.util.Locale;
 import java.util.Objects;

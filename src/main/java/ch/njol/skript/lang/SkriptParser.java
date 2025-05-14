@@ -42,7 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import org.skriptlang.skript.lang.experiment.ExperimentalSyntax;
 import org.skriptlang.skript.lang.script.Script;
 import org.skriptlang.skript.lang.script.ScriptWarning;
-import org.skriptlang.skript.lang.simplification.Simplifiable;
+import ch.njol.skript.lang.simplification.Simplifiable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;

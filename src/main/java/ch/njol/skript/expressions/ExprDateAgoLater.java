@@ -15,7 +15,7 @@ import ch.njol.skript.util.Timespan;
 import ch.njol.util.Kleenean;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
-import org.skriptlang.skript.lang.simplification.SimplifiedLiteral;
+import ch.njol.skript.lang.simplification.SimplifiedLiteral;
 
 @Name("Date Ago/Later")
 @Description("A date the specified timespan before/after another date.")

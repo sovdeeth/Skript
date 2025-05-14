@@ -1,4 +1,4 @@
-package org.skriptlang.skript.lang.simplification;
+package ch.njol.skript.lang.simplification;
 
 import ch.njol.skript.lang.Debuggable;
 import ch.njol.skript.lang.Expression;

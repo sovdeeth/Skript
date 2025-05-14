@@ -14,7 +14,7 @@ import ch.njol.util.Kleenean;
 import org.apache.commons.lang.ArrayUtils;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
-import org.skriptlang.skript.lang.simplification.SimplifiedLiteral;
+import ch.njol.skript.lang.simplification.SimplifiedLiteral;
 
 @Name("Characters Between")
 @Description({

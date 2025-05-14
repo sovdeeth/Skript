@@ -16,7 +16,7 @@ import ch.njol.util.Kleenean;
 import ch.njol.util.Math2;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
-import org.skriptlang.skript.lang.simplification.SimplifiedLiteral;
+import ch.njol.skript.lang.simplification.SimplifiedLiteral;
 
 @Name("Rounding")
 @Description("Rounds numbers normally, up (ceiling) or down (floor) respectively.")
