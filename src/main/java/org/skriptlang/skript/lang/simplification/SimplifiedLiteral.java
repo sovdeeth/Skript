@@ -32,10 +32,12 @@ public class SimplifiedLiteral<T> extends SimpleLiteral<T> {
 		if (original instanceof SimplifiedLiteral<T> literal)
 			return literal;
 
+		T[] values = original.getAll(event);
+
 		//noinspection unchecked
 		return new SimplifiedLiteral<>(
-			original.getAll(event),
-			(Class<T>) original.getReturnType(),
+			values,
+			(Class<T>) values.getClass().getComponentType(),
 			original.getAnd(),
 			original);
 	}
@@ -84,11 +86,8 @@ public class SimplifiedLiteral<T> extends SimpleLiteral<T> {
 		sourceExpr.changeInPlace(event, changeFunction, getAll);
 	}
 
-	/**
-	 * Gets the original expression this literal was created from.
-	 * @return the original expression
-	 */
-	public Expression<T> getPresimplifiedExpr() {
+	@Override
+	public Expression<?> getSource() {
 		return sourceExpr;
 	}
 

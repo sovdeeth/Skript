@@ -240,8 +240,6 @@ public interface Expression<T> extends SyntaxElement, Debuggable, Loopable<T>, S
 
 	/**
 	 * Returns the original expression that was parsed, i.e. without any conversions done.
-	 * <p>
-	 * This method is undefined for simplified expressions.
 	 *
 	 * @return The unconverted source expression of this expression or this expression itself if it was never converted.
 	 */
