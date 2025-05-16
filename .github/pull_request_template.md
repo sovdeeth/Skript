@@ -7,7 +7,7 @@
 
 
 ### Testing Completed
-<!--- List test scripts/unit tests and any manual testing that was performed. If no test scripts or unit test are present, explain why.  --->
+<!--- List test scripts/unit tests and any manual testing that was performed. If no test scripts or unit tests are present, explain why.  --->
 
 
 ### Supporting Information
