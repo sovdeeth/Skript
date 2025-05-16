@@ -3,7 +3,7 @@
 
 
 ### Solution
-<!--- How your solution fixes the problem and a summary of the major code changes.  --->
+<!--- Explain how your solution fixes the problem and summarize the major code changes.  --->
 
 
 ### Testing Completed
