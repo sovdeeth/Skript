@@ -15,5 +15,5 @@
 
 
 ---
-**Completes Issues:** none <!-- Links to issues that should be completed when this PR is merged. -->
+**Completes:** none <!-- Links to issues or discussions that should be completed when this PR is merged. -->
 **Related:** none <!-- Links to issues or discussions with related information -->
