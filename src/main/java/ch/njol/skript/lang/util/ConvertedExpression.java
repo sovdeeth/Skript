@@ -113,19 +113,13 @@ public class ConvertedExpression<F, T> implements Expression<T> {
 			//         returned by the expression (which are instances of <? extends F>), this won't result in any CCEs
 
 			// get list of exact types that can be converted to
-			Class<?>[] converterTypes = infos.stream().map(ConverterInfo::getTo).toArray(Class[]::new);
-			List<Class<?>> validTypes = new ArrayList<>();
-			for (Class<?> type : converterTypes) {
-				for (Class<T> toType : to) {
-					if (type == toType || toType.isAssignableFrom(type)) {
-						validTypes.add(type);
-						break;
-					}
-				}
-			}
+			Class<?>[] converterTypes = infos.stream()
+					.map(ConverterInfo::getTo)
+					.distinct()
+					.toArray(Class[]::new);
 
 			// noinspection rawtypes, unchecked
-			return new ConvertedExpression(from, validTypes.toArray(Class[]::new), infos, true);
+			return new ConvertedExpression(from, converterTypes, infos, true);
 		}
 
 		return null;

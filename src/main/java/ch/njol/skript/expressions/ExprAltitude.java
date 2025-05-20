@@ -11,7 +11,7 @@ import org.bukkit.Location;
 import ch.njol.skript.lang.simplification.SimplifiedLiteral;
 
 @Name("Altitude")
-@Description("Effectively an alias of 'y-<a href='#ExprCoordinate'>coordinate</a> of …', it represents the height of some object above bedrock.")
+@Description("Effectively an alias of 'y-<a href='#ExprCoordinate'>coordinate</a> of …', it represents the height of some location within the world.")
 @Example("""
 	on damage:
 		altitude of the attacker is higher than the altitude of the victim
@@ -41,8 +41,6 @@ public class ExprAltitude extends SimplePropertyExpression<Location, Number> {
 
 	@Override
 	public Expression<? extends Number> simplify() {
-		// as of INSERT VERSION, there are no literal locations but this is implemented for when pure functions can
-		// be simplified.
 		if (getExpr() instanceof Literal<? extends Location>)
 			return SimplifiedLiteral.fromExpression(this);
 		return this;

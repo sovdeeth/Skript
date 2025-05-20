@@ -100,7 +100,6 @@ public class ExprCoordinate extends SimplePropertyExpression<Location, Number> {
 
 	@Override
 	public Expression<? extends Number> simplify() {
-		// implemented for future use with pure functions
 		if (getExpr() instanceof Literal<? extends Location>)
 			return SimplifiedLiteral.fromExpression(this);
 		return this;
