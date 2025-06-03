@@ -48,4 +48,5 @@ public class ExprFirstEmptySlot extends SimplePropertyExpression<Inventory, Slot
 	protected String getPropertyName() {
 		return "first empty slot";
 	}
+
 }
