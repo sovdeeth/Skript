@@ -1,6 +1,7 @@
 package ch.njol.skript.expressions;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.*;
 import ch.njol.skript.expressions.base.SimplePropertyExpression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.util.slot.InventorySlot;
@@ -12,6 +13,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+@Name("First Empty Slot in Inventory")
+@Description("Returns the first empty slot in an inventory. If no empty slot is found, it returns nothing.")
+@Example("set the first empty slot in player's inventory to 5 diamonds")
+@Example("""
+	if the first empty slot in player's inventory is not set:
+		message "No empty slot available in your inventory!" to player
+	""")
+@Since("INSERT VERSION")
+@Keywords({"full", "inventory", "empty", "air", "slot"})
 public class ExprFirstEmptySlot extends SimplePropertyExpression<Inventory, Slot> {
 
 	static {
