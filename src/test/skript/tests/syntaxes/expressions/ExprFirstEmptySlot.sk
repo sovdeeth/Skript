@@ -11,3 +11,8 @@ test "first empty slot":
 	set first empty slot of {_inv} to diamond sword
 	assert slot 2 of {_inv} is a diamond sword with "First empty slot should be set to diamond sword"
 	assert the index of the first empty slot in {_inv} is 4 with "First empty slot in inventory should be 4"
+
+	set {_inv2} to a hopper inventory named "Test Hopper"
+	set the first empty slots in {_inv2} and {_inv} to diamond sword
+	assert slot 0 of {_inv2} is a diamond sword with "First empty slot in hopper inventory should be set to diamond sword"
+	assert slot 4 of {_inv} is a diamond sword with "First empty slot in chest inventory should be set to diamond sword"
