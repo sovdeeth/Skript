@@ -1,7 +1,6 @@
 package org.skriptlang.skript.bukkit.tags.elements;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.config.Node;
 import ch.njol.skript.doc.*;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
@@ -15,7 +14,6 @@ import org.jetbrains.annotations.Nullable;
 import org.skriptlang.skript.bukkit.tags.TagModule;
 import org.skriptlang.skript.bukkit.tags.TagType;
 import org.skriptlang.skript.bukkit.tags.sources.TagOrigin;
-import org.skriptlang.skript.log.runtime.SyntaxRuntimeErrorProducer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,7 +43,7 @@ import java.util.List;
 @Since("2.10")
 @RequiredPlugins("Paper (paper tags)")
 @Keywords({"blocks", "minecraft tag", "type", "category"})
-public class ExprTag extends SimpleExpression<Tag> implements SyntaxRuntimeErrorProducer {
+public class ExprTag extends SimpleExpression<Tag> {
 
 	static {
 		Skript.registerExpression(ExprTag.class, Tag.class, ExpressionType.COMBINED,
@@ -57,8 +55,6 @@ public class ExprTag extends SimpleExpression<Tag> implements SyntaxRuntimeError
 	private TagOrigin origin;
 	private boolean datapackOnly;
 
-	private Node node;
-
 	@Override
 	public boolean init(Expression<?>[] expressions, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
 		//noinspection unchecked
@@ -66,7 +62,6 @@ public class ExprTag extends SimpleExpression<Tag> implements SyntaxRuntimeError
 		types = TagType.fromParseMark(parseResult.mark);
 		origin = TagOrigin.fromParseTags(parseResult.tags);
 		datapackOnly = origin == TagOrigin.BUKKIT && parseResult.hasTag("datapack");
-		node = getParser().getNode();
 		return true;
 	}
 
@@ -132,11 +127,6 @@ public class ExprTag extends SimpleExpression<Tag> implements SyntaxRuntimeError
 	@SuppressWarnings("rawtypes")
 	public Class<? extends Tag> getReturnType() {
 		return Tag.class;
-	}
-
-	@Override
-	public Node getNode() {
-		return node;
 	}
 
 	@Override
