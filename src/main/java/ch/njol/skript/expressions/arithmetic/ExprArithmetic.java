@@ -308,8 +308,8 @@ public class ExprArithmetic<L, R, T> extends SimpleExpression<T> {
 			if (LiteralUtils.canInitSafely(secondLiteral)) {
 				double number = ((Number) secondLiteral.getSingle()).doubleValue();
 				if (number == 1)
-					Skript.warning("This subtraction is ambiguous and could be interpreted either as 'arg-1' or as '(arg) - 1'. " +
-					"If you meant to use 'arg-1', use 'arg 1' instead or use parentheses to clarify your intent.");
+					Skript.warning("This subtraction is ambiguous and could be interpreted as either the 'first argument' expression ('argument-1') or as subtraction from the argument value ('(argument) - 1'). " +
+					"If you meant to use 'argument-1', omit the hyphen ('arg 1') or use parentheses to clarify your intent.");
 			}
 		}
 	}
