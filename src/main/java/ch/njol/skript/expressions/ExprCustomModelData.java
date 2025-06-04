@@ -98,7 +98,7 @@ public class ExprCustomModelData extends PropertyExpression<ItemType, Object> {
 
 			CustomModelDataComponent component = meta.getCustomModelDataComponent();
 			return switch (dataType) {
-				case SINGLE_INT -> throw new IllegalStateException("unreachable state for SINGLE_INT!");
+				case SINGLE_INT -> throw new IllegalStateException("Unreachable state for SINGLE_INT!");
 				case FLOATS -> component.getFloats().toArray(Float[]::new);
 				case FLAGS -> component.getFlags().toArray(Boolean[]::new);
 				case STRINGS -> component.getStrings().toArray(String[]::new);
