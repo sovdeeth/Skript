@@ -36,6 +36,9 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 
 	private @Nullable Expression<?> source = null;
 
+	/**
+	 * The data of the literal. May not be null or contain null, but may be empty.
+	 */
 	protected transient T[] data;
 
 	public SimpleLiteral(T[] data, Class<T> type, boolean and) {
@@ -43,7 +46,7 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 		assert type != null;
 		this.data = data;
 		this.type = type;
-		this.and = data.length == 1 || and;
+		this.and = data.length <= 1 || and;
 		this.isDefault = false;
 	}
 
@@ -142,7 +145,7 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 
 	@Override
 	public boolean isSingle() {
-		return !getAnd() || data.length == 1;
+		return !getAnd() || data.length <= 1;
 	}
 
 	@Override
