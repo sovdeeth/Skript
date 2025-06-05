@@ -1,0 +1,101 @@
+name: When pr labels are modified, run actions.
+
+on:
+    pr:
+        types: [labeled]
+
+jobs:
+    add-to-project:
+        if: ${{ startsWith(github.event.label.name, '2.') }}
+        runs-on: ubuntu-latest
+        permissions:
+            issues: write
+        steps:
+            -   name: Generate token
+                id: generate-token
+                uses: actions/create-github-app-token@v1
+                with:
+                    app-id: ${{ vars.APP_ID }}
+                    private-key: ${{ secrets.APP_PEM }}
+            -   name: Get project from label name
+                env:
+                    GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+                    ORGANIZATION: SkriptLang
+                    LABEL_NAME: ${{ github.event.label.name }}
+                run: |
+                    gh api graphql -f query='
+                        query($org: String!, $name: String!) {
+                            organization(login: $org) {
+                                projectsV2(query: $name, first: 1) {
+                                    nodes {
+                                        id
+                                        fields(first:20) {
+                                            nodes {
+                                                ... on ProjectV2Field {
+                                                    id
+                                                    name
+                                                }
+                                                ... on ProjectV2SingleSelectField {
+                                                    id
+                                                    name
+                                                    options {
+                                                        id
+                                                        name
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }' -f org=$ORGANIZATION -f name=$LABEL_NAME' Release' > project_data.json
+                    echo 'PROJECT_ID='$(jq '.data.organization.projectsV2.nodes[0].id' project_data.json) >> $GITHUB_ENV
+                    echo 'STATUS_FIELD_ID='$(jq '.data.organization.projectsV2.nodes[0].fields.nodes[] | select(.name== "Status") | .id' project_data.json) >> $GITHUB_ENV
+                    echo 'IN_PROGRESS_OPTION_ID='$(jq '.data.organization.projectsV2.nodes[0].fields.nodes[] | select(.name== "Status") | .options[] | select(.name=="In Progress") |.id' project_data.json) >> $GITHUB_ENV
+                    echo 'IN_REVIEW_OPTION_ID='$(jq '.data.organization.projectsV2.nodes[0].fields.nodes[] | select(.name== "Status") | .options[] | select(.name=="In Review") |.id' project_data.json) >> $GITHUB_ENV
+            -   name: Determine proper status
+                run: |
+                    if ${{ github.event.pull_request.draft }}; then
+                        echo 'STATUS_OPTION_ID='${{ env.IN_PROGRESS_OPTION_ID }} >> $GITHUB_ENV
+                    else
+                        echo 'STATUS_OPTION_ID='${{ env.IN_REVIEW_OPTION_ID }} >> $GITHUB_ENV
+                    fi
+            -   name: Add PR to project
+                env:
+                    GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+                    PR_ID: ${{ github.event.pull_request.node_id }}
+                run: |
+                    item_id="$( gh api graphql -f query='
+                        mutation($project:ID!, $pr:ID!) {
+                            addProjectV2ItemById(input: {projectId: $project, contentId: $pr}) {
+                                item {
+                                    id
+                                }
+                            }
+                        }' -f project=$PROJECT_ID -f pr=$PR_ID --jq '.data.addProjectV2ItemById.item.id')"
+                    echo 'ITEM_ID='$item_id >> $GITHUB_ENV
+            -   name: Set fields
+                env:
+                    GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+                run: |
+                    gh api graphql -f query='
+                        mutation (
+                            $project: ID!
+                            $item: ID!
+                            $status_field: ID!
+                            $status_value: String!
+                        ) {
+                            set_status: updateProjectV2ItemFieldValue(input: {
+                                projectId: $project
+                                itemId: $item
+                                fieldId: $status_field
+                                value: {
+                                    singleSelectOptionId: $status_value
+                                }
+                            }) {
+                                projectV2Item {
+                                    id
+                                }
+                            }
+                        }' -f project=$PROJECT_ID -f item=$ITEM_ID -f status_field=$STATUS_FIELD_ID -f status_value=$STATUS_OPTION_ID --silent
+                    
