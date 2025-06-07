@@ -25,4 +25,3 @@ test "tolerances":
 	assert 5 is evenly divisible by 2.5 with tolerance 3 to fail with "too small divisor passed"
 	assert 0 is evenly divisible by 2 with tolerance 1 with "too small dividend failed"
 
-

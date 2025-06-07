@@ -19,7 +19,7 @@ import org.skriptlang.skript.log.runtime.SyntaxRuntimeErrorProducer;
 	Checks if a number is evenly divisible by another number.
 	An optional tolerance can be provided to counteract floating point error. The default tolerance is 1e-10.
 	Any input smaller than the tolerance is considered to be 0.
-	This means too-small divisors will always return false, and too-small dividends will always return true.
+	This means divisors that are too small will always return false, and dividends that are too small will always return true.
 	""")
 @Examples({
 	"if 5 is evenly divisible by 5:",
