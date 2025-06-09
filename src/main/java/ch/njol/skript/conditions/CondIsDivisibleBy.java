@@ -24,8 +24,9 @@ import org.skriptlang.skript.log.runtime.SyntaxRuntimeErrorProducer;
 @Examples({
 	"if 5 is evenly divisible by 5:",
 	"if 11 cannot be evenly divided by 10:",
+	"if 0.3 can be evenly divided by 0.1 with a tolerance of 0.0000001:"
 })
-@Since("2.10")
+@Since("2.10, INSERT VERSION (tolerance)")
 public class CondIsDivisibleBy extends Condition implements SyntaxRuntimeErrorProducer {
 
 	static {
