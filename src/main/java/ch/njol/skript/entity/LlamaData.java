@@ -51,11 +51,12 @@ public class LlamaData extends EntityData<Llama> {
 	@Override
 	protected boolean init(@Nullable Class<? extends Llama> c, @Nullable Llama llama) {
 		if (TRADER_SUPPORT && c != null)
-			isTrader = c.isAssignableFrom(TraderLlama.class);
+			isTrader = TraderLlama.class.isAssignableFrom(c);
 		if (llama != null) {
 			color = llama.getColor();
 			isTrader = TRADER_SUPPORT && llama instanceof TraderLlama;
 		}
+		super.matchedPattern = (color != null ? (color.ordinal() + 1) : 0) + (isTrader ? 5 : 0);
 		return true;
 	}
 	
@@ -68,8 +69,9 @@ public class LlamaData extends EntityData<Llama> {
 	
 	@Override
 	protected boolean match(Llama entity) {
-		return (TRADER_SUPPORT && isTrader == entity instanceof TraderLlama && (color == null || color == entity.getColor()))
-			|| color == null || color == entity.getColor();
+		if (isTrader && !(entity instanceof TraderLlama))
+			return false;
+		return (color == null || color == entity.getColor());
 	}
 	
 	@Override
@@ -106,10 +108,13 @@ public class LlamaData extends EntityData<Llama> {
 	
 	@Override
 	public boolean isSupertypeOf(EntityData<?> data) {
-		if (!(data instanceof LlamaData))
+		if (!(data instanceof LlamaData llamaData))
 			return false;
-		LlamaData d = (LlamaData) data;
-		return isTrader == d.isTrader && (color == null || d.color == color);
+
+		if (isTrader && !llamaData.isTrader)
+			return false;
+
+		return (color == null || llamaData.color == color);
 	}
 	
 }
