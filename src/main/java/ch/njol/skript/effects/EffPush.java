@@ -30,12 +30,13 @@ public class EffPush extends Effect {
 	static {
 		Skript.registerEffect(EffPush.class,
 			"(push|thrust) %entities% [along] %direction% [(at|with) [a] (speed|velocity|force) [of] %-number%]",
-			"(push|thrust|pull) %entities% towards %location% [(at|with) [a] (speed|velocity|force) [of] %-number%]");
+			"(push|thrust|pull) %entities% (towards|away:away from) %location% [(at|with) [a] (speed|velocity|force) [of] %-number%]");
 	}
 
 	private Expression<Entity> entities;
 	private @Nullable Expression<Direction> direction;
 	private @Nullable Expression<Location> target;
+	private boolean awayFrom = false;
 	private @Nullable Expression<Number> speed = null;
 	
 	@SuppressWarnings({"unchecked", "null"})
@@ -46,6 +47,7 @@ public class EffPush extends Effect {
 			direction = (Expression<Direction>) exprs[1];
 		} else {
 			target = (Expression<Location>) exprs[1];
+			awayFrom = parseResult.hasTag("away");
 		}
 		speed = (Expression<Number>) exprs[2];
 		return true;
@@ -71,7 +73,12 @@ public class EffPush extends Effect {
 			if (target == null)
 				return;
 			Vector targetVector = target.toVector();
-			getDirection = entity -> targetVector.subtract(entity.getLocation().toVector());
+			getDirection = entity -> {
+					Vector direction = targetVector.subtract(entity.getLocation().toVector());
+					if (awayFrom)
+						direction.multiply(-1);
+					return direction;
+				};
 		}
 
 		Entity[] entities = this.entities.getArray(event);
