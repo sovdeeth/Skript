@@ -10,17 +10,7 @@ import ch.njol.skript.entity.BoatChestData;
 import ch.njol.skript.entity.BoatData;
 import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.entity.RabbitData;
-import ch.njol.skript.util.BlockUtils;
-import ch.njol.skript.util.Color;
-import ch.njol.skript.util.Date;
-import ch.njol.skript.util.EnchantmentType;
-import ch.njol.skript.util.Experience;
-import ch.njol.skript.util.GameruleValue;
-import ch.njol.skript.util.StructureType;
-import ch.njol.skript.util.Time;
-import ch.njol.skript.util.Timeperiod;
-import ch.njol.skript.util.Timespan;
-import ch.njol.skript.util.WeatherType;
+import ch.njol.skript.util.*;
 import ch.njol.skript.util.slot.EquipmentSlot;
 import ch.njol.skript.util.slot.Slot;
 import ch.njol.skript.util.slot.SlotWithIndex;
@@ -41,6 +31,7 @@ import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.util.Vector;
 import org.skriptlang.skript.lang.comparator.Comparator;
 import org.skriptlang.skript.lang.comparator.Comparators;
 import org.skriptlang.skript.lang.comparator.Relation;
@@ -637,6 +628,18 @@ public class DefaultComparators {
 			@Override
 			public boolean supportsOrdering() {
 				return false;
+			}
+		});
+
+		// Vector - Vector
+		Comparators.registerComparator(Vector.class, Vector.class, new Comparator<>() {
+			private static final double epsilon = Vector.getEpsilon();
+
+			@Override
+			public Relation compare(Vector v1, Vector v2) {
+				return Relation.get(Math.abs(v1.getX() - v2.getX()) < epsilon
+					&& Math.abs(v1.getY() - v2.getY()) < epsilon
+					&& Math.abs(v1.getZ() - v2.getZ()) < epsilon);
 			}
 		});
 

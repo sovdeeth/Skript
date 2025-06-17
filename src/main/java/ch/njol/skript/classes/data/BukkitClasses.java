@@ -57,8 +57,8 @@ import org.bukkit.metadata.Metadatable;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.CachedServerIcon;
-import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
+import org.skriptlang.skript.bukkit.vector.FastVector;
 
 import java.io.StreamCorruptedException;
 import java.util.*;
@@ -396,18 +396,18 @@ public class BukkitClasses {
 				})
 				.cloner(Location::clone));
 
-		Classes.registerClass(new ClassInfo<>(Vector.class, "vector")
+		Classes.registerClass(new ClassInfo<>(FastVector.class, "vector")
 				.user("vectors?")
 				.name("Vector")
 				.description("Vector is a collection of numbers. In Minecraft, 3D vectors are used to express velocities of entities.")
 				.usage("vector(x, y, z)")
 				.examples("")
 				.since("2.2-dev23")
-				.defaultExpression(new EventValueExpression<>(Vector.class))
-				.parser(new Parser<Vector>() {
+				.defaultExpression(new EventValueExpression<>(FastVector.class))
+				.parser(new Parser<>() {
 					@Override
 					@Nullable
-					public Vector parse(final String s, final ParseContext context) {
+					public FastVector parse(final String s, final ParseContext context) {
 						return null;
 					}
 
@@ -417,23 +417,23 @@ public class BukkitClasses {
 					}
 
 					@Override
-					public String toString(final Vector vec, final int flags) {
+					public String toString(final FastVector vec, final int flags) {
 						return "x: " + Skript.toString(vec.getX()) + ", y: " + Skript.toString(vec.getY()) + ", z: " + Skript.toString(vec.getZ());
 					}
 
 					@Override
-					public String toVariableNameString(final Vector vec) {
+					public String toVariableNameString(final FastVector vec) {
 						return "vector:" + vec.getX() + "," + vec.getY() + "," + vec.getZ();
 					}
 
 					@Override
-					public String getDebugMessage(final Vector vec) {
+					public String getDebugMessage(final FastVector vec) {
 						return "(" + vec.getX() + "," + vec.getY() + "," + vec.getZ() + ")";
 					}
 				})
-				.serializer(new Serializer<Vector>() {
+				.serializer(new Serializer<FastVector>() {
 					@Override
-					public Fields serialize(Vector o) {
+					public Fields serialize(FastVector o) {
 						Fields f = new Fields();
 						f.putPrimitive("x", o.getX());
 						f.putPrimitive("y", o.getY());
@@ -442,13 +442,13 @@ public class BukkitClasses {
 					}
 
 					@Override
-					public void deserialize(Vector o, Fields f) {
+					public void deserialize(FastVector o, Fields f) {
 						assert false;
 					}
 
 					@Override
-					public Vector deserialize(final Fields f) throws StreamCorruptedException {
-						return new Vector(f.getPrimitive("x", double.class), f.getPrimitive("y", double.class), f.getPrimitive("z", double.class));
+					public FastVector deserialize(final Fields f) throws StreamCorruptedException {
+						return new FastVector(f.getPrimitive("x", double.class), f.getPrimitive("y", double.class), f.getPrimitive("z", double.class));
 					}
 
 					@Override
@@ -461,7 +461,7 @@ public class BukkitClasses {
 						return false;
 					}
 				})
-				.cloner(Vector::clone));
+				.cloner(FastVector::clone));
 
 		Classes.registerClass(new ClassInfo<>(World.class, "world")
 				.user("worlds?")

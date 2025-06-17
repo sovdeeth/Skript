@@ -1,18 +1,18 @@
 package ch.njol.skript.util;
 
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-
+import ch.njol.skript.Skript;
 import ch.njol.skript.bukkitutil.WorldUtils;
+import ch.njol.util.Math2;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
+import org.skriptlang.skript.bukkit.vector.FastVector;
 
-import ch.njol.skript.Skript;
-import ch.njol.util.Math2;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 /**
  * AABB = Axis-Aligned Bounding Box
@@ -24,23 +24,23 @@ public class AABB implements Iterable<Block> {
 	final World world;
 	final Vector lowerBound, upperBound;
 
-	//	private final static Vector EPSILON = new Vector(Skript.EPSILON, Skript.EPSILON, Skript.EPSILON);
+	//	private final static Vector EPSILON = new FastVector(Skript.EPSILON, Skript.EPSILON, Skript.EPSILON);
 	
 	@SuppressWarnings("null")
 	public AABB(final Location l1, final Location l2) {
 		if (l1.getWorld() != l2.getWorld())
 			throw new IllegalArgumentException("Locations must be in the same world");
 		world = l1.getWorld();
-		lowerBound = new Vector(Math.min(l1.getBlockX(), l2.getBlockX()), Math.min(l1.getBlockY(), l2.getBlockY()), Math.min(l1.getBlockZ(), l2.getBlockZ()));
-		upperBound = new Vector(Math.max(l1.getBlockX(), l2.getBlockX()), Math.max(l1.getBlockY(), l2.getBlockY()), Math.max(l1.getBlockZ(), l2.getBlockZ()));
+		lowerBound = new FastVector(Math.min(l1.getBlockX(), l2.getBlockX()), Math.min(l1.getBlockY(), l2.getBlockY()), Math.min(l1.getBlockZ(), l2.getBlockZ()));
+		upperBound = new FastVector(Math.max(l1.getBlockX(), l2.getBlockX()), Math.max(l1.getBlockY(), l2.getBlockY()), Math.max(l1.getBlockZ(), l2.getBlockZ()));
 	}
 	
 	public AABB(final Block b1, final Block b2) {
 		if (b1.getWorld() != b2.getWorld())
 			throw new IllegalArgumentException("Blocks must be in the same world");
 		world = b1.getWorld();
-		lowerBound = new Vector(Math.min(b1.getX(), b2.getX()), Math.min(b1.getY(), b2.getY()), Math.min(b1.getZ(), b2.getZ()));
-		upperBound = new Vector(Math.max(b1.getX(), b2.getX()), Math.max(b1.getY(), b2.getY()), Math.max(b1.getZ(), b2.getZ()));
+		lowerBound = new FastVector(Math.min(b1.getX(), b2.getX()), Math.min(b1.getY(), b2.getY()), Math.min(b1.getZ(), b2.getZ()));
+		upperBound = new FastVector(Math.max(b1.getX(), b2.getX()), Math.max(b1.getY(), b2.getY()), Math.max(b1.getZ(), b2.getZ()));
 	}
 	
 	@SuppressWarnings("null")
@@ -48,14 +48,14 @@ public class AABB implements Iterable<Block> {
 		assert rX >= 0 && rY >= 0 && rZ >= 0 : rX + "," + rY + "," + rY;
 		world = center.getWorld();
 		int min = WorldUtils.getWorldMinHeight(world);
-		lowerBound = new Vector(center.getX() - rX, Math.max(center.getY() - rY, min), center.getZ() - rZ);
-		upperBound = new Vector(center.getX() + rX, Math.min(center.getY() + rY, world.getMaxHeight() - 1), center.getZ() + rZ);
+		lowerBound = new FastVector(center.getX() - rX, Math.max(center.getY() - rY, min), center.getZ() - rZ);
+		upperBound = new FastVector(center.getX() + rX, Math.min(center.getY() + rY, world.getMaxHeight() - 1), center.getZ() + rZ);
 	}
 	
 	public AABB(final World w, final Vector v1, final Vector v2) {
 		world = w;
-		lowerBound = new Vector(Math.min(v1.getX(), v2.getX()), Math.min(v1.getY(), v2.getY()), Math.min(v1.getZ(), v2.getZ()));
-		upperBound = new Vector(Math.max(v1.getX(), v2.getX()), Math.max(v1.getY(), v2.getY()), Math.max(v1.getZ(), v2.getZ()));
+		lowerBound = new FastVector(Math.min(v1.getX(), v2.getX()), Math.min(v1.getY(), v2.getY()), Math.min(v1.getZ(), v2.getZ()));
+		upperBound = new FastVector(Math.max(v1.getX(), v2.getX()), Math.max(v1.getY(), v2.getY()), Math.max(v1.getZ(), v2.getZ()));
 	}
 	
 	public AABB(final Chunk c) {

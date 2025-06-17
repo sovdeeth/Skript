@@ -11,38 +11,38 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
 import org.bukkit.event.Event;
-import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
+import org.skriptlang.skript.bukkit.vector.FastVector;
 
 @Name("Vectors - Vector Projection")
 @Description("An expression to get the vector projection of two vectors.")
 @Examples("set {_projection} to vector projection of vector(1, 2, 3) onto vector(4, 4, 4)")
 @Since("2.8.0")
-public class ExprVectorProjection extends SimpleExpression<Vector> {
+public class ExprVectorProjection extends SimpleExpression<FastVector> {
 
 	static {
-		Skript.registerExpression(ExprVectorProjection.class, Vector.class, ExpressionType.COMBINED, "[vector] projection [of] %vector% on[to] %vector%");
+		Skript.registerExpression(ExprVectorProjection.class, FastVector.class, ExpressionType.COMBINED, "[vector] projection [of] %vector% on[to] %vector%");
 	}
 
-	private Expression<Vector> left, right;
+	private Expression<FastVector> left, right;
 
 	@Override
 	@SuppressWarnings("unchecked")
 	public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
-		this.left = (Expression<Vector>) exprs[0];
-		this.right = (Expression<Vector>) exprs[1];
+		this.left = (Expression<FastVector>) exprs[0];
+		this.right = (Expression<FastVector>) exprs[1];
 		return true;
 	}
 
 	@Override
 	@Nullable
-	protected Vector[] get(Event event) {
-		Vector left = this.left.getOptionalSingle(event).orElse(new Vector());
-		Vector right = this.right.getOptionalSingle(event).orElse(new Vector());
+	protected FastVector[] get(Event event) {
+		FastVector left = this.left.getOptionalSingle(event).orElse(new FastVector());
+		FastVector right = this.right.getOptionalSingle(event).orElse(new FastVector());
 		double dot = left.dot(right);
 		double length = right.lengthSquared();
 		double scalar = dot / length;
-		return new Vector[] {right.clone().multiply(scalar)};
+		return new FastVector[] {right.clone().multiply(scalar)};
 	}
 
 	@Override
@@ -51,8 +51,8 @@ public class ExprVectorProjection extends SimpleExpression<Vector> {
 	}
 
 	@Override
-	public Class<? extends Vector> getReturnType() {
-		return Vector.class;
+	public Class<? extends FastVector> getReturnType() {
+		return FastVector.class;
 	}
 
 	@Override

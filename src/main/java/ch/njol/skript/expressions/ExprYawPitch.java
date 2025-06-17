@@ -16,6 +16,7 @@ import org.bukkit.event.Event;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
+import org.skriptlang.skript.bukkit.vector.FastVector;
 
 @Name("Yaw / Pitch")
 @Description({
@@ -64,7 +65,7 @@ public class ExprYawPitch extends SimplePropertyExpression<Object, Float> {
 			return usesYaw
 				? normalizeYaw(location.getYaw())
 				: location.getPitch();
-		} else if (object instanceof Vector vector) {
+		} else if (object instanceof FastVector vector) {
 			return usesYaw
 				? skriptYaw((getYaw(vector)))
 				: skriptPitch(getPitch(vector));
@@ -103,7 +104,7 @@ public class ExprYawPitch extends SimplePropertyExpression<Object, Float> {
 			} else if (object instanceof Location) {
 				changeForLocation(((Location) object), value, mode);
 			} else if (object instanceof Vector) {
-				changeForVector(((Vector) object), value, mode);
+				changeForVector(((FastVector) object), value, mode);
 			}
 		}
 	}
@@ -170,7 +171,7 @@ public class ExprYawPitch extends SimplePropertyExpression<Object, Float> {
 		}
 	}
 
-	private void changeForVector(Vector vector, float value, ChangeMode mode) {
+	private void changeForVector(FastVector vector, float value, ChangeMode mode) {
 		float yaw = getYaw(vector);
 		float pitch = getPitch(vector);
 		switch (mode) {
@@ -191,7 +192,7 @@ public class ExprYawPitch extends SimplePropertyExpression<Object, Float> {
 				else
 					pitch = fromSkriptPitch(value);
 		}
-		Vector newVector = fromYawAndPitch(yaw, pitch).multiply(vector.length());
+		FastVector newVector = fromYawAndPitch(yaw, pitch).multiply(vector.length());
 		vector.copy(newVector);
 	}
 
@@ -212,19 +213,19 @@ public class ExprYawPitch extends SimplePropertyExpression<Object, Float> {
 
 	// TODO Mark as private next version after VectorMath deletion
 	@ApiStatus.Internal
-	public static Vector fromYawAndPitch(float yaw, float pitch) {
+	public static FastVector fromYawAndPitch(float yaw, float pitch) {
 		double y = Math.sin(pitch * DEG_TO_RAD);
 		double div = Math.cos(pitch * DEG_TO_RAD);
 		double x = Math.cos(yaw * DEG_TO_RAD);
 		double z = Math.sin(yaw * DEG_TO_RAD);
 		x *= div;
 		z *= div;
-		return new Vector(x,y,z);
+		return new FastVector(x,y,z);
 	}
 
 	// TODO Mark as private next version after VectorMath deletion
 	@ApiStatus.Internal
-	public static float getYaw(Vector vector) {
+	public static float getYaw(FastVector vector) {
 		if (((Double) vector.getX()).equals((double) 0) && ((Double) vector.getZ()).equals((double) 0)){
 			return 0;
 		}
@@ -233,7 +234,7 @@ public class ExprYawPitch extends SimplePropertyExpression<Object, Float> {
 
 	// TODO Mark as private next version after VectorMath deletion
 	@ApiStatus.Internal
-	public static float getPitch(Vector vector) {
+	public static float getPitch(FastVector vector) {
 		double xy = Math.sqrt(vector.getX() * vector.getX() + vector.getZ() * vector.getZ());
 		return (float) (Math.atan(vector.getY() / xy) * RAD_TO_DEG);
 	}

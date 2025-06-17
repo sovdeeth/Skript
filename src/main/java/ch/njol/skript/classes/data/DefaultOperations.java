@@ -4,7 +4,7 @@ import ch.njol.skript.util.Date;
 import ch.njol.skript.util.Timespan;
 import ch.njol.skript.util.Timespan.TimePeriod;
 import ch.njol.skript.util.Utils;
-import org.bukkit.util.Vector;
+import org.skriptlang.skript.bukkit.vector.FastVector;
 import org.skriptlang.skript.lang.arithmetic.Arithmetics;
 import org.skriptlang.skript.lang.arithmetic.Operator;
 
@@ -64,30 +64,22 @@ public class DefaultOperations {
 		Arithmetics.registerDefaultValue(Number.class, () -> 0L);
 
 		// Vector - Vector
-		Arithmetics.registerOperation(Operator.ADDITION, Vector.class, (left, right) -> left.clone().add(right));
-		Arithmetics.registerOperation(Operator.SUBTRACTION, Vector.class, (left, right) -> left.clone().subtract(right));
-		Arithmetics.registerOperation(Operator.MULTIPLICATION, Vector.class, (left, right) -> left.clone().multiply(right));
-		Arithmetics.registerOperation(Operator.DIVISION, Vector.class, (left, right) -> left.clone().divide(right));
-		Arithmetics.registerDifference(Vector.class,
-			(left, right) -> new Vector(Math.abs(left.getX() - right.getX()), Math.abs(left.getY() - right.getY()), Math.abs(left.getZ() - right.getZ())));
-		Arithmetics.registerDefaultValue(Vector.class, Vector::new);
+		Arithmetics.registerOperation(Operator.ADDITION, FastVector.class, (left, right) -> left.add(right, new FastVector()));
+		Arithmetics.registerOperation(Operator.SUBTRACTION, FastVector.class, (left, right) -> left.subtract(right, new FastVector()));
+		Arithmetics.registerOperation(Operator.MULTIPLICATION, FastVector.class, (left, right) -> left.multiply(right, new FastVector()));
+		Arithmetics.registerOperation(Operator.DIVISION, FastVector.class, (left, right) -> left.divide(right, new FastVector()));
+		Arithmetics.registerDifference(FastVector.class,
+			(left, right) -> new FastVector(Math.abs(left.getX() - right.getX()), Math.abs(left.getY() - right.getY()), Math.abs(left.getZ() - right.getZ())));
+		Arithmetics.registerDefaultValue(FastVector.class, FastVector::new);
 
 		// Vector - Number
 		// Number - Vector
-		Arithmetics.registerOperation(Operator.MULTIPLICATION, Vector.class, Number.class, (left, right) -> left.clone().multiply(right.doubleValue()), (left, right) -> {
-			double number = left.doubleValue();
-			Vector leftVector = new Vector(number, number, number);
-			return leftVector.multiply(right);
-		});
-		Arithmetics.registerOperation(Operator.DIVISION, Vector.class, Number.class, (left, right) -> {
-			double number = right.doubleValue();
-			Vector rightVector = new Vector(number, number, number);
-			return left.clone().divide(rightVector);
-		}, (left, right) -> {
-			double number = left.doubleValue();
-			Vector leftVector = new Vector(number, number, number);
-			return leftVector.divide(right);
-		});
+		Arithmetics.registerOperation(Operator.MULTIPLICATION, FastVector.class, Number.class,
+			(left, right) -> left.multiply(right.doubleValue(), new FastVector()),
+			(left, right) -> right.multiply(left.doubleValue(), new FastVector()));
+		Arithmetics.registerOperation(Operator.DIVISION, FastVector.class, Number.class,
+			(left, right) -> left.divide(right.doubleValue(), new FastVector()),
+			(left, right) -> right.divide(left.doubleValue(), new FastVector()));
 
 		// Timespan - Timespan
 		Arithmetics.registerOperation(Operator.ADDITION, Timespan.class, Timespan::add);

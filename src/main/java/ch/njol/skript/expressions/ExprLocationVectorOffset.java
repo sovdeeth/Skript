@@ -1,10 +1,5 @@
 package ch.njol.skript.expressions;
 
-import org.bukkit.Location;
-import org.bukkit.event.Event;
-import org.bukkit.util.Vector;
-import org.jetbrains.annotations.Nullable;
-
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
@@ -16,6 +11,10 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
 import ch.njol.util.coll.CollectionUtils;
+import org.bukkit.Location;
+import org.bukkit.event.Event;
+import org.jetbrains.annotations.Nullable;
+import org.skriptlang.skript.bukkit.vector.FastVector;
 
 
 /**
@@ -37,13 +36,13 @@ public class ExprLocationVectorOffset extends SimpleExpression<Location> {
 	private Expression<Location> location;
 
 	@SuppressWarnings("null")
-	private Expression<Vector> vectors;
+	private Expression<FastVector> vectors;
 
 	@Override
 	@SuppressWarnings({"unchecked", "null"})
 	public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
 		location = (Expression<Location>) exprs[0];
-		vectors = (Expression<Vector>) exprs[1];
+		vectors = (Expression<FastVector>) exprs[1];
 		return true;
 	}
 
@@ -54,7 +53,7 @@ public class ExprLocationVectorOffset extends SimpleExpression<Location> {
 		if (l == null)
 			return null;
 		Location clone = l.clone();
-		for (Vector v : vectors.getArray(e))
+		for (FastVector v : vectors.getArray(e))
 			clone.add(v);
 		return CollectionUtils.array(clone);
 	}

@@ -12,35 +12,35 @@ import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
 import ch.njol.util.coll.CollectionUtils;
 import org.bukkit.event.Event;
-import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
+import org.skriptlang.skript.bukkit.vector.FastVector;
 
 @Name("Vectors - Normalized")
 @Description("Returns the same vector but with length 1.")
 @Examples("set {_v} to normalized {_v}")
 @Since("2.2-dev28")
-public class ExprVectorNormalize extends SimpleExpression<Vector> {
+public class ExprVectorNormalize extends SimpleExpression<FastVector> {
 
 	static {
-		Skript.registerExpression(ExprVectorNormalize.class, Vector.class, ExpressionType.COMBINED,
+		Skript.registerExpression(ExprVectorNormalize.class, FastVector.class, ExpressionType.COMBINED,
 				"normalize[d] %vector%",
 				"%vector% normalized");
 	}
 
 	@SuppressWarnings("null")
-	private Expression<Vector> vector;
+	private Expression<FastVector> vector;
 
 	@Override
 	@SuppressWarnings({"unchecked", "null"})
 	public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
-		vector = (Expression<Vector>) exprs[0];
+		vector = (Expression<FastVector>) exprs[0];
 		return true;
 	}
 
 	@Override
 	@SuppressWarnings("null")
-	protected Vector[] get(Event event) {
-		Vector vector = this.vector.getSingle(event);
+	protected FastVector[] get(Event event) {
+		FastVector vector = this.vector.getSingle(event);
 		if (vector == null)
 			return null;
 		vector = vector.clone();
@@ -55,8 +55,8 @@ public class ExprVectorNormalize extends SimpleExpression<Vector> {
 	}
 
 	@Override
-	public Class<? extends Vector> getReturnType() {
-		return Vector.class;
+	public Class<? extends FastVector> getReturnType() {
+		return FastVector.class;
 	}
 
 	@Override

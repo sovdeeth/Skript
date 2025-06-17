@@ -35,6 +35,7 @@ import org.bukkit.scoreboard.Team;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.UnknownNullability;
+import org.skriptlang.skript.bukkit.vector.FastVector;
 import org.skriptlang.skript.lang.converter.Converter;
 import org.skriptlang.skript.lang.converter.Converters;
 import org.skriptlang.skript.lang.script.Script;
@@ -269,6 +270,7 @@ public class DefaultConverters {
 
 		// Vector - Direction
 		Converters.registerConverter(Vector.class, Direction.class, Direction::new);
+		Converters.registerConverter(Vector.class, FastVector.class, FastVector::asFastVector);
 
 		// EnchantmentOffer - EnchantmentType
 		Converters.registerConverter(EnchantmentOffer.class, EnchantmentType.class, eo -> new EnchantmentType(eo.getEnchantment(), eo.getEnchantmentLevel()));
@@ -307,7 +309,7 @@ public class DefaultConverters {
 //			@Override
 //			@Nullable
 //			public Vector convert(Number number) {
-//				return new Vector(number.doubleValue(), number.doubleValue(), number.doubleValue());
+//				return new FastVector(number.doubleValue(), number.doubleValue(), number.doubleValue());
 //			}
 //		});
 

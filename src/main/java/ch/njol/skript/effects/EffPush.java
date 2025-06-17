@@ -12,8 +12,8 @@ import ch.njol.skript.util.Direction;
 import ch.njol.util.Kleenean;
 import org.bukkit.entity.Entity;
 import org.bukkit.event.Event;
-import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
+import org.skriptlang.skript.bukkit.vector.FastVector;
 
 @Name("Push")
 @Description("Push entities around.")
@@ -50,7 +50,7 @@ public class EffPush extends Effect {
 			return;
 		Entity[] entities = this.entities.getArray(event);
 		for (Entity entity : entities) {
-			Vector pushDirection = direction.getDirection(entity);
+			FastVector pushDirection = direction.getDirection(entity);
 			if (speed != null)
 				pushDirection.normalize().multiply(speed.doubleValue());
 			if (!(Double.isFinite(pushDirection.getX()) && Double.isFinite(pushDirection.getY()) && Double.isFinite(pushDirection.getZ()))) {

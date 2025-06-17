@@ -1,13 +1,5 @@
 package ch.njol.skript.expressions;
 
-import org.bukkit.Location;
-import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
-import org.bukkit.entity.Entity;
-import org.bukkit.event.Event;
-import org.bukkit.util.Vector;
-import org.jetbrains.annotations.Nullable;
-
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
@@ -20,6 +12,14 @@ import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.util.Direction;
 import ch.njol.util.Kleenean;
 import ch.njol.util.Math2;
+import org.bukkit.Location;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
+import org.bukkit.entity.Entity;
+import org.bukkit.event.Event;
+import org.bukkit.util.Vector;
+import org.jetbrains.annotations.Nullable;
+import org.skriptlang.skript.bukkit.vector.FastVector;
 
 /**
  * @author Peter Güttinger
@@ -72,7 +72,7 @@ public class ExprDirection extends SimpleExpression<Direction> {
 	Expression<Number> amount;
 	
 	@Nullable
-	private Vector direction;
+	private FastVector direction;
 	@Nullable
 	private ExprDirection next;
 	
@@ -89,7 +89,7 @@ public class ExprDirection extends SimpleExpression<Direction> {
 		amount = (Expression<Number>) exprs[0];
 		switch (matchedPattern) {
 			case 0:
-				direction = new Vector(byMark[parseResult.mark].getModX(), byMark[parseResult.mark].getModY(), byMark[parseResult.mark].getModZ());
+				direction = new FastVector(byMark[parseResult.mark].getModX(), byMark[parseResult.mark].getModY(), byMark[parseResult.mark].getModZ());
 				if (exprs[1] != null) {
 					if (!(exprs[1] instanceof ExprDirection) || ((ExprDirection) exprs[1]).direction == null)
 						return false;
@@ -118,7 +118,7 @@ public class ExprDirection extends SimpleExpression<Direction> {
 			return new Direction[0];
 		final double ln = n.doubleValue();
 		if (direction != null) {
-			final Vector v = direction.clone().multiply(ln);
+			final FastVector v = direction.clone().multiply(ln);
 			ExprDirection d = next;
 			while (d != null) {
 				final Number n2 = d.amount != null ? d.amount.getSingle(e) : 1;

@@ -4,7 +4,7 @@ import ch.njol.skript.expressions.ExprVectorCylindrical;
 import ch.njol.skript.expressions.ExprVectorFromYawAndPitch;
 import ch.njol.skript.expressions.ExprVectorSpherical;
 import ch.njol.skript.expressions.ExprYawPitch;
-import org.bukkit.util.Vector;
+import org.skriptlang.skript.bukkit.vector.FastVector;
 
 @Deprecated(since = "2.10.0", forRemoval = true)
 public final class VectorMath {
@@ -16,69 +16,69 @@ public final class VectorMath {
 
 	private VectorMath() {}
 
-	public static Vector fromSphericalCoordinates(double radius, double theta, double phi) {
+	public static FastVector fromSphericalCoordinates(double radius, double theta, double phi) {
 		return ExprVectorSpherical.fromSphericalCoordinates(radius, theta, phi);
 	}
 
-	public static Vector fromCylindricalCoordinates(double radius, double phi, double height) {
+	public static FastVector fromCylindricalCoordinates(double radius, double phi, double height) {
 		return ExprVectorCylindrical.fromCylindricalCoordinates(radius, phi, height);
 	}
 
-	public static Vector fromYawAndPitch(float yaw, float pitch) {
+	public static FastVector fromYawAndPitch(float yaw, float pitch) {
 		return ExprYawPitch.fromYawAndPitch(yaw, pitch);
 	}
 
-	public static float getYaw(Vector vector) {
+	public static float getYaw(FastVector vector) {
 		return ExprYawPitch.getYaw(vector);
 	}
 
-	public static float getPitch(Vector vector) {
+	public static float getPitch(FastVector vector) {
 		return ExprYawPitch.getPitch(vector);
 	}
 
-	public static Vector rotX(Vector vector, double angle) {
+	public static FastVector rotX(FastVector vector, double angle) {
 		double sin = Math.sin(angle * DEG_TO_RAD);
 		double cos = Math.cos(angle * DEG_TO_RAD);
-		Vector vy = new Vector(0, cos, -sin);
-		Vector vz = new Vector(0, sin, cos);
-		Vector clone = vector.clone();
+		FastVector vy = new FastVector(0, cos, -sin);
+		FastVector vz = new FastVector(0, sin, cos);
+		FastVector clone = vector.clone();
 		vector.setY(clone.dot(vy));
 		vector.setZ(clone.dot(vz));
 		return vector;
 	}
 
-	public static Vector rotY(Vector vector, double angle) {
+	public static FastVector rotY(FastVector vector, double angle) {
 		double sin = Math.sin(angle * DEG_TO_RAD);
 		double cos = Math.cos(angle * DEG_TO_RAD);
-		Vector vx = new Vector(cos, 0, sin);
-		Vector vz = new Vector(-sin, 0, cos);
-		Vector clone = vector.clone();
+		FastVector vx = new FastVector(cos, 0, sin);
+		FastVector vz = new FastVector(-sin, 0, cos);
+		FastVector clone = vector.clone();
 		vector.setX(clone.dot(vx));
 		vector.setZ(clone.dot(vz));
 		return vector;
 	}
 
-	public static Vector rotZ(Vector vector, double angle) {
+	public static FastVector rotZ(FastVector vector, double angle) {
 		double sin = Math.sin(angle * DEG_TO_RAD);
 		double cos = Math.cos(angle * DEG_TO_RAD);
-		Vector vx = new Vector(cos, -sin, 0);
-		Vector vy = new Vector(sin, cos, 0);
-		Vector clone = vector.clone();
+		FastVector vx = new FastVector(cos, -sin, 0);
+		FastVector vy = new FastVector(sin, cos, 0);
+		FastVector clone = vector.clone();
 		vector.setX(clone.dot(vx));
 		vector.setY(clone.dot(vy));
 		return vector;
 	}
 
-	public static Vector rot(Vector vector, Vector axis, double angle) {
+	public static FastVector rot(FastVector vector, FastVector axis, double angle) {
 		double sin = Math.sin(angle * DEG_TO_RAD);
 		double cos = Math.cos(angle * DEG_TO_RAD);
-		Vector a = axis.clone().normalize();
+		FastVector a = axis.clone().normalize();
 		double ax = a.getX();
 		double ay = a.getY();
 		double az = a.getZ();
-		Vector rotx = new Vector(cos+ax*ax*(1-cos), ax*ay*(1-cos)-az*sin, ax*az*(1-cos)+ay*sin);
-		Vector roty = new Vector(ay*ax*(1-cos)+az*sin, cos+ay*ay*(1-cos), ay*az*(1-cos)-ax*sin);
-		Vector rotz = new Vector(az*ax*(1-cos)-ay*sin, az*ay*(1-cos)+ax*sin, cos+az*az*(1-cos));
+		FastVector rotx = new FastVector(cos+ax*ax*(1-cos), ax*ay*(1-cos)-az*sin, ax*az*(1-cos)+ay*sin);
+		FastVector roty = new FastVector(ay*ax*(1-cos)+az*sin, cos+ay*ay*(1-cos), ay*az*(1-cos)-ax*sin);
+		FastVector rotz = new FastVector(az*ax*(1-cos)-ay*sin, az*ay*(1-cos)+ax*sin, cos+az*az*(1-cos));
 		double x = rotx.dot(vector);
 		double y = roty.dot(vector);
 		double z = rotz.dot(vector);
@@ -106,7 +106,7 @@ public final class VectorMath {
 		return ExprVectorFromYawAndPitch.wrapAngleDeg(angle);
 	}
 
-	public static void copyVector(Vector vector1, Vector vector2) {
+	public static void copyVector(FastVector vector1, FastVector vector2) {
 		vector1.copy(vector2);
 	}
 
@@ -115,7 +115,7 @@ public final class VectorMath {
 	 * <br>Replaces {@code Vector#isZero()} since that method was added in spigot 1.19.3
 	 * @return true if equal to zero, false if at least one component is non-zero
 	 */
-	public static boolean isZero(Vector vector) {
+	public static boolean isZero(FastVector vector) {
 		return (vector.getX() == 0 && vector.getY() == 0 && vector.getZ() == 0);
 	}
 

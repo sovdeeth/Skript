@@ -1,18 +1,18 @@
 package org.skriptlang.skript.bukkit.misc.rotation;
 
-import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Contract;
+import org.skriptlang.skript.bukkit.vector.FastVector;
 
 import java.util.function.Function;
 
 /**
- * Rotates {@link Vector}s around the X, Y, and Z axes, as well as any arbitrary axis.
+ * Rotates {@link FastVector}s around the X, Y, and Z axes, as well as any arbitrary axis.
  * Does not support local axes.
  * Returns new vector objects rather than mutating the input vector.
  */
-public class NonMutatingVectorRotator implements Rotator<Vector> {
+public class NonMutatingVectorRotator implements Rotator<FastVector> {
 
-	private final Function<Vector, Vector> rotator;
+	private final Function<FastVector, FastVector> rotator;
 
 	public NonMutatingVectorRotator(Axis axis, double angle) {
 		this.rotator = switch (axis) {
@@ -24,7 +24,7 @@ public class NonMutatingVectorRotator implements Rotator<Vector> {
 		};
 	}
 
-	public NonMutatingVectorRotator(Axis axis, Vector vector, double angle) {
+	public NonMutatingVectorRotator(Axis axis, FastVector vector, double angle) {
 		this.rotator = switch (axis) {
 			case X -> (input) -> input.clone().rotateAroundX(angle);
 			case Y -> (input) -> input.clone().rotateAroundY(angle);
@@ -36,7 +36,7 @@ public class NonMutatingVectorRotator implements Rotator<Vector> {
 
 	@Override
 	@Contract("_ -> new")
-	public Vector rotate(Vector input) {
+	public FastVector rotate(FastVector input) {
 		return rotator.apply(input);
 	}
 

@@ -11,7 +11,6 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
 import org.bukkit.event.Event;
-import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
 import org.joml.Quaternionf;
@@ -20,6 +19,7 @@ import org.skriptlang.skript.bukkit.misc.rotation.NonMutatingQuaternionRotator;
 import org.skriptlang.skript.bukkit.misc.rotation.NonMutatingVectorRotator;
 import org.skriptlang.skript.bukkit.misc.rotation.Rotator;
 import org.skriptlang.skript.bukkit.misc.rotation.Rotator.Axis;
+import org.skriptlang.skript.bukkit.vector.FastVector;
 
 import java.util.Locale;
 import java.util.Objects;
@@ -55,7 +55,7 @@ public class ExprRotate extends SimpleExpression<Object> {
 	private Expression<?> toRotate;
 
 	private @UnknownNullability Expression<Number> angle;
-	private @UnknownNullability Expression<Vector> vector;
+	private @UnknownNullability Expression<FastVector> vector;
 	private @UnknownNullability Axis axis;
 
 	private @UnknownNullability Expression<Number> x, y, z;
@@ -76,7 +76,7 @@ public class ExprRotate extends SimpleExpression<Object> {
 				axis = Axis.valueOf(axisString);
 			}
 			case 2 -> {
-				vector = (Expression<Vector>) exprs[1];
+				vector = (Expression<FastVector>) exprs[1];
 				angle = (Expression<Number>) exprs[2];
 				axis = Axis.ARBITRARY;
 			}
@@ -117,12 +117,12 @@ public class ExprRotate extends SimpleExpression<Object> {
 		if (Double.isInfinite(radAngle) || Double.isNaN(radAngle))
 			return new Object[0];
 
-		Rotator<Vector> vectorRotator;
+		Rotator<FastVector> vectorRotator;
 		Rotator<Quaternionf> quaternionRotator;
 
 		if (axis == Axis.ARBITRARY) {
 			// rotate around arbitrary axis
-			Vector axis = vector.getSingle(event);
+			FastVector axis = vector.getSingle(event);
 			if (axis == null || axis.isZero())
 				return new Object[0];
 			axis.normalize();
@@ -136,7 +136,7 @@ public class ExprRotate extends SimpleExpression<Object> {
 
 		return toRotate.stream(event)
 			.map(object -> {
-				if (object instanceof Vector vectorToRotate) {
+				if (object instanceof FastVector vectorToRotate) {
 					return vectorRotator.rotate(vectorToRotate);
 				} else if (object instanceof Quaternionf quaternion) {
 					return quaternionRotator.rotate(quaternion);
@@ -159,7 +159,7 @@ public class ExprRotate extends SimpleExpression<Object> {
 
 	@Override
 	public Class<?>[] possibleReturnTypes() {
-		return new Class<?>[]{Quaternionf.class, Vector.class};
+		return new Class<?>[]{Quaternionf.class, FastVector.class};
 	}
 
 	@Override

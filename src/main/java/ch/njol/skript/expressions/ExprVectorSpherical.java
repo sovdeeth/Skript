@@ -12,8 +12,8 @@ import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
 import ch.njol.util.coll.CollectionUtils;
 import org.bukkit.event.Event;
-import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
+import org.skriptlang.skript.bukkit.vector.FastVector;
 
 @Name("Vectors - Spherical Shape")
 @Description("Forms a 'spherical shaped' vector using yaw and pitch to manipulate the current point.")
@@ -23,12 +23,12 @@ import org.jetbrains.annotations.Nullable;
 	"set {_v} to spherical vector radius 1, yaw 45, pitch 90"
 })
 @Since("2.2-dev28")
-public class ExprVectorSpherical extends SimpleExpression<Vector> {
+public class ExprVectorSpherical extends SimpleExpression<FastVector> {
 
 	private static final double DEG_TO_RAD = Math.PI / 180;
 
 	static {
-		Skript.registerExpression(ExprVectorSpherical.class, Vector.class, ExpressionType.SIMPLE,
+		Skript.registerExpression(ExprVectorSpherical.class, FastVector.class, ExpressionType.SIMPLE,
 				"[a] [new] spherical vector [(from|with)] [radius] %number%, [yaw] %number%(,[ and]| and) [pitch] %number%");
 	}
 
@@ -46,7 +46,7 @@ public class ExprVectorSpherical extends SimpleExpression<Vector> {
 
 	@Override
 	@SuppressWarnings("null")
-	protected Vector[] get(Event event) {
+	protected FastVector[] get(Event event) {
 		Number radius = this.radius.getSingle(event);
 		Number yaw = this.yaw.getSingle(event);
 		Number pitch = this.pitch.getSingle(event);
@@ -62,8 +62,8 @@ public class ExprVectorSpherical extends SimpleExpression<Vector> {
 	}
 
 	@Override
-	public Class<? extends Vector> getReturnType() {
-		return Vector.class;
+	public Class<FastVector> getReturnType() {
+		return FastVector.class;
 	}
 
 	@Override
@@ -72,7 +72,7 @@ public class ExprVectorSpherical extends SimpleExpression<Vector> {
 				" and pitch" + pitch.toString(event, debug);
 	}
 
-	public static Vector fromSphericalCoordinates(double radius, double theta, double phi) {
+	public static FastVector fromSphericalCoordinates(double radius, double theta, double phi) {
 		double r = Math.abs(radius);
 		double t = theta * DEG_TO_RAD;
 		double p = phi * DEG_TO_RAD;
@@ -80,7 +80,7 @@ public class ExprVectorSpherical extends SimpleExpression<Vector> {
 		double x = r * sinp * Math.cos(t);
 		double y = r * Math.cos(p);
 		double z = r * sinp * Math.sin(t);
-		return new Vector(x, y, z);
+		return new FastVector(x, y, z);
 	}
 
 }

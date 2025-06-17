@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.AxisAngle4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
+import org.skriptlang.skript.bukkit.vector.FastVector;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -462,17 +463,17 @@ public class DefaultFunctions {
 			.examples("date(2014, 10, 1) # 0:00, 1st October 2014", "date(1990, 3, 5, 14, 30) # 14:30, 5th May 1990", "date(1999, 12, 31, 23, 59, 59, 999, -3*60, 0) # almost year 2000 in parts of Brazil (-3 hours offset, no DST)")
 			.since("2.2"));
 
-		Functions.registerFunction(new SimpleJavaFunction<Vector>("vector", new Parameter[] {
+		Functions.registerFunction(new SimpleJavaFunction<>("vector", new Parameter[]{
 			new Parameter<>("x", DefaultClasses.NUMBER, true, null),
 			new Parameter<>("y", DefaultClasses.NUMBER, true, null),
 			new Parameter<>("z", DefaultClasses.NUMBER, true, null)
 		}, DefaultClasses.VECTOR, true) {
 			@Override
-			public Vector[] executeSimple(Object[][] params) {
-				return new Vector[] {new Vector(
-					((Number)params[0][0]).doubleValue(),
-					((Number)params[1][0]).doubleValue(),
-					((Number)params[2][0]).doubleValue()
+			public FastVector[] executeSimple(Object[][] params) {
+				return new FastVector[]{new FastVector(
+					((Number) params[0][0]).doubleValue(),
+					((Number) params[1][0]).doubleValue(),
+					((Number) params[2][0]).doubleValue()
 				)};
 			}
 

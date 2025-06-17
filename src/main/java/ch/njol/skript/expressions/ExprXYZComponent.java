@@ -1,7 +1,6 @@
 package ch.njol.skript.expressions;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.classes.Changer;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.classes.Changer.ChangerUtils;
 import ch.njol.skript.doc.Description;
@@ -14,10 +13,10 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.util.Kleenean;
 import ch.njol.util.coll.CollectionUtils;
 import org.bukkit.event.Event;
-import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
 import org.joml.Quaternionf;
+import org.skriptlang.skript.bukkit.vector.FastVector;
 
 import java.util.Locale;
 
@@ -67,7 +66,7 @@ public class ExprXYZComponent extends SimplePropertyExpression<Object, Number> {
 
 	@Override
 	public @Nullable Number convert(Object object) {
-		if (object instanceof Vector vector) {
+		if (object instanceof FastVector vector) {
 			return switch (axis) {
 				case W -> null;
 				case X -> vector.getX();
@@ -90,9 +89,9 @@ public class ExprXYZComponent extends SimplePropertyExpression<Object, Number> {
 		if ((mode == ChangeMode.ADD || mode == ChangeMode.REMOVE || mode == ChangeMode.SET)) {
 			boolean acceptsChange;
 			if (IS_RUNNING_1194) {
-				acceptsChange = ChangerUtils.acceptsChange(getExpr(), ChangeMode.SET, Vector.class, Quaternionf.class);
+				acceptsChange = ChangerUtils.acceptsChange(getExpr(), ChangeMode.SET, FastVector.class, Quaternionf.class);
 			} else {
-				acceptsChange = ChangerUtils.acceptsChange(getExpr(), ChangeMode.SET, Vector.class);
+				acceptsChange = ChangerUtils.acceptsChange(getExpr(), ChangeMode.SET, FastVector.class);
 			}
 			if (acceptsChange)
 				return CollectionUtils.array(Number.class);
@@ -106,11 +105,11 @@ public class ExprXYZComponent extends SimplePropertyExpression<Object, Number> {
 		final double value = ((Number) delta[0]).doubleValue();
 
 		// for covering the edge cases such as an expression that returns a Vector but can only be set to a Quaternions
-		boolean acceptsVectors = ChangerUtils.acceptsChange(getExpr(), ChangeMode.SET, Vector.class);
+		boolean acceptsVectors = ChangerUtils.acceptsChange(getExpr(), ChangeMode.SET, FastVector.class);
 		boolean acceptsQuaternions = ChangerUtils.acceptsChange(getExpr(), ChangeMode.SET, Quaternionf.class);
 
 		getExpr().changeInPlace(event, object -> {
-			if (acceptsVectors && object instanceof Vector vector) {
+			if (acceptsVectors && object instanceof FastVector vector) {
 				changeVector(vector, axis, value, mode);
 			} else if (acceptsQuaternions && object instanceof Quaternionf quaternion) {
 				changeQuaternion(quaternion, axis, (float) value, mode);
@@ -126,7 +125,7 @@ public class ExprXYZComponent extends SimplePropertyExpression<Object, Number> {
 	 * @param value the value to modify by
 	 * @param mode the change mode to determine the modification type
 	 */
-	private static void changeVector(Vector vector, Axis axis, double value, ChangeMode mode) {
+	private static void changeVector(FastVector vector, Axis axis, double value, ChangeMode mode) {
 		if (axis == Axis.W)
 			return;
 		switch (mode) {

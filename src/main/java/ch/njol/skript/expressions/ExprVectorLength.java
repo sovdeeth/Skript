@@ -9,8 +9,8 @@ import ch.njol.skript.expressions.base.SimplePropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.util.coll.CollectionUtils;
 import org.bukkit.event.Event;
-import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
+import org.skriptlang.skript.bukkit.vector.FastVector;
 
 import java.util.function.Function;
 
@@ -23,7 +23,7 @@ import java.util.function.Function;
 	"send \"%standard length of {_v}%\""
 })
 @Since("2.2-dev28")
-public class ExprVectorLength extends SimplePropertyExpression<Vector, Number> {
+public class ExprVectorLength extends SimplePropertyExpression<FastVector, Number> {
 
 	static {
 		register(ExprVectorLength.class, Number.class, "(vector|standard|normal) length[s]", "vectors");
@@ -31,7 +31,7 @@ public class ExprVectorLength extends SimplePropertyExpression<Vector, Number> {
 
 	@Override
 	@SuppressWarnings("unused")
-	public Number convert(Vector vector) {
+	public Number convert(FastVector vector) {
 		return vector.length();
 	}
 
@@ -48,7 +48,7 @@ public class ExprVectorLength extends SimplePropertyExpression<Vector, Number> {
 		assert delta != null;
 		double deltaLength = ((Number) delta[0]).doubleValue();
 
-		Function<Vector, Vector> changeFunction;
+		Function<FastVector, FastVector> changeFunction;
 		switch (mode) {
 			case REMOVE:
 				deltaLength = -deltaLength;
@@ -61,9 +61,7 @@ public class ExprVectorLength extends SimplePropertyExpression<Vector, Number> {
 						vector.zero();
 					} else {
 						double newLength = finalDeltaLength + vector.length();
-						if (!vector.isNormalized())
-							vector.normalize();
-						vector.multiply(newLength);
+						vector.normalize().multiply(newLength);
 					}
 					return vector;
 				};
@@ -74,9 +72,7 @@ public class ExprVectorLength extends SimplePropertyExpression<Vector, Number> {
 					if (finalDeltaLength1 < 0 || vector.isZero()) {
 						vector.zero();
 					} else {
-						if (!vector.isNormalized())
-							vector.normalize();
-						vector.multiply(finalDeltaLength1);
+						vector.normalize().multiply(finalDeltaLength1);
 					}
 					return vector;
 				};
@@ -85,8 +81,8 @@ public class ExprVectorLength extends SimplePropertyExpression<Vector, Number> {
 				return;
 		}
 
-		//noinspection unchecked,DataFlowIssue
-		((Expression<Vector>) getExpr()).changeInPlace(event, changeFunction);
+		// noinspection unchecked
+		((Expression<FastVector>) getExpr()).changeInPlace(event, changeFunction);
 	}
 
 	@Override

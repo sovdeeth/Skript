@@ -16,15 +16,16 @@ import org.bukkit.util.Transformation;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
+import org.skriptlang.skript.bukkit.vector.FastVector;
 
 @Name("Display Transformation Scale/Translation")
 @Description("Returns or changes the transformation scale or translation of <a href='classes.html#display'>displays</a>.")
 @Examples("set transformation translation of display to vector from -0.5, -0.5, -0.5 # Center the display in the same position as a block")
 @Since("2.10")
-public class ExprDisplayTransformationScaleTranslation extends SimplePropertyExpression<Display, Vector> {
+public class ExprDisplayTransformationScaleTranslation extends SimplePropertyExpression<Display, FastVector> {
 
 	static {
-		register(ExprDisplayTransformationScaleTranslation.class, Vector.class, "(display|[display] transformation) (:scale|translation)", "displays");
+		register(ExprDisplayTransformationScaleTranslation.class, FastVector.class, "(display|[display] transformation) (:scale|translation)", "displays");
 	}
 
 	private boolean scale;
@@ -36,14 +37,14 @@ public class ExprDisplayTransformationScaleTranslation extends SimplePropertyExp
 	}
 
 	@Override
-	public @Nullable Vector convert(Display display) {
+	public @Nullable FastVector convert(Display display) {
 		Transformation transformation = display.getTransformation();
-		return Vector.fromJOML(scale ? transformation.getScale() : transformation.getTranslation());
+		return new FastVector(scale ? transformation.getScale() : transformation.getTranslation());
 	}
 
 	public Class<?> @Nullable [] acceptChange(ChangeMode mode) {
 		return switch (mode) {
-			case SET, RESET -> CollectionUtils.array(Vector.class);
+			case SET, RESET -> CollectionUtils.array(FastVector.class);
 			default -> null;
 		};
 	}
@@ -70,8 +71,8 @@ public class ExprDisplayTransformationScaleTranslation extends SimplePropertyExp
 	}
 
 	@Override
-	public Class<? extends Vector> getReturnType() {
-		return Vector.class;
+	public Class<? extends FastVector> getReturnType() {
+		return FastVector.class;
 	}
 
 	@Override

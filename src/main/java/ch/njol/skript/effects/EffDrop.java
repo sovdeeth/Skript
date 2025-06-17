@@ -20,8 +20,8 @@ import org.bukkit.entity.ExperienceOrb;
 import org.bukkit.entity.Item;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
+import org.skriptlang.skript.bukkit.vector.FastVector;
 
 @Name("Drop")
 @Description("Drops one or more items.")
@@ -73,7 +73,7 @@ public class EffDrop extends Effect {
 							} else {
 								Item item = l.getWorld().dropItem(l, is);
 								item.teleport(l);
-								item.setVelocity(new Vector(0, 0, 0));
+								item.setVelocity(new FastVector(0, 0, 0));
 								lastSpawned = item;
 							}
 						}

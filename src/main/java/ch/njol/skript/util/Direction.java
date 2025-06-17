@@ -20,6 +20,7 @@ import org.bukkit.event.Event;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.skriptlang.skript.bukkit.vector.FastVector;
 
 import java.io.StreamCorruptedException;
 import java.lang.reflect.Field;
@@ -85,7 +86,7 @@ public class Direction implements YggdrasilRobustSerializable {
 	}
 	
 	public Direction(final BlockFace f, final double length) {
-		this(new Vector(f.getModX(), f.getModY(), f.getModZ()).normalize().multiply(length));
+		this(new FastVector(f.getModX(), f.getModY(), f.getModZ()).normalize().multiply(length));
 	}
 	
 	public Direction(final Vector v) {
@@ -111,34 +112,34 @@ public class Direction implements YggdrasilRobustSerializable {
 	 * Used to get a vector from a direction without anything to be relative to.
 	 * Any relative directions will be relative to 0 degrees pitch and yaw.
 	 */
-	public Vector getDirection() {
+	public FastVector getDirection() {
 		if (!relative)
-			return new Vector(pitchOrX, yawOrY, lengthOrZ);
+			return new FastVector(pitchOrX, yawOrY, lengthOrZ);
 		return getDirection(0, 0);
 	}
 
-	public Vector getDirection(final Location l) {
+	public FastVector getDirection(final Location l) {
 		if (!relative)
-			return new Vector(pitchOrX, yawOrY, lengthOrZ);
+			return new FastVector(pitchOrX, yawOrY, lengthOrZ);
 		return getDirection(pitchOrX == IGNORE_PITCH ? 0 : pitchToRadians(l.getPitch()), yawToRadians(l.getYaw()));
 	}
 	
-	public Vector getDirection(final Entity e) {
+	public FastVector getDirection(final Entity e) {
 		return getDirection(e.getLocation());
 	}
 	
-	public Vector getDirection(Block b) {
+	public FastVector getDirection(Block b) {
 		if (!relative)
-			return new Vector(pitchOrX, yawOrY, lengthOrZ);
+			return new FastVector(pitchOrX, yawOrY, lengthOrZ);
 		BlockFace blockFace = getFacing(b);
 		return getDirection(pitchOrX == IGNORE_PITCH ? 0 : blockFace.getModZ() * Math.PI / 2 /* only up and down have a z mod */, Math.atan2(blockFace.getModZ(), blockFace.getModX()));
 	}
 	
-	private Vector getDirection(final double p, final double y) {
+	private FastVector getDirection(final double p, final double y) {
 		if (pitchOrX == IGNORE_PITCH)
-			return new Vector(Math.cos(y + yawOrY) * lengthOrZ, 0, Math.sin(y + yawOrY) * lengthOrZ);
+			return new FastVector(Math.cos(y + yawOrY) * lengthOrZ, 0, Math.sin(y + yawOrY) * lengthOrZ);
 		final double lxz = Math.cos(p + pitchOrX) * lengthOrZ;
-		return new Vector(Math.cos(y + yawOrY) * lxz, Math.sin(p + pitchOrX) * Math.cos(yawOrY) * lengthOrZ, Math.sin(y + yawOrY) * lxz);
+		return new FastVector(Math.cos(y + yawOrY) * lxz, Math.sin(p + pitchOrX) * Math.cos(yawOrY) * lengthOrZ, Math.sin(y + yawOrY) * lxz);
 	}
 	
 	@Override

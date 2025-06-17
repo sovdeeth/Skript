@@ -8,10 +8,10 @@ import org.bukkit.entity.Pig;
 import org.bukkit.entity.Sheep;
 import org.bukkit.event.vehicle.VehicleBlockCollisionEvent;
 import org.bukkit.event.vehicle.VehicleEntityCollisionEvent;
-import org.bukkit.util.Vector;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.skriptlang.skript.bukkit.vector.FastVector;
 
 public class EvtVehicleCollisionTest extends SkriptJUnitTest {
 
@@ -29,7 +29,7 @@ public class EvtVehicleCollisionTest extends SkriptJUnitTest {
 
 	@Test
 	public void test() {
-		Bukkit.getPluginManager().callEvent(new VehicleBlockCollisionEvent(pig, getBlock(), new Vector()));
+		Bukkit.getPluginManager().callEvent(new VehicleBlockCollisionEvent(pig, getBlock(), new FastVector()));
 		Bukkit.getPluginManager().callEvent(new VehicleEntityCollisionEvent(pig, sheep));
 	}
 

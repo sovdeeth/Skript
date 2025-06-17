@@ -1,11 +1,5 @@
 package ch.njol.skript.expressions;
 
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.Minecart;
-import org.bukkit.event.Event;
-import org.bukkit.util.Vector;
-import org.jetbrains.annotations.Nullable;
-
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
@@ -16,16 +10,22 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.util.Kleenean;
 import ch.njol.util.coll.CollectionUtils;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Minecart;
+import org.bukkit.event.Event;
+import org.bukkit.util.Vector;
+import org.jetbrains.annotations.Nullable;
+import org.skriptlang.skript.bukkit.vector.FastVector;
 
 @Name("Minecart Derailed / Flying Velocity")
 @Description("The velocity of a minecart as soon as it has been derailed or as soon as it starts flying.")
 @Examples({"on right click on minecart:",
 	"\tset derailed velocity of event-entity to vector 2, 10, 2"})
 @Since("2.5.1")
-public class ExprMinecartDerailedFlyingVelocity extends SimplePropertyExpression<Entity, Vector> {
+public class ExprMinecartDerailedFlyingVelocity extends SimplePropertyExpression<Entity, FastVector> {
 	
 	static {
-		register(ExprMinecartDerailedFlyingVelocity.class, Vector.class,
+		register(ExprMinecartDerailedFlyingVelocity.class, FastVector.class,
 			"[minecart] (1¦derailed|2¦flying) velocity", "entities");
 	}
 	
@@ -39,10 +39,10 @@ public class ExprMinecartDerailedFlyingVelocity extends SimplePropertyExpression
 	
 	@Nullable
 	@Override
-	public Vector convert(Entity entity) {
+	public FastVector convert(Entity entity) {
 		if (entity instanceof Minecart) {
 			Minecart mc = (Minecart) entity;
-			return flying ? mc.getFlyingVelocityMod() : mc.getDerailedVelocityMod();
+			return FastVector.asFastVector(flying ? mc.getFlyingVelocityMod() : mc.getDerailedVelocityMod());
 		}
 		return null;
 	}
@@ -54,7 +54,7 @@ public class ExprMinecartDerailedFlyingVelocity extends SimplePropertyExpression
 			case SET:
 			case ADD:
 			case REMOVE:
-				return CollectionUtils.array(Vector.class);
+				return CollectionUtils.array(FastVector.class);
 			default:
 				return null;
 		}
@@ -128,8 +128,8 @@ public class ExprMinecartDerailedFlyingVelocity extends SimplePropertyExpression
 	
 	
 	@Override
-	public Class<? extends Vector> getReturnType() {
-		return Vector.class;
+	public Class<FastVector> getReturnType() {
+		return FastVector.class;
 	}
 	
 }

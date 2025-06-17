@@ -12,7 +12,6 @@ import ch.njol.util.Kleenean;
 import org.bukkit.entity.Display;
 import org.bukkit.event.Event;
 import org.bukkit.util.Transformation;
-import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
 import org.joml.Quaternionf;
@@ -22,6 +21,7 @@ import org.skriptlang.skript.bukkit.misc.rotation.QuaternionRotator;
 import org.skriptlang.skript.bukkit.misc.rotation.Rotator;
 import org.skriptlang.skript.bukkit.misc.rotation.Rotator.Axis;
 import org.skriptlang.skript.bukkit.misc.rotation.VectorRotator;
+import org.skriptlang.skript.bukkit.vector.FastVector;
 
 import java.util.Locale;
 
@@ -60,7 +60,7 @@ public class EffRotate extends Effect {
 	private Expression<?> toRotate;
 
 	private @UnknownNullability Expression<Number> angle;
-	private @UnknownNullability Expression<Vector> vector;
+	private @UnknownNullability Expression<FastVector> vector;
 	private @UnknownNullability Axis axis;
 
 	private @UnknownNullability Expression<Number> x, y, z;
@@ -81,7 +81,7 @@ public class EffRotate extends Effect {
 				axis = Axis.valueOf(axisString);
 			}
 			case 2 -> {
-				vector = (Expression<Vector>) exprs[1];
+				vector = (Expression<FastVector>) exprs[1];
 				angle = (Expression<Number>) exprs[2];
 				axis = Axis.ARBITRARY;
 			}
@@ -134,13 +134,13 @@ public class EffRotate extends Effect {
 		if (Double.isInfinite(radAngle) || Double.isNaN(radAngle))
 			return;
 
-		Rotator<Vector> vectorRotator;
+		Rotator<FastVector> vectorRotator;
 		Rotator<Quaternionf> quaternionRotator;
 		Rotator<Display> displayRotator;
 
 		if (axis == Axis.ARBITRARY) {
 			// rotate around arbitrary axis
-			Vector axis = vector.getSingle(event);
+			FastVector axis = vector.getSingle(event);
 			if (axis == null || axis.isZero())
 				return;
 			axis.normalize();
@@ -155,7 +155,7 @@ public class EffRotate extends Effect {
 		}
 
 		for (Object object : toRotate.getArray(event)) {
-			if (object instanceof Vector vectorToRotate) {
+			if (object instanceof FastVector vectorToRotate) {
 				vectorRotator.rotate(vectorToRotate);
 			} else if (object instanceof Quaternionf quaternion) {
 				quaternionRotator.rotate(quaternion);
