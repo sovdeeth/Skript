@@ -1,10 +1,8 @@
 package ch.njol.util;
 
 import ch.njol.skript.Skript;
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.ApiStatus;
-
-import java.util.Arrays;
+import org.joml.Vector3d;
 
 /**
  * This class is not to be used by addons. In the future methods may
@@ -161,6 +159,12 @@ public final class Math2 {
 			// If either x or y is negative return the min value, otherwise return the max value
 			return x < 0 == y < 0 ? Long.MAX_VALUE : Long.MIN_VALUE;
 		return result;
+	}
+
+	public static boolean vectorIsZero(Vector3d vector) {
+		return Math.abs(vector.x) < Skript.EPSILON &&
+				Math.abs(vector.y) < Skript.EPSILON &&
+				Math.abs(vector.z) < Skript.EPSILON;
 	}
 
 }

@@ -57,8 +57,8 @@ import org.bukkit.metadata.Metadatable;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.CachedServerIcon;
-import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3d;
 
 import java.io.StreamCorruptedException;
 import java.util.*;
@@ -396,18 +396,18 @@ public class BukkitClasses {
 				})
 				.cloner(Location::clone));
 
-		Classes.registerClass(new ClassInfo<>(Vector.class, "vector")
+		Classes.registerClass(new ClassInfo<>(Vector3d.class, "vector")
 				.user("vectors?")
 				.name("Vector")
 				.description("Vector is a collection of numbers. In Minecraft, 3D vectors are used to express velocities of entities.")
 				.usage("vector(x, y, z)")
 				.examples("")
 				.since("2.2-dev23")
-				.defaultExpression(new EventValueExpression<>(Vector.class))
-				.parser(new Parser<Vector>() {
+				.defaultExpression(new EventValueExpression<>(Vector3d.class))
+				.parser(new Parser<Vector3d>() {
 					@Override
 					@Nullable
-					public Vector parse(final String s, final ParseContext context) {
+					public Vector3d parse(final String s, final ParseContext context) {
 						return null;
 					}
 
@@ -417,38 +417,38 @@ public class BukkitClasses {
 					}
 
 					@Override
-					public String toString(final Vector vec, final int flags) {
-						return "x: " + Skript.toString(vec.getX()) + ", y: " + Skript.toString(vec.getY()) + ", z: " + Skript.toString(vec.getZ());
+					public String toString(final Vector3d vec, final int flags) {
+						return "x: " + Skript.toString(vec.x()) + ", y: " + Skript.toString(vec.y()) + ", z: " + Skript.toString(vec.z());
 					}
 
 					@Override
-					public String toVariableNameString(final Vector vec) {
-						return "vector:" + vec.getX() + "," + vec.getY() + "," + vec.getZ();
+					public String toVariableNameString(final Vector3d vec) {
+						return "vector:" + vec.x() + "," + vec.y() + "," + vec.z();
 					}
 
 					@Override
-					public String getDebugMessage(final Vector vec) {
-						return "(" + vec.getX() + "," + vec.getY() + "," + vec.getZ() + ")";
+					public String getDebugMessage(final Vector3d vec) {
+						return "(" + vec.x() + "," + vec.y() + "," + vec.z() + ")";
 					}
 				})
-				.serializer(new Serializer<Vector>() {
+				.serializer(new Serializer<Vector3d>() {
 					@Override
-					public Fields serialize(Vector o) {
+					public Fields serialize(Vector3d o) {
 						Fields f = new Fields();
-						f.putPrimitive("x", o.getX());
-						f.putPrimitive("y", o.getY());
-						f.putPrimitive("z", o.getZ());
+						f.putPrimitive("x", o.x());
+						f.putPrimitive("y", o.y());
+						f.putPrimitive("z", o.z());
 						return f;
 					}
 
 					@Override
-					public void deserialize(Vector o, Fields f) {
+					public void deserialize(Vector3d o, Fields f) {
 						assert false;
 					}
 
 					@Override
-					public Vector deserialize(final Fields f) throws StreamCorruptedException {
-						return new Vector(f.getPrimitive("x", double.class), f.getPrimitive("y", double.class), f.getPrimitive("z", double.class));
+					public Vector3d deserialize(final Fields f) throws StreamCorruptedException {
+						return new Vector3d(f.getPrimitive("x", double.class), f.getPrimitive("y", double.class), f.getPrimitive("z", double.class));
 					}
 
 					@Override
@@ -461,7 +461,7 @@ public class BukkitClasses {
 						return false;
 					}
 				})
-				.cloner(Vector::clone));
+				.cloner(Vector3d::new));
 
 		Classes.registerClass(new ClassInfo<>(World.class, "world")
 				.user("worlds?")
