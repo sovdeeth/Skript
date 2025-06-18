@@ -652,7 +652,7 @@ public class DefaultFunctions {
 							Vector3d v = ((Vector3d) params[1][0]);
 							if (Math2.vectorIsZero(v) || !v.isFinite())
 								return new Quaternionf[0];
-							Vector3f axis = new Vector3f((Vector3d) params[1][0]);
+							Vector3f axis = new Vector3f((float) v.x, (float) v.y, (float) v.z);
 							return CollectionUtils.array(new Quaternionf(new AxisAngle4f(angle, axis)));
 						}
 					})

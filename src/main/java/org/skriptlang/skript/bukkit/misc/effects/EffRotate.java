@@ -145,7 +145,7 @@ public class EffRotate extends Effect {
 			if (axis == null || Math2.vectorIsZero(axis))
 				return;
 			axis.normalize();
-			Vector3f v3fAxis = new Vector3f(axis);
+			Vector3f v3fAxis = new Vector3f((float) axis.x, (float) axis.y, (float) axis.z);
 			vectorRotator = new VectorRotator(Axis.ARBITRARY, axis, radAngle);
 			quaternionRotator = new QuaternionRotator(Axis.LOCAL_ARBITRARY, v3fAxis, (float) radAngle);
 			displayRotator = new DisplayRotator(Axis.LOCAL_ARBITRARY, v3fAxis, (float) radAngle);

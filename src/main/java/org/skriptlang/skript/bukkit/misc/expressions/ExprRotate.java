@@ -127,7 +127,7 @@ public class ExprRotate extends SimpleExpression<Object> {
 			if (axis == null || Math2.vectorIsZero(axis))
 				return new Object[0];
 			axis.normalize();
-			Vector3f v3fAxis = new Vector3f(axis);
+			Vector3f v3fAxis = new Vector3f((float) axis.x, (float) axis.y, (float) axis.z);
 			vectorRotator = new NonMutatingVectorRotator(Axis.ARBITRARY, axis, radAngle);
 			quaternionRotator = new NonMutatingQuaternionRotator(Axis.LOCAL_ARBITRARY, v3fAxis, (float) radAngle);
 		} else {
