@@ -58,7 +58,6 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.CachedServerIcon;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Vector3d;
 
 import java.io.StreamCorruptedException;
 import java.util.*;
@@ -395,73 +394,6 @@ public class BukkitClasses {
 					}
 				})
 				.cloner(Location::clone));
-
-		Classes.registerClass(new ClassInfo<>(Vector3d.class, "vector")
-				.user("vectors?")
-				.name("Vector")
-				.description("Vector is a collection of numbers. In Minecraft, 3D vectors are used to express velocities of entities.")
-				.usage("vector(x, y, z)")
-				.examples("")
-				.since("2.2-dev23")
-				.defaultExpression(new EventValueExpression<>(Vector3d.class))
-				.parser(new Parser<Vector3d>() {
-					@Override
-					@Nullable
-					public Vector3d parse(final String s, final ParseContext context) {
-						return null;
-					}
-
-					@Override
-					public boolean canParse(final ParseContext context) {
-						return false;
-					}
-
-					@Override
-					public String toString(final Vector3d vec, final int flags) {
-						return "x: " + Skript.toString(vec.x()) + ", y: " + Skript.toString(vec.y()) + ", z: " + Skript.toString(vec.z());
-					}
-
-					@Override
-					public String toVariableNameString(final Vector3d vec) {
-						return "vector:" + vec.x() + "," + vec.y() + "," + vec.z();
-					}
-
-					@Override
-					public String getDebugMessage(final Vector3d vec) {
-						return "(" + vec.x() + "," + vec.y() + "," + vec.z() + ")";
-					}
-				})
-				.serializer(new Serializer<Vector3d>() {
-					@Override
-					public Fields serialize(Vector3d o) {
-						Fields f = new Fields();
-						f.putPrimitive("x", o.x());
-						f.putPrimitive("y", o.y());
-						f.putPrimitive("z", o.z());
-						return f;
-					}
-
-					@Override
-					public void deserialize(Vector3d o, Fields f) {
-						assert false;
-					}
-
-					@Override
-					public Vector3d deserialize(final Fields f) throws StreamCorruptedException {
-						return new Vector3d(f.getPrimitive("x", double.class), f.getPrimitive("y", double.class), f.getPrimitive("z", double.class));
-					}
-
-					@Override
-					public boolean mustSyncDeserialization() {
-						return false;
-					}
-
-					@Override
-					protected boolean canBeInstantiated() {
-						return false;
-					}
-				})
-				.cloner(Vector3d::new));
 
 		Classes.registerClass(new ClassInfo<>(World.class, "world")
 				.user("worlds?")
