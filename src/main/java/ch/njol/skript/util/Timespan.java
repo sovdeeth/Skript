@@ -321,7 +321,7 @@ public class Timespan implements YggdrasilSerializable, Comparable<Timespan>, Te
 	 */
 	@Contract(value = "_ -> new", pure = true)
 	public Timespan divide(double scalar) {
-		Preconditions.checkArgument(scalar >= 0);
+		Preconditions.checkArgument(scalar >= 0, "Cannot divide a timespan by non-positive value");
 		if (this.isInfinite())
 			return Timespan.infinite();
 		double value = this.getAs(TimePeriod.MILLISECOND) / scalar;
