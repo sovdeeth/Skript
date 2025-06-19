@@ -24,6 +24,7 @@ import java.util.function.Function;
 @Example("push the player upwards")
 @Example("push the victim downwards at speed 0.5")
 @Example("push player towards player's target at speed 2")
+@Example("pull player along vector(1,1,1) at speed 1.5")
 @Since({"1.4.6", "INSERT VERSION (push towards)"})
 public class EffPush extends Effect {
 
