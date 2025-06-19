@@ -150,6 +150,11 @@ public final class Math2 {
 		return result;
 	}
 
+	/**
+	 * @param x the first value
+	 * @param y the second value
+	 * @return the product of x and y, or {@link Long#MAX_VALUE}, {@link Long#MIN_VALUE} in case of an overflow/underflow.
+	 */
 	public static long multiplyClamped(long x, long y) {
 		long result = x * y;
 		long ax = Math.abs(x);
@@ -161,6 +166,10 @@ public final class Math2 {
 		return result;
 	}
 
+	/**
+	 * @param vector the vector to check
+	 * @return whether the x, y, and z components of the vector are all within {@link Skript#EPSILON} of 0.
+	 */
 	public static boolean vectorIsZero(Vector3d vector) {
 		return Math.abs(vector.x) < Skript.EPSILON &&
 				Math.abs(vector.y) < Skript.EPSILON &&

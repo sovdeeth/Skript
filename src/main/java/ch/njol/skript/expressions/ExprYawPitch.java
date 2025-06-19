@@ -217,33 +217,25 @@ public class ExprYawPitch extends SimplePropertyExpression<Object, Float> {
 		return new Vector3d(x,y,z);
 	}
 
-	// TODO Mark as private next version after VectorMath deletion
-	@ApiStatus.Internal
-	public static float getYaw(Vector3d vector) {
+	private static float getYaw(Vector3d vector) {
 		if (((Double) vector.x()).equals((double) 0) && ((Double) vector.z()).equals((double) 0)){
 			return 0;
 		}
 		return (float) (Math.atan2(vector.z(), vector.x()) * RAD_TO_DEG);
 	}
 
-	// TODO Mark as private next version after VectorMath deletion
-	@ApiStatus.Internal
-	public static float getPitch(Vector3d vector) {
+	private static float getPitch(Vector3d vector) {
 		double xy = Math.sqrt(vector.x() * vector.x() + vector.z() * vector.z());
 		return (float) (Math.atan(vector.y() / xy) * RAD_TO_DEG);
 	}
 
-	// TODO Mark as private next version after VectorMath deletion
-	@ApiStatus.Internal
-	public static float skriptYaw(float yaw) {
+	private static float skriptYaw(float yaw) {
 		return yaw < 90
 			? yaw + 270
 			: yaw - 90;
 	}
 
-	// TODO Mark as private next version after VectorMath deletion
-	@ApiStatus.Internal
-	public static float skriptPitch(float pitch) {
+	private static float skriptPitch(float pitch) {
 		return -pitch;
 	}
 
@@ -256,4 +248,5 @@ public class ExprYawPitch extends SimplePropertyExpression<Object, Float> {
 	public static float fromSkriptPitch(float pitch) {
 		return -pitch;
 	}
+
 }

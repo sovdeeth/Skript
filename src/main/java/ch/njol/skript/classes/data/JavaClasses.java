@@ -16,6 +16,7 @@ import ch.njol.skript.util.Utils;
 import ch.njol.util.StringUtils;
 import ch.njol.yggdrasil.Fields;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionf;
 import org.joml.Vector3d;
@@ -312,63 +313,8 @@ public class JavaClasses {
 			.examples("")
 			.since("2.2-dev23")
 			.defaultExpression(new EventValueExpression<>(Vector3d.class))
-			.parser(new Parser<Vector3d>() {
-				@Override
-				@Nullable
-				public Vector3d parse(final String s, final ParseContext context) {
-					return null;
-				}
-
-				@Override
-				public boolean canParse(final ParseContext context) {
-					return false;
-				}
-
-				@Override
-				public String toString(final Vector3d vec, final int flags) {
-					return "x: " + Skript.toString(vec.x()) + ", y: " + Skript.toString(vec.y()) + ", z: " + Skript.toString(vec.z());
-				}
-
-				@Override
-				public String toVariableNameString(final Vector3d vec) {
-					return "vector:" + vec.x() + "," + vec.y() + "," + vec.z();
-				}
-
-				@Override
-				public String getDebugMessage(final Vector3d vec) {
-					return "(" + vec.x() + "," + vec.y() + "," + vec.z() + ")";
-				}
-			})
-			.serializer(new Serializer<>() {
-				@Override
-				public Fields serialize(Vector3d o) {
-					Fields f = new Fields();
-					f.putPrimitive("x", o.x());
-					f.putPrimitive("y", o.y());
-					f.putPrimitive("z", o.z());
-					return f;
-				}
-
-				@Override
-				public void deserialize(Vector3d o, Fields f) {
-					assert false;
-				}
-
-				@Override
-				public Vector3d deserialize(final Fields f) throws StreamCorruptedException {
-					return new Vector3d(f.getPrimitive("x", double.class), f.getPrimitive("y", double.class), f.getPrimitive("z", double.class));
-				}
-
-				@Override
-				public boolean mustSyncDeserialization() {
-					return false;
-				}
-
-				@Override
-				protected boolean canBeInstantiated() {
-					return false;
-				}
-			})
+			.parser(new Vector3dParser())
+			.serializer(new Vector3dSerializer())
 			.cloner(Vector3d::new));
 
 		// joml type - for display entities
@@ -927,6 +873,70 @@ public class JavaClasses {
 			long mostSignificantBits = fields.getAndRemovePrimitive("mostsignificantbits", long.class);
 			long leastSignificantBits = fields.getAndRemovePrimitive("leastsignificantbits", long.class);
 			return new UUID(mostSignificantBits, leastSignificantBits);
+		}
+
+		@Override
+		public boolean mustSyncDeserialization() {
+			return false;
+		}
+
+		@Override
+		protected boolean canBeInstantiated() {
+			return false;
+		}
+
+	}
+
+	private static class Vector3dParser extends Parser<Vector3d> {
+
+		@Override
+		public @Nullable Vector3d parse(String s, ParseContext context) {
+			return null;
+		}
+
+		@Override
+		public boolean canParse(ParseContext context) {
+			return false;
+		}
+
+		@Override
+		public @NotNull String toString(@NotNull Vector3d vec, int flags) {
+			return "x: " + Skript.toString(vec.x()) + ", y: " + Skript.toString(vec.y()) + ", z: " + Skript.toString(vec.z());
+		}
+
+		@Override
+		public @NotNull String toVariableNameString(@NotNull Vector3d vec) {
+			return "vector:" + vec.x() + "," + vec.y() + "," + vec.z();
+		}
+
+		@Override
+		public @NotNull String getDebugMessage(@NotNull Vector3d vec) {
+			return "(" + vec.x() + "," + vec.y() + "," + vec.z() + ")";
+		}
+
+	}
+
+	private static class Vector3dSerializer extends Serializer<Vector3d> {
+		@Override
+		public Fields serialize(Vector3d vector3d) {
+			Fields f = new Fields();
+			f.putPrimitive("x", vector3d.x());
+			f.putPrimitive("y", vector3d.y());
+			f.putPrimitive("z", vector3d.z());
+			return f;
+		}
+
+		@Override
+		public void deserialize(Vector3d o, Fields f) {
+			assert false;
+		}
+
+		@Override
+		public Vector3d deserialize(Fields fields) throws StreamCorruptedException {
+			return new Vector3d(
+				fields.getPrimitive("x", double.class),
+				fields.getPrimitive("y", double.class),
+				fields.getPrimitive("z", double.class));
 		}
 
 		@Override
