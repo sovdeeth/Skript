@@ -238,14 +238,14 @@ public class StructVariables extends Structure {
 			return true;
 		}
 		Task.callSync(() -> {
-				for (NonNullPair<String, Object> pair : data.getVariables()) {
-					String name = pair.getKey();
-					if (Variables.getVariable(name, null, false) != null)
-						continue;
-					Variables.setVariable(name, pair.getValue(), null, false);
-				}
-				return null;
-			});
+			for (NonNullPair<String, Object> pair : data.getVariables()) {
+				String name = pair.getKey();
+				if (Variables.getVariable(name, null, false) != null)
+					continue;
+				Variables.setVariable(name, pair.getValue(), null, false);
+			}
+			return null;
+		});
 		data.loaded = true;
 		return true;
 	}
