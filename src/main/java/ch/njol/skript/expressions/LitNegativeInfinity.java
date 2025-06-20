@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 public class LitNegativeInfinity extends SimpleLiteral<Double> {
 
 	static {
-		Skript.registerExpression(LitInfinity.class, Double.class, ExpressionType.SIMPLE,
+		Skript.registerExpression(LitNegativeInfinity.class, Double.class, ExpressionType.SIMPLE,
 				"(-|minus |negative )(infinity|∞) [value]",
 				"value of (-|minus |negative )(infinity|∞)");
 	}
