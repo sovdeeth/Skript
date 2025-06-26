@@ -8,14 +8,13 @@ import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.Literal;
-import ch.njol.skript.lang.simplification.SimplifiedLiteral;
 import ch.njol.skript.lang.SkriptParser;
+import ch.njol.skript.lang.simplification.SimplifiedLiteral;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.util.LiteralUtils;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Kleenean;
 import org.bukkit.event.Event;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -81,7 +80,7 @@ public class ExprDefaultValue extends SimpleExpression<Object> {
 	}
 
 	@Override
-	public Expression<? extends T> simplify() {
+	public Expression<?> simplify() {
 		if (values instanceof Literal<Object> literal
 			&& (defaultValues instanceof Literal<Object> || literal.getAll().length > 0))
 			return SimplifiedLiteral.fromExpression(this);
