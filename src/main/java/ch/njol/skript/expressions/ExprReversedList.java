@@ -90,12 +90,22 @@ public class ExprReversedList extends SimpleExpression<Object> {
 	}
 
 	@Override
+	public Class<?>[] possibleReturnTypes() {
+		return list.possibleReturnTypes();
+	}
+
+	@Override
+	public boolean canReturn(Class<?> returnType) {
+		return list.canReturn(returnType);
+	}
+  
+  @Override
 	public Expression<?> simplify() {
 		if (list instanceof Literal<?>)
 			return SimplifiedLiteral.fromExpression(this);
 		return this;
-	}
-
+  }
+    
 	@Override
 	public String toString(@Nullable Event e, boolean debug) {
 		return "reversed " + list.toString(e, debug);

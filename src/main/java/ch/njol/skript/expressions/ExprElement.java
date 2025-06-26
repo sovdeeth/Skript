@@ -239,6 +239,22 @@ public class ExprElement<T> extends SimpleExpression<T> {
 	}
 
 	@Override
+	public Class<? extends T>[] possibleReturnTypes() {
+		if (!queue) {
+			return expr.possibleReturnTypes();
+		}
+		return super.possibleReturnTypes();
+	}
+
+	@Override
+	public boolean canReturn(Class<?> returnType) {
+		if (!queue) {
+			return expr.canReturn(returnType);
+		}
+		return super.canReturn(returnType);
+	}
+  
+  @Override
 	public Expression<? extends T> simplify() {
 		if (!queue && expr instanceof Literal<?>
 			&& type != ElementType.RANDOM
@@ -247,7 +263,7 @@ public class ExprElement<T> extends SimpleExpression<T> {
 			return SimplifiedLiteral.fromExpression(this);
 		}
 		return this;
-	}
+  }
 
 	@Override
 	public String toString(@Nullable Event event, boolean debug) {

@@ -6,6 +6,7 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.util.Kleenean;
 import ch.njol.util.coll.CollectionUtils;
+import com.google.common.collect.ImmutableSet;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +44,7 @@ public class ExpressionList<T> implements Expression<T> {
 		assert expressions != null;
 		this.expressions = expressions;
 		this.returnType = returnType;
-		this.possibleReturnTypes = possibleReturnTypes;
+		this.possibleReturnTypes = ImmutableSet.copyOf(possibleReturnTypes).toArray(new Class[0]);
 		this.and = and;
 		if (and) {
 			single = false;
