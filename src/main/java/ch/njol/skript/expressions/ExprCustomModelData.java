@@ -8,18 +8,20 @@ import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Color;
 import ch.njol.skript.util.ColorRGB;
-import ch.njol.skript.util.Utils;
 import ch.njol.util.Kleenean;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.components.CustomModelDataComponent;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.IntFunction;
 
 @Name("Custom Model Data")
 @Description({
@@ -65,20 +67,20 @@ public class ExprCustomModelData extends PropertyExpression<ItemType, Object> {
 		COLORS(Color.class),
 		ALL(Float.class, Boolean.class, String.class, Color.class);
 
-		private final Class<?> supertype;
 		private final Class<?>[] types;
 
 		CMDType(Class<?>... returns) {
 			this.types = returns;
-			this.supertype = Utils.getSuperType(returns);
 		}
 	}
 
 	private CMDType dataType;
+	private Class<?> returnType;
 
 	@Override
 	public boolean init(Expression<?>[] expressions, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
 		dataType = CMDType.values()[parseResult.mark];
+		returnType = Classes.getSuperClassInfo(dataType.types).getC();
 		//noinspection unchecked
 		setExpr((Expression<? extends ItemType>) expressions[0]);
 		return true;
@@ -97,11 +99,12 @@ public class ExprCustomModelData extends PropertyExpression<ItemType, Object> {
 			}
 
 			CustomModelDataComponent component = meta.getCustomModelDataComponent();
+			IntFunction<Object[]> arrayConstructor = n -> (Object[]) Array.newInstance(getReturnType(), n);
 			return switch (dataType) {
 				case SINGLE_INT -> throw new IllegalStateException("Unreachable state for SINGLE_INT!");
-				case FLOATS -> component.getFloats().toArray(Float[]::new);
-				case FLAGS -> component.getFlags().toArray(Boolean[]::new);
-				case STRINGS -> component.getStrings().toArray(String[]::new);
+				case FLOATS -> component.getFloats().toArray(arrayConstructor);
+				case FLAGS -> component.getFlags().toArray(arrayConstructor);
+				case STRINGS -> component.getStrings().toArray(arrayConstructor);
 				case COLORS ->
 					component.getColors().stream().map(ColorRGB::fromBukkitColor).toList().toArray(ColorRGB[]::new);
 				case ALL -> {
@@ -110,17 +113,17 @@ public class ExprCustomModelData extends PropertyExpression<ItemType, Object> {
 					data.addAll(component.getFlags());
 					data.addAll(component.getStrings());
 					data.addAll(component.getColors().stream().map(ColorRGB::fromBukkitColor).toList());
-					yield data.toArray(Object[]::new);
+					yield data.toArray(arrayConstructor);
 				}
 			};
 		}
-		throw new IllegalStateException("Unreachable state! Either source was an empty array or something horrible happened.");
+		return (Object[]) Array.newInstance(getReturnType(), 0);
 	}
 
 	@Override
 	public Class<?> @Nullable [] acceptChange(ChangeMode mode) {
 		return switch (mode) {
-			case ADD, REMOVE, REMOVE_ALL, SET, DELETE, RESET -> {
+			case ADD, REMOVE, SET, DELETE, RESET -> {
 				// convert to array types to allow plural changes.
 				Class<?>[] arrayClasses = new Class[dataType.types.length];
 				for (int i = 0; i < dataType.types.length; i++) {
@@ -296,7 +299,7 @@ public class ExprCustomModelData extends PropertyExpression<ItemType, Object> {
 
 	@Override
 	public Class<?> getReturnType() {
-		return dataType.supertype;
+		return returnType;
 	}
 
 	@Override
