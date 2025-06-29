@@ -46,7 +46,7 @@ public class DefaultValueData extends ParserInstance.Data {
 	 * @return The default value for type, or null if none is set.   
 	 */
 	public <T> @Nullable DefaultExpression<T> getDefaultValue(Class<T> type) {
-		Deque<DefaultExpression<?>> stack =  defaults.get(type);
+		Deque<DefaultExpression<?>> stack = defaults.get(type);
 		if (stack == null || stack.isEmpty())
 			return null;
 		//noinspection unchecked
@@ -60,9 +60,12 @@ public class DefaultValueData extends ParserInstance.Data {
 	 * @param type Which class to remove the default value of.
 	 */
 	public void removeDefaultValue(Class<?> type) {
-		Deque<DefaultExpression<?>> stack =  defaults.get(type);
-		if (stack != null && !stack.isEmpty())
+		Deque<DefaultExpression<?>> stack = defaults.get(type);
+		if (stack != null && !stack.isEmpty()) {
 			stack.pop();
+		} else {
+			throw new IllegalStateException("No default value for " + type.getName() + " to remove. Imbalanced add/remove?");
+		}
 	}
 
 }
