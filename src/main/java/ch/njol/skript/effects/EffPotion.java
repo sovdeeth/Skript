@@ -108,7 +108,7 @@ public class EffPotion extends Effect {
 				if (timespan == null)
 					return;
 				if (timespan.isInfinite()) {
-					duration = -1;
+					duration = PotionEffect.INFINITE_DURATION;
 				} else {
 					duration = (int) Math.min(timespan.getAs(Timespan.TimePeriod.TICK), Integer.MAX_VALUE);
 				}

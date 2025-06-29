@@ -149,11 +149,20 @@ public class Timespan implements YggdrasilSerializable, Comparable<Timespan>, Te
 		return new Timespan(totalMillis);
 	}
 
+	/**
+	 * Creates a {@link Timespan} from the given {@link Duration}.
+	 * @param duration The duration to convert to a Timespan.
+	 * @return A new Timespan object representing the duration, based on its milliseconds.
+	 */
 	@Contract("_ -> new")
 	public static @NotNull Timespan fromDuration(@NotNull Duration duration) {
 		return new Timespan(duration.toMillis());
 	}
 
+	/**
+	 * Creates a {@link Timespan} that represents an infinite duration.
+	 * @return A new Timespan object representing an infinite duration.
+	 */
 	@Contract(value = " -> new", pure = true)
 	public static @NotNull Timespan infinite() {
 		return new Timespan(Long.MAX_VALUE);

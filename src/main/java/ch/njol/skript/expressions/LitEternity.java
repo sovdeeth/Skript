@@ -7,7 +7,7 @@ import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
-import ch.njol.skript.lang.SkriptParser;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.skript.util.Timespan;
 import ch.njol.util.Kleenean;
@@ -29,8 +29,7 @@ public class LitEternity extends SimpleLiteral<Timespan> {
 		Skript.registerExpression(LitEternity.class, Timespan.class, ExpressionType.SIMPLE,
 				"[an] eternity",
 				"forever",
-				"[an] (indefinite|infinite) (duration|timespan)"
-			);
+				"[an] (indefinite|infinite) (duration|timespan)");
 	}
 
 	public LitEternity() {
@@ -38,7 +37,7 @@ public class LitEternity extends SimpleLiteral<Timespan> {
 	}
 
 	@Override
-	public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult) {
+	public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
 		return true;
 	}
 

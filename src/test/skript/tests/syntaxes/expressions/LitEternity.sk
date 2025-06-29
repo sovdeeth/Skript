@@ -25,4 +25,3 @@ test "eternity":
 
 	set {_a} to a potion effect of speed for an eternity
 	assert {_a} is infinite with "potion effect was not infinite"
-	assert {_a} is infinite

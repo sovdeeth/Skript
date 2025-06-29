@@ -67,7 +67,7 @@ public class ExprPotionEffect extends SimpleExpression<PotionEffect> {
 		if (this.timespan != null) {
 			Timespan timespan = this.timespan.getSingle(e);
 			if (timespan != null) {
-				ticks = timespan.isInfinite() ? -1 : (int) timespan.getAs(Timespan.TimePeriod.TICK);
+				ticks = timespan.isInfinite() ? PotionEffect.INFINITE_DURATION : (int) timespan.getAs(Timespan.TimePeriod.TICK);
 			}
 		}
 		return new PotionEffect[]{new PotionEffect(potionEffectType, ticks, tier, ambient, particles)};
