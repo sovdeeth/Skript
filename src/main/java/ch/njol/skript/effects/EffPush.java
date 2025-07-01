@@ -102,7 +102,11 @@ public class EffPush extends Effect {
 			ssb.append(direction);
 		} else {
 			assert target != null;
-			ssb.append("towards", target);
+			if (awayFrom) {
+				ssb.append("away from", target);
+			} else {
+				ssb.append("towards", target);
+			}
 		}
 		if (speed != null)
 			ssb.append("at a speed of", speed);
