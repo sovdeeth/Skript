@@ -20,8 +20,11 @@ import org.jetbrains.annotations.Nullable;
 public class LitInfinity extends SimpleLiteral<Double> {
 
 	static {
+		// patterns are a bit messy to avoid conflicts between `infinity` enchantment and `infinity` number.
 		Skript.registerExpression(LitInfinity.class, Double.class, ExpressionType.SIMPLE,
-				"[positive] (infinity|∞) [value]",
+				"positive (infinity|∞) [value]",
+				"∞ [value]",
+				"infinity value",
 				"value of [positive] (infinity|∞)");
 	}
 
