@@ -17,7 +17,7 @@ import ch.njol.skript.lang.simplification.SimplifiedLiteral;
 import java.util.Locale;
 
 @Name("Timespan Details")
-@Description("Retrieve specific information of a <a href=\"/classes.html#timespan\">timespan</a> such as hours/minutes/etc.")
+@Description("Retrieve specific information of a <a href=\"/#timespan\">timespan</a> such as hours/minutes/etc.")
 @Examples({
 	"set {_t} to difference between now and {Payouts::players::%uuid of player%::last-date}",
 	"send \"It has been %days of {_t}% day(s) since last payout.\""
