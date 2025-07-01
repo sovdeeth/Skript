@@ -13,6 +13,7 @@ import ch.njol.skript.expressions.ExprParse;
 import ch.njol.skript.lang.function.ExprFunctionCall;
 import ch.njol.skript.lang.function.FunctionReference;
 import ch.njol.skript.lang.function.Functions;
+import ch.njol.skript.lang.parser.DefaultValueData;
 import ch.njol.skript.lang.parser.ParseStackOverflowException;
 import ch.njol.skript.lang.parser.ParserInstance;
 import ch.njol.skript.lang.parser.ParsingStack;
@@ -39,10 +40,12 @@ import org.bukkit.event.Event;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.skriptlang.skript.lang.experiment.ExperimentSet;
 import org.skriptlang.skript.lang.experiment.ExperimentalSyntax;
 import org.skriptlang.skript.lang.script.Script;
 import org.skriptlang.skript.lang.script.ScriptWarning;
 
+import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -52,7 +55,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Stream;
-import java.lang.reflect.Array;
 
 /**
  * Used for parsing my custom patterns.<br>
@@ -237,19 +239,13 @@ public class SkriptParser {
 							}
 							T element = info.getElementClass().newInstance();
 
-							if (element instanceof EventRestrictedSyntax eventRestrictedSyntax) {
-								Class<? extends Event>[] supportedEvents = eventRestrictedSyntax.supportedEvents();
-								if (!getParser().isCurrentEvent(supportedEvents)) {
-									Skript.error("'" + parseResult.expr + "' can only be used in " + supportedEventsNames(supportedEvents));
-									continue;
-								}
-							}
-							if (element instanceof ExperimentalSyntax experimentalSyntax) {
-								if (!experimentalSyntax.isSatisfiedBy(getParser().getExperimentSet()))
-									continue;
-							}
+							if (!checkRestrictedEvents(element, parseResult))
+								continue;
 
-							boolean success = element.init(parseResult.exprs, patternIndex, getParser().getHasDelayBefore(), parseResult);
+							if (!checkExperimentalSyntax(element))
+								continue;
+
+							boolean success = element.preInit() && element.init(parseResult.exprs, patternIndex, getParser().getHasDelayBefore(), parseResult);
 							if (success) {
 								log.printLog();
 								return element;
@@ -267,7 +263,31 @@ public class SkriptParser {
 		}
 	}
 
-	private static String supportedEventsNames(Class<? extends Event>[] supportedEvents) {
+	/**
+	 * Checks whether the given element is restricted to specific events, and if so, whether the current event is allowed.
+	 * Prints errors.
+	 * @param element The syntax element to check.
+	 * @param parseResult The parse result for error information.
+	 * @return True if the element is allowed in the current event, false otherwise.
+	 */
+	private static boolean checkRestrictedEvents(SyntaxElement element, ParseResult parseResult) {
+		if (element instanceof EventRestrictedSyntax eventRestrictedSyntax) {
+			Class<? extends Event>[] supportedEvents = eventRestrictedSyntax.supportedEvents();
+			if (!getParser().isCurrentEvent(supportedEvents)) {
+				Skript.error("'" + parseResult.expr + "' can only be used in " + supportedEventsNames(supportedEvents));
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Returns a string with the names of the supported skript events for the given class array.
+	 * If no events are found, returns an empty string.
+	 * @param supportedEvents The array of supported event classes.
+	 * @return A string with the names of the supported skript events, or an empty string if none are found.
+	 */
+	private static @NotNull String supportedEventsNames(Class<? extends Event>[] supportedEvents) {
 		List<String> names = new ArrayList<>();
 
 		for (SkriptEventInfo<?> eventInfo : Skript.getEvents()) {
@@ -283,8 +303,28 @@ public class SkriptParser {
 		return StringUtils.join(names, ", ", " or ");
 	}
 
+	/**
+	 * Checks that {@code element} is an {@link ExperimentalSyntax} and, if so, ensures that its requirements are satisfied by the current {@link ExperimentSet}.
+	 * @param element The {@link SyntaxElement} to check.
+	 * @return {@code True} if the {@link SyntaxElement} is not an {@link ExperimentalSyntax} or is satisfied.
+	 */
+	private static <T extends SyntaxElement> boolean checkExperimentalSyntax(T element) {
+		if (!(element instanceof ExperimentalSyntax experimentalSyntax))
+			return true;
+		ExperimentSet experiments = getParser().getExperimentSet();
+		return experimentalSyntax.isSatisfiedBy(experiments);
+	}
+
 	private static @NotNull DefaultExpression<?> getDefaultExpression(ExprInfo exprInfo, String pattern) {
-		DefaultExpression<?> expr = exprInfo.classes[0].getDefaultExpression();
+		DefaultExpression<?> expr;
+		// check custom default values first.
+		DefaultValueData data = getParser().getData(DefaultValueData.class);
+		expr = data.getDefaultValue(exprInfo.classes[0].getC());
+
+		// then check classinfo
+		if (expr == null)
+			expr = exprInfo.classes[0].getDefaultExpression();
+
 		if (expr == null)
 			throw new SkriptAPIException("The class '" + exprInfo.classes[0].getCodeName() + "' does not provide a default expression. Either allow null (with %-" + exprInfo.classes[0].getCodeName() + "%) or make it mandatory [pattern: " + pattern + "]");
 		if (!(expr instanceof Literal) && (exprInfo.flagMask & PARSE_EXPRESSIONS) == 0)
@@ -1529,18 +1569,23 @@ public class SkriptParser {
 		return ParserInstance.get();
 	}
 
+	// register default value data when the parser class is loaded.
+	static {
+		ParserInstance.registerData(DefaultValueData.class, DefaultValueData::new);
+	}
+
 	/**
 	 * @deprecated due to bad naming conventions,
-	 * use {@link #LIST_SPLIT_PATTERN} instead.
+	 * use {@link #LIST_SPLIT_PATTERN} instead. 
 	 */
-	@Deprecated
+	@Deprecated(since = "2.7.0", forRemoval = true)
 	public final static Pattern listSplitPattern = LIST_SPLIT_PATTERN;
 
 	/**
 	 * @deprecated due to bad naming conventions,
 	 * use {@link #WILDCARD} instead.
 	 */
-	@Deprecated
+	@Deprecated(since = "2.8.0", forRemoval = true)
 	public final static String wildcard = WILDCARD;
 
 }

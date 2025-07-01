@@ -42,6 +42,8 @@ import java.io.StreamCorruptedException;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.function.BiPredicate;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @ContainerType(ItemStack.class)
@@ -174,9 +176,9 @@ public class ItemType implements Unit, Iterable<ItemData>, Container<ItemStack>,
 	}
 
 	/**
-	 * @deprecated Use {@link #ItemType(BlockData)} instead
+	 * @deprecated Use {@link #ItemType(BlockData)} instead.
 	 */
-	@Deprecated
+	@Deprecated(since = "2.8.4", forRemoval = true)
 	public ItemType(BlockState blockState) {
 		this(blockState.getBlockData());
 	}
@@ -268,9 +270,9 @@ public class ItemType implements Unit, Iterable<ItemData>, Container<ItemStack>,
 	}
 
 	/**
-	 * @deprecated Use {@link #isOfType(BlockData)} instead
+	 * @deprecated Use {@link #isOfType(BlockData)} instead.
 	 */
-	@Deprecated
+	@Deprecated(since = "2.8.4", forRemoval = true)
 	public boolean isOfType(@Nullable BlockState blockState) {
 		return blockState != null && isOfType(blockState.getBlockData());
 	}
@@ -562,6 +564,30 @@ public class ItemType implements Unit, Iterable<ItemData>, Container<ItemStack>,
 				return containerIterator();
 			}
 		};
+	}
+
+	/**
+	 * Determines whether this ItemType satisfies the given predicate.
+	 * If {@link #isAll()} is true, this will return true if the predicate is satisfied by all ItemDatas.
+	 * If {@link #isAll()} is false, this will return true if the predicate is satisfied by any ItemData.
+	 * @param predicate A predicate to test items against
+	 * @return Whether this ItemType satisfies the predicate
+	 */
+	public boolean satisfies(Predicate<ItemStack> predicate) {
+		if (isAll()) {
+			for (Iterator<ItemStack> it = containerIterator(); it.hasNext(); ) {
+				ItemStack stack = it.next();
+				if (!predicate.test(stack))
+					return false;
+			}
+			return true;
+		}
+		for (Iterator<ItemStack> it = containerIterator(); it.hasNext(); ) {
+			ItemStack stack = it.next();
+			if (predicate.test(stack))
+				return true;
+		}
+		return false;
 	}
 
 	@Nullable
@@ -1239,9 +1265,9 @@ public class ItemType implements Unit, Iterable<ItemData>, Container<ItemStack>,
 	/**
 	 * Gets all enchantments of this item.
 	 * @return Enchantments.
-	 * @deprecated Use {@link ItemType#getEnchantmentTypes()}
+	 * @deprecated Use {@link ItemType#getEnchantmentTypes()} instead.
 	 */
-	@Deprecated
+	@Deprecated(since = "2.3.0", forRemoval = true)
 	@Nullable
 	public Map<Enchantment,Integer> getEnchantments() {
 		if (globalMeta == null)
@@ -1256,13 +1282,13 @@ public class ItemType implements Unit, Iterable<ItemData>, Container<ItemStack>,
 	/**
 	 * Adds enchantments to this item type.
 	 * @param enchantments Enchantments.
-	 * @deprecated Use {@link ItemType#addEnchantments(EnchantmentType...)}
+	 * @deprecated Use {@link ItemType#addEnchantments(EnchantmentType...)} instead.
 	 */
-	@Deprecated
+	@Deprecated(since = "2.3.0", forRemoval = true)
 	public void addEnchantments(Map<Enchantment,Integer> enchantments) {
 		if (globalMeta == null)
 			globalMeta = ItemData.itemFactory.getItemMeta(Material.STONE);
-		for (Map.Entry<Enchantment,Integer> entry : enchantments.entrySet()) {
+		for (Entry<Enchantment,Integer> entry : enchantments.entrySet()) {
 			assert globalMeta != null;
 			globalMeta.addEnchant(entry.getKey(), entry.getValue(), true);
 		}
@@ -1339,23 +1365,111 @@ public class ItemType implements Unit, Iterable<ItemData>, Container<ItemStack>,
 	}
 
 	/**
+	 * Checks whether this item type contains all the given enchantments.
+	 * Also checks the enchantment level, where any level equal or lesser than the item's level is accepted.
+	 * @param enchantments The enchantments to be checked.
+	 * @deprecated Use {@link #hasEnchantmentsOrBetter(EnchantmentType...)}
+	 */
+	@Deprecated(since="INSERT VERSION")
+	public boolean hasEnchantments(EnchantmentType... enchantments) {
+		return hasEnchantmentsOrBetter(true, enchantments);
+	}
+
+	/**
 	 * Checks whether this item type contains the given enchantments.
-	 * Also checks the enchantment level.
+	 * Also checks the enchantment level, where any level equal or lesser than the item's level is accepted.
+	 * @param all Whether to check all enchantments or any enchantment.
+	 * @param enchantments The enchantments to be checked.
+	 * @deprecated Use {@link #hasEnchantmentsOrBetter(boolean, EnchantmentType...)}
+	 */
+	@Deprecated(since="INSERT VERSION")
+	public boolean hasEnchantments(boolean all, EnchantmentType... enchantments) {
+		return hasEnchantmentsOrBetter(all, enchantments);
+	}
+
+	/**
+	 * Checks whether this item type contains all the given enchantments.
+	 * Also checks the enchantment level, where any level equal or lesser than the item's level is accepted.
 	 * @param enchantments The enchantments to be checked.
 	 */
-	public boolean hasEnchantments(EnchantmentType... enchantments) {
+	public boolean hasEnchantmentsOrBetter(EnchantmentType... enchantments) {
+		return hasEnchantmentsOrBetter(true, enchantments);
+	}
+
+	/**
+	 * Checks whether this item type contains the given enchantments.
+	 * Also checks the enchantment level, where any level equal or lesser than the item's level is accepted.
+	 * @param all Whether to check all enchantments or any enchantment.
+	 * @param enchantments The enchantments to be checked.
+	 */
+	public boolean hasEnchantmentsOrBetter(boolean all, EnchantmentType... enchantments) {
+		return hasEnchantments((itemLevel, typeLevel) -> itemLevel >= typeLevel, all, enchantments);
+	}
+
+	/**
+	 * Checks whether this item type contains all the given enchantments.
+	 * Also checks the enchantment level, where any level equal or greater than the item's level is accepted.
+	 * @param enchantments The enchantments to be checked.
+	 */
+	public boolean hasEnchantmentsOrWorse(EnchantmentType... enchantments) {
+		return hasEnchantmentsOrWorse(true, enchantments);
+	}
+
+	/**
+	 * Checks whether this item type contains the given enchantments.
+	 * Also checks the enchantment level, where any level equal or greater than the item's level is accepted.
+	 * @param all Whether to check all enchantments or any enchantment.
+	 * @param enchantments The enchantments to be checked.
+	 */
+	public boolean hasEnchantmentsOrWorse(boolean all, EnchantmentType... enchantments) {
+		return hasEnchantments((itemLevel, typeLevel) -> itemLevel <= typeLevel, all, enchantments);
+	}
+
+	/**
+	 * Checks whether this item type contains all the given enchantments with the given level.
+	 * EnchantmentTypes that do not specify a level match any level.
+	 * @param enchantments The enchantments to be checked.
+	 */
+	public boolean hasExactEnchantments(EnchantmentType... enchantments) {
+		return hasExactEnchantments(true, enchantments);
+	}
+
+	/**
+	 * Checks whether this item type contains the given enchantments with the given level.
+	 * EnchantmentTypes that do not specify a level match any level.
+	 * @param all Whether to check all enchantments or any enchantment.
+	 * @param enchantments The enchantments to be checked.
+	 */
+	public boolean hasExactEnchantments(boolean all, EnchantmentType... enchantments) {
+		return hasEnchantments(Integer::equals, all, enchantments);
+	}
+
+	/**
+	 * Checks whether this item type contains the given enchantments.
+	 * Also checks the enchantment level, with behavior depending on the {@code exact} parameter.
+	 * @param levelMatchingCondition A predicate used to tell whether the item's level (first param) matches a type's level (second param).
+	 *                               Types with no specified level will always match, regardless of this predicate.
+	 * @param all Whether to check all enchantments or any enchantment.
+	 * @param enchantments The enchantments to be checked.
+	 */
+	private boolean hasEnchantments(BiPredicate<@NotNull Integer, @NotNull Integer> levelMatchingCondition, boolean all, EnchantmentType... enchantments) {
 		if (!hasEnchantments())
 			return false;
 		ItemMeta meta = getItemMeta();
 		for (EnchantmentType enchantment : enchantments) {
 			Enchantment type = enchantment.getType();
 			assert type != null; // Bukkit working different than we expect
-			if (!meta.hasEnchant(type))
+			if (!meta.hasEnchant(type) && all)
 				return false;
-			if (enchantment.getInternalLevel() != -1 && meta.getEnchantLevel(type) < enchantment.getLevel())
+			if (enchantment.getInternalLevel() == -1 || levelMatchingCondition.test(meta.getEnchantLevel(type), enchantment.getLevel())) {
+				if (!all)
+					return true;
+			} else if (all) {
 				return false;
+			}
 		}
-		return true;
+		return all;
+
 	}
 
 	/**
