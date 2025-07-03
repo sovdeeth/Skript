@@ -108,9 +108,7 @@ public class ExprMetadata<T> extends SimpleExpression<T> {
 	@Override
 	public void change(Event event, Object @Nullable [] delta, ChangeMode mode) {
 		String[] keys = this.keys.getArray(event);
-		for (Object obj: holders.getArray(event)) {
-			if (!(obj instanceof Metadatable holder))
-				continue;
+		for (Metadatable holder: holders.getArray(event)) {
 			for (String key : keys) {
                 switch (mode) {
                     case SET -> holder.setMetadata(key, new FixedMetadataValue(Skript.getInstance(), delta[0]));
