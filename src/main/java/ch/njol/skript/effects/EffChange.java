@@ -12,7 +12,6 @@ import ch.njol.skript.doc.Since;
 import ch.njol.skript.expressions.ExprParse;
 import ch.njol.skript.lang.*;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.lang.util.ContextlessEvent;
 import ch.njol.skript.log.CountingLogHandler;
 import ch.njol.skript.log.ErrorQuality;
 import ch.njol.skript.log.ParseLogHandler;
@@ -20,7 +19,6 @@ import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.LiteralUtils;
 import ch.njol.skript.util.Patterns;
 import ch.njol.skript.variables.HintManager;
-import ch.njol.skript.variables.Variables;
 import ch.njol.util.Kleenean;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
@@ -282,7 +280,7 @@ public class EffChange extends Effect {
 						hintManager.add(variable, hints);
 					}
 				}
-				if (!variable.isLocal() && !variable.getName().toString(ContextlessEvent.get()).startsWith(Variables.EPHEMERAL_VARIABLE_PREFIX)) {
+				if (!variable.isLocal() && !variable.isEphemeral()) {
 					ClassInfo<?> changerInfo = Classes.getSuperClassInfo(changer.getReturnType());
 					if (changerInfo.getC() != Object.class && changerInfo.getSerializer() == null && changerInfo.getSerializeAs() == null
 						&& !SkriptConfig.disableObjectCannotBeSavedWarnings.value()
