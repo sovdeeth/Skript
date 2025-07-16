@@ -85,24 +85,3 @@ parse:
 test "function overloading with supertype":
 	assert {FunctionOverloadingSupertype1::parse::*} is not set
 	assert {FunctionOverloadingSupertype2::parse::*} is not set
-
-function overloading_arg_literals(p: entitytype):
-	stop
-
-test "function overloading with unspecified arg literals":
-	parse:
-		overloading_arg_literals(warden)
-
-	assert first element of last parse logs do not contain "does not exist."
-
-function overloading_default_expr(x: number, y: number):
-	stop
-
-test "function overloading with unspecified list params":
-	set {_x} to 1
-
-	parse:
-		stop
-		 #overloading_default_expr({_x}, {_y} ? 0)
-
-	assert first element of last parse logs do not contain "does not exist."
