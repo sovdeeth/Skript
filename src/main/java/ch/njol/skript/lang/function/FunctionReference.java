@@ -283,13 +283,11 @@ public class FunctionReference<T> implements Contract, Executable<Event, T[]> {
 
 		parameterTypes = new Class<?>[parameters.length];
 		for (int i = 0; i < parameters.length; i++) {
-//			if (parameters[i] instanceof UnparsedLiteral) {
-//				parameterTypes[i] = Object.class;
-//			} else {
-//				parameterTypes[i] = LiteralUtils.defendExpression(parameters[i]).getReturnType();
-//			}
-			Expression<?> parsed = LiteralUtils.defendExpression(parameters[i]);
-			parameterTypes[i] = parsed.getReturnType();
+			if (parameters[i] instanceof UnparsedLiteral) {
+				parameterTypes[i] = Object.class;
+			} else {
+				parameterTypes[i] = LiteralUtils.defendExpression(parameters[i]).getReturnType();
+			}
 		}
 	}
 
@@ -310,10 +308,48 @@ public class FunctionReference<T> implements Contract, Executable<Event, T[]> {
 		}
 
 		if (attempt.result() == RetrievalResult.AMBIGUOUS) {
+//			Set<Match> candidates = new HashSet<>();
+//			for (int i = 0; i < parameterTypes.length; i++) {
+//				if (parameterTypes[i] != Object.class || !(parameters[i] instanceof UnparsedLiteral)) {
+//					continue;
+//				}
+//
+//				for (int j = 0; j < attempt.conflictingArgs().length; j++) {
+//					Class<?> to = attempt.conflictingArgs()[j][i];
+//
+//					//noinspection unchecked
+//					Expression<?> converted = parameters[i].getConvertedExpression(to);
+//
+//					if (converted == null) {
+//						continue;
+//					}
+//
+//					parameterTypes[i] = converted.getReturnType();
+//
+//					Retrieval<Signature<?>> alt = FunctionRegistry.getRegistry().getSignature(script, functionName, parameterTypes);
+//
+//					if (alt.result() != RetrievalResult.EXACT) {
+//						continue;
+//					}
+//
+//					candidates.add(new Match(alt.retrieved(), Arrays.copyOf(parameterTypes, parameterTypes.length)));
+//				}
+//			}
+//
+//			if (candidates.size() == 1) {
+//				Match match = candidates.stream().findAny().get();
+//				parameterTypes = match.params;
+//				return match.signature;
+//			}
+
 			ambiguousError(attempt.conflictingArgs());
 		}
 
 		return null;
+	}
+
+	private record Match(Signature<?> signature, Class<?>[] params) {
+
 	}
 
 	/**
