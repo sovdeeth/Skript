@@ -283,11 +283,8 @@ public class FunctionReference<T> implements Contract, Executable<Event, T[]> {
 
 		parameterTypes = new Class<?>[parameters.length];
 		for (int i = 0; i < parameters.length; i++) {
-			if (parameters[i] instanceof UnparsedLiteral) {
-				parameterTypes[i] = Object.class;
-			} else {
-				parameterTypes[i] = LiteralUtils.defendExpression(parameters[i]).getReturnType();
-			}
+			Expression<?> parsed = LiteralUtils.defendExpression(parameters[i]);
+			parameterTypes[i] = parsed.getReturnType();
 		}
 	}
 
