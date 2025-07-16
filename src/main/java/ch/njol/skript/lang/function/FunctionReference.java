@@ -4,10 +4,7 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptAPIException;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.config.Node;
-import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.KeyProviderExpression;
-import ch.njol.skript.lang.KeyedValue;
-import ch.njol.skript.lang.SkriptParser;
+import ch.njol.skript.lang.*;
 import ch.njol.skript.lang.function.FunctionRegistry.Retrieval;
 import ch.njol.skript.lang.function.FunctionRegistry.RetrievalResult;
 import ch.njol.skript.log.RetainingLogHandler;
@@ -286,6 +283,11 @@ public class FunctionReference<T> implements Contract, Executable<Event, T[]> {
 
 		parameterTypes = new Class<?>[parameters.length];
 		for (int i = 0; i < parameters.length; i++) {
+//			if (parameters[i] instanceof UnparsedLiteral) {
+//				parameterTypes[i] = Object.class;
+//			} else {
+//				parameterTypes[i] = LiteralUtils.defendExpression(parameters[i]).getReturnType();
+//			}
 			Expression<?> parsed = LiteralUtils.defendExpression(parameters[i]);
 			parameterTypes[i] = parsed.getReturnType();
 		}
@@ -326,7 +328,6 @@ public class FunctionReference<T> implements Contract, Executable<Event, T[]> {
 		}
 
 		Retrieval<Function<?>> attempt = FunctionRegistry.getRegistry().getFunction(script, functionName, parameterTypes);
-
 		if (attempt.result() == RetrievalResult.EXACT) {
 			return attempt.retrieved();
 		}
