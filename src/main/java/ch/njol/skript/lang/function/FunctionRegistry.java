@@ -280,14 +280,13 @@ final class FunctionRegistry implements Registry<Function<?>> {
 		@NotNull String name,
 		@NotNull Class<?>... args
 	) {
-		if (namespace == null) {
-			return getFunction(GLOBAL_NAMESPACE, FunctionIdentifier.of(name, false, args));
+		Retrieval<Function<?>> attempt = null;
+		if (namespace != null) {
+			attempt = getFunction(new NamespaceIdentifier(namespace),
+				FunctionIdentifier.of(name, true, args));
 		}
-
-		Retrieval<Function<?>> attempt = getFunction(new NamespaceIdentifier(namespace),
-			FunctionIdentifier.of(name, true, args));
-		if (attempt.result() == RetrievalResult.NOT_REGISTERED) {
-			return getFunction(GLOBAL_NAMESPACE, FunctionIdentifier.of(name, false, args));
+		if (attempt == null || attempt.result() == RetrievalResult.NOT_REGISTERED) {
+			attempt = getFunction(GLOBAL_NAMESPACE, FunctionIdentifier.of(name, false, args));
 		}
 		return attempt;
 	}
@@ -353,14 +352,13 @@ final class FunctionRegistry implements Registry<Function<?>> {
 		@NotNull String name,
 		@NotNull Class<?>... args
 	) {
-		if (namespace == null) {
-			return getSignature(GLOBAL_NAMESPACE, FunctionIdentifier.of(name, false, args), false);
+		Retrieval<Signature<?>> attempt = null;
+		if (namespace != null) {
+			attempt = getSignature(new NamespaceIdentifier(namespace),
+				FunctionIdentifier.of(name, true, args), false);
 		}
-
-		Retrieval<Signature<?>> attempt = getSignature(new NamespaceIdentifier(namespace),
-			FunctionIdentifier.of(name, true, args), false);
-		if (attempt.result() == RetrievalResult.NOT_REGISTERED) {
-			return getSignature(GLOBAL_NAMESPACE, FunctionIdentifier.of(name, false, args), false);
+		if (attempt == null || attempt.result() == RetrievalResult.NOT_REGISTERED) {
+			attempt = getSignature(GLOBAL_NAMESPACE, FunctionIdentifier.of(name, false, args), false);
 		}
 		return attempt;
 	}
@@ -385,14 +383,14 @@ final class FunctionRegistry implements Registry<Function<?>> {
 		@NotNull String name,
 		@NotNull Class<?>... args
 	) {
-		if (namespace == null) {
-			return getSignature(GLOBAL_NAMESPACE, FunctionIdentifier.of(name, false, args), true);
+		Retrieval<Signature<?>> attempt = null;
+		if (namespace != null) {
+			attempt = getSignature(new NamespaceIdentifier(namespace),
+				FunctionIdentifier.of(name, true, args), true);
 		}
 
-		Retrieval<Signature<?>> attempt = getSignature(new NamespaceIdentifier(namespace),
-			FunctionIdentifier.of(name, true, args), true);
-		if (attempt.result() == RetrievalResult.NOT_REGISTERED) {
-			return getSignature(GLOBAL_NAMESPACE, FunctionIdentifier.of(name, false, args), true);
+		if (attempt == null || attempt.result() == RetrievalResult.NOT_REGISTERED) {
+			attempt = getSignature(GLOBAL_NAMESPACE, FunctionIdentifier.of(name, false, args), true);
 		}
 		return attempt;
 	}
@@ -402,6 +400,8 @@ final class FunctionRegistry implements Registry<Function<?>> {
 	 *
 	 * @param namespace The namespace to get the function from.
 	 * @param provided  The provided identifier of the function.
+	 * @param exact When false, will convert arguments to different types to attempt to find a match.
+	 *              When true, will not convert arguments.
 	 * @return The signature for the function with the given name and argument types, or null if no such signature exists
 	 * in the specified namespace.
 	 */
@@ -447,6 +447,8 @@ final class FunctionRegistry implements Registry<Function<?>> {
 	 *
 	 * @param provided The provided function.
 	 * @param existing The existing functions with the same name.
+	 * @param exact When false, will convert arguments to different types to attempt to find a match.
+	 *              When true, will not convert arguments.
 	 * @return An unmodifiable list of candidates for the provided function.
 	 */
 	private static @Unmodifiable @NotNull Set<FunctionIdentifier> candidates(
