@@ -454,7 +454,7 @@ public class FunctionRegistryTest {
 
 		assertSame(RetrievalResult.EXACT, registry.getExactSignature(null, FUNCTION_NAME, Player.class).result());
 		assertEquals(TEST_FUNCTION_P.getSignature(), registry.getExactSignature(null, FUNCTION_NAME, Player.class).retrieved());
-        assertNull(registry.getExactSignature(null, FUNCTION_NAME, OfflinePlayer.class).retrieved());
+		assertNull(registry.getExactSignature(null, FUNCTION_NAME, OfflinePlayer.class).retrieved());
 
 		assertEquals(TEST_FUNCTION_P.getSignature(), registry.getSignature(null, FUNCTION_NAME, Player.class).retrieved());
 		assertEquals(TEST_FUNCTION_P.getSignature(), registry.getSignature(null, FUNCTION_NAME, OfflinePlayer.class).retrieved());
