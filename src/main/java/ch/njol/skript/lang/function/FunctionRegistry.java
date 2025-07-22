@@ -561,8 +561,8 @@ final class FunctionRegistry implements Registry<Function<?>> {
 	 *              When true, will not convert arguments.
 	 * @return An unmodifiable list of candidates for the provided function.
 	 */
-	private static @Unmodifiable @NotNull Set<FunctionIdentifier<Class<?>>> candidates(
-		@NotNull FunctionIdentifier<?> provided,
+	private static <T> @Unmodifiable @NotNull Set<FunctionIdentifier<Class<?>>> candidates(
+		@NotNull FunctionIdentifier<T> provided,
 		Set<FunctionIdentifier<Class<?>>> existing,
 		boolean exact
 	) {
@@ -583,19 +583,9 @@ final class FunctionRegistry implements Registry<Function<?>> {
 
 					// make sure all types in the passed array are valid for the array parameter
 					Class<?> candidateType = candidate.args[0].componentType();
-					if (provided instanceof ClassFunctionIdentifier classProvided) {
-						for (Class<?> providedType : classProvided.args) {
-							if (!Converters.converterExists(providedType, candidateType)) {
-								continue candidates;
-							}
-						}
-					} else if (provided instanceof ExprFunctionIdentifier expressionProvided) {
-						for (Expression<?> providedType : expressionProvided.args) {
-							//noinspection unchecked
-							if (providedType.getConvertedExpression(candidateType) == null) {
-								continue candidates;
-							}
-						}
+					for (T providedArg : provided.args) {
+						if (!provided.canConvertTo(providedArg, candidateType))
+							continue candidates;
 					}
 
 					return Set.of(candidate);
@@ -617,28 +607,14 @@ final class FunctionRegistry implements Registry<Function<?>> {
 						candidateType = candidate.args[i];
 					}
 
-					if (provided instanceof ClassFunctionIdentifier classProvided) {
-						Class<?> providedArg = classProvided.args[i];
-						if (exact) {
-							if (providedArg != candidateType) {
-								continue candidates;
-							}
-						} else {
-							if (!Converters.converterExists(providedArg, candidateType)) {
-								continue candidates;
-							}
+					T providedArg = provided.args[i];
+					if (exact) {
+						if (!provided.matchesArgType(providedArg, candidateType)) {
+							continue candidates;
 						}
-					} else if (provided instanceof ExprFunctionIdentifier expressionProvided) {
-						Expression<?> providedArg = expressionProvided.args[i];
-						if (exact) {
-							if (providedArg.getReturnType() != candidateType) {
-								continue candidates;
-							}
-						} else {
-							//noinspection unchecked
-							if (providedArg.getConvertedExpression(candidateType) == null) {
-								continue candidates;
-							}
+					} else {
+						if (!provided.canConvertTo(providedArg, candidateType)) {
+							continue candidates;
 						}
 					}
 				}
@@ -675,7 +651,7 @@ final class FunctionRegistry implements Registry<Function<?>> {
 
 						argIndex++;
 					}
-				} else if (provided instanceof ExprFunctionIdentifier exprProvided) {
+				} else if (provided instanceof ExpressionFunctionIdentifier exprProvided) {
 					while (argIndex < exprProvided.args.length) {
 						if (exprProvided.args[argIndex].getReturnType() == Object.class) {
 							argIndex++;
@@ -791,14 +767,15 @@ final class FunctionRegistry implements Registry<Function<?>> {
 
 	}
 
-	public abstract static class FunctionIdentifier<T> {
+	public sealed abstract static class FunctionIdentifier<T>  {
 
 		protected final String name;
 		protected final boolean local;
 		protected final int minArgCount;
 		protected T[] args;
 
-		public FunctionIdentifier(@NotNull String name, boolean local, int minArgCount) {
+		@SafeVarargs
+		public FunctionIdentifier(@NotNull String name, boolean local, int minArgCount, T... args) {
 			Preconditions.checkNotNull(name, "name cannot be null");
 			Preconditions.checkArgument(!name.isEmpty(), "name cannot be empty");
 			Preconditions.checkArgument(name.matches(FUNCTION_NAME_PATTERN), "name '%s' does not match the function name pattern", name);
@@ -806,6 +783,7 @@ final class FunctionRegistry implements Registry<Function<?>> {
 			this.name = name;
 			this.local = local;
 			this.minArgCount = minArgCount;
+			this.args = args;
 		}
 
 		/**
@@ -829,6 +807,9 @@ final class FunctionRegistry implements Registry<Function<?>> {
 			return minArgCount;
 		}
 
+		abstract boolean matchesArgType(T arg, Class<?> type);
+		abstract boolean canConvertTo(T arg, Class<?> type);
+
 		/**
 		 * Returns the identifier for the given arguments.
 		 *
@@ -840,7 +821,7 @@ final class FunctionRegistry implements Registry<Function<?>> {
 			Preconditions.checkNotNull(name, "name cannot be null");
 			Preconditions.checkNotNull(args, "args cannot be null");
 
-			return new ExprFunctionIdentifier(name, local, args.length, args);
+			return new ExpressionFunctionIdentifier(name, local, args.length, args);
 		}
 
 		/**
@@ -915,7 +896,7 @@ final class FunctionRegistry implements Registry<Function<?>> {
 				return false;
 			}
 
-			if (this instanceof ExprFunctionIdentifier && !(other instanceof ExprFunctionIdentifier)) {
+			if (this instanceof ExpressionFunctionIdentifier && !(other instanceof ExpressionFunctionIdentifier)) {
 				return false;
 			}
 
@@ -942,14 +923,20 @@ final class FunctionRegistry implements Registry<Function<?>> {
 
 	}
 
-	public static class ClassFunctionIdentifier extends FunctionIdentifier<Class<?>>{
+	private static final class ClassFunctionIdentifier extends FunctionIdentifier<Class<?>>{
 
-		private ClassFunctionIdentifier(@NotNull String name, boolean local, int minArgCount,
-								  @NotNull Class<?>... args) {
-			super(name, local, minArgCount);
-			Preconditions.checkNotNull(args, "args cannot be null");
+		public ClassFunctionIdentifier(@NotNull String name, boolean local, int minArgCount, Class<?>... args) {
+			super(name, local, minArgCount, args);
+		}
 
-			this.args = args;
+		@Override
+		boolean matchesArgType(Class<?> provided, Class<?> candidate) {
+			return provided == candidate;
+		}
+
+		@Override
+		boolean canConvertTo(Class<?> from, Class<?> to) {
+			return Converters.converterExists(from, to);
 		}
 
 		@Override
@@ -963,16 +950,21 @@ final class FunctionRegistry implements Registry<Function<?>> {
 		}
 	}
 
-	public static class ExprFunctionIdentifier extends FunctionIdentifier<Expression<?>>{
+	private static final class ExpressionFunctionIdentifier extends FunctionIdentifier<Expression<?>>{
 
-//		private final Expression<?>[] args;
+		public ExpressionFunctionIdentifier(@NotNull String name, boolean local, int minArgCount, Expression<?>... args) {
+			super(name, local, minArgCount, args);
+		}
 
-		private ExprFunctionIdentifier(@NotNull String name, boolean local, int minArgCount,
-										@NotNull Expression<?>... args) {
-			super(name, local, minArgCount);
-			Preconditions.checkNotNull(args, "args cannot be null");
+		@Override
+		boolean matchesArgType(Expression<?> provided, Class<?> candidate) {
+			return provided.getReturnType() == candidate;
+		}
 
-			this.args = args;
+		@Override
+		boolean canConvertTo(Expression<?> from, Class<?> to) {
+			//noinspection unchecked
+			return from.getConvertedExpression(to) != null;
 		}
 
 		@Override
