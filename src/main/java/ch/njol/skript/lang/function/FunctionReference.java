@@ -283,8 +283,8 @@ public class FunctionReference<T> implements Contract, Executable<Event, T[]> {
 
 		parameterTypes = new Class<?>[parameters.length];
 		for (int i = 0; i < parameters.length; i++) {
-			Expression<?> parsed = LiteralUtils.defendExpression(parameters[i]);
-			parameterTypes[i] = parsed.getReturnType();
+//			Expression<?> parsed = LiteralUtils.defendExpression(parameters[i]);
+			parameterTypes[i] = parameters[i].getReturnType();
 		}
 	}
 
@@ -292,6 +292,17 @@ public class FunctionReference<T> implements Contract, Executable<Event, T[]> {
 	 * Attempts to get this function's signature.
 	 */
 	private Signature<?> getRegisteredSignature() {
+
+		// get possible functions based on name
+
+		// match given parameter types to the possible functions
+
+		// if there is a single match, return it
+
+		// if there are multiple matches, return an error
+
+		// if there are no matches, return null
+
 		parseParameters();
 
 		if (Skript.debug()) {
@@ -299,9 +310,9 @@ public class FunctionReference<T> implements Contract, Executable<Event, T[]> {
 				functionName, Arrays.toString(Arrays.stream(parameterTypes).map(Class::getSimpleName).toArray()));
 		}
 
-		Retrieval<Signature<?>> attempt = FunctionRegistry.getRegistry().getSignature(script, functionName, parameterTypes);
+		Retrieval<Signature<?>> attempt = FunctionRegistry.getRegistry().getSignature(script, functionName, parameters);
 		if (attempt.result() == RetrievalResult.EXACT) {
-			return attempt.retrieved();
+			return attempt.retrieved()[0];
 		}
 
 		if (attempt.result() == RetrievalResult.AMBIGUOUS) {
@@ -322,9 +333,9 @@ public class FunctionReference<T> implements Contract, Executable<Event, T[]> {
 				functionName, Arrays.toString(Arrays.stream(parameterTypes).map(Class::getSimpleName).toArray()));
 		}
 
-		Retrieval<Function<?>> attempt = FunctionRegistry.getRegistry().getFunction(script, functionName, parameterTypes);
+		Retrieval<Function<?>> attempt = FunctionRegistry.getRegistry().getFunction(script, functionName, parameters);
 		if (attempt.result() == RetrievalResult.EXACT) {
-			return attempt.retrieved();
+			return attempt.retrieved()[0];
 		}
 
 		if (attempt.result() == RetrievalResult.AMBIGUOUS) {

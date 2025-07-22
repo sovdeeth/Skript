@@ -2,6 +2,10 @@ package ch.njol.skript.lang.function;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptAPIException;
+import ch.njol.skript.lang.Expression;
+import ch.njol.skript.log.RetainingLogHandler;
+import ch.njol.skript.log.SkriptLogger;
+import ch.njol.util.coll.CollectionUtils;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import org.jetbrains.annotations.NotNull;
@@ -99,13 +103,13 @@ final class FunctionRegistry implements Registry<Function<?>> {
 		}
 
 		Namespace ns = namespaces.computeIfAbsent(namespaceId, n -> new Namespace());
-		FunctionIdentifier identifier = FunctionIdentifier.of(signature);
+		FunctionIdentifier<Class<?>> identifier = FunctionIdentifier.of(signature);
 
 		// register
 		// since we are getting a set and then updating it,
 		// avoid race conditions by ensuring only one thread can access this namespace for this operation
 		synchronized (ns) {
-			Set<FunctionIdentifier> identifiersWithName = ns.identifiers.computeIfAbsent(identifier.name, s -> new HashSet<>());
+			Set<FunctionIdentifier<Class<?>>> identifiersWithName = ns.identifiers.computeIfAbsent(identifier.name, s -> new HashSet<>());
 			boolean exists = identifiersWithName.add(identifier);
 			if (!exists) {
 				alreadyRegisteredError(signature.getName(), identifier, namespaceId);
@@ -159,7 +163,7 @@ final class FunctionRegistry implements Registry<Function<?>> {
 			namespaceId = GLOBAL_NAMESPACE;
 		}
 
-		FunctionIdentifier identifier = FunctionIdentifier.of(function.getSignature());
+		FunctionIdentifier<Class<?>> identifier = FunctionIdentifier.of(function.getSignature());
 		if (!signatureExists(namespaceId, identifier)) {
 			register(namespace, function.getSignature());
 		}
@@ -172,7 +176,7 @@ final class FunctionRegistry implements Registry<Function<?>> {
 		}
 	}
 
-	private static void alreadyRegisteredError(String name, FunctionIdentifier identifier, NamespaceIdentifier namespace) {
+	private static void alreadyRegisteredError(String name, FunctionIdentifier<Class<?>> identifier, NamespaceIdentifier namespace) {
 		throw new SkriptAPIException("Function '%s' with parameters %s is already registered in %s"
 			.formatted(name, Arrays.toString(Arrays.stream(identifier.args).map(Class::getSimpleName).toArray()),
 				namespace));
@@ -185,7 +189,7 @@ final class FunctionRegistry implements Registry<Function<?>> {
 	 * @param identifier The identifier of the function.
 	 * @return True if a function with the given name and arguments exists in the namespace, false otherwise.
 	 */
-	private boolean signatureExists(@NotNull NamespaceIdentifier namespace, @NotNull FunctionIdentifier identifier) {
+	private boolean signatureExists(@NotNull NamespaceIdentifier namespace, @NotNull FunctionIdentifier<Class<?>> identifier) {
 		Preconditions.checkNotNull(namespace, "namespace cannot be null");
 		Preconditions.checkNotNull(identifier, "identifier cannot be null");
 
@@ -198,7 +202,7 @@ final class FunctionRegistry implements Registry<Function<?>> {
 			return false;
 		}
 
-		for (FunctionIdentifier other : ns.identifiers.get(identifier.name)) {
+		for (FunctionIdentifier<Class<?>> other : ns.identifiers.get(identifier.name)) {
 			if (identifier.equals(other)) {
 				return true;
 			}
@@ -254,15 +258,15 @@ final class FunctionRegistry implements Registry<Function<?>> {
 	 * </p>
 	 *
 	 * @param result          The result of the function or signature retrieval.
-	 * @param retrieved       The function or signature that was found if {@code result} is {@code EXACT}.
+	 * @param retrieved       The function[s] or signature[s] that was found if {@code result} is
+	 * 					      {@link RetrievalResult#EXACT} or {@link RetrievalResult#AMBIGUOUS}.
 	 * @param conflictingArgs The conflicting arguments if {@code result} is {@code AMBIGUOUS}.
 	 */
 	record Retrieval<T>(
 		@NotNull RetrievalResult result,
-		T retrieved,
+		T[] retrieved,
 		Class<?>[][] conflictingArgs
-	) {
-	}
+	) { }
 
 	/**
 	 * Gets a function from a script. If no local function is found, checks for global functions.
@@ -292,6 +296,58 @@ final class FunctionRegistry implements Registry<Function<?>> {
 	}
 
 	/**
+	 * Gets a function from a script. If no local function is found, checks for global functions.
+	 * If {@code namespace} is null, only global functions will be checked.
+	 *
+	 * @param namespace The namespace to get the function from.
+	 *                  Usually represents the path of the script this function is registered in.
+	 * @param name      The name of the function.
+	 * @return Information related to the attempt to get the specified function,
+	 * stored in a {@link Retrieval} object.
+	 */
+	public @NotNull Retrieval<Function<?>> getFunction(
+		@Nullable String namespace,
+		@NotNull String name
+	) {
+		Retrieval<Function<?>> attempt = null;
+		if (namespace != null) {
+			attempt = getFunction(new NamespaceIdentifier(namespace),
+				FunctionIdentifier.of(name, true));
+		}
+		if (attempt == null || attempt.result() == RetrievalResult.NOT_REGISTERED) {
+			attempt = getFunction(GLOBAL_NAMESPACE, FunctionIdentifier.of(name, false));
+		}
+		return attempt;
+	}
+
+	/**
+	 * Gets a function from a script. If no local function is found, checks for global functions.
+	 * If {@code namespace} is null, only global functions will be checked.
+	 *
+	 * @param namespace The namespace to get the function from.
+	 *                  Usually represents the path of the script this function is registered in.
+	 * @param name      The name of the function.
+	 * @param args      The types of the arguments of the function.
+	 * @return Information related to the attempt to get the specified function,
+	 * stored in a {@link Retrieval} object.
+	 */
+	public @NotNull Retrieval<Function<?>> getFunction(
+		@Nullable String namespace,
+		@NotNull String name,
+		@NotNull Expression<?>... args
+	) {
+		Retrieval<Function<?>> attempt = null;
+		if (namespace != null) {
+			attempt = getFunction(new NamespaceIdentifier(namespace),
+				FunctionIdentifier.of(name, true, args));
+		}
+		if (attempt == null || attempt.result() == RetrievalResult.NOT_REGISTERED) {
+			attempt = getFunction(GLOBAL_NAMESPACE, FunctionIdentifier.of(name, false, args));
+		}
+		return attempt;
+	}
+
+	/**
 	 * Gets a function from a namespace.
 	 *
 	 * @param namespace The namespace to get the function from.
@@ -300,18 +356,18 @@ final class FunctionRegistry implements Registry<Function<?>> {
 	 * @return Information related to the attempt to get the specified function,
 	 * stored in a {@link Retrieval} object.
 	 */
-	private @NotNull Retrieval<Function<?>> getFunction(@NotNull NamespaceIdentifier namespace, @NotNull FunctionIdentifier provided) {
+	private @NotNull Retrieval<Function<?>> getFunction(@NotNull NamespaceIdentifier namespace, @NotNull FunctionIdentifier<?> provided) {
 		Preconditions.checkNotNull(namespace, "namespace cannot be null");
 		Preconditions.checkNotNull(provided, "provided cannot be null");
 
 		Namespace ns = namespaces.getOrDefault(namespace, new Namespace());
-		Set<FunctionIdentifier> existing = ns.identifiers.get(provided.name);
+		Set<FunctionIdentifier<Class<?>>> existing = ns.identifiers.get(provided.name);
 		if (existing == null) {
 			Skript.debug("No functions named '%s' exist in the '%s' namespace", provided.name, namespace.name);
 			return new Retrieval<>(RetrievalResult.NOT_REGISTERED, null, null);
 		}
 
-		Set<FunctionIdentifier> candidates = candidates(provided, existing, false);
+		Set<FunctionIdentifier<Class<?>>> candidates = candidates(provided, existing, false);
 		if (candidates.isEmpty()) {
 			Skript.debug("Failed to find a function for '%s'", provided.name);
 			return new Retrieval<>(RetrievalResult.NOT_REGISTERED, null, null);
@@ -320,21 +376,47 @@ final class FunctionRegistry implements Registry<Function<?>> {
 				Skript.debug("Matched function for '%s': %s", provided.name, candidates.stream().findAny().orElse(null));
 			}
 			return new Retrieval<>(RetrievalResult.EXACT,
-				ns.functions.get(candidates.stream().findAny().orElse(null)),
+				CollectionUtils.array(ns.functions.get(candidates.stream().findAny().orElse(null))),
 				null);
 		} else {
 			if (Skript.debug()) {
-				String options = candidates.stream().map(Record::toString).collect(Collectors.joining(", "));
+				String options = candidates.stream().map(Object::toString).collect(Collectors.joining(", "));
 				Skript.debug("Failed to match an exact function for '%s'", provided.name);
 				Skript.debug("Identifier: %s", provided);
 				Skript.debug("Options: %s", options);
 			}
 			return new Retrieval<>(RetrievalResult.AMBIGUOUS,
-				null,
+				candidates.stream()
+					.map(ns.functions::get)
+					.toArray(Function<?>[]::new),
 				candidates.stream()
 					.map(FunctionIdentifier::args)
 					.toArray(Class<?>[][]::new));
 		}
+	}
+
+	/**
+	 * Gets the signature for a function with the given name and arguments. If no local function is found,
+	 * checks for global functions. If {@code namespace} is null, only global signatures will be checked.
+	 *
+	 * @param namespace The namespace to get the function from.
+	 *                  Usually represents the path of the script this function is registered in.
+	 * @param name      The name of the function.
+	 * @return The signature for the function with the given name and argument types, or null if no such function exists.
+	 */
+	public Retrieval<Signature<?>> getSignature(
+		@Nullable String namespace,
+		@NotNull String name
+	) {
+		Retrieval<Signature<?>> attempt = null;
+		if (namespace != null) {
+			attempt = getSignature(new NamespaceIdentifier(namespace),
+				FunctionIdentifier.of(name, true, new Class<?>[0]), false);
+		}
+		if (attempt == null || attempt.result() == RetrievalResult.NOT_REGISTERED) {
+			attempt = getSignature(GLOBAL_NAMESPACE, FunctionIdentifier.of(name, false, new Class<?>[0]), false);
+		}
+		return attempt;
 	}
 
 	/**
@@ -351,6 +433,32 @@ final class FunctionRegistry implements Registry<Function<?>> {
 		@Nullable String namespace,
 		@NotNull String name,
 		@NotNull Class<?>... args
+	) {
+		Retrieval<Signature<?>> attempt = null;
+		if (namespace != null) {
+			attempt = getSignature(new NamespaceIdentifier(namespace),
+				FunctionIdentifier.of(name, true, args), false);
+		}
+		if (attempt == null || attempt.result() == RetrievalResult.NOT_REGISTERED) {
+			attempt = getSignature(GLOBAL_NAMESPACE, FunctionIdentifier.of(name, false, args), false);
+		}
+		return attempt;
+	}
+
+	/**
+	 * Gets the signature for a function with the given name and arguments. If no local function is found,
+	 * checks for global functions. If {@code namespace} is null, only global signatures will be checked.
+	 *
+	 * @param namespace The namespace to get the function from.
+	 *                  Usually represents the path of the script this function is registered in.
+	 * @param name      The name of the function.
+	 * @param args      The types of the arguments of the function.
+	 * @return The signature for the function with the given name and argument types, or null if no such function exists.
+	 */
+	public Retrieval<Signature<?>> getSignature(
+		@Nullable String namespace,
+		@NotNull String name,
+		@NotNull Expression<?>... args
 	) {
 		Retrieval<Signature<?>> attempt = null;
 		if (namespace != null) {
@@ -405,7 +513,7 @@ final class FunctionRegistry implements Registry<Function<?>> {
 	 * @return The signature for the function with the given name and argument types, or null if no such signature exists
 	 * in the specified namespace.
 	 */
-	private Retrieval<Signature<?>> getSignature(@NotNull NamespaceIdentifier namespace, @NotNull FunctionIdentifier provided, boolean exact) {
+	private Retrieval<Signature<?>> getSignature(@NotNull NamespaceIdentifier namespace, @NotNull FunctionIdentifier<?> provided, boolean exact) {
 		Preconditions.checkNotNull(namespace, "namespace cannot be null");
 		Preconditions.checkNotNull(provided, "provided cannot be null");
 
@@ -415,7 +523,7 @@ final class FunctionRegistry implements Registry<Function<?>> {
 			return new Retrieval<>(RetrievalResult.NOT_REGISTERED, null, null);
 		}
 
-		Set<FunctionIdentifier> candidates = candidates(provided, ns.identifiers.get(provided.name), exact);
+		Set<FunctionIdentifier<Class<?>>> candidates = candidates(provided, ns.identifiers.get(provided.name), exact);
 		if (candidates.isEmpty()) {
 			Skript.debug("Failed to find a signature for '%s'", provided.name);
 			return new Retrieval<>(RetrievalResult.NOT_REGISTERED, null, null);
@@ -425,17 +533,19 @@ final class FunctionRegistry implements Registry<Function<?>> {
 					provided.name, ns.signatures.get(candidates.stream().findAny().orElse(null)));
 			}
 			return new Retrieval<>(RetrievalResult.EXACT,
-				ns.signatures.get(candidates.stream().findAny().orElse(null)),
+				CollectionUtils.array(ns.signatures.get(candidates.stream().findAny().orElse(null))),
 				null);
 		} else {
 			if (Skript.debug()) {
-				String options = candidates.stream().map(Record::toString).collect(Collectors.joining(", "));
+				String options = candidates.stream().map(Object::toString).collect(Collectors.joining(", "));
 				Skript.debug("Failed to match an exact signature for '%s'", provided.name);
 				Skript.debug("Identifier: %s", provided);
 				Skript.debug("Options: %s", options);
 			}
 			return new Retrieval<>(RetrievalResult.AMBIGUOUS,
-				null,
+				candidates.stream()
+					.map(ns.signatures::get)
+					.toArray(Signature<?>[]::new),
 				candidates.stream()
 					.map(FunctionIdentifier::args)
 					.toArray(Class<?>[][]::new));
@@ -451,92 +561,139 @@ final class FunctionRegistry implements Registry<Function<?>> {
 	 *              When true, will not convert arguments.
 	 * @return An unmodifiable list of candidates for the provided function.
 	 */
-	private static @Unmodifiable @NotNull Set<FunctionIdentifier> candidates(
-		@NotNull FunctionIdentifier provided,
-		Set<FunctionIdentifier> existing,
+	private static @Unmodifiable @NotNull Set<FunctionIdentifier<Class<?>>> candidates(
+		@NotNull FunctionIdentifier<?> provided,
+		Set<FunctionIdentifier<Class<?>>> existing,
 		boolean exact
 	) {
-		Set<FunctionIdentifier> candidates = new HashSet<>();
+		Set<FunctionIdentifier<Class<?>>> candidates = new HashSet<>();
 
-		candidates:
-		for (FunctionIdentifier candidate : existing) {
-			// by this point, all candidates have matching names
 
-			if (Arrays.stream(candidate.args).filter(Class::isArray).count() == 1
-				&& candidate.args.length == 1
-				&& candidate.args[0].isArray()) {
-				// if a function has single list value param, check all types
+		RetainingLogHandler log = SkriptLogger.startRetainingLog();
+		try {
 
-				// make sure all types in the passed array are valid for the array parameter
-				Class<?> arrayType = candidate.args[0].componentType();
-				for (Class<?> arrayArg : provided.args) {
-					if (!Converters.converterExists(arrayType, arrayArg)) {
-						continue candidates;
+			candidates:
+			for (FunctionIdentifier<Class<?>> candidate : existing) {
+				// by this point, all candidates have matching names
+
+				if (Arrays.stream(candidate.args).filter(Class::isArray).count() == 1
+					&& candidate.args.length == 1
+					&& candidate.args[0].isArray()) {
+					// if a function has single list value param, check all types
+
+					// make sure all types in the passed array are valid for the array parameter
+					Class<?> candidateType = candidate.args[0].componentType();
+					if (provided instanceof ClassFunctionIdentifier classProvided) {
+						for (Class<?> providedType : classProvided.args) {
+							if (!Converters.converterExists(providedType, candidateType)) {
+								continue candidates;
+							}
+						}
+					} else if (provided instanceof ExprFunctionIdentifier expressionProvided) {
+						for (Expression<?> providedType : expressionProvided.args) {
+							//noinspection unchecked
+							if (providedType.getConvertedExpression(candidateType) == null) {
+								continue candidates;
+							}
+						}
 					}
+
+					return Set.of(candidate);
 				}
 
-				return Set.of(candidate);
-			}
-
-			// if argument counts are not possible, skip
-			if (provided.args.length > candidate.args.length
-				|| provided.args.length < candidate.minArgCount) {
-				continue;
-			}
-
-			// if the types of the provided arguments do not match the candidate arguments, skip
-			for (int i = 0; i < provided.args.length; i++) {
-				// allows single passed values to still match array type in candidate (e.g. clamp)
-				Class<?> candidateType;
-				if (candidate.args[i].isArray()) {
-					candidateType = candidate.args[i].componentType();
-				} else {
-					candidateType = candidate.args[i];
-				}
-
-				Class<?> providedArg = provided.args[i];
-				if (exact) {
-					if (providedArg != candidateType) {
-						continue candidates;
-					}
-				} else {
-					if (!Converters.converterExists(providedArg, candidateType)) {
-						continue candidates;
-					}
-				}
-			}
-
-			candidates.add(candidate);
-		}
-
-		if (candidates.size() <= 1) {
-			// if there is only one candidate, then return without trying to convert
-			return Collections.unmodifiableSet(candidates);
-		}
-
-		// let overloaded(Long, Long) and overloaded(String, String) be two functions.
-		// the code below allows overloaded(1, {_x}) to match Long, Long and avoid String, String,
-		// and allow overloaded({_x}, 1) to match Long, Long and avoid String, String
-		// despite not being an exact match in all arguments,
-		// since variables have an unknown type at runtime.
-		Iterator<FunctionIdentifier> iterator = candidates.iterator();
-		while (iterator.hasNext()) {
-			FunctionIdentifier candidate = iterator.next();
-			int argIndex = 0;
-
-			while (argIndex < provided.args.length) {
-				if (provided.args[argIndex] == Object.class) {
-					argIndex++;
+				// if argument counts are not possible, skip
+				if (provided.args.length > candidate.args.length
+					|| provided.args.length < candidate.minArgCount) {
 					continue;
 				}
 
-				if (provided.args[argIndex] != candidate.args[argIndex]) {
-					iterator.remove();
-					break;
+				// if the types of the provided arguments do not match the candidate arguments, skip
+				for (int i = 0; i < provided.args.length; i++) {
+					// allows single passed values to still match array type in candidate (e.g. clamp)
+					Class<?> candidateType;
+					if (candidate.args[i].isArray()) {
+						candidateType = candidate.args[i].componentType();
+					} else {
+						candidateType = candidate.args[i];
+					}
+
+					if (provided instanceof ClassFunctionIdentifier classProvided) {
+						Class<?> providedArg = classProvided.args[i];
+						if (exact) {
+							if (providedArg != candidateType) {
+								continue candidates;
+							}
+						} else {
+							if (!Converters.converterExists(providedArg, candidateType)) {
+								continue candidates;
+							}
+						}
+					} else if (provided instanceof ExprFunctionIdentifier expressionProvided) {
+						Expression<?> providedArg = expressionProvided.args[i];
+						if (exact) {
+							if (providedArg.getReturnType() != candidateType) {
+								continue candidates;
+							}
+						} else {
+							//noinspection unchecked
+							if (providedArg.getConvertedExpression(candidateType) == null) {
+								continue candidates;
+							}
+						}
+					}
 				}
 
-				argIndex++;
+				candidates.add(candidate);
 			}
+
+			if (candidates.size() <= 1) {
+				// if there is only one candidate, then return without trying to convert
+				return Collections.unmodifiableSet(candidates);
+			}
+
+			// let overloaded(Long, Long) and overloaded(String, String) be two functions.
+			// the code below allows overloaded(1, {_x}) to match Long, Long and avoid String, String,
+			// and allow overloaded({_x}, 1) to match Long, Long and avoid String, String
+			// despite not being an exact match in all arguments,
+			// since variables have an unknown type at runtime.
+			Iterator<FunctionIdentifier<Class<?>>> iterator = candidates.iterator();
+			while (iterator.hasNext()) {
+				FunctionIdentifier<Class<?>> candidate = iterator.next();
+				int argIndex = 0;
+
+				if (provided instanceof ClassFunctionIdentifier classProvided) {
+					while (argIndex < classProvided.args.length) {
+						if (classProvided.args[argIndex] == Object.class) {
+							argIndex++;
+							continue;
+						}
+
+						if (classProvided.args[argIndex] != candidate.args[argIndex]) {
+							iterator.remove();
+							break;
+						}
+
+						argIndex++;
+					}
+				} else if (provided instanceof ExprFunctionIdentifier exprProvided) {
+					while (argIndex < exprProvided.args.length) {
+						if (exprProvided.args[argIndex].getReturnType() == Object.class) {
+							argIndex++;
+							continue;
+						}
+
+						if (!exprProvided.args[argIndex].canReturn(candidate.args[argIndex])) {
+							iterator.remove();
+							break;
+						}
+
+						argIndex++;
+					}
+				}
+			}
+		} finally {
+			log.clear();
+			log.printLog();
 		}
 
 		return Collections.unmodifiableSet(candidates);
@@ -551,7 +708,7 @@ final class FunctionRegistry implements Registry<Function<?>> {
 		Preconditions.checkNotNull(signature, "signature cannot be null");
 
 		String name = signature.getName();
-		FunctionIdentifier identifier = FunctionIdentifier.of(signature);
+		FunctionIdentifier<Class<?>> identifier = FunctionIdentifier.of(signature);
 
 		Namespace namespace;
 		if (signature.isLocal()) {
@@ -564,7 +721,7 @@ final class FunctionRegistry implements Registry<Function<?>> {
 			return;
 		}
 
-		for (FunctionIdentifier other : namespace.identifiers.getOrDefault(name, Set.of())) {
+		for (FunctionIdentifier<Class<?>> other : namespace.identifiers.getOrDefault(name, Set.of())) {
 			if (!identifier.equals(other)) {
 				continue;
 			}
@@ -581,7 +738,7 @@ final class FunctionRegistry implements Registry<Function<?>> {
 	 * @param toRemove  The identifier to remove
 	 * @param name      The name of the function
 	 */
-	private void removeUpdateMaps(Namespace namespace, FunctionIdentifier toRemove, String name) {
+	private void removeUpdateMaps(Namespace namespace, FunctionIdentifier<Class<?>> toRemove, String name) {
 		namespace.identifiers.computeIfPresent(name, (k, set) -> {
 			if (set.remove(toRemove)) {
 				Skript.debug("Removed identifier '%s' from %s", toRemove, namespace);
@@ -620,29 +777,57 @@ final class FunctionRegistry implements Registry<Function<?>> {
 		/**
 		 * Map for all function names to their identifiers, allowing for quicker lookup.
 		 */
-		private final Map<String, Set<FunctionIdentifier>> identifiers = new HashMap<>();
+		private final Map<String, Set<FunctionIdentifier<Class<?>>>> identifiers = new HashMap<>();
 
 		/**
 		 * Map for all identifier to function combinations.
 		 */
-		private final Map<FunctionIdentifier, Function<?>> functions = new HashMap<>();
+		private final Map<FunctionIdentifier<Class<?>>, Function<?>> functions = new HashMap<>();
 
 		/**
 		 * Map for all identifier to signature combinations.
 		 */
-		private final Map<FunctionIdentifier, Signature<?>> signatures = new HashMap<>();
+		private final Map<FunctionIdentifier<Class<?>>, Signature<?>> signatures = new HashMap<>();
 
 	}
 
-	/**
-	 * An identifier for a function.
-	 * <p>Used to differentiate between functions with the same name but different parameters.</p>
-	 *
-	 * @param name The name of the function.
-	 * @param args The arguments of the function.
-	 */
-	record FunctionIdentifier(@NotNull String name, boolean local, int minArgCount,
-							  @NotNull Class<?>... args) {
+	public abstract static class FunctionIdentifier<T> {
+
+		protected final String name;
+		protected final boolean local;
+		protected final int minArgCount;
+		protected T[] args;
+
+		public FunctionIdentifier(@NotNull String name, boolean local, int minArgCount) {
+			Preconditions.checkNotNull(name, "name cannot be null");
+			Preconditions.checkArgument(!name.isEmpty(), "name cannot be empty");
+			Preconditions.checkArgument(name.matches(FUNCTION_NAME_PATTERN), "name '%s' does not match the function name pattern", name);
+
+			this.name = name;
+			this.local = local;
+			this.minArgCount = minArgCount;
+		}
+
+		/**
+		 * The types of the arguments this function takes.
+		 *
+		 * @return The types of the arguments this function takes.
+		 */
+		@NotNull T[] args() {
+			return args;
+		}
+
+		public String name() {
+			return name;
+		}
+
+		public boolean local() {
+			return local;
+		}
+
+		public int minArgCount() {
+			return minArgCount;
+		}
 
 		/**
 		 * Returns the identifier for the given arguments.
@@ -651,11 +836,37 @@ final class FunctionRegistry implements Registry<Function<?>> {
 		 * @param args The types of the arguments.
 		 * @return The identifier for the signature.
 		 */
-		static FunctionIdentifier of(@NotNull String name, boolean local, @NotNull Class<?>... args) {
+		static FunctionIdentifier<Expression<?>> of(@NotNull String name, boolean local, @NotNull Expression<?>... args) {
 			Preconditions.checkNotNull(name, "name cannot be null");
 			Preconditions.checkNotNull(args, "args cannot be null");
 
-			return new FunctionIdentifier(name, local, args.length, args);
+			return new ExprFunctionIdentifier(name, local, args.length, args);
+		}
+
+		/**
+		 * Returns the identifier for the given arguments.
+		 *
+		 * @param name The name of the function.
+		 * @return The identifier for the signature.
+		 */
+		static FunctionIdentifier<Class<?>> of(@NotNull String name, boolean local) {
+			Preconditions.checkNotNull(name, "name cannot be null");
+
+			return new ClassFunctionIdentifier(name, local, 0);
+		}
+
+		/**
+		 * Returns the identifier for the given arguments.
+		 *
+		 * @param name The name of the function.
+		 * @param args The types of the arguments.
+		 * @return The identifier for the signature.
+		 */
+		static FunctionIdentifier<Class<?>> of(@NotNull String name, boolean local, @NotNull Class<?>... args) {
+			Preconditions.checkNotNull(name, "name cannot be null");
+			Preconditions.checkNotNull(args, "args cannot be null");
+
+			return new ClassFunctionIdentifier(name, local, args.length, args);
 		}
 
 		/**
@@ -664,7 +875,7 @@ final class FunctionRegistry implements Registry<Function<?>> {
 		 * @param signature The signature to get the identifier for.
 		 * @return The identifier for the signature.
 		 */
-		static FunctionIdentifier of(@NotNull Signature<?> signature) {
+		static FunctionIdentifier<Class<?>> of(@NotNull Signature<?> signature) {
 			Preconditions.checkNotNull(signature, "signature cannot be null");
 
 			Parameter<?>[] signatureParams = signature.parameters;
@@ -685,7 +896,7 @@ final class FunctionRegistry implements Registry<Function<?>> {
 				}
 			}
 
-			return new FunctionIdentifier(signature.getName(), signature.isLocal(),
+			return new ClassFunctionIdentifier(signature.getName(), signature.isLocal(),
 				parameters.length - optionalArgs, parameters);
 		}
 
@@ -696,7 +907,15 @@ final class FunctionRegistry implements Registry<Function<?>> {
 
 		@Override
 		public boolean equals(Object obj) {
-			if (!(obj instanceof FunctionIdentifier other)) {
+			if (!(obj instanceof FunctionIdentifier<?> other)) {
+				return false;
+			}
+
+			if (this instanceof ClassFunctionIdentifier && !(other instanceof ClassFunctionIdentifier)) {
+				return false;
+			}
+
+			if (this instanceof ExprFunctionIdentifier && !(other instanceof ExprFunctionIdentifier)) {
 				return false;
 			}
 
@@ -721,6 +940,18 @@ final class FunctionRegistry implements Registry<Function<?>> {
 			return true;
 		}
 
+	}
+
+	public static class ClassFunctionIdentifier extends FunctionIdentifier<Class<?>>{
+
+		private ClassFunctionIdentifier(@NotNull String name, boolean local, int minArgCount,
+								  @NotNull Class<?>... args) {
+			super(name, local, minArgCount);
+			Preconditions.checkNotNull(args, "args cannot be null");
+
+			this.args = args;
+		}
+
 		@Override
 		public @NotNull String toString() {
 			return MoreObjects.toStringHelper(this)
@@ -730,7 +961,30 @@ final class FunctionRegistry implements Registry<Function<?>> {
 				.add("args", Arrays.stream(args).map(Class::getSimpleName).collect(Collectors.joining(", ")))
 				.toString();
 		}
-
 	}
+
+	public static class ExprFunctionIdentifier extends FunctionIdentifier<Expression<?>>{
+
+//		private final Expression<?>[] args;
+
+		private ExprFunctionIdentifier(@NotNull String name, boolean local, int minArgCount,
+										@NotNull Expression<?>... args) {
+			super(name, local, minArgCount);
+			Preconditions.checkNotNull(args, "args cannot be null");
+
+			this.args = args;
+		}
+
+		@Override
+		public @NotNull String toString() {
+			return MoreObjects.toStringHelper(this)
+				.add("name", name)
+				.add("local", local)
+				.add("minArgCount", minArgCount)
+				.add("args", Arrays.stream(args).map(Expression::toString).collect(Collectors.joining(", ")))
+				.toString();
+		}
+	}
+
 
 }

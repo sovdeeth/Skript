@@ -13,7 +13,7 @@ test "function overloading with 1 parameter":
 	parse:
 		overloaded1({_x})
 
-	assert first element of last parse logs contains "Skript cannot determine which function named 'overloaded1' to call."
+	assert first element of last parse logs contains "Skript cannot determine which function named 'overloaded1' to call." with "logs: %last parse logs%"
 
 	set {_x} to 1
 
@@ -21,16 +21,16 @@ test "function overloading with 1 parameter":
 	assert overloaded1(text within {_x}) = 2
 	assert overloaded1() = 3
 
-function overloaded2(x: int, y: int) :: int:
+local function overloaded2(x: int, y: int) :: int:
 	return 1
 
-function overloaded2(x: int, y: int, z: int) :: int:
+local function overloaded2(x: int, y: int, z: int) :: int:
 	return 2
 
-function overloaded2(x: text, y: text) :: int:
+local function overloaded2(x: text, y: text) :: int:
 	return 3
 
-function overloaded2(x: text, y: int, z: int) :: int:
+local function overloaded2(x: text, y: int, z: int) :: int:
 	return 4
 
 test "function overloading with 2 parameters":
@@ -51,26 +51,26 @@ test "function overloading with 2 parameters":
 
 	assert first element of last parse logs contains "Skript cannot determine which function named 'overloaded2' to call."
 
-function overloaded3() :: int:
+local function overloaded3() :: int:
 	return 1
 
 parse:
 	results: {FunctionOverloading3::parse::*}
 	code:
-		function overloaded3() :: string:
+		local function overloaded3() :: string:
 			return ""
 
 test "function overloading with different return types":
 	assert size of {FunctionOverloading3::parse::*} = 1
 	assert {FunctionOverloading3::parse::1} contains "Function 'overloaded3' with the same argument types already exists in script"
 
-function overloading_supertype1(p: offlineplayer):
+local function overloading_supertype1(p: offlineplayer):
 	stop
 
 parse:
 	results: {FunctionOverloadingSupertype1::parse::*}
 	code:
-		function overloading_supertype1(n: player):
+		local function overloading_supertype1(n: player):
 			stop
 
 function overloading_supertype2(p: player):
@@ -79,9 +79,19 @@ function overloading_supertype2(p: player):
 parse:
 	results: {FunctionOverloadingSupertype2::parse::*}
 	code:
-		function overloading_supertype2(n: offlineplayer):
+		local function overloading_supertype2(n: offlineplayer):
 			stop
 
 test "function overloading with supertype":
 	assert {FunctionOverloadingSupertype1::parse::*} is not set
 	assert {FunctionOverloadingSupertype2::parse::*} is not set
+
+
+local function entity(e: entity type, l: location):
+	assert {_e} is creeper (entity type) with "Entity type should be creeper"
+
+local function test_literal():
+	entity(creeper, location(1,1,1))
+
+test "function overloading with ambiguous literal":
+	test_literal() # intermediate function to avoid `event-creeper`

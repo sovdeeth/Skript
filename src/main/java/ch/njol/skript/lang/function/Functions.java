@@ -177,17 +177,18 @@ public abstract class Functions {
 
 		// if this function has already been registered, only allow it if one function is local and one is global.
 		// if both are global or both are local, disallow.
-		if (existing.result() == RetrievalResult.EXACT && existing.retrieved().isLocal() == signature.isLocal()) {
+		if (existing.result() == RetrievalResult.EXACT && existing.retrieved()[0].isLocal() == signature.isLocal()) {
 			StringBuilder error = new StringBuilder();
+			Signature<?> existingSignature = existing.retrieved()[0];
 
-			if (existing.retrieved().isLocal()) {
+			if (existingSignature.isLocal()) {
 				error.append("Local function ");
 			} else {
 				error.append("Function ");
 			}
 			error.append("'%s' with the same argument types already exists".formatted(signature.getName()));
-			if (existing.retrieved().script != null) {
-				error.append(" in script '%s'.".formatted(existing.retrieved().script));
+			if (existingSignature.script != null) {
+				error.append(" in script '%s'.".formatted(existingSignature.script));
 			} else {
 				error.append(".");
 			}
