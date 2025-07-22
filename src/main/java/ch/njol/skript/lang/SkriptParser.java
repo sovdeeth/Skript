@@ -1123,6 +1123,10 @@ public class SkriptParser {
 			}
 			final SkriptParser skriptParser = new SkriptParser(args, flags | PARSE_LITERALS, context);
 			params = this.getFunctionArguments(() -> skriptParser.suppressMissingAndOrWarnings().parseExpression(Object.class), args, unaryArgument);
+			if (params == null) {
+				log.printError();
+				return null;
+			}
 
 			ParserInstance parser = getParser();
 			Script currentScript = parser.isActive() ? parser.getCurrentScript() : null;
