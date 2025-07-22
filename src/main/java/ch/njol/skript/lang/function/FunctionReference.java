@@ -275,35 +275,10 @@ public class FunctionReference<T> implements Contract, Executable<Event, T[]> {
 		return true;
 	}
 
-	// attempt to get the types of the parameters for this function reference
-	private void parseParameters() {
-		if (parameterTypes != null) {
-			return;
-		}
-
-		parameterTypes = new Class<?>[parameters.length];
-		for (int i = 0; i < parameters.length; i++) {
-//			Expression<?> parsed = LiteralUtils.defendExpression(parameters[i]);
-			parameterTypes[i] = parameters[i].getReturnType();
-		}
-	}
-
 	/**
 	 * Attempts to get this function's signature.
 	 */
 	private Signature<?> getRegisteredSignature() {
-
-		// get possible functions based on name
-
-		// match given parameter types to the possible functions
-
-		// if there is a single match, return it
-
-		// if there are multiple matches, return an error
-
-		// if there are no matches, return null
-
-		parseParameters();
 
 		if (Skript.debug()) {
 			Skript.debug("Getting signature for '%s' with types %s",
@@ -326,7 +301,6 @@ public class FunctionReference<T> implements Contract, Executable<Event, T[]> {
 	 * Attempts to get this function's registered implementation.
 	 */
 	private Function<?> getRegisteredFunction() {
-		parseParameters();
 
 		if (Skript.debug()) {
 			Skript.debug("Getting function '%s' with types %s",
