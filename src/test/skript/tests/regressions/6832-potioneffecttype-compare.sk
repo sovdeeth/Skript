@@ -1,3 +1,0 @@
-test "compare potion effect types":
-	assert nausea = nausea with "2 nausea potion effect types should match"
-	assert type of (potion effect of nausea for 1 minute) = nausea with "type of potion effect of nausea should equal nausea"

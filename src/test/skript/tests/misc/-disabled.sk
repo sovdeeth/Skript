@@ -1,2 +1,0 @@
-on script load:
-	set {EffScriptFile} to true

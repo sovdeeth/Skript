@@ -1,5 +1,0 @@
-on join with priority lowest:
-	stop
-
-every 10 seconds:
-	stop

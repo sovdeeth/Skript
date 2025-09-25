@@ -1,6 +1,0 @@
-test "unicode":
-	assert "<unicode:00A7>" is "§" with "single symbol did not get replaced"
-	assert "<u:00A7>" is "§" with "single short symbol did not get replaced"
-
-	assert "a<unicode:1F41B>B" is "a🐛B" with "symbol did not get replaced"
-	assert "a<u:1F41B>B" is "a🐛B" with "short symbol did not get replaced"

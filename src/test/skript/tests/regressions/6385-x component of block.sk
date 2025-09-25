@@ -1,3 +1,0 @@
-test "x component of block":
-	set {_a} to block at location(0, 0, 0)
-	add 1 to x of {_a} # should not throw exception

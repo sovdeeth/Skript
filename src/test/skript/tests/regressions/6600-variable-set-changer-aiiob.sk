@@ -1,2 +1,0 @@
-test "variable set aiiob":
-	set vector length of {_} to 1

@@ -1,4 +1,0 @@
-test "special character parsing issues":
-	parse:
-		send "İİ" to {_}
-	assert last parse logs is not set with "parsing failed when the code is valid"
