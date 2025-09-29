@@ -14,10 +14,7 @@ import org.skriptlang.skript.common.conditions.PropCondContains;
 import org.skriptlang.skript.common.expressions.PropExprName;
 import org.skriptlang.skript.common.types.QueueClassInfo;
 import org.skriptlang.skript.common.types.ScriptClassInfo;
-import org.skriptlang.skript.lang.properties.PropertyHandler.ConditionPropertyHandler;
-import org.skriptlang.skript.lang.properties.PropertyHandler.ContainsHandler;
-import org.skriptlang.skript.lang.properties.PropertyHandler.ExpressionPropertyHandler;
-import org.skriptlang.skript.lang.properties.PropertyHandler.TypedValuePropertyHandler;
+import org.skriptlang.skript.lang.properties.PropertyHandler.*;
 
 import java.util.Locale;
 
@@ -231,6 +228,56 @@ public record Property<Handler extends PropertyHandler<?>>(
 			TypedValuePropertyHandler.class);
 
 	/**
+	 * A property for getting the x, y, or z coordinates/components of something.
+	 */
+	public static final Property<WXYZPropertyHandler<?, ?>> WXYZ = Property.of(
+		"wxyz component",
+		"The W, X, Y, or Z components of something, say the x coordinate of a location or vector.",
+		"INSERT VERSION",
+		Skript.instance(),
+		WXYZPropertyHandler.class);
+
+	/**
+	 * A property for getting the length of something.
+	 */
+	public static final Property<ExpressionPropertyHandler<?, ?>> LENGTH = Property.of(
+		"length",
+		"The length of something, say the length of a string in characters.",
+		"INSERT VERSION",
+		Skript.instance(),
+		ExpressionPropertyHandler.class);
+
+	/**
+	 * A property for getting the length of something.
+	 */
+	public static final Property<ExpressionPropertyHandler<?, ?>> WIDTH = Property.of(
+		"width",
+		"The width of something, say the width of a display entity's culling hitbox.",
+		"INSERT VERSION",
+		Skript.instance(),
+		ExpressionPropertyHandler.class);
+
+	/**
+	 * A property for getting the height of something.
+	 */
+	public static final Property<ExpressionPropertyHandler<?, ?>> HEIGHT = Property.of(
+		"height",
+		"The height of something.",
+		"INSERT VERSION",
+		Skript.instance(),
+		ExpressionPropertyHandler.class);
+
+	/**
+	 * A property for getting the radius of something.
+	 */
+	public static final Property<ExpressionPropertyHandler<?, ?>> RADIUS = Property.of(
+		"radius",
+		"The radius of something, say the radius of a world border.",
+		"INSERT VERSION",
+		Skript.instance(),
+		ExpressionPropertyHandler.class);
+
+	/**
 	 * Register all Skript's default properties. Should be done prior to loading classinfos.
 	 */
 	public static void registerDefaultProperties() {
@@ -242,6 +289,13 @@ public record Property<Handler extends PropertyHandler<?>>(
 		NUMBER.register();
 		IS_EMPTY.register();
 		TYPED_VALUE.register();
+
+		// dimensions
+		WXYZ.register();
+		LENGTH.register();
+		WIDTH.register();
+		HEIGHT.register();
+		RADIUS.register();
 	}
 
 	/**

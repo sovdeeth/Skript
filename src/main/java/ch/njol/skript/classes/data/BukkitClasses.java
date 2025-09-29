@@ -5,6 +5,7 @@ import ch.njol.skript.bukkitutil.BukkitUtils;
 import ch.njol.skript.bukkitutil.EntityUtils;
 import ch.njol.skript.bukkitutil.SkriptTeleportFlag;
 import ch.njol.skript.classes.*;
+import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.classes.registry.RegistryClassInfo;
 import ch.njol.skript.entity.ChickenData.ChickenVariantDummy;
 import ch.njol.skript.entity.CowData.CowVariantDummy;
@@ -56,11 +57,14 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.CachedServerIcon;
 import org.bukkit.util.Vector;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.skriptlang.skript.bukkit.base.types.*;
 import org.skriptlang.skript.bukkit.base.types.EntityClassInfo.EntityChanger;
 import org.skriptlang.skript.lang.properties.Property;
+import org.skriptlang.skript.lang.properties.PropertyHandler;
 import org.skriptlang.skript.lang.properties.PropertyHandler.ExpressionPropertyHandler;
+import org.skriptlang.skript.lang.properties.PropertyHandler.WXYZPropertyHandler;
 
 import java.io.StreamCorruptedException;
 import java.util.Arrays;
@@ -267,7 +271,11 @@ public class BukkitClasses {
 						}
 					}
 				})
-				.cloner(Location::clone));
+				.cloner(Location::clone)
+				.property(Property.WXYZ,
+					"X, Y, or Z coordinate of the location.",
+					Skript.instance(),
+					new LocationWXYZHandler()));
 
 		Classes.registerClass(new ClassInfo<>(Vector.class, "vector")
 				.user("vectors?")
@@ -334,7 +342,12 @@ public class BukkitClasses {
 						return false;
 					}
 				})
-				.cloner(Vector::clone));
+				.cloner(Vector::clone)
+			.property(Property.WXYZ,
+				"X, Y, or Z component of the vector.",
+				Skript.instance(),
+				new VectorWXYZHandler())
+		);
 
 		Classes.registerClass(new ClassInfo<>(World.class, "world")
 				.user("worlds?")
@@ -1253,5 +1266,139 @@ public class BukkitClasses {
 			.since("2.12")
 		);
 
+	}
+
+	private static class VectorWXYZHandler extends WXYZPropertyHandler<Vector, Double> {
+
+		@Override
+		public @Nullable Double convert(Vector propertyHolder) {
+			return switch (axis) {
+				case X -> propertyHolder.getX();
+				case Y -> propertyHolder.getY();
+				case Z -> propertyHolder.getZ();
+				default -> null;
+			};
+		}
+
+		@Override
+		public Class<?> @Nullable [] acceptChange(ChangeMode mode) {
+			return switch (mode) {
+				case ADD, SET, REMOVE -> new Class[]{Float.class};
+				default -> null;
+			};
+		}
+
+		@Override
+		public void change(Vector vector, Object @Nullable [] delta, ChangeMode mode) {
+			assert delta != null;
+			float value = ((Float) delta[0]);
+			if (axis == WXYZPropertyHandler.Axis.W)
+				return;
+			switch (mode) {
+				case REMOVE:
+					value = -value;
+					//$FALL-THROUGH$
+				case ADD:
+					switch (axis) {
+						case X -> vector.setX(vector.getX() + value);
+						case Y -> vector.setY(vector.getY() + value);
+						case Z -> vector.setZ(vector.getZ() + value);
+					}
+					break;
+				case SET:
+					switch (axis) {
+						case X -> vector.setX(value);
+						case Y -> vector.setY(value);
+						case Z -> vector.setZ(value);
+					}
+					break;
+				default:
+					assert false;
+			}
+		}
+
+		@Override
+		public @NotNull Class<Double> returnType() {
+			return Double.class;
+		}
+
+		@Override
+		public PropertyHandler<Vector> newInstance() {
+			var instance = new VectorWXYZHandler();
+			instance.axis(axis);
+			return instance;
+		}
+
+		@Override
+		public boolean requiresChangeInPlace() {
+			return true;
+		}
+	}
+
+	private static class LocationWXYZHandler extends WXYZPropertyHandler<Location, Double> {
+
+		@Override
+		public @Nullable Double convert(Location propertyHolder) {
+			return switch (axis) {
+				case X -> propertyHolder.getX();
+				case Y -> propertyHolder.getY();
+				case Z -> propertyHolder.getZ();
+				default -> null;
+			};
+		}
+
+		@Override
+		public Class<?> @Nullable [] acceptChange(ChangeMode mode) {
+			return switch (mode) {
+				case ADD, SET, REMOVE -> new Class[]{Float.class};
+				default -> null;
+			};
+		}
+
+		@Override
+		public void change(Location location, Object @Nullable [] delta, ChangeMode mode) {
+			assert delta != null;
+			float value = ((Float) delta[0]);
+			if (axis == WXYZPropertyHandler.Axis.W)
+				return;
+			switch (mode) {
+				case REMOVE:
+					value = -value;
+					//$FALL-THROUGH$
+				case ADD:
+					switch (axis) {
+						case X -> location.setX(location.getX() + value);
+						case Y -> location.setY(location.getY() + value);
+						case Z -> location.setZ(location.getZ() + value);
+					}
+					break;
+				case SET:
+					switch (axis) {
+						case X -> location.setX(value);
+						case Y -> location.setY(value);
+						case Z -> location.setZ(value);
+					}
+					break;
+				default:
+					assert false;
+			}
+		}
+
+		@Override
+		public @NotNull Class<Double> returnType() {
+			return Double.class;
+		}
+
+		@Override
+		public PropertyHandler<Location> newInstance() {
+			var instance = new LocationWXYZHandler();
+			instance.axis(axis);
+			return instance;
+		}
+
+		@Override
+		public boolean requiresChangeInPlace() {
+			return true;
+		}
 	}
 }

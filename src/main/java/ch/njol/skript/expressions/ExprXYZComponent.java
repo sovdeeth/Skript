@@ -48,7 +48,7 @@ public class ExprXYZComponent extends SimplePropertyExpression<Object, Number> {
 		String types = "vectors";
 		if (IS_RUNNING_1194)
 			types += "/quaternions";
-		register(ExprXYZComponent.class, Number.class, "[vector|quaternion] (:w|:x|:y|:z) [component[s]]", types);
+//		register(ExprXYZComponent.class, Number.class, "[vector|quaternion] (:w|:x|:y|:z) [component[s]]", types);
 	}
 
 	private enum Axis {

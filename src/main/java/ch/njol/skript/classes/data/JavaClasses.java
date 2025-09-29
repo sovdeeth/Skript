@@ -2,6 +2,7 @@ package ch.njol.skript.classes.data;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptConfig;
+import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.Parser;
 import ch.njol.skript.classes.Serializer;
@@ -16,11 +17,14 @@ import ch.njol.skript.util.Utils;
 import ch.njol.util.StringUtils;
 import ch.njol.yggdrasil.Fields;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionf;
 import org.skriptlang.skript.lang.properties.Property;
+import org.skriptlang.skript.lang.properties.PropertyHandler;
 import org.skriptlang.skript.lang.properties.PropertyHandler.ConditionPropertyHandler;
 import org.skriptlang.skript.lang.properties.PropertyHandler.ContainsHandler;
+import org.skriptlang.skript.lang.properties.PropertyHandler.WXYZPropertyHandler;
 
 import java.io.StreamCorruptedException;
 import java.util.UUID;
@@ -356,7 +360,11 @@ public class JavaClasses {
 					} catch (CloneNotSupportedException e) {
 						return null;
 					}
-				}));
+				})
+				.property(Property.WXYZ,
+					"W, X, Y, or Z component of the quaternion.",
+					Skript.instance(),
+					new QuanternionWXYZHandler()));
 
 		Classes.registerClass(new ClassInfo<>(UUID.class, "uuid")
 			.user("uuids?")
@@ -893,6 +901,75 @@ public class JavaClasses {
 			return false;
 		}
 
+	}
+	private static class QuanternionWXYZHandler extends WXYZPropertyHandler<Quaternionf, Float>{
+
+		@Override
+		public PropertyHandler<Quaternionf> newInstance() {
+			var instance =  new QuanternionWXYZHandler();
+			instance.axis(this.axis);
+			return instance;
+		}
+
+		@Override
+		public boolean requiresChangeInPlace() {
+			return true;
+		}
+
+		@Override
+		public @NotNull Float convert(Quaternionf propertyHolder) {
+			return switch (axis) {
+				case W -> propertyHolder.w;
+				case X -> propertyHolder.x;
+				case Y -> propertyHolder.y;
+				case Z -> propertyHolder.z;
+			};
+		}
+
+		@Override
+		public Class<?> @Nullable [] acceptChange(ChangeMode mode) {
+			return switch (mode) {
+				case ADD, SET, REMOVE -> new Class[]{Float.class};
+				default -> null;
+			};
+		}
+
+		@Override
+		public void change(Quaternionf propertyHolder, Object @Nullable [] delta, ChangeMode mode) {
+			assert delta != null;
+			float value = ((Float) delta[0]);
+			float x = propertyHolder.x();
+			float y = propertyHolder.y();
+			float z = propertyHolder.z();
+			float w = propertyHolder.w();
+			switch (mode) {
+				case REMOVE:
+					value = -value;
+					//$FALL-THROUGH$
+				case ADD:
+					switch (axis) {
+						case W -> w += value;
+						case X -> x += value;
+						case Y -> y += value;
+						case Z -> z += value;
+					}
+					break;
+				case SET:
+					switch (axis) {
+						case W -> w = value;
+						case X -> x = value;
+						case Y -> y = value;
+						case Z -> z = value;
+					}
+					break;
+			}
+			propertyHolder.set(x, y, z, w);
+		}
+
+		@Override
+		public @NotNull Class<Float> returnType() {
+			return Float.class;
+		}
 	}
 
 }

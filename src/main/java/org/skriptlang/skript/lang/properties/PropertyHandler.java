@@ -155,6 +155,25 @@ public interface PropertyHandler<Type> {
 		}
 	}
 
+	abstract class WXYZPropertyHandler<Type, ValueType> implements ExpressionPropertyHandler<Type, ValueType> {
+
+		public enum Axis {W, X, Y, Z}
+
+		protected Axis axis;
+
+		@Override
+		abstract public PropertyHandler<Type> newInstance();
+
+		public void axis(Axis axis) {
+			this.axis = axis;
+		}
+
+		public Axis axis() {
+			return axis;
+		}
+
+	}
+
 	interface TypedValuePropertyHandler<Type, ValueType> extends ExpressionPropertyHandler<Type, ValueType> {
 
 		/**
