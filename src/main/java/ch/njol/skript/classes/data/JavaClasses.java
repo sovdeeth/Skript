@@ -912,11 +912,6 @@ public class JavaClasses {
 		}
 
 		@Override
-		public boolean requiresChangeInPlace() {
-			return true;
-		}
-
-		@Override
 		public @NotNull Float convert(Quaternionf propertyHolder) {
 			return switch (axis) {
 				case W -> propertyHolder.w;
@@ -924,6 +919,11 @@ public class JavaClasses {
 				case Y -> propertyHolder.y;
 				case Z -> propertyHolder.z;
 			};
+		}
+
+		@Override
+		public boolean supportsAxis(Axis axis) {
+			return true;
 		}
 
 		@Override
@@ -969,6 +969,11 @@ public class JavaClasses {
 		@Override
 		public @NotNull Class<Float> returnType() {
 			return Float.class;
+		}
+
+		@Override
+		public boolean requiresSourceExprChange() {
+			return true;
 		}
 	}
 

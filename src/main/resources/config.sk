@@ -30,6 +30,8 @@
 
 # ==== General Options ====
 
+use type properties: true
+
 language: english
 # Which language to use. Currently English, German, Korean, French, Polish, Russian, Japanese, Simplified Chinese, Turkish, Dutch, Spanish and Catalan
 # are included in the download, but custom languages can be created as well. Use the name in lowercase and no spaces as the value.

@@ -1281,6 +1281,11 @@ public class BukkitClasses {
 		}
 
 		@Override
+		public boolean supportsAxis(Axis axis) {
+			return axis != Axis.W;
+		}
+
+		@Override
 		public Class<?> @Nullable [] acceptChange(ChangeMode mode) {
 			return switch (mode) {
 				case ADD, SET, REMOVE -> new Class[]{Float.class};
@@ -1330,7 +1335,7 @@ public class BukkitClasses {
 		}
 
 		@Override
-		public boolean requiresChangeInPlace() {
+		public boolean requiresSourceExprChange() {
 			return true;
 		}
 	}
@@ -1345,6 +1350,11 @@ public class BukkitClasses {
 				case Z -> propertyHolder.getZ();
 				default -> null;
 			};
+		}
+
+		@Override
+		public boolean supportsAxis(Axis axis) {
+			return axis != Axis.W;
 		}
 
 		@Override
@@ -1397,7 +1407,7 @@ public class BukkitClasses {
 		}
 
 		@Override
-		public boolean requiresChangeInPlace() {
+		public boolean requiresSourceExprChange() {
 			return true;
 		}
 	}

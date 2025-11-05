@@ -174,13 +174,27 @@ public interface PropertyHandler<Type> {
 		@Override
 		abstract public PropertyHandler<Type> newInstance();
 
+		/**
+		 * @return Whether this handler supports the given axis
+		 */
+		public abstract boolean supportsAxis(Axis axis);
+
+		/**
+		 * Sets the specific axis for this handler to use.
+		 *
+		 * @param axis The axis to set
+		 */
 		public void axis(Axis axis) {
 			this.axis = axis;
 		}
 
+		/**
+		 * @return The axis this handler is using
+		 */
 		public Axis axis() {
 			return axis;
 		}
+
 
 	}
 
