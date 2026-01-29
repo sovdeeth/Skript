@@ -1420,7 +1420,7 @@ public final class Skript extends JavaPlugin implements Listener {
 
 	private static void stopAcceptingRegistrations() {
 		Converters.createChainedConverters();
-		ExprArithmetic.registerExpression();
+		ExprArithmetic.registerExpression(skript.syntaxRegistry());
 		acceptRegistrations = false;
 		Classes.onRegistrationsStop();
 	}

@@ -8,11 +8,11 @@ import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
 import ch.njol.skript.expressions.ExprArgument;
 import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.UnparsedLiteral;
 import ch.njol.skript.lang.parser.ParsingStack;
+import ch.njol.skript.lang.simplification.SimplifiedLiteral;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.LiteralUtils;
@@ -20,16 +20,17 @@ import ch.njol.skript.util.Patterns;
 import ch.njol.util.Kleenean;
 import com.google.common.collect.ImmutableSet;
 import org.bukkit.event.Event;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.skriptlang.skript.lang.arithmetic.Arithmetics;
 import org.skriptlang.skript.lang.arithmetic.OperationInfo;
 import org.skriptlang.skript.lang.arithmetic.Operator;
-import ch.njol.skript.lang.simplification.SimplifiedLiteral;
+import org.skriptlang.skript.registration.SyntaxInfo;
+import org.skriptlang.skript.registration.SyntaxRegistry;
 
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 @Name("Arithmetic")
 @Description("Arithmetic expressions, e.g. 1 + 2, (health of player - 2) / 3, etc.")
@@ -51,26 +52,78 @@ public class ExprArithmetic<L, R, T> extends SimpleExpression<T> {
 	// initialized during registration
 	private static Patterns<PatternInfo> patterns = null;
 
-	public static void registerExpression() {
+	public static void registerExpression(SyntaxRegistry registry) {
 		Skript.checkAcceptRegistrations();
 		List<Object[]> infos = new ArrayList<>();
 		for (Operator operator : Arithmetics.getAllOperators()) {
-			infos.add(new Object[] {"\\(%object%\\)[ ]" + operator.sign() + "[ ]\\(%object%\\)",
+			OperationTypeNames types = buildTypeExpression(operator);
+			infos.add(new Object[] {"\\(%" + types.leftTypeNames + "%\\)[ ]" + operator.sign() + "[ ]\\(%" + types.rightTypeNames + "%\\)",
 				new PatternInfo(operator, true, true)});
-			infos.add(new Object[] {"\\(%object%\\)[ ]" + operator.sign() + "[ ]%object%",
+			infos.add(new Object[] {"\\(%" + types.leftTypeNames + "%\\)[ ]" + operator.sign() + "[ ]%" + types.rightTypeNames + "%",
 				new PatternInfo(operator, true, false)});
-			infos.add(new Object[] {"%object%[ ]" + operator.sign() + "[ ]\\(%object%\\)",
+			infos.add(new Object[] {"%" + types.leftTypeNames + "%[ ]" + operator.sign() + "[ ]\\(%" + types.rightTypeNames + "%\\)",
 				new PatternInfo(operator, false, true)});
-			infos.add(new Object[] {"%object%[ ]" + operator.sign() + "[ ]%object%",
+			infos.add(new Object[] {"%" + types.leftTypeNames + "%[ ]" + operator.sign() + "[ ]%" + types.rightTypeNames + "%",
 				new PatternInfo(operator, false, false)});
 		}
 		Object[][] arr = new Object[infos.size()][];
 		for (int i = 0; i < arr.length; i++)
 			arr[i] = infos.get(i);
 		patterns = new Patterns<>(arr);
-		//noinspection unchecked
-		Skript.registerExpression(ExprArithmetic.class, Object.class,
-			ExpressionType.PATTERN_MATCHES_EVERYTHING, patterns.getPatterns());
+		//noinspection unchecked,rawtypes
+		registry.register(
+			SyntaxRegistry.EXPRESSION,
+			// yes this cast is necessary, no i don't care what intellij claims. It's wrong!
+			(SyntaxInfo.Expression) SyntaxInfo.Expression.builder(ExprArithmetic.class, Object.class)
+				.addPatterns(patterns.getPatterns())
+				.supplier(ExprArithmetic::new)
+				.priority(SyntaxInfo.PATTERN_MATCHES_EVERYTHING)
+				.build()
+		);
+	}
+
+	/**
+	 * A record holding the type name strings for the left and right sides of an operator pattern.
+	 * @param leftTypeNames the left type names, joined with '/'
+	 * @param rightTypeNames the right type names, joined with '/'
+	 */
+	private record OperationTypeNames(String leftTypeNames, String rightTypeNames) {
+		public OperationTypeNames(Set<String> leftTypeNames, Set<String> rightTypeNames) {
+			this(String.join("/", leftTypeNames), String.join("/", rightTypeNames));
+		}
+	}
+
+	/**
+	 * Builds the type strings for the left and right sides of an operator.
+	 * @param operator the operator
+	 * @return the type names for the left and right sides of all registered operations with the operator
+	 */
+	@Contract("_ -> new")
+	private static @NotNull OperationTypeNames buildTypeExpression(Operator operator) {
+		Set<String> leftTypeNames = new LinkedHashSet<>();
+		Set<String> rightTypeNames = new LinkedHashSet<>();
+		for (OperationInfo<?, ?, ?> info : Arithmetics.getOperations(operator)) {
+			addTypeName(leftTypeNames, info.left());
+			addTypeName(rightTypeNames, info.right());
+		}
+		// should not happen but this should be safe just in case
+		if (leftTypeNames.isEmpty())
+			leftTypeNames.add("object");
+		if (rightTypeNames.isEmpty())
+			rightTypeNames.add("object");
+		return new OperationTypeNames(leftTypeNames, rightTypeNames);
+	}
+
+	/**
+	 * Adds the code name of a type to a set of type names.
+	 * @param typeNames the set of type names
+	 * @param type the type
+	 */
+	private static void addTypeName(Set<String> typeNames, Class<?> type) {
+		ClassInfo<?> classInfo = Classes.getExactClassInfo(type);
+		if (classInfo != null) {
+			typeNames.add(classInfo.getCodeName());
+		}
 	}
 
 	private Expression<L> first;
