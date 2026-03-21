@@ -177,9 +177,13 @@ public abstract class Commands {
 				Bukkit.getPluginManager().callEvent(effectCommand);
 				command = effectCommand.getCommand();
 				ParserInstance parserInstance = ParserInstance.get();
+				if (parserInstance.isInstrumentationEnabled())
+					parserInstance.getInstrumentation().beginInput(command);
 				parserInstance.setCurrentEvent("effect command", EffectCommandEvent.class);
 				Effect effect = Effect.parse(command, null);
 				parserInstance.deleteCurrentEvent();
+				if (parserInstance.isInstrumentationEnabled())
+					parserInstance.getInstrumentation().endInput(effect != null);
 
 				if (effect != null) {
 					log.clear(); // ignore warnings and stuff

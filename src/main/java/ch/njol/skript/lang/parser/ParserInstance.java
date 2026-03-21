@@ -9,6 +9,7 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptEvent;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.TriggerSection;
+import ch.njol.skript.lang.parser.instrumentation.ParserInstrumentation;
 import ch.njol.skript.log.HandlerList;
 import ch.njol.skript.structures.StructOptions.OptionsData;
 import ch.njol.skript.variables.HintManager;
@@ -42,6 +43,49 @@ public final class ParserInstance implements Experimented {
 	}
 
 	private boolean isActive = false;
+
+	private boolean noInstrument = true;
+	private ParserInstrumentation instrumentation;
+	private java.nio.file.Path traceOutputPath;
+
+	public void setInstrumentationEnabled(boolean enabled) {
+		this.noInstrument = !enabled;
+		if (enabled && instrumentation == null)
+			instrumentation = new ParserInstrumentation();
+	}
+
+	/**
+	 * Sets the path for call tree trace output (JSONL format).
+	 * Set to null to disable trace recording.
+	 */
+	public void setTraceOutputPath(java.nio.file.@org.jetbrains.annotations.Nullable Path path) {
+		this.traceOutputPath = path;
+	}
+
+	/**
+	 * @return Whether instrumentation is enabled for this ParserInstance.
+	 */
+	public boolean isInstrumentationEnabled() {
+		return !noInstrument;
+	}
+
+	/**
+	 * Returns the current instrumentation instance, or null if instrumentation is disabled.
+	 */
+	public ParserInstrumentation getInstrumentation() {
+		return instrumentation;
+	}
+
+	/**
+	 * Resets the instrumentation, creating a fresh instance if enabled.
+	 */
+	public void resetInstrumentation() {
+		if (!noInstrument) {
+			instrumentation = new ParserInstrumentation();
+			if (traceOutputPath != null)
+				instrumentation.setTraceOutputPath(traceOutputPath);
+		}
+	}
 
 	/**
 	 * Internal method for updating a ParserInstance's {@link #isActive()} status!

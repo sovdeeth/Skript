@@ -7,6 +7,7 @@ import ch.njol.skript.config.SimpleNode;
 import ch.njol.skript.events.bukkit.PreScriptLoadEvent;
 import ch.njol.skript.lang.*;
 import ch.njol.skript.lang.parser.ParserInstance;
+import ch.njol.skript.lang.parser.instrumentation.ParserInstrumentation;
 import ch.njol.skript.log.CountingLogHandler;
 import ch.njol.skript.log.LogEntry;
 import ch.njol.skript.log.RetainingLogHandler;
@@ -517,6 +518,8 @@ public class ScriptLoader {
 				// TODO in the future this won't work when parallel loading is fixed
 				// It does now though so let's avoid calling getParser() a bunch.
 				ParserInstance parser = getParser();
+				if (parser.isInstrumentationEnabled())
+					parser.resetInstrumentation();
 
 				try {
 					openCloseable.open();
@@ -629,7 +632,11 @@ public class ScriptLoader {
 					throw Skript.exception(e);
 				} finally {
 					parser.setInactive();
-
+					if (parser.isInstrumentationEnabled()) {
+						ParserInstrumentation instrumentation = parser.getInstrumentation();
+						if (instrumentation != null)
+							System.out.println(instrumentation.getSummary());
+					}
 					openCloseable.close();
 				}
 			}).exceptionally(t -> {

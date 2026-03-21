@@ -202,26 +202,50 @@ public final class SkriptParser {
 
 	private <T extends SyntaxElement> @Nullable T parse(Iterator<? extends SyntaxInfo<? extends T>> source) {
 		ParsingStack parsingStack = getParser().getParsingStack();
+		var instrumentation = getParser().getInstrumentation();
+		if (instrumentation != null)
+			instrumentation.beginInput(expr);
 		try (ParseLogHandler log = SkriptLogger.startParseLogHandler()) {
 			while (source.hasNext()) {
 				SyntaxInfo<? extends T> info = source.next();
+				if (instrumentation != null)
+					instrumentation.beginSyntax(info.type().getName());
 				int matchedPattern = -1; // will increment at the start of each iteration
 				patternsLoop: for (String pattern : info.patterns()) {
 					matchedPattern++;
+					if (instrumentation != null)
+						instrumentation.beginPattern(pattern);
 					log.clear();
-					ParseResult parseResult;
+					ParseResult parseResult = null;
 
 					try {
 						parsingStack.push(new ParsingStack.Element(info, matchedPattern));
-						parseResult = parse_i(pattern);
+						if (instrumentation != null)
+							instrumentation.beginMatch(pattern);
+						try {
+							parseResult = parse_i(pattern);
+						} finally {
+							if (instrumentation != null)
+								instrumentation.endMatch(parseResult != null);
+						}
 					} catch (MalformedPatternException e) {
 						String message = "pattern compiling exception, element class: " + info.type().getName();
 						try {
 							JavaPlugin providingPlugin = JavaPlugin.getProvidingPlugin(info.type());
 							message += " (provided by " + providingPlugin.getName() + ")";
 						} catch (IllegalArgumentException | IllegalStateException ignored) { }
+						if (instrumentation != null) {
+							instrumentation.endPattern(false);
+							instrumentation.endSyntax(false);
+							instrumentation.endInput(false);
+						}
 						throw new RuntimeException(message, e);
 					} catch (StackOverflowError e) {
+						if (instrumentation != null) {
+							instrumentation.endPattern(false);
+							instrumentation.endSyntax(false);
+							instrumentation.endInput(false);
+						}
 						// Parsing caused a stack overflow, possibly due to too long lines
 						throw new ParseStackOverflowException(e, new ParsingStack(parsingStack));
 					} finally {
@@ -230,8 +254,11 @@ public final class SkriptParser {
 						assert stackElement.syntaxElementInfo() == info && stackElement.patternIndex() == matchedPattern;
 					}
 
-					if (parseResult == null)
+					if (parseResult == null) {
+						if (instrumentation != null)
+							instrumentation.endPattern(false);
 						continue;
+					}
 
 					assert parseResult.source != null; // parse results from parse_i have a source
 					List<TypePatternElement> types = null;
@@ -249,21 +276,38 @@ public final class SkriptParser {
 										break;
 									}
 								}
-								if (matchedExpr == null)
+								if (matchedExpr == null) {
+									if (instrumentation != null)
+										instrumentation.endPattern(false);
 									continue patternsLoop;
+								}
 								parseResult.exprs[i] = matchedExpr;
 							}
 						}
 					}
 					T element = info.instance();
 
-					if (!checkRestrictedEvents(element, parseResult))
+					if (!checkRestrictedEvents(element, parseResult)) {
+						if (instrumentation != null)
+							instrumentation.endPattern(false);
 						continue;
+					}
 
-					if (!checkExperimentalSyntax(element))
+					if (!checkExperimentalSyntax(element)) {
+						if (instrumentation != null)
+							instrumentation.endPattern(false);
 						continue;
+					}
 
-					boolean success = element.preInit() && element.init(parseResult.exprs, matchedPattern, getParser().getHasDelayBefore(), parseResult);
+					if (instrumentation != null)
+						instrumentation.beginInit(info.type().getName());
+					boolean success = false;
+					try {
+						success = element.preInit() && element.init(parseResult.exprs, matchedPattern, getParser().getHasDelayBefore(), parseResult);
+					} finally {
+						if (instrumentation != null)
+							instrumentation.endInit(success);
+					}
 					if (success) {
 						// Check if any expressions are 'UnparsedLiterals' and if applicable for multiple info warning.
 						for (Expression<?> expr : parseResult.exprs) {
@@ -274,16 +318,30 @@ public final class SkriptParser {
 						if (doSimplification && element instanceof Simplifiable<?> simplifiable) {
 							//noinspection unchecked
 							element = (T) simplify(simplifiable);
-							if (element == null)
+							if (element == null) {
+								if (instrumentation != null)
+									instrumentation.endPattern(false);
 								continue;
+							}
+						}
+						if (instrumentation != null) {
+							instrumentation.endPattern(true);
+							instrumentation.endSyntax(true);
+							instrumentation.endInput(true);
 						}
 						return element;
 					}
+					if (instrumentation != null)
+						instrumentation.endPattern(false);
 				}
+				if (instrumentation != null)
+					instrumentation.endSyntax(false);
 			}
 
 			// No successful syntax elements parsed, print errors and return
 			log.printError();
+			if (instrumentation != null)
+				instrumentation.endInput(false);
 			return null;
 		}
 	}
