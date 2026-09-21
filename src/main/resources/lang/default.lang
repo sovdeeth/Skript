@@ -2916,6 +2916,7 @@ types:
 	villagercareerchangereason: villager career change reason¦s @a
 	damagesource: damage source¦s @a
 	damagetype: damage type¦s @a
+	raytraceresult: ray trace result¦s @a
 	textcomponent: text component¦s @a
 	audience: audience¦s @an
 	frogvariant: frog variant¦s @a

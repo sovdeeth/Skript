@@ -21,6 +21,7 @@ import org.skriptlang.skript.bukkit.misc.MiscModule;
 import org.skriptlang.skript.bukkit.particles.ParticleModule;
 import org.skriptlang.skript.bukkit.pdc.PDCModule;
 import org.skriptlang.skript.bukkit.potion.PotionModule;
+import org.skriptlang.skript.bukkit.raytrace.RaytraceModule;
 import org.skriptlang.skript.bukkit.tags.TagModule;
 import org.skriptlang.skript.bukkit.text.TextModule;
 import org.skriptlang.skript.bukkit.types.*;
@@ -54,6 +55,7 @@ public class BukkitModule extends HierarchicalAddonModule {
 			new ParticleModule(this),
 			new PDCModule(this),
 			new PotionModule(this),
+			new RaytraceModule(this),
 			new TagModule(this),
 			new TextModule(this),
 			new WorldBorderModule(this)
