@@ -12,7 +12,6 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.Trigger;
 import ch.njol.skript.lang.TriggerItem;
 import ch.njol.skript.lang.util.SectionUtils;
-import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.skript.util.Direction;
 import ch.njol.skript.variables.Variables;
 import ch.njol.util.Kleenean;
@@ -51,7 +50,7 @@ import java.util.Objects;
 	""")
 @Example("""
 	set {_hit} to the results of a raytrace from {_start} to {_end}:
-		use a ray of size 0.5
+		set the ray size to 0.5
 		ignore passable blocks
 		ignore flowing fluids
 	
@@ -80,7 +79,8 @@ public class ExprSecRaytrace extends SectionExpression<RayTraceResult> {
 	private Expression<?> start;
 	private @Nullable Expression<?> direction; // when null, the direction of the starting location/entity is used
 	private @Nullable Expression<Location> end;
-	private Expression<Number> maxDistance = new SimpleLiteral<>(SkriptConfig.maxTargetBlockDistance.value().doubleValue());
+	// when null, the maximum target block distance from Skript's config is used
+	private @Nullable Expression<Number> maxDistance;
 
 	private @Nullable Trigger trigger;
 
@@ -146,14 +146,23 @@ public class ExprSecRaytrace extends SectionExpression<RayTraceResult> {
 			}
 		} else {
 			directionVector = getDirection(event, startLocation);
-			Number maxDistance = this.maxDistance.getSingle(event);
-			if (directionVector == null || maxDistance == null)
+			if (directionVector == null)
 				return null;
-			distance = maxDistance.doubleValue();
+			if (this.maxDistance != null) {
+				Number maxDistance = this.maxDistance.getSingle(event);
+				if (maxDistance == null)
+					return null;
+				distance = maxDistance.doubleValue();
+			} else {
+				// read the config when the raytrace was given no distance, so a reloaded config is respected
+				distance = SkriptConfig.maxTargetBlockDistance.value().doubleValue();
+			}
 		}
 
 		RaytraceConfig config = new RaytraceConfig();
 		config.excludedEntity = startEntity;
+		// the section may override the distance, so it starts out as whatever this raytrace determined
+		config.maxDistance = distance;
 		if (trigger != null) {
 			RaytraceSectionEvent sectionEvent = new RaytraceSectionEvent(config);
 			Variables.withLocalVariables(event, sectionEvent, () -> TriggerItem.walk(trigger, sectionEvent));
@@ -165,6 +174,11 @@ public class ExprSecRaytrace extends SectionExpression<RayTraceResult> {
 			return null;
 		}
 
+		if (config.maxDistance <= 0) {
+			error("A raytrace must travel a positive distance, but was given " + config.maxDistance + ".");
+			return null;
+		}
+
 		// perform the raytrace
 		World world = startLocation.getWorld();
 		if (world == null) {
@@ -172,7 +186,7 @@ public class ExprSecRaytrace extends SectionExpression<RayTraceResult> {
 			return null;
 		}
 
-		RayTraceResult result = world.rayTrace(config.asBuilder(startLocation, directionVector, distance));
+		RayTraceResult result = world.rayTrace(config.asBuilder(startLocation, directionVector, config.maxDistance));
 		if (result != null)
 			return new RayTraceResult[]{result};
 		return new RayTraceResult[0];
@@ -213,7 +227,9 @@ public class ExprSecRaytrace extends SectionExpression<RayTraceResult> {
 			return result + " to " + end.toString(event, debug);
 		if (direction != null)
 			result += " along " + direction.toString(event, debug);
-		return result + " for " + maxDistance.toString(event, debug);
+		if (maxDistance != null)
+			result += " for " + maxDistance.toString(event, debug);
+		return result;
 	}
 
 }

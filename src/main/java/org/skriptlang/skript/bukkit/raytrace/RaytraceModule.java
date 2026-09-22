@@ -14,7 +14,8 @@ import org.skriptlang.skript.addon.HierarchicalAddonModule;
 import org.skriptlang.skript.addon.SkriptAddon;
 import org.skriptlang.skript.bukkit.raytrace.elements.conditions.CondRaytraceHit;
 import org.skriptlang.skript.bukkit.raytrace.elements.effects.EffRaytraceIgnore;
-import org.skriptlang.skript.bukkit.raytrace.elements.effects.EffRaytraceRaySize;
+import org.skriptlang.skript.bukkit.raytrace.elements.expressions.ExprRaytraceMaxDistance;
+import org.skriptlang.skript.bukkit.raytrace.elements.expressions.ExprRaytraceRaySize;
 import org.skriptlang.skript.bukkit.raytrace.elements.expressions.ExprRaytraceHitEntity;
 import org.skriptlang.skript.bukkit.raytrace.elements.expressions.ExprRaytraceHitFace;
 import org.skriptlang.skript.bukkit.raytrace.elements.expressions.ExprRaytraceHitLocation;
@@ -72,7 +73,8 @@ public class RaytraceModule extends HierarchicalAddonModule {
 	protected void loadSelf(SkriptAddon addon) {
 		register(addon,
 			ExprSecRaytrace::register,
-			EffRaytraceRaySize::register,
+			ExprRaytraceRaySize::register,
+			ExprRaytraceMaxDistance::register,
 			EffRaytraceIgnore::register,
 			SecRaytraceIgnoreIf::register,
 			ExprRaytraceHitLocation::register,

@@ -222,7 +222,7 @@ test "raytrace with a ray size":
 	assert {_hit} is not set with "a thin ray should miss a pig standing to the side"
 
 	set {_hit} to the results of a raytrace from {_start} along vector(1, 0, 0) for 20 meters:
-		use a ray of size 4
+		set the ray size to 4
 	assert hit entity of {_hit} is {_pig} with "a ray of size 4 should reach the pig to the side"
 
 	clear entity within {_pig}
@@ -256,5 +256,32 @@ test "raytrace result used as a location":
 
 	# a result converts to its hit location, so it works wherever a location is expected
 	assert distance between {_hit} and location(10, 100.5, 60.5, {_world}) is 0 with "a raytrace result should convert to its hit location"
+
+	set block at {_target} to air
+
+test "raytrace setting the max distance in its section":
+	set {_world} to world("world")
+	set {_start} to location(0.5, 100.5, 65.5, {_world})
+	set {_target} to location(10, 100, 65, {_world})
+	set block at location(5, 100, 65, {_world}) to air
+	set block at {_target} to stone
+
+	# the section starts out with the distance from the header, and may shorten it
+	set {_hit} to the results of a raytrace from {_start} along vector(1, 0, 0) for 20 meters:
+		assert the max distance is 20 with "the section should start with the distance given to the raytrace"
+		set the max distance to 5
+	assert {_hit} is not set with "shortening the max distance should stop the ray short of the block"
+
+	# it may also extend beyond what the header allowed
+	set {_hit} to the results of a raytrace from {_start} along vector(1, 0, 0) for 5 meters:
+		set the max distance to 20
+	assert hit block of {_hit} is block at {_target} with "extending the max distance should let the ray reach the block"
+
+	# the ray size defaults to 0 and is readable too
+	set {_hit} to the results of a raytrace from {_start} along vector(1, 0, 0) for 20 meters:
+		assert the ray size is 0 with "the ray size should default to 0"
+		set the ray size to 0.5
+		assert the ray size is 0.5 with "the ray size should be readable after being set"
+	assert hit block of {_hit} is block at {_target} with "setting the ray size should not stop the ray hitting the block"
 
 	set block at {_target} to air
