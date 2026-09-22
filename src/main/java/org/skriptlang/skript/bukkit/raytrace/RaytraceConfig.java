@@ -1,10 +1,13 @@
 package org.skriptlang.skript.bukkit.raytrace;
 
 import ch.njol.skript.SkriptConfig;
+import ch.njol.skript.aliases.ItemType;
+import ch.njol.skript.entity.EntityData;
 import io.papermc.paper.raytracing.PositionedRayTraceConfigurationBuilder;
 import io.papermc.paper.raytracing.RayTraceTarget;
 import org.bukkit.FluidCollisionMode;
 import org.bukkit.Location;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.event.Event;
 import org.bukkit.util.Vector;
@@ -12,7 +15,9 @@ import org.jetbrains.annotations.Nullable;
 import org.skriptlang.skript.lang.condition.Conditional;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 /**
@@ -71,6 +76,54 @@ public class RaytraceConfig {
 	public final List<Conditional<Event>> blockFilters = new ArrayList<>();
 
 	/**
+	 * Specific entities the ray may not hit.
+	 */
+	public final Set<Entity> ignoredEntities = new LinkedHashSet<>();
+
+	/**
+	 * Types of entity the ray may not hit, such as every zombie.
+	 */
+	public final Set<EntityData<?>> ignoredEntityTypes = new LinkedHashSet<>();
+
+	/**
+	 * The positions of specific blocks the ray may not hit.
+	 * Blocks are held by position so that snapshots, delayed-change blocks and any other wrapper are treated
+	 * as the block they stand for.
+	 */
+	public final Set<Location> ignoredBlockLocations = new LinkedHashSet<>();
+
+	/**
+	 * Types of block the ray may not hit, such as every stone block.
+	 */
+	public final Set<ItemType> ignoredBlockTypes = new LinkedHashSet<>();
+
+	/**
+	 * @return Whether the given entity is one this configuration was told to ignore.
+	 */
+	private boolean isIgnored(Entity entity) {
+		if (ignoredEntities.contains(entity))
+			return true;
+		for (EntityData<?> entityType : ignoredEntityTypes) {
+			if (entityType.isInstance(entity))
+				return true;
+		}
+		return false;
+	}
+
+	/**
+	 * @return Whether the given block is one this configuration was told to ignore.
+	 */
+	private boolean isIgnored(Block block) {
+		if (!ignoredBlockLocations.isEmpty() && ignoredBlockLocations.contains(block.getLocation()))
+			return true;
+		for (ItemType blockType : ignoredBlockTypes) {
+			if (blockType.isOfType(block))
+				return true;
+		}
+		return false;
+	}
+
+	/**
 	 * @return Whether this configuration allows the raytrace to hit anything at all.
 	 */
 	public boolean canHitAnything() {
@@ -106,20 +159,32 @@ public class RaytraceConfig {
 				builder.targets(RayTraceTarget.ENTITY);
 			}
 
-			// set filters
+			// entity filter
 			Conditional<Event> entityIgnoreIf = entityFilters.isEmpty() ? null
 				: Conditional.compound(Conditional.Operator.OR, entityFilters);
-			if (excludedEntity != null || entityIgnoreIf != null) {
+
+			if (excludedEntity != null || entityIgnoreIf != null
+				|| !ignoredEntities.isEmpty() || !ignoredEntityTypes.isEmpty()) {
+
 				builder.entityFilter(entity -> {
 					// the entity the ray was cast from can never be hit
 					if (entity.equals(excludedEntity))
 						return false;
+					if (isIgnored(entity))
+						return false;
 					return entityIgnoreIf == null || !entityIgnoreIf.evaluate(new RaytraceEntityEvent(entity)).isTrue();
 				});
 			}
-			if (!blockFilters.isEmpty()) {
-				Conditional<Event> blockIgnoreIf = Conditional.compound(Conditional.Operator.OR, blockFilters);
-				builder.blockFilter(block -> !blockIgnoreIf.evaluate(new RaytraceBlockEvent(block)).isTrue());
+			// block filter
+			Conditional<Event> blockIgnoreIf = blockFilters.isEmpty() ? null
+				: Conditional.compound(Conditional.Operator.OR, blockFilters);
+
+			if (blockIgnoreIf != null || !ignoredBlockLocations.isEmpty() || !ignoredBlockTypes.isEmpty()) {
+				builder.blockFilter(block -> {
+					if (isIgnored(block))
+						return false;
+					return blockIgnoreIf == null || !blockIgnoreIf.evaluate(new RaytraceBlockEvent(block)).isTrue();
+				});
 			}
 		};
 	}

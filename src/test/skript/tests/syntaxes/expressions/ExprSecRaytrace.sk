@@ -285,3 +285,45 @@ test "raytrace setting the max distance in its section":
 	assert hit block of {_hit} is block at {_target} with "setting the ray size should not stop the ray hitting the block"
 
 	set block at {_target} to air
+
+test "raytrace ignoring specific targets":
+	set {_world} to world("world")
+	set {_start} to location(0.5, 100.5, 70.5, {_world})
+	set {_first} to location(5, 100, 70, {_world})
+	set {_target} to location(10, 100, 70, {_world})
+	set block at {_first} to dirt
+	set block at {_target} to stone
+
+	# ignoring a type of block
+	set {_hit} to the results of a raytrace from {_start} along vector(1, 0, 0) for 20 meters:
+		ignore dirt
+	assert hit block of {_hit} is block at {_target} with "ignoring a block type should skip blocks of that type"
+
+	# ignoring one specific block
+	set {_hit} to the results of a raytrace from {_start} along vector(1, 0, 0) for 20 meters:
+		ignore block at {_first}
+	assert hit block of {_hit} is block at {_target} with "ignoring a specific block should skip it"
+
+	spawn a pig at location(7, 100, 70.5, {_world}):
+		set {_pig} to entity
+
+	# the pig stands beyond the dirt, so it is hit once the dirt is skipped
+	set {_hit} to the results of a raytrace from {_start} along vector(1, 0, 0) for 20 meters:
+		ignore dirt
+	assert hit entity of {_hit} is {_pig} with "the pig should be hit while it is not ignored"
+
+	# ignoring a type of entity
+	set {_hit} to the results of a raytrace from {_start} along vector(1, 0, 0) for 20 meters:
+		ignore dirt
+		ignore pigs
+	assert hit block of {_hit} is block at {_target} with "ignoring an entity type should skip entities of that type"
+
+	# ignoring one specific entity
+	set {_hit} to the results of a raytrace from {_start} along vector(1, 0, 0) for 20 meters:
+		ignore dirt
+		ignore {_pig}
+	assert hit block of {_hit} is block at {_target} with "ignoring a specific entity should skip it"
+
+	clear entity within {_pig}
+	set block at {_first} to air
+	set block at {_target} to air
