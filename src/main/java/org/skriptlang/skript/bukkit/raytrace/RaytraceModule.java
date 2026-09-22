@@ -15,9 +15,8 @@ import org.skriptlang.skript.addon.SkriptAddon;
 import org.skriptlang.skript.bukkit.raytrace.elements.conditions.CondRaytraceHit;
 import org.skriptlang.skript.bukkit.raytrace.elements.effects.EffRaytraceIgnore;
 import org.skriptlang.skript.bukkit.raytrace.elements.effects.EffRaytraceRaySize;
-import org.skriptlang.skript.bukkit.raytrace.elements.expressions.ExprRaytraceHitBlock;
 import org.skriptlang.skript.bukkit.raytrace.elements.expressions.ExprRaytraceHitEntity;
-import org.skriptlang.skript.bukkit.raytrace.elements.expressions.ExprRaytraceHitFaceDirection;
+import org.skriptlang.skript.bukkit.raytrace.elements.expressions.ExprRaytraceHitFace;
 import org.skriptlang.skript.bukkit.raytrace.elements.expressions.ExprRaytraceHitLocation;
 import org.skriptlang.skript.bukkit.raytrace.elements.expressions.ExprSecRaytrace;
 import org.skriptlang.skript.bukkit.raytrace.elements.sections.SecRaytraceIgnoreIf;
@@ -59,7 +58,7 @@ public class RaytraceModule extends HierarchicalAddonModule {
 
 				@Override
 				public String toVariableNameString(RayTraceResult result) {
-					return "raytrace result:" + result.hashCode();
+					return toString(result, 0);
 				}
 			})
 		);
@@ -77,8 +76,7 @@ public class RaytraceModule extends HierarchicalAddonModule {
 			EffRaytraceIgnore::register,
 			SecRaytraceIgnoreIf::register,
 			ExprRaytraceHitLocation::register,
-			ExprRaytraceHitBlock::register,
-			ExprRaytraceHitFaceDirection::register,
+			ExprRaytraceHitFace::register,
 			ExprRaytraceHitEntity::register,
 			CondRaytraceHit::register
 		);

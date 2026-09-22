@@ -5,52 +5,51 @@ import ch.njol.skript.doc.Example;
 import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
 import ch.njol.skript.expressions.base.SimplePropertyExpression;
-import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.util.RayTraceResult;
 import org.jetbrains.annotations.Nullable;
 import org.skriptlang.skript.registration.SyntaxRegistry;
 
-@Name("Raytrace Result - Hit Block")
+@Name("Raytrace Result - Hit Face")
 @Description("""
-	The block a raytrace hit.
-	This is not set when the raytrace hit an entity, or when it hit nothing at all.
+	The side a raytrace hit, being the face of the block or of the entity's hitbox that the ray entered.
+	A ray travelling east, for example, enters whatever it hits on the west side.
 	""")
 @Example("""
 	set {_hit} to the results of a raytrace from player for 20 meters
-	if {_hit} hit a block:
-		send "You are looking at %the hit block of {_hit}%"
+	send "You are looking at the %hit face of {_hit}% of the block"
 	""")
 @Since("INSERT VERSION")
-public class ExprRaytraceHitBlock extends SimplePropertyExpression<RayTraceResult, Block> {
+public class ExprRaytraceHitFace extends SimplePropertyExpression<RayTraceResult, BlockFace> {
 
 	public static void register(SyntaxRegistry registry) {
 		registry.register(
 			SyntaxRegistry.EXPRESSION,
 			infoBuilder(
-				ExprRaytraceHitBlock.class,
-				Block.class,
-				"hit block",
+				ExprRaytraceHitFace.class,
+				BlockFace.class,
+				"hit [block] face",
 				"raytraceresults",
 				false
 			)
-				.supplier(ExprRaytraceHitBlock::new)
+				.supplier(ExprRaytraceHitFace::new)
 				.build()
 		);
 	}
 
 	@Override
-	public @Nullable Block convert(RayTraceResult result) {
-		return result.getHitBlock();
+	public @Nullable BlockFace convert(RayTraceResult result) {
+		return result.getHitBlockFace();
 	}
 
 	@Override
-	public Class<Block> getReturnType() {
-		return Block.class;
+	public Class<BlockFace> getReturnType() {
+		return BlockFace.class;
 	}
 
 	@Override
 	protected String getPropertyName() {
-		return "hit block";
+		return "hit face";
 	}
 
 }

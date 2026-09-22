@@ -41,8 +41,8 @@ public class CondRaytraceHit extends Condition {
 			SyntaxRegistry.CONDITION,
 			SyntaxInfo.builder(CondRaytraceHit.class)
 				.addPatterns(
-					"%raytraceresults% hit [a[n]] (:block|:entity|:anything)",
-					"%raytraceresults% (didn't|did not|doesn't|does not) hit [a[n]] (:block|:entity|:anything)"
+					"%raytraceresults% hit [a[n]] (:block|:entity|anything:(any|some)thing)",
+					"%raytraceresults% (didn't|did not|doesn't|does not) hit [a[n]] (:block|:entity|anything:(any|some)thing)"
 				)
 				.supplier(CondRaytraceHit::new)
 				.build()

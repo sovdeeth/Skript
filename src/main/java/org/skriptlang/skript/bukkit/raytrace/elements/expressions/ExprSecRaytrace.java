@@ -71,8 +71,8 @@ public class ExprSecRaytrace extends SectionExpression<RayTraceResult> {
 			SyntaxInfo.Expression.builder(ExprSecRaytrace.class, RayTraceResult.class)
 				.supplier(ExprSecRaytrace::new)
 				.addPatterns(
-					"[[the] results of] [a] ray[ ](trace|cast) (starting at|[starting] from) %entity/location% [(facing|along) %-vector/direction%] [for %-number% (blocks|meters)]",
-					"[[the] results of] [a] ray[ ](trace|cast) from %location% to %location%")
+					"[[the] result[s] of] [a] ray[ ](trace|cast) (starting at|[starting] from) %entity/location% [(facing|along) %-vector/direction%] [for %-number% (blocks|meters)]",
+					"[[the] result[s] of] [a] ray[ ](trace|cast) from %location% to %location%")
 				.build()
 		);
 	}
