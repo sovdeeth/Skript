@@ -2,7 +2,6 @@ package org.skriptlang.skript.bukkit.raytrace;
 
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.Parser;
-import ch.njol.skript.command.Commands;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.registrations.Classes;
 import org.bukkit.Location;
@@ -15,17 +14,12 @@ import org.skriptlang.skript.addon.SkriptAddon;
 import org.skriptlang.skript.bukkit.raytrace.elements.conditions.CondRaytraceHit;
 import org.skriptlang.skript.bukkit.raytrace.elements.effects.EffRaytraceIgnore;
 import org.skriptlang.skript.bukkit.raytrace.elements.effects.EffRaytraceIgnoreTargets;
-import org.skriptlang.skript.bukkit.raytrace.elements.expressions.ExprRaytraceMaxDistance;
-import org.skriptlang.skript.bukkit.raytrace.elements.expressions.ExprRaytraceRaySize;
-import org.skriptlang.skript.bukkit.raytrace.elements.expressions.ExprRaytraceHitEntity;
-import org.skriptlang.skript.bukkit.raytrace.elements.expressions.ExprRaytraceHitFace;
-import org.skriptlang.skript.bukkit.raytrace.elements.expressions.ExprRaytraceHitLocation;
-import org.skriptlang.skript.bukkit.raytrace.elements.expressions.ExprSecRaytrace;
+import org.skriptlang.skript.bukkit.raytrace.elements.expressions.*;
 import org.skriptlang.skript.bukkit.raytrace.elements.sections.SecRaytraceIgnoreIf;
 import org.skriptlang.skript.lang.converter.Converters;
 
 /**
- * Raytracing syntax. Requires Paper's raytracing API.
+ * Raytracing syntax.
  */
 public class RaytraceModule extends HierarchicalAddonModule {
 
@@ -66,8 +60,7 @@ public class RaytraceModule extends HierarchicalAddonModule {
 		);
 
 		// allows a result to be used wherever a location is expected
-		Converters.registerConverter(RayTraceResult.class, Location.class,
-			RaytraceUtils::toLocation, Commands.CONVERTER_NO_COMMAND_ARGUMENTS);
+		Converters.registerConverter(RayTraceResult.class, Location.class, RaytraceUtils::toLocation);
 	}
 
 	@Override

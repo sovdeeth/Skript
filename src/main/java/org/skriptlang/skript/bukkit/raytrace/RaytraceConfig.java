@@ -53,12 +53,6 @@ public class RaytraceConfig {
 	}
 
 	public double raySize = 0.0;
-
-	/**
-	 * The maximum distance the ray travels.
-	 * This is seeded with the distance the raytrace itself determined, and may be overridden from within its section.
-	 * It defaults to the maximum target block distance from Skript's config.
-	 */
 	public double maxDistance = SkriptConfig.maxTargetBlockDistance.value().doubleValue();
 
 	public FluidCollisionMode fluidCollisionMode = FluidCollisionMode.ALWAYS;
