@@ -24,7 +24,7 @@ import static org.skriptlang.skript.bukkit.entity.EntityData.getInfo;
 /**
  * @deprecated Use {@link org.skriptlang.skript.bukkit.entity.EntityData} instead.
  */
-@Deprecated(forRemoval = true, since = "INSERT VERSION")
+@Deprecated(forRemoval = true, since = "2.17")
 public abstract class EntityData<E extends Entity> implements SyntaxElement, YggdrasilExtendedSerializable {
 
 	public static final String LANGUAGE_NODE = "entities";

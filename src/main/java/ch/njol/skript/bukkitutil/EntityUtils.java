@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @deprecated Use {@link org.skriptlang.skript.bukkit.entity.EntityUtils} instead.
  */
-@Deprecated(since = "INSERT VERSION", forRemoval = true)
+@Deprecated(since = "2.17", forRemoval = true)
 public class EntityUtils {
 
 	/**

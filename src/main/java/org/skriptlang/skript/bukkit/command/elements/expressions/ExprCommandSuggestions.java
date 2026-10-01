@@ -57,7 +57,7 @@ import java.util.List;
 			trigger:
 				teleport the player to {homes::%player%::%{_name}%}
 	""")
-@Since("INSERT VERSION")
+@Since("2.17")
 public class ExprCommandSuggestions extends SimpleExpression<Component> implements EventRestrictedSyntax {
 
 	public static void register(SyntaxRegistry syntaxRegistry) {

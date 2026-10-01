@@ -753,7 +753,7 @@ public abstract class EntityData<E extends Entity>
 
 	@Internal
 	@Override
-	@Deprecated(forRemoval = true, since = "INSERT VERSION")
+	@Deprecated(forRemoval = true, since = "2.17")
 	public boolean isSupertypeOf(ch.njol.skript.entity.EntityData<?> entityData) {
 		return isSupertypeOf((EntityData<?>) entityData);
 	}

@@ -348,7 +348,7 @@ public final class Skript extends JavaPlugin implements Listener {
 	 * @deprecated {@link ExperimentRegistry} is now a regular registry, and should be accessed as such.
 	 * See {@link org.skriptlang.skript.addon.SkriptAddon#registry(Class)}.
 	 */
-	@Deprecated(since = "INSERT VERSION", forRemoval = true)
+	@Deprecated(since = "2.17", forRemoval = true)
 	public static ExperimentRegistry experiments() {
 		// intentionally returning the modifiable view
 		return skript.registry(ExperimentRegistry.class);
@@ -1812,7 +1812,7 @@ public final class Skript extends JavaPlugin implements Listener {
 	 * @return Whether the command was run
 	 * @deprecated There is no replacement for this method.
 	 */
-	@Deprecated(since = "INSERT VERSION", forRemoval = true)
+	@Deprecated(since = "2.17", forRemoval = true)
 	public static boolean dispatchCommand(CommandSender sender, String command) {
 		return EffCommand.dispatchCommand(sender, command, new RuntimeErrorProducer() {
 			@Override

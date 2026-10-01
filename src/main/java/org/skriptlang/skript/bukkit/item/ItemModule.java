@@ -30,7 +30,7 @@ public class ItemModule extends HierarchicalAddonModule {
 			.user("item ?rarit(y|ies)")
 			.name("Item Rarity")
 			.description("Represents the item rarity of an item.")
-			.since("INSERT VERSION")
+			.since("2.17")
 		);
 	}
 

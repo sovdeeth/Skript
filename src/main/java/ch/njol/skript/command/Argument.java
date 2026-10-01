@@ -25,7 +25,7 @@ import ch.njol.skript.variables.Variables;
  * @deprecated There is no direct replacement for this class.
  * The closest alternative is {@link org.skriptlang.skript.bukkit.command.custom.ArgumentData}.
  */
-@Deprecated(since = "INSERT VERSION", forRemoval = true)
+@Deprecated(since = "2.17", forRemoval = true)
 public class Argument<T> {
 	
 	@Nullable

@@ -39,7 +39,7 @@ import java.util.regex.MatchResult;
 			else: # must be giveaway
 				broadcast "<aqua>A giveaway is starting soon at spawn!"
 	""")
-@Since("INSERT VERSION")
+@Since("2.17")
 public class ExprChoiceArgument extends SimpleExpression<String> implements EventRestrictedSyntax {
 
 	public static void register(SyntaxRegistry syntaxRegistry) {

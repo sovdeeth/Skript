@@ -11,7 +11,7 @@ import org.skriptlang.skript.bukkit.command.custom.ScriptCommandExecutionEvent;
  * @deprecated There is no direct replacement for this class.
  * The closest alternative is {@link ScriptCommandExecutionEvent}.
  */
-@Deprecated(since = "INSERT VERSION", forRemoval = true)
+@Deprecated(since = "2.17", forRemoval = true)
 public class ScriptCommandEvent extends CommandEvent {
 	
 	private final ScriptCommand scriptCommand;

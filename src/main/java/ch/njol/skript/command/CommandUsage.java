@@ -12,7 +12,7 @@ import org.skriptlang.skript.bukkit.text.TextComponentParser;
  * TODO: replace with record when java 17
  * @deprecated There is no direct replacement for this class.
  */
-@Deprecated(since = "INSERT VERSION", forRemoval = true)
+@Deprecated(since = "2.17", forRemoval = true)
 public class CommandUsage {
 
 	/**

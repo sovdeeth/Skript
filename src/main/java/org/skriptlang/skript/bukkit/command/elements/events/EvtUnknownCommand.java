@@ -37,7 +37,7 @@ public class EvtUnknownCommand extends SimpleEvent {
 							push the player upwards
 							set the unknown command message to "<red>You are executing too many unknown commands too fast!"
 					""")
-				.addSince("INSERT VERSION")
+				.addSince("2.17")
 				.build());
 		eventValueRegistry.register(EventValue.simple(UnknownCommandEvent.class, CommandSender.class, UnknownCommandEvent::getSender));
 		eventValueRegistry.register(EventValue.simple(UnknownCommandEvent.class, Block.class,

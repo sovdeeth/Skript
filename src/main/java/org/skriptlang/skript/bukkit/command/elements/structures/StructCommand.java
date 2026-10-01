@@ -60,7 +60,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 			trigger:
 				teleport the player to {homes::%player%::%{_name}%}
 	""")
-@Since({"1.0", "INSERT VERSION (subcommands, suggestions, etc.)"})
+@Since({"1.0", "2.17 (subcommands, suggestions, etc.)"})
 public class StructCommand extends Structure {
 
 	public static void register(SkriptAddon addon, SyntaxRegistry syntaxRegistry) {

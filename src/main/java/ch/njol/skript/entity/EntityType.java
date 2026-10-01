@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
  * @deprecated Use {@link org.skriptlang.skript.bukkit.entity.EntityType} instead.
  */
 @SuppressWarnings("removal")
-@Deprecated(forRemoval = true, since = "INSERT VERSION")
+@Deprecated(forRemoval = true, since = "2.17")
 public abstract class EntityType implements Cloneable, YggdrasilSerializable {
 
 	public static @Nullable EntityType parse(String string) {

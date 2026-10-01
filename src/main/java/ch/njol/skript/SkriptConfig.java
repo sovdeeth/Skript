@@ -247,7 +247,7 @@ public class SkriptConfig {
 	/**
 	 * @deprecated This config option is no longer used and there is no replacement.
 	 */
-	@Deprecated(since = "INSERT VERSION", forRemoval = true)
+	@Deprecated(since = "2.17", forRemoval = true)
 	public static final Option<Boolean> caseInsensitiveCommands = new Option<>("case-insensitive commands", false)
 		.optional(true);
 
@@ -319,7 +319,7 @@ public class SkriptConfig {
 	/**
 	 * @deprecated This config option is no longer used and there is no replacement.
 	 */
-	@Deprecated(since = "INSERT VERSION", forRemoval = true)
+	@Deprecated(since = "2.17", forRemoval = true)
 	public static final Option<Boolean> keepLastUsageDates = new Option<>("keep command last usage dates", false)
 			.optional(true);
 

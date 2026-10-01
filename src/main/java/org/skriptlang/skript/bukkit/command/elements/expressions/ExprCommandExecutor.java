@@ -29,7 +29,7 @@ import org.skriptlang.skript.registration.SyntaxRegistry;
 		# It will send the output to the command sender, but it will be as if "<player>" was the thing executing it.
 		send "Your balance is %{balance::%uuid of the executor%}%" to the sender
 	""")
-@Since("INSERT VERSION")
+@Since("2.17")
 public class ExprCommandExecutor extends SimpleExpression<Entity> implements EventRestrictedSyntax {
 
 	public static void register(SyntaxRegistry syntaxRegistry) {

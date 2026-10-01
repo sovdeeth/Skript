@@ -26,7 +26,7 @@ import org.skriptlang.skript.registration.SyntaxRegistry;
 			if the number argument is greater than the player's balance:
 				fail the command execution with the error message "Your balance is less than $%number argument%!"
 	""")
-@Since("INSERT VERSION")
+@Since("2.17")
 public class EffFailExecution extends Effect implements EventRestrictedSyntax {
 
 	public static void register(SyntaxRegistry syntaxRegistry) {

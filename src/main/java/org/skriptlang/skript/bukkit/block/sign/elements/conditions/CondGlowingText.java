@@ -30,7 +30,7 @@ import java.util.Arrays;
 	If a sign side is not specified, the front side will be used by default.
 	""")
 @Example("if target block has glowing text")
-@Since({"2.8.0", "INSERT VERSION (sign side support)"})
+@Since({"2.8.0", "2.17 (sign side support)"})
 public class CondGlowingText extends PropertyCondition<Object> {
 
 	public static void register(SyntaxRegistry syntaxRegistry) {

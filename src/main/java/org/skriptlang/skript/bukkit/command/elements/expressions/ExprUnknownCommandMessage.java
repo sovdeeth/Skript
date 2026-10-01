@@ -31,7 +31,7 @@ import org.skriptlang.skript.registration.SyntaxRegistry;
 			push the player upwards
 			set the unknown command message to "<red>You are executing too many unknown commands too fast!"
 """)
-@Since("INSERT VERSION")
+@Since("2.17")
 @Events("unknown command execution")
 public class ExprUnknownCommandMessage extends SimpleExpression<Component> implements EventRestrictedSyntax {
 

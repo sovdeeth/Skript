@@ -31,7 +31,7 @@ public class EntityUtils {
 	/**
 	 * @deprecated The minimum supported version of MC 1.21.4, all entities covered in this method now extend {@link Ageable}.
 	 */
-	@Deprecated(since = "INSERT VERSION", forRemoval = true)
+	@Deprecated(since = "2.17", forRemoval = true)
 	public static boolean isAgeable(Entity entity) {
 		return entity instanceof Ageable;
 	}

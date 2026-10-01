@@ -25,7 +25,7 @@ import org.skriptlang.skript.registration.SyntaxRegistry;
 @Example("broadcast \"Flying: %whether player is flying%\"")
 @Example("set whether the player can fly to true")
 @Example("toggle whether the player can pick up items")
-@Since({"2.9.0", "INSERT VERSION (changing)"})
+@Since({"2.9.0", "2.17 (changing)"})
 public class ExprWhether extends SimpleExpression<Boolean> {
 
 	public static void register(SyntaxRegistry syntaxRegistry) {

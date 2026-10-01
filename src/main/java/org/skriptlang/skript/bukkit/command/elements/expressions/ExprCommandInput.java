@@ -33,7 +33,7 @@ import org.skriptlang.skript.registration.SyntaxRegistry;
 			send "<grey><italic>%player% -> You: %text argument%" to player argument
 			send "<grey><italic>You -> %player argument%: %text argument%" to player
 	""")
-@Since("INSERT VERSION")
+@Since("2.17")
 public class ExprCommandInput extends SimpleExpression<Object> implements EventRestrictedSyntax {
 
 	public static void register(SyntaxRegistry syntaxRegistry) {

@@ -20,7 +20,7 @@ import org.skriptlang.skript.registration.SyntaxRegistry;
 @Example("set the item rarity of player's tool to epic")
 @Example("set the item rarity of {_item} to uncommon")
 @Example("set {_rarity} to item rarity of player's held item")
-@Since("INSERT VERSION")
+@Since("2.17")
 public class ExprItemRarity extends SimplePropertyExpression<ItemType, ItemRarity> {
 
 	public static void register(SyntaxRegistry syntaxRegistry) {

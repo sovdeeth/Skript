@@ -11,13 +11,13 @@ import org.jetbrains.annotations.Nullable;
  * @deprecated See {@link org.skriptlang.skript.bukkit.command.elements.structures.StructCommand}.
  * Note that this replacement class is considered internal API.
  */
-@Deprecated(since = "INSERT VERSION", forRemoval = true)
+@Deprecated(since = "2.17", forRemoval = true)
 public class StructCommand extends Structure {
 
 	/**
 	 * @deprecated This field is no longer used internally and should not be relied upon for any behavior.
 	 */
-	@Deprecated(since = "INSERT VERSION", forRemoval = true)
+	@Deprecated(since = "2.17", forRemoval = true)
 	public static final Priority PRIORITY = new Priority(500);
 
 	@Override

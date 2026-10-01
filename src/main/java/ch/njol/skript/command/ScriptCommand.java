@@ -67,7 +67,7 @@ import java.util.UUID;
  * @deprecated There is no direct replacement for this class.
  * The closest alternative is {@link org.skriptlang.skript.bukkit.command.custom.ScriptBrigadierCommand}.
  */
-@Deprecated(since = "INSERT VERSION", forRemoval = true)
+@Deprecated(since = "2.17", forRemoval = true)
 public class ScriptCommand implements TabExecutor {
 
 	private static final String DEFAULT_PREFIX = "skript";
