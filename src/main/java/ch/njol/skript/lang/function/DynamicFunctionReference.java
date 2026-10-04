@@ -1,12 +1,15 @@
 package ch.njol.skript.lang.function;
 
 import ch.njol.skript.ScriptLoader;
+import ch.njol.skript.Skript;
+import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionList;
 import ch.njol.skript.lang.util.common.AnyNamed;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Contract;
 import ch.njol.skript.util.Utils;
+import ch.njol.skript.util.Utils.PluralResult;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,6 +25,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -34,10 +38,11 @@ public class DynamicFunctionReference<Result>
 	implements Contract, Executable<Event, Result[]>, Validated, AnyNamed {
 
 	/**
-	 * Matches the argument list of a stringified function reference, e.g. the '(1, true)'
-	 * of 'myFunction(1, true)', along with anything following it.
+	 * Splits a stringified function reference into its name and, if one was written, the list of
+	 * parameter types selecting an overload, e.g. the 'integer, objects' of
+	 * 'myFunction(integer, objects)'.
 	 */
-	private static final Pattern ARGUMENTS_PATTERN = Pattern.compile("\\(.*\\).*");
+	private static final Pattern SIGNATURE_PATTERN = Pattern.compile("(?<name>[^(]+)\\((?<types>.*)\\).*");
 
 	private final @NotNull String name;
 	private final @Nullable Script source;
@@ -60,17 +65,22 @@ public class DynamicFunctionReference<Result>
 	}
 
 	public DynamicFunctionReference(@NotNull String name, @Nullable Script source) {
+		this(name, source, null);
+	}
+
+	/**
+	 * @param name           The function name.
+	 * @param source         The script the function is expected to be in, if one is known.
+	 * @param parameterTypes The declared types of the parameters of the overload to use, or null
+	 *                       to use whichever overload is found for the name alone.
+	 */
+	public DynamicFunctionReference(@NotNull String name, @Nullable Script source, Class<?> @Nullable [] parameterTypes) {
 		this.name = name;
-		Function<? extends Result> function;
-		if (source != null) {
-			// will return the first function found that matches name.
-			// TODO: add a way to specify param types
-			//noinspection unchecked
-			function = (Function<? extends Result>) Functions.getFunction(name, source.getConfig().getFileName());
-		} else {
-			//noinspection unchecked
-			function = (Function<? extends Result>) Functions.getFunction(name, null);
-		}
+		String namespace = source != null ? source.getConfig().getFileName() : null;
+
+		//noinspection unchecked
+		Function<? extends Result> function =
+			(Function<? extends Result>) findFunction(name, namespace, parameterTypes);
 
 		this.resolved = function != null;
 		this.function = new WeakReference<>(function);
@@ -87,6 +97,80 @@ public class DynamicFunctionReference<Result>
 			this.signature = null;
 			this.source = null;
 		}
+	}
+
+	/**
+	 * Finds the function to use for a name, optionally restricted to the overload declaring
+	 * exactly {@code parameterTypes}.
+	 *
+	 * @param name           The function name.
+	 * @param namespace      The namespace to look in, or null for global functions only.
+	 * @param parameterTypes The declared parameter types of the overload to use, or null for any.
+	 * @return The function, or null if there is none.
+	 */
+	private static @Nullable Function<?> findFunction(
+		@NotNull String name, @Nullable String namespace, Class<?> @Nullable [] parameterTypes
+	) {
+		if (parameterTypes == null) {
+			return Functions.getFunction(name, namespace);
+		}
+
+		FunctionRegistry registry = FunctionRegistry.getRegistry();
+		for (Signature<?> candidate : registry.getSignatures(namespace, name)) {
+			if (Arrays.equals(declaredTypes(candidate), parameterTypes)) {
+				return registry.getFunction(candidate);
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * @param signature The signature.
+	 * @return The declared types of the parameters of {@code signature}, in order.
+	 */
+	private static Class<?>[] declaredTypes(Signature<?> signature) {
+		return Arrays.stream(signature.parameters().all())
+			.map(Parameter::type)
+			.toArray(Class<?>[]::new);
+	}
+
+	/**
+	 * Parses the parameter type list of a stringified function reference, e.g. the
+	 * 'integer, objects' of 'myFunction(integer, objects)', into the declared parameter types it
+	 * names. This is the inverse of how a signature is written out in an error message.
+	 *
+	 * @param types The type list. Must not be blank.
+	 * @return The declared types, or null if any of them could not be recognised.
+	 */
+	private static Class<?> @Nullable [] parseParameterTypes(@NotNull String types) {
+		// a type name contains no commas, and the function ClassInfo is only parsed in contexts
+		// where SkriptParser#next offers no nesting protection, so a plain split is all we can do
+		String[] split = types.split(",", -1);
+		Class<?>[] parsed = new Class<?>[split.length];
+
+		for (int i = 0; i < split.length; i++) {
+			String type = split[i].trim();
+			if (type.isEmpty()) {
+				Skript.error("Missing a parameter type in '" + types + "'");
+				return null;
+			}
+
+			ClassInfo<?> classInfo = Classes.getClassInfoFromUserInput(type);
+			PluralResult plural = Utils.isPlural(type);
+			if (classInfo == null) {
+				classInfo = Classes.getClassInfoFromUserInput(plural.updated());
+			}
+
+			if (classInfo == null) {
+				Skript.error("Cannot recognise the type '" + type + "'");
+				return null;
+			}
+
+			parsed[i] = plural.plural() ? classInfo.getC().arrayType() : classInfo.getC();
+		}
+
+		return parsed;
 	}
 
 	public @Nullable Script source() {
@@ -234,11 +318,24 @@ public class DynamicFunctionReference<Result>
 	 * @return A function reference, if one is available.
 	 */
 	public static @Nullable DynamicFunctionReference<?> resolveFunction(String name, @Nullable Script script) {
-		if (name.contains("(") && name.contains(")"))
-			name = ARGUMENTS_PATTERN.matcher(name).replaceAll("").trim();
-		// In the future, if function overloading is supported, we could even use the header
-		// to specify parameter types (e.g. "myFunction(text, player)"
-		DynamicFunctionReference<Object> reference = new DynamicFunctionReference<>(name, script);
+		Class<?>[] parameterTypes = null;
+
+		Matcher matcher = SIGNATURE_PATTERN.matcher(name);
+		if (matcher.matches()) {
+			String types = matcher.group("types");
+			name = matcher.group("name").trim();
+
+			// 'myFunction()' has always meant the function of that name, whatever its parameters,
+			// so only a non-empty list selects a particular overload
+			if (!types.isBlank()) {
+				parameterTypes = parseParameterTypes(types);
+				if (parameterTypes == null) {
+					return null;
+				}
+			}
+		}
+
+		DynamicFunctionReference<Object> reference = new DynamicFunctionReference<>(name, script, parameterTypes);
 		if (!reference.valid())
 			return null;
 		return reference;

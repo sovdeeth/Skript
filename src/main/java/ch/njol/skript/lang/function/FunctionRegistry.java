@@ -431,6 +431,33 @@ public final class FunctionRegistry implements Registry<Function<?>> {
 	}
 
 	/**
+	 * Gets the function implementing {@code signature}.
+	 * <p>
+	 * Unlike {@link #getFunction(String, String, Class[])} this considers no conversion between
+	 * argument types, so it returns the implementation of exactly that overload rather than the
+	 * one which best matches a call.
+	 * </p>
+	 *
+	 * @param signature The signature to get the function of.
+	 * @return The function, or null if no function with that signature has been loaded.
+	 */
+	public @Nullable Function<?> getFunction(@NotNull Signature<?> signature) {
+		Preconditions.checkNotNull(signature, "signature cannot be null");
+
+		Namespace namespace;
+		if (signature.isLocal()) {
+			namespace = namespaces.get(new NamespaceIdentifier(signature.namespace()));
+		} else {
+			namespace = namespaces.get(GLOBAL_NAMESPACE);
+		}
+
+		if (namespace == null) {
+			return null;
+		}
+
+		return namespace.functions.get(FunctionIdentifier.of(signature));
+	}
+	/**
 	 * Gets every signature declared in {@code namespace}.
 	 * <p>
 	 * Unlike {@link #getSignatures(String, String)} this is not about what is visible from a
