@@ -1412,7 +1412,7 @@ public class ScriptLoader {
 	/**
 	 * Searches the loaded scripts for the one with the provided name.
 	 * <p>
-	 * Unlike {@link #getScriptFromName(String)} this never touches the filesystem, but it can
+	 * Unlike {@link #getScriptFileFromName(String)} this never touches the filesystem, but it can
 	 * only find scripts that are currently loaded. Prefer this method when a {@link Script} is
 	 * what you need, as the file-based lookup requires several filesystem operations.
 	 * </p>

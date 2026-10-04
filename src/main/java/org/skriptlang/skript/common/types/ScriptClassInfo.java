@@ -56,7 +56,7 @@ public class ScriptClassInfo extends ClassInfo<Script> {
 		public @Nullable Script parse(final String name, final ParseContext context) {
 			return switch (context) {
 				case PARSE, COMMAND -> {
-					@Nullable File file = ScriptLoader.getScriptFromName(name);
+					@Nullable File file = ScriptLoader.getScriptFileFromName(name);
 					if (file == null || !file.isFile())
 						yield null;
 					yield ScriptLoader.getScript(file);
