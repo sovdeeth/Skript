@@ -103,6 +103,26 @@ public final class FunctionBinder<T> {
 	public <R> @Nullable FunctionReference<R> resolve(
 		@Nullable String namespace, @NotNull String name, @NotNull Argument<T>[] arguments
 	) {
+		return resolve(namespace, name, arguments, null);
+	}
+
+	/**
+	 * Attempts to resolve a function call to a single {@link FunctionReference}, considering only
+	 * the overload declaring exactly {@code onlyParameterTypes}.
+	 *
+	 * @param namespace          The namespace to resolve local functions in, or null for global
+	 *                           functions only.
+	 * @param name               The function name.
+	 * @param arguments          The passed arguments.
+	 * @param onlyParameterTypes The declared parameter types of the only overload to consider, or
+	 *                           null to consider every overload.
+	 * @param <R>                The return type of the function.
+	 * @return The matched reference, or null if none could be matched.
+	 */
+	public <R> @Nullable FunctionReference<R> resolve(
+		@Nullable String namespace, @NotNull String name, @NotNull Argument<T>[] arguments,
+		Class<?> @Nullable [] onlyParameterTypes
+	) {
 		// avoid assigning values to a parameter multiple times
 		Set<String> named = new HashSet<>();
 		for (Argument<T> argument : arguments) {
@@ -121,6 +141,12 @@ public final class FunctionBinder<T> {
 
 		// try to find a matching signature to get which types to parse args with
 		Set<Signature<?>> options = FunctionRegistry.getRegistry().getSignatures(namespace, name);
+
+		if (onlyParameterTypes != null) {
+			options = options.stream()
+				.filter(option -> Arrays.equals(declaredTypes(option), onlyParameterTypes))
+				.collect(Collectors.toUnmodifiableSet());
+		}
 
 		if (options.isEmpty()) {
 			doesNotExist(name, arguments, options);
@@ -517,6 +543,16 @@ public final class FunctionBinder<T> {
 		}
 
 		return references;
+	}
+
+	/**
+	 * @param signature The signature.
+	 * @return The declared types of the parameters of {@code signature}, in order.
+	 */
+	public static Class<?>[] declaredTypes(@NotNull Signature<?> signature) {
+		return Arrays.stream(signature.parameters().all())
+			.map(Parameter::type)
+			.toArray(Class<?>[]::new);
 	}
 
 	/**

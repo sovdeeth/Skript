@@ -1,0 +1,84 @@
+using script reflection
+
+# arities, so that a spread can pick between them by how many values it produces
+function dfrCountOv(a: number) :: text:
+	return "one"
+
+function dfrCountOv(a: number, b: number) :: text:
+	return "two"
+
+function dfrCountOv(a: number, b: number, c: number) :: text:
+	return "three"
+
+# an exact arity against one which can only be reached by spreading
+function dfrPrecOv(a: number, b: numbers) :: text:
+	return "greedy"
+
+function dfrPrecOv(a: number, b: number, c: number) :: text:
+	return "exact"
+
+# the same shape, distinguished only by the type of the first parameter
+function dfrTypeOv(a: number, b: numbers) :: text:
+	return "number first"
+
+function dfrTypeOv(a: text, b: numbers) :: text:
+	return "text first"
+
+# both of these can take three arguments once something is spread
+function dfrAmbigOv(a: objects, b: number) :: text:
+	return "list first"
+
+function dfrAmbigOv(a: number, b: objects) :: text:
+	return "list second"
+
+# a list overload alongside one which needs several arguments
+function dfrListOv(a: number, b: number) :: text:
+	return "two singles"
+
+function dfrListOv(ns: numbers) :: text:
+	return "list"
+
+test "an exact arity is preferred over spreading":
+	# three arguments fit the three parameter overload exactly, so nothing is spread
+	assert (result of (function "dfrPrecOv") with arguments 1, 2 and 3) is "exact" with "spreading was preferred over an exact arity"
+
+	# four arguments fit no overload exactly, so the list parameter takes the surplus
+	assert (result of (function "dfrPrecOv") with arguments 1, 2, 3 and 4) is "greedy" with "the surplus arguments were not spread"
+
+test "spreading picks the overload matching the argument types":
+	assert (result of (function "dfrTypeOv") with arguments 1, 2 and 3) is "number first" with "wrong overload chosen for a leading number"
+	assert (result of (function "dfrTypeOv") with arguments "a", 2 and 3) is "text first" with "wrong overload chosen for a leading text"
+
+test "spreading which fits several overloads is rejected":
+	# both overloads can take three arguments, so neither may be chosen arbitrarily
+	assert (result of (function "dfrAmbigOv") with arguments 1, 2 and 3) doesn't exist with "an ambiguous spread was resolved anyway"
+
+test "how many values a list argument holds picks the overload":
+	# the spread happens per execution, so the overload depends on the values, not the call
+	set {_values::*} to 1
+	assert (result of (function "dfrCountOv") with arguments {_values::*}) is "one" with "one value should reach the one parameter overload"
+
+	set {_values::*} to 1 and 2
+	assert (result of (function "dfrCountOv") with arguments {_values::*}) is "two" with "two values should reach the two parameter overload"
+
+	set {_values::*} to 1, 2 and 3
+	assert (result of (function "dfrCountOv") with arguments {_values::*}) is "three" with "three values should reach the three parameter overload"
+
+	set {_values::*} to 1, 2, 3 and 4
+	assert (result of (function "dfrCountOv") with arguments {_values::*}) doesn't exist with "four values fit no overload"
+
+test "a list overload takes a list argument whole rather than spreading it":
+	# spreading is a last resort, so an overload which accepts the list as one argument wins
+	set {_values::*} to 1 and 2
+	assert (result of (function "dfrListOv") with arguments {_values::*}) is "list" with "the list argument should have filled the list overload"
+
+	set {_values::*} to 1, 2 and 3
+	assert (result of (function "dfrListOv") with arguments {_values::*}) is "list" with "the list overload should take any number of values"
+
+test "spreading respects an explicitly selected overload":
+	# with the two parameter overload pinned, a three value list no longer fits
+	set {_values::*} to 1 and 2
+	assert (result of (function "dfrCountOv(number, number)") with arguments {_values::*}) is "two" with "the pinned overload was not used"
+
+	set {_values::*} to 1, 2 and 3
+	assert (result of (function "dfrCountOv(number, number)") with arguments {_values::*}) doesn't exist with "the pin was ignored in favour of another overload"

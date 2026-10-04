@@ -5,7 +5,10 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionList;
+import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.skript.lang.util.common.AnyNamed;
+import ch.njol.skript.log.RetainingLogHandler;
+import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Contract;
 import ch.njol.skript.util.Utils;
@@ -13,25 +16,35 @@ import ch.njol.skript.util.Utils.PluralResult;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.UnknownNullability;
-import org.skriptlang.skript.common.function.Parameter;
+import org.skriptlang.skript.common.function.FunctionBinder;
+import org.skriptlang.skript.common.function.FunctionBinder.Mode;
+import org.skriptlang.skript.common.function.FunctionReference;
+import org.skriptlang.skript.common.function.FunctionReference.Argument;
+import org.skriptlang.skript.common.function.FunctionReference.ArgumentType;
 import org.skriptlang.skript.lang.script.Script;
 import org.skriptlang.skript.util.Executable;
 import org.skriptlang.skript.util.Validated;
 
-import java.lang.ref.Reference;
-import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * A partial reference to a Skript function.
  * This reference knows some of its information in advance (such as the function's name)
  * but will not be resolved until it receives inputs for the first time.
+ * <p>
+ * Which overload of a function this refers to is therefore only decided once arguments are
+ * supplied, unless the parameter types were given when the reference was obtained.
+ * </p>
+ *
  * @param <Result> The return type of this function, if known.
  */
 public class DynamicFunctionReference<Result>
@@ -45,19 +58,40 @@ public class DynamicFunctionReference<Result>
 	private static final Pattern SIGNATURE_PATTERN = Pattern.compile("(?<name>[^(]+)\\((?<types>.*)\\).*");
 
 	private final @NotNull String name;
-	private final @Nullable Script source;
-	private final Reference<Function<? extends Result>> function;
-	private final @UnknownNullability Signature<? extends Result> signature;
+
+	/**
+	 * The namespace local functions are resolved in, or null to only resolve global functions.
+	 */
+	private final @Nullable String namespace;
+
+	/**
+	 * The declared parameter types of the only overload this may use, or null if whichever
+	 * overload the supplied arguments select may be used.
+	 */
+	private final Class<?> @Nullable [] parameterTypes;
+
+	/**
+	 * The namespace of the signature this resolves to, which is where the function was declared
+	 * rather than where it was looked up from.
+	 */
+	private final @Nullable String declaredIn;
+
 	private final Validated validator = Validated.validator();
-	private final Map<Input, Expression<?>> checkedInputs = new HashMap<>();
-	private final boolean resolved;
+
+	/**
+	 * How a particular set of argument expressions binds to this function. Binding depends only
+	 * on the expressions, not on the values they produce, so it is worked out once per input.
+	 */
+	private final Map<Input, Binding> bindings = new HashMap<>();
 
 	public DynamicFunctionReference(Function<? extends Result> function) {
-		this.resolved = true;
-		this.function = new WeakReference<>(function);
+		Signature<? extends Result> signature = function.getSignature();
+
 		this.name = function.getName();
-		this.signature = function.getSignature();
-		this.source = ScriptLoader.getLoadedScriptFromName(signature.namespace());
+		this.namespace = signature.namespace();
+		// a reference to a known function refers to exactly that overload
+		this.parameterTypes = FunctionBinder.declaredTypes(signature);
+		this.declaredIn = signature.namespace();
 	}
 
 	public DynamicFunctionReference(@NotNull String name) {
@@ -72,67 +106,48 @@ public class DynamicFunctionReference<Result>
 	 * @param name           The function name.
 	 * @param source         The script the function is expected to be in, if one is known.
 	 * @param parameterTypes The declared types of the parameters of the overload to use, or null
-	 *                       to use whichever overload is found for the name alone.
+	 *                       to use whichever overload the supplied arguments select.
 	 */
 	public DynamicFunctionReference(@NotNull String name, @Nullable Script source, Class<?> @Nullable [] parameterTypes) {
 		this.name = name;
-		String namespace = source != null ? source.getConfig().getFileName() : null;
-
-		//noinspection unchecked
-		Function<? extends Result> function =
-			(Function<? extends Result>) findFunction(name, namespace, parameterTypes);
-
-		this.resolved = function != null;
-		this.function = new WeakReference<>(function);
-		if (resolved) {
-			this.signature = function.getSignature();
-			// A local lookup may still fall back to a global function from another script,
-			// so only reuse the provided script when the function actually came from it.
-			if (source != null && source.getConfig().getFileName().equals(signature.namespace())) {
-				this.source = source;
-			} else {
-				this.source = ScriptLoader.getLoadedScriptFromName(signature.namespace());
-			}
-		} else {
-			this.signature = null;
-			this.source = null;
-		}
+		this.namespace = source != null ? source.getConfig().getFileName() : null;
+		this.parameterTypes = parameterTypes;
+		this.declaredIn = declaringNamespace(candidates());
 	}
 
 	/**
-	 * Finds the function to use for a name, optionally restricted to the overload declaring
-	 * exactly {@code parameterTypes}.
-	 *
-	 * @param name           The function name.
-	 * @param namespace      The namespace to look in, or null for global functions only.
-	 * @param parameterTypes The declared parameter types of the overload to use, or null for any.
-	 * @return The function, or null if there is none.
+	 * @return The signatures this may resolve to.
 	 */
-	private static @Nullable Function<?> findFunction(
-		@NotNull String name, @Nullable String namespace, Class<?> @Nullable [] parameterTypes
-	) {
+	private Set<Signature<?>> candidates() {
+		Set<Signature<?>> candidates = FunctionRegistry.getRegistry().getSignatures(namespace, name);
 		if (parameterTypes == null) {
-			return Functions.getFunction(name, namespace);
+			return candidates;
 		}
 
-		FunctionRegistry registry = FunctionRegistry.getRegistry();
-		for (Signature<?> candidate : registry.getSignatures(namespace, name)) {
-			if (Arrays.equals(declaredTypes(candidate), parameterTypes)) {
-				return registry.getFunction(candidate);
-			}
-		}
-
-		return null;
+		return candidates.stream()
+			.filter(candidate -> Arrays.equals(FunctionBinder.declaredTypes(candidate), parameterTypes))
+			.collect(Collectors.toUnmodifiableSet());
 	}
 
 	/**
-	 * @param signature The signature.
-	 * @return The declared types of the parameters of {@code signature}, in order.
+	 * Picks the namespace to report as the source of this reference. A local lookup may fall back
+	 * to a global function declared elsewhere, so this prefers a candidate declared in the
+	 * namespace that was looked up.
+	 *
+	 * @param candidates The candidate signatures.
+	 * @return The namespace the function was declared in, or null if that is not known.
 	 */
-	private static Class<?>[] declaredTypes(Signature<?> signature) {
-		return Arrays.stream(signature.parameters().all())
-			.map(Parameter::type)
-			.toArray(Class<?>[]::new);
+	private @Nullable String declaringNamespace(Set<Signature<?>> candidates) {
+		String fallback = null;
+		for (Signature<?> candidate : candidates) {
+			if (Objects.equals(candidate.namespace(), namespace)) {
+				return namespace;
+			}
+			if (fallback == null) {
+				fallback = candidate.namespace();
+			}
+		}
+		return fallback;
 	}
 
 	/**
@@ -174,7 +189,7 @@ public class DynamicFunctionReference<Result>
 	}
 
 	public @Nullable Script source() {
-		return source;
+		return ScriptLoader.getLoadedScriptFromName(declaredIn);
 	}
 
 	@Override
@@ -184,39 +199,209 @@ public class DynamicFunctionReference<Result>
 
 	@Override
 	public boolean isSingle(Expression<?>... arguments) {
-		if (!resolved)
+		FunctionReference<?> reference = binding(new Input(arguments)).reference();
+		if (reference == null) {
 			return true;
-		return signature.getContract() != null
-				? signature.getContract().isSingle(arguments)
-				: signature.isSingle();
+		}
+		return reference.isSingle();
 	}
 
 	@Override
 	public @Nullable Class<?> getReturnType(Expression<?>... arguments) {
-		if (!resolved)
+		FunctionReference<?> reference = binding(new Input(arguments)).reference();
+		if (reference == null) {
 			return Object.class;
-		if (signature.getContract() != null)
-			return signature.getContract().getReturnType(arguments);
-		Function<? extends Result> function = this.function.get();
-		if (function != null && function.getReturnType() != null)
-			return function.getReturnType().getC();
-		return null;
+		}
+
+		Contract contract = reference.signature().contract();
+		if (contract != null) {
+			return contract.getReturnType(arguments);
+		}
+		return reference.signature().returnType();
+	}
+
+	/**
+	 * Executes this function with the given arguments.
+	 *
+	 * @param event The event to execute with.
+	 * @param input The argument expressions, as collected when the caller was parsed.
+	 * @return The returned values, or null if the arguments are not acceptable or execution failed.
+	 */
+	public Result @Nullable [] execute(Event event, Input input) {
+		if (!this.valid()) {
+			return null;
+		}
+
+		Binding binding = binding(input);
+		FunctionReference<?> reference = binding.reference();
+
+		if (reference == null) {
+			if (binding.spread() < 0) {
+				return null;
+			}
+			// the arguments only fit once the values of one of them are spread across several
+			// parameters, which cannot be known before they have been evaluated
+			reference = spread(event, input, binding.spread());
+			if (reference == null) {
+				return null;
+			}
+		}
+
+		try {
+			return normalise(reference.execute(event));
+		} finally {
+			// FunctionReference#execute does not do this itself, and a script function asserts
+			// that its return value was reset before it is set again
+			org.skriptlang.skript.common.function.Function<?> function = reference.function();
+			if (function != null) {
+				function.resetReturnValue();
+			}
+		}
+	}
+
+	/**
+	 * @param result The value a function returned.
+	 * @return That value as an array, since a function may return either a single value or several.
+	 */
+	private Result @Nullable [] normalise(@Nullable Object result) {
+		if (result == null) {
+			return null;
+		}
+
+		//noinspection unchecked
+		return result instanceof Object[] array ? (Result[]) array : (Result[]) new Object[]{result};
+	}
+
+	/**
+	 * Binds the arguments of {@code input} by spreading the values of the argument at
+	 * {@code index} across several parameters.
+	 * <p>
+	 * This exists so that passing a single list of values to a function of several parameters
+	 * keeps working. How many parameters those values fill is only known once they have been
+	 * evaluated, so unlike every other binding this one is worked out for each execution.
+	 * </p>
+	 *
+	 * @param event The event to evaluate with.
+	 * @param input The argument expressions.
+	 * @param index The index of the argument whose values are spread.
+	 * @return The bound reference, or null if the values do not fit any overload either.
+	 */
+	private @Nullable FunctionReference<?> spread(Event event, Input input, int index) {
+		Expression<?>[] expressions = input.parameters();
+
+		List<Argument<Expression<?>>> arguments = new ArrayList<>(expressions.length);
+		for (int i = 0; i < expressions.length; i++) {
+			if (i != index) {
+				arguments.add(argument(expressions[i]));
+				continue;
+			}
+
+			for (Object value : expressions[i].getArray(event)) {
+				arguments.add(argument(new SimpleLiteral<>(value, true)));
+			}
+		}
+
+		//noinspection unchecked
+		Argument<Expression<?>>[] array = arguments.toArray(new Argument[0]);
+		return FunctionBinder.forExpressions(Mode.GREEDY).resolve(namespace, name, array, parameterTypes);
+	}
+
+	/**
+	 * @param input The argument expressions.
+	 * @return How those arguments bind to this function, working it out if it is not yet known.
+	 */
+	private Binding binding(Input input) {
+		Binding binding = bindings.get(input);
+		if (binding != null) {
+			return binding;
+		}
+
+		binding = bind(input);
+		bindings.put(input, binding);
+		return binding;
+	}
+
+	/**
+	 * Works out how the arguments of {@code input} bind to this function.
+	 *
+	 * @param input The argument expressions.
+	 * @return The binding, which may be {@link Binding#NONE}.
+	 */
+	private Binding bind(Input input) {
+		Expression<?>[] expressions = input.parameters();
+
+		//noinspection unchecked
+		Argument<Expression<?>>[] arguments = (Argument<Expression<?>>[]) new Argument[expressions.length];
+		for (int i = 0; i < expressions.length; i++) {
+			arguments[i] = argument(expressions[i]);
+		}
+
+		// an argument which is not single may have to be spread across several parameters, which
+		// can only be decided once its values are known, so a failure here is not yet final
+		int spread = spreadable(expressions);
+
+		try (RetainingLogHandler log = SkriptLogger.startRetainingLog()) {
+			FunctionReference<?> reference =
+				FunctionBinder.forExpressions(Mode.GREEDY).resolve(namespace, name, arguments, parameterTypes);
+
+			if (reference != null) {
+				discard(log);
+				return new Binding(reference, -1);
+			}
+
+			if (spread >= 0) { // the spread may still bind, so do not report this failure
+				discard(log);
+				return new Binding(null, spread);
+			}
+
+			log.printErrors();
+			return Binding.NONE;
+		}
+	}
+
+	/**
+	 * Throws away everything a speculative binding logged.
+	 *
+	 * @param log The log to discard.
+	 */
+	private static void discard(RetainingLogHandler log) {
+		log.clear();
+		// clearing alone does not count as having handled the log, and the handler complains when
+		// it is stopped without having been told what to do with it
+		log.printLog();
+	}
+
+	/**
+	 * @param expressions The argument expressions.
+	 * @return The index of the only argument whose values could be spread across several
+	 * 	parameters, or -1 if there is not exactly one such argument.
+	 */
+	private static int spreadable(Expression<?>[] expressions) {
+		int spread = -1;
+		for (int i = 0; i < expressions.length; i++) {
+			if (expressions[i].isSingle()) {
+				continue;
+			}
+			if (spread >= 0) { // with more than one, which to spread would be arbitrary
+				return -1;
+			}
+			spread = i;
+		}
+		return spread;
+	}
+
+	private static Argument<Expression<?>> argument(Expression<?> expression) {
+		return new Argument<>(ArgumentType.UNNAMED, null, expression);
 	}
 
 	@Override
 	public Result @Nullable [] execute(Event event, Object... arguments) {
-		if (!this.valid())
-			return null;
-		Function<? extends Result> function = this.function.get();
-		if (function == null)
-			return null;
-		// We shouldn't trust the caller provided an array of arrays
-		Object[][] consigned = FunctionReference.consign(arguments);
-		try {
-			return function.execute(consigned);
-		} finally {
-			function.resetReturnValue();
+		Expression<?>[] expressions = new Expression[arguments.length];
+		for (int i = 0; i < arguments.length; i++) {
+			expressions[i] = new SimpleLiteral<>(arguments[i], true);
 		}
+
+		return execute(event, new Input(expressions));
 	}
 
 	@Override
@@ -226,18 +411,12 @@ public class DynamicFunctionReference<Result>
 
 	@Override
 	public boolean valid() {
-		return resolved && validator.valid()
-			&& function.get() != null // function was garbage-collected
-			// Deliberately checks the config rather than calling Script#valid(),
-			// which additionally stats the script file on every call.
-			// We should revisit script validity in general since it's technically fine
-			// for the script to not have a File, but for this case all we care about is whether
-			// the config is still loaded and valid.
-			&& (source == null || source.getConfig().valid());
+		return validator.valid() && !candidates().isEmpty();
 	}
 
 	@Override
 	public String toString() {
+		Script source = source();
 		if (source != null)
 			return name + "() from " + Classes.toString(source);
 		return name + "()";
@@ -245,52 +424,30 @@ public class DynamicFunctionReference<Result>
 
 	/**
 	 * Validates whether dynamic inputs are appropriate for the resolved function.
-	 * If the inputs are acceptable, this will collect them into an expression list
-	 * (the output of which can be passed directly to the task).
 	 *
 	 * @param parameters The input types to check
 	 * @return A combined expression list, if these inputs are appropriate for the function
+	 * @deprecated Use {@link #execute(Event, Input)}, which binds each argument to the parameter
+	 * 	it belongs to instead of collapsing them all into one expression.
 	 */
+	@Deprecated(forRemoval = true, since = "2.18")
 	public @Nullable Expression<?> validate(Expression<?>[] parameters) {
-		Input input = new Input(parameters);
-		return this.validate(input);
+		return this.validate(new Input(parameters));
 	}
 
+	/**
+	 * @deprecated Use {@link #execute(Event, Input)}, which binds each argument to the parameter
+	 * 	it belongs to instead of collapsing them all into one expression.
+	 */
+	@Deprecated(forRemoval = true, since = "2.18")
 	public @Nullable Expression<?> validate(Input input) {
-		if (checkedInputs.containsKey(input))
-			return checkedInputs.get(input);
-		this.checkedInputs.put(input, null); // failure case
-		if (signature == null)
+		if (!binding(input).bindable()) {
 			return null;
-		boolean varArgs = signature.getMaxParameters() == 1 && !signature.parameters().getFirst().isSingle();
-		Expression<?>[] inputParameters = input.parameters();
-		// Too many parameters
-		if (inputParameters.length > signature.getMaxParameters() && !varArgs)
-			return null;
-		// Not enough parameters
-		else if (inputParameters.length < signature.getMinParameters())
-			return null;
-		Expression<?>[] checkedInputParameters = new Expression[inputParameters.length];
-
-		// Check parameter types
-		for (int i = 0; i < inputParameters.length; i++) {
-			Parameter<?> parameter = signature.parameters().all()[varArgs ? 0 : i];
-
-			Class<?> target = Utils.getComponentType(parameter.type());
-			//noinspection unchecked
-			Expression<?> expression = inputParameters[i].getConvertedExpression(target);
-			if (expression == null) {
-				return null;
-			} else if (parameter.isSingle() && !expression.isSingle()) {
-				return null;
-			}
-			checkedInputParameters[i] = expression;
 		}
 
-		// if successful, replace with our known result
-		ExpressionList<?> result = new ExpressionList<>(checkedInputParameters, Object.class, true);
-		this.checkedInputs.put(input, result);
-		return result;
+		// the arguments are acceptable, but which parameter each of them belongs to is only known
+		// to the binding, so handing them back as one expression loses that
+		return new ExpressionList<>(input.parameters(), Object.class, true);
 	}
 
 	/**
@@ -342,9 +499,33 @@ public class DynamicFunctionReference<Result>
 	}
 
 	/**
+	 * How a set of argument expressions binds to a function.
+	 *
+	 * @param reference The reference the arguments were bound to, or null if they could not be
+	 *                  bound without knowing their values.
+	 * @param spread    The index of the argument whose values must be spread across several
+	 *                  parameters for the arguments to fit, or -1 if there is none.
+	 */
+	private record Binding(@Nullable FunctionReference<?> reference, int spread) {
+
+		/**
+		 * The arguments do not fit this function at all.
+		 */
+		private static final Binding NONE = new Binding(null, -1);
+
+		/**
+		 * @return Whether the arguments fit, possibly only once their values are known.
+		 */
+		private boolean bindable() {
+			return reference != null || spread >= 0;
+		}
+
+	}
+
+	/**
 	 * An index-linking key for a particular set of input expressions.
-	 * Validation only needs to be done once for a set of parameter types,
-	 * so this is used to prevent re-validation.
+	 * Binding only needs to be done once for a set of parameter types,
+	 * so this is used to prevent re-binding.
 	 */
 	public static class Input {
 		private final Class<?>[] types;

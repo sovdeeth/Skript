@@ -9,8 +9,7 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.function.DynamicFunctionReference;
-import ch.njol.skript.lang.function.Functions;
-import ch.njol.skript.lang.function.Namespace;
+import ch.njol.skript.lang.function.FunctionRegistry;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
 import ch.njol.util.coll.CollectionUtils;
@@ -88,10 +87,8 @@ public class ExprFunction extends SimpleExpression<DynamicFunctionReference> imp
 			case 2 -> {
 				if (script == null)
 					yield CollectionUtils.array();
-				@Nullable Namespace namespace = Functions.getScriptNamespace(script.getConfig().getFileName());
-				if (namespace == null)
-					yield CollectionUtils.array();
-				yield namespace.getFunctions().stream()
+				yield FunctionRegistry.getRegistry()
+					.getDeclaredFunctions(script.getConfig().getFileName()).stream()
 					.map(DynamicFunctionReference::new)
 					.toArray(DynamicFunctionReference[]::new);
 			}

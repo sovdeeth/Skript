@@ -1,0 +1,74 @@
+using script reflection
+
+# selecting an overload from the arguments alone, with each argument filling one parameter
+
+function dfrMatch(n: number) :: text:
+	return "number"
+
+function dfrMatch(t: text) :: text:
+	return "text"
+
+function dfrArity() :: text:
+	return "none"
+
+function dfrArity(a: number) :: text:
+	return "one"
+
+function dfrArity(a: number, b: number) :: text:
+	return "two"
+
+function dfrOrder(a: number, b: text) :: text:
+	return "number text"
+
+function dfrOrder(a: text, b: number) :: text:
+	return "text number"
+
+function dfrWide(o: object) :: text:
+	return "object"
+
+function dfrWide(n: number) :: text:
+	return "number"
+
+test "the argument types pick the overload":
+	assert (result of (function "dfrMatch") with arguments 1) is "number" with "a number argument should pick the number overload"
+	assert (result of (function "dfrMatch") with arguments "hello") is "text" with "a text argument should pick the text overload"
+
+test "the number of arguments picks the overload":
+	assert (result of (function "dfrArity")) is "none" with "no arguments should pick the parameterless overload"
+	assert (result of (function "dfrArity") with arguments 1) is "one" with "one argument should pick the one parameter overload"
+	assert (result of (function "dfrArity") with arguments 1 and 2) is "two" with "two arguments should pick the two parameter overload"
+	assert (result of (function "dfrArity") with arguments 1, 2 and 3) doesn't exist with "three arguments fit no overload"
+
+test "the order of the arguments picks the overload":
+	assert (result of (function "dfrOrder") with arguments 1 and "hello") is "number text" with "wrong overload for a number then a text"
+	assert (result of (function "dfrOrder") with arguments "hello" and 1) is "text number" with "wrong overload for a text then a number"
+
+test "an argument of unknown type cannot pick between overloads":
+	# a variable has no known type, so either overload would do and neither may be chosen
+	set {_unknown} to 1
+	assert (result of (function "dfrMatch") with arguments {_unknown}) doesn't exist with "an ambiguous argument was resolved anyway"
+
+test "the type of an argument can be stated to pick an overload":
+	set {_unknown} to 1
+	assert (result of (function "dfrMatch") with arguments (number within {_unknown})) is "number" with "stating the type did not pick the number overload"
+
+	set {_other} to "hello"
+	assert (result of (function "dfrMatch") with arguments (text within {_other})) is "text" with "stating the type did not pick the text overload"
+
+test "an overload whose parameter is a supertype is ambiguous":
+	# there is no preference for the most specific parameter, so a value fitting both overloads
+	# cannot pick between them
+	assert (result of (function "dfrWide") with arguments 1) doesn't exist with "a supertype pair was resolved anyway"
+
+	parse:
+		dfrWide(1)
+
+	assert last parse logs is set with "a static call should be ambiguous in the same way"
+	assert first element of last parse logs contains "Cannot determine which function named 'dfrWide' to call" with "unexpected error for a supertype pair"
+
+test "static calls pick the overload the same way":
+	parse:
+		dfrMatch({_unknown})
+
+	assert last parse logs is set with "an ambiguous argument should be an error"
+	assert first element of last parse logs contains "Cannot determine which function named 'dfrMatch' to call" with "unexpected error for an ambiguous argument"

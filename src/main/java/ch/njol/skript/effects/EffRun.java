@@ -64,13 +64,15 @@ public class EffRun extends Effect implements ReflectionExperimentSyntax {
 		Executable task = executable.getSingle(event);
 		if (task == null)
 			return;
-		Object[] arguments;
 		if (task instanceof DynamicFunctionReference<?> reference) {
-			Expression<?> validated = reference.validate(input);
-			if (validated == null)
-				return;
-			arguments = validated.getArray(event);
-		} else if (hasArguments) {
+			// a function binds each argument to the parameter it belongs to, so it is handed the
+			// argument expressions rather than a flat list of all of their values
+			reference.execute(event, input);
+			return;
+		}
+
+		Object[] arguments;
+		if (hasArguments) {
 			arguments = this.arguments.getArray(event);
 		} else {
 			arguments = new Object[0];

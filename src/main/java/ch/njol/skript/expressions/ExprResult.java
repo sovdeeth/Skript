@@ -63,14 +63,16 @@ public class ExprResult extends PropertyExpression<Executable<Event, Object>, Ob
 	@Override
 	protected Object[] get(Event event, Executable<Event, Object>[] source) {
 		for (Executable<Event, Object> task : source) {
-			Object[] arguments;
 			//noinspection rawtypes
 			if (task instanceof DynamicFunctionReference reference) {
-				Expression<?> validated = reference.validate(input);
-				if (validated == null)
-					return new Object[0];
-				arguments = validated.getArray(event);
-			} else if (hasArguments) {
+				// a function binds each argument to the parameter it belongs to, so it is handed
+				// the argument expressions rather than a flat list of all of their values
+				Object[] results = reference.execute(event, input);
+				return results != null ? results : new Object[0];
+			}
+
+			Object[] arguments;
+			if (hasArguments) {
 				arguments = this.arguments.getArray(event);
 			} else {
 				arguments = new Object[0];
