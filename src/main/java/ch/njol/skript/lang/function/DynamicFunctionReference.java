@@ -144,8 +144,12 @@ public class DynamicFunctionReference<Result>
 	public boolean valid() {
 		return resolved && validator.valid()
 			&& function.get() != null // function was garbage-collected
-			&& (source == null || source.valid());
-		// if our source script has been reloaded our reference was invalidated
+			// Deliberately checks the config rather than calling Script#valid(),
+			// which additionally stats the script file on every call.
+			// We should revisit script validity in general since it's technically fine
+			// for the script to not have a File, but for this case all we care about is whether
+			// the config is still loaded and valid.
+			&& (source == null || source.getConfig().valid());
 	}
 
 	@Override
