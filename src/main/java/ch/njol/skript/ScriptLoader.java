@@ -748,7 +748,7 @@ public class ScriptLoader {
 
 			// Add to loaded files to use for future reloads
 			loadedScripts.add(script);
-			String name = normaliseScriptName(script.getConfig().getFileName());
+			String name = normalizeScriptName(script.getConfig().getFileName());
 			if (name != null)
 				scriptsByName.put(name, script);
 
@@ -951,7 +951,7 @@ public class ScriptLoader {
 			script.clearData();
 			script.invalidate();
 			loadedScripts.remove(script); // We just unloaded it, so...
-			String name = normaliseScriptName(script.getConfig().getFileName());
+			String name = normalizeScriptName(script.getConfig().getFileName());
 			if (name != null)
 				// Only remove our own entry; a reload may have already registered the new script
 				scriptsByName.remove(name, script);
@@ -1367,7 +1367,7 @@ public class ScriptLoader {
 	 */
 	@Nullable
 	public static File getScriptFileFromName(String script, File directory) {
-		script = normaliseScriptName(script);
+		script = normalizeScriptName(script);
 		if (script == null)
 			return null;
 
@@ -1421,7 +1421,7 @@ public class ScriptLoader {
 	 * @return The loaded script with the provided name, or null if no such script is loaded.
 	 */
 	public static @Nullable Script getLoadedScriptFromName(@Nullable String name) {
-		name = normaliseScriptName(name);
+		name = normalizeScriptName(name);
 		if (name == null)
 			return null;
 		return scriptsByName.get(name);
