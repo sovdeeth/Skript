@@ -1344,7 +1344,6 @@ public class ScriptLoader {
 		return getScriptFileFromName(script, Skript.getInstance().getScriptsFolder());
 	}
 
-
 	/**
 	 * Gets a script's file from its name, if one exists.
 	 * This is simply a file lookup, and does not care if the script is loaded or not.
@@ -1435,7 +1434,7 @@ public class ScriptLoader {
 	 * @param name The name to normalise.
 	 * @return The normalised name, or null if the provided name cannot denote a script.
 	 */
-	private static @Nullable String normaliseScriptName(@Nullable String name) {
+	private static @Nullable String normalizeScriptName(@Nullable String name) {
 		if (name == null || name.isEmpty())
 			return null;
 

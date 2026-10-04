@@ -41,7 +41,7 @@ test "get all functions":
 	set {_functions::*} to all functions from the current script
 	assert size of {_functions::*} is 4 with "found wrong number of functions"
 
-test "get java function":
+test "dynamically get java function":
 	# java functions have no source script, which used to throw while resolving one
 	set {_function} to function "floor"
 	assert {_function} exists with "java function wasn't found"
