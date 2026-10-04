@@ -5,10 +5,13 @@ import ch.njol.skript.lang.function.FunctionRegistry.FunctionIdentifier;
 import ch.njol.skript.lang.function.FunctionRegistry.RetrievalResult;
 import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.skript.registrations.DefaultClasses;
+import ch.njol.skript.util.Contract;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
+
+import java.util.Set;
 
 import static org.junit.Assert.*;
 
@@ -461,6 +464,107 @@ public class FunctionRegistryTest {
 
 		registry.remove(TEST_FUNCTION_P.getSignature());
 		registry.remove(TEST_FUNCTION_OP.getSignature());
+	}
+
+	private static final String DECLARED_SCRIPT = "testFunctionRegistryDeclared";
+
+	private static Function<Boolean> numberFunction(String name, Parameter<?>... parameters) {
+		return new SimpleJavaFunction<>(name, parameters, DefaultClasses.BOOLEAN, true) {
+			@Override
+			public Boolean @Nullable [] executeSimple(Object[][] params) {
+				return new Boolean[]{true};
+			}
+		};
+	}
+
+	@Test
+	public void testListParameterOverloadWithUnknownArgumentType() {
+		String name = "testFunctionRegistryListOverload";
+
+		Function<Boolean> listFunction = numberFunction(name,
+			new Parameter<>("ns", DefaultClasses.NUMBER, false, null));
+		Function<Boolean> pairFunction = numberFunction(name,
+			new Parameter<>("a", DefaultClasses.NUMBER, true, null),
+			new Parameter<>("b", DefaultClasses.NUMBER, true, null));
+
+		registry.register(null, listFunction);
+		registry.register(null, pairFunction);
+
+		try {
+			// An argument of unknown type (as every variable has) must not make the positional
+			// tie-break read past the end of a candidate which takes every passed argument in a
+			// single list parameter. This used to throw ArrayIndexOutOfBoundsException.
+			assertNotNull(registry.getFunction(null, name, Object.class, Number.class).result());
+			assertNotNull(registry.getSignature(null, name, Object.class, Number.class).result());
+			assertNotNull(registry.getFunction(null, name, Object.class, Object.class, Object.class).result());
+		} finally {
+			registry.remove(listFunction.getSignature());
+			registry.remove(pairFunction.getSignature());
+		}
+	}
+
+	@Test
+	public void testGetDeclaredSignaturesAndFunctions() {
+		String localName = "testFunctionRegistryDeclaredLocal";
+		String globalName = "testFunctionRegistryDeclaredGlobal";
+		String elsewhereName = "testFunctionRegistryDeclaredElsewhere";
+
+		assertTrue(registry.getDeclaredSignatures(DECLARED_SCRIPT).isEmpty());
+		assertTrue(registry.getDeclaredFunctions(DECLARED_SCRIPT).isEmpty());
+
+		// a local function, which lives in the namespace of the script declaring it
+		Function<Boolean> local = new SimpleJavaFunction<>(DECLARED_SCRIPT, localName, new Parameter[0],
+			DefaultClasses.BOOLEAN, true) {
+			@Override
+			public Boolean @Nullable [] executeSimple(Object[][] params) {
+				return new Boolean[]{true};
+			}
+		};
+
+		// a global function declared in that same script, which lives in the global namespace but
+		// whose signature still records where it was declared
+		Signature<Boolean> globalSignature = new Signature<>(DECLARED_SCRIPT, globalName, new Parameter[0],
+			false, DefaultClasses.BOOLEAN, true, (Contract) null);
+		Function<Boolean> global = new SimpleJavaFunction<>(globalSignature) {
+			@Override
+			public Boolean @Nullable [] executeSimple(Object[][] params) {
+				return new Boolean[]{true};
+			}
+		};
+
+		// a global function with no declaring script at all, as Java functions have
+		Function<Boolean> elsewhere = numberFunction(elsewhereName);
+
+		registry.register(DECLARED_SCRIPT, local);
+		registry.register(null, global);
+		registry.register(null, elsewhere);
+
+		try {
+			Set<Signature<?>> signatures = registry.getDeclaredSignatures(DECLARED_SCRIPT);
+			assertEquals(2, signatures.size());
+			assertTrue(signatures.contains(local.getSignature()));
+			assertTrue(signatures.contains(globalSignature));
+			assertFalse(signatures.contains(elsewhere.getSignature()));
+
+			Set<Function<?>> functions = registry.getDeclaredFunctions(DECLARED_SCRIPT);
+			assertEquals(2, functions.size());
+			assertTrue(functions.contains(local));
+			assertTrue(functions.contains(global));
+			assertFalse(functions.contains(elsewhere));
+
+			// a null namespace means the functions which have no declaring script
+			assertTrue(registry.getDeclaredSignatures(null).contains(elsewhere.getSignature()));
+			assertFalse(registry.getDeclaredSignatures(null).contains(globalSignature));
+			assertTrue(registry.getDeclaredFunctions(null).contains(elsewhere));
+			assertFalse(registry.getDeclaredFunctions(null).contains(global));
+		} finally {
+			registry.remove(local.getSignature());
+			registry.remove(globalSignature);
+			registry.remove(elsewhere.getSignature());
+		}
+
+		assertTrue(registry.getDeclaredSignatures(DECLARED_SCRIPT).isEmpty());
+		assertTrue(registry.getDeclaredFunctions(DECLARED_SCRIPT).isEmpty());
 	}
 
 }

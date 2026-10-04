@@ -431,6 +431,78 @@ public final class FunctionRegistry implements Registry<Function<?>> {
 	}
 
 	/**
+	 * Gets every signature declared in {@code namespace}.
+	 * <p>
+	 * Unlike {@link #getSignatures(String, String)} this is not about what is visible from a
+	 * namespace, but about where a function was declared: the result contains the local functions
+	 * of {@code namespace} and the global functions declared in it, but not global functions
+	 * declared elsewhere. If {@code namespace} is null, returns the signatures which have no
+	 * declaring script, such as those of Java functions.
+	 * </p>
+	 *
+	 * @param namespace The namespace functions were declared in.
+	 *                  Usually represents the path of the script in question.
+	 * @return All signatures declared in {@code namespace}.
+	 */
+	public @Unmodifiable @NotNull Set<Signature<?>> getDeclaredSignatures(@Nullable String namespace) {
+		Set<Signature<?>> declared = new HashSet<>();
+
+		if (namespace != null) {
+			Namespace local = namespaces.get(new NamespaceIdentifier(namespace));
+			if (local != null) {
+				declared.addAll(local.signatures.values());
+			}
+		}
+
+		// global functions are registered in the global namespace no matter which script declared
+		// them, so they have to be filtered by the script their signature records
+		Namespace global = namespaces.get(GLOBAL_NAMESPACE);
+		if (global != null) {
+			for (Signature<?> signature : global.signatures.values()) {
+				if (Objects.equals(signature.namespace(), namespace)) {
+					declared.add(signature);
+				}
+			}
+		}
+
+		return Set.copyOf(declared);
+	}
+
+	/**
+	 * Gets every function declared in {@code namespace}.
+	 * <p>
+	 * Only functions whose body has been loaded are returned; use
+	 * {@link #getDeclaredSignatures(String)} for everything that has been declared.
+	 * </p>
+	 *
+	 * @param namespace The namespace functions were declared in.
+	 *                  Usually represents the path of the script in question.
+	 * @return All functions declared in {@code namespace}.
+	 * @see #getDeclaredSignatures(String)
+	 */
+	public @Unmodifiable @NotNull Set<Function<?>> getDeclaredFunctions(@Nullable String namespace) {
+		Set<Function<?>> declared = new HashSet<>();
+
+		if (namespace != null) {
+			Namespace local = namespaces.get(new NamespaceIdentifier(namespace));
+			if (local != null) {
+				declared.addAll(local.functions.values());
+			}
+		}
+
+		Namespace global = namespaces.get(GLOBAL_NAMESPACE);
+		if (global != null) {
+			for (Function<?> function : global.functions.values()) {
+				if (Objects.equals(function.getSignature().namespace(), namespace)) {
+					declared.add(function);
+				}
+			}
+		}
+
+		return Set.copyOf(declared);
+	}
+
+	/**
 	 * Gets the signature for a function with the given name and arguments.
 	 *
 	 * @param namespace The namespace to get the function from.
@@ -558,6 +630,12 @@ public final class FunctionRegistry implements Registry<Function<?>> {
 			int argIndex = 0;
 
 			while (argIndex < provided.args.length) {
+				if (argIndex >= candidate.args.length) {
+					// this candidate takes every provided argument in one list parameter, so there is
+					// no positional argument of its own left to compare against
+					break;
+				}
+
 				if (provided.args[argIndex] == Object.class) {
 					argIndex++;
 					continue;
