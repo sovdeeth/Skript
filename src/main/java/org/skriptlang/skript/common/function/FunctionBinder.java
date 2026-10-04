@@ -50,9 +50,41 @@ public final class FunctionBinder<T> {
 	private static final ArgsMessage POTENTIAL_SIGNATURE = new ArgsMessage("functions.potential signature");
 
 	private final ArgumentBinder<T> binder;
+	private final Mode mode;
 
-	FunctionBinder(@NotNull ArgumentBinder<T> binder) {
+	FunctionBinder(@NotNull ArgumentBinder<T> binder, @NotNull Mode mode) {
 		this.binder = binder;
+		this.mode = mode;
+	}
+
+	/**
+	 * Returns a binder for arguments which have already been parsed into expressions.
+	 *
+	 * @param mode How to bind the passed arguments to a signature's parameters.
+	 * @return The binder.
+	 */
+	public static FunctionBinder<Expression<?>> forExpressions(@NotNull Mode mode) {
+		return new FunctionBinder<>(new ExpressionArgumentBinder(), mode);
+	}
+
+	/**
+	 * How the passed arguments are bound to the parameters of a signature.
+	 */
+	public enum Mode {
+
+		/**
+		 * Every parameter takes exactly one of the passed arguments, except that a signature whose
+		 * only parameter accepts a list may take all of them.
+		 */
+		STRICT,
+
+		/**
+		 * As {@link #STRICT}, but if no signature can be bound that way, a signature containing a
+		 * list parameter may have it take several of the passed arguments. See
+		 * {@link #allocate(Parameter[], int)}.
+		 */
+		GREEDY
+
 	}
 
 	/**
@@ -130,6 +162,17 @@ public final class FunctionBinder<T> {
 		}
 
 		exactReferences.addAll(listReferences);
+
+		// only when nothing could be bound one argument per parameter may a list parameter
+		// take several of the passed arguments
+		if (exactReferences.isEmpty() && mode == Mode.GREEDY) {
+			Set<FunctionReference<R>> greedyReferences = getGreedyReferences(namespace, name, exacts, arguments);
+			if (greedyReferences == null) { // a list error, so quit parsing
+				return null;
+			}
+
+			exactReferences.addAll(greedyReferences);
+		}
 
 		if (exactReferences.isEmpty()) {
 			doesNotExist(name, arguments, Sets.union(exacts, lists));
@@ -390,6 +433,138 @@ public final class FunctionBinder<T> {
 	}
 
 	/**
+	 * Returns all possible {@link FunctionReference FunctionReferences} which can be bound by
+	 * letting a list parameter take several of the passed arguments.
+	 * <p>
+	 * Only signatures containing a list parameter are considered, as a signature of only single
+	 * parameters can never bind anything here that {@link #getExactReferences} did not already
+	 * bind. Named arguments are not supported.
+	 * </p>
+	 *
+	 * @param namespace  The current namespace.
+	 * @param name       The name of the function.
+	 * @param signatures The possible signatures.
+	 * @param arguments  The passed arguments.
+	 * @param <R>        The return type of the references.
+	 * @return All possible greedily bound {@link FunctionReference FunctionReferences}.
+	 */
+	private <R> @Nullable Set<FunctionReference<R>> getGreedyReferences(
+		String namespace, String name,
+		Set<Signature<?>> signatures, Argument<T>[] arguments
+	) {
+		for (Argument<T> argument : arguments) {
+			if (argument.type() == ArgumentType.NAMED) {
+				return Set.of();
+			}
+		}
+
+		Set<FunctionReference<R>> references = new HashSet<>();
+
+		for (Signature<?> signature : signatures) {
+			Parameter<?>[] parameters = signature.parameters().all();
+
+			if (Arrays.stream(parameters).allMatch(Parameter::isSingle)) {
+				continue;
+			}
+
+			int[] allocation = allocate(parameters, arguments.length);
+			if (allocation == null) {
+				continue;
+			}
+
+			//noinspection unchecked
+			Argument<T>[] parseArguments = (Argument<T>[]) new Argument[parameters.length];
+			ArgumentParseTarget[] parseTargets = new ArgumentParseTarget[parameters.length];
+
+			int next = 0;
+			for (int i = 0; i < parameters.length; i++) {
+				Parameter<?> parameter = parameters[i];
+				int take = allocation[i];
+
+				if (take == 0) { // nothing was allocated, so fall back to the default value
+					parseArguments[i] = new Argument<>(ArgumentType.UNNAMED, parameter.name(), null);
+				} else if (take == 1) {
+					// a single argument is passed through as it is, so that an argument which is
+					// itself a list stays one argument rather than being spread
+					parseArguments[i] = new Argument<>(ArgumentType.UNNAMED, parameter.name(), arguments[next].value());
+				} else {
+					Argument<T>[] allocated = Arrays.copyOfRange(arguments, next, next + take);
+					parseArguments[i] = binder.joinForList(allocated, parameter.name());
+				}
+				next += take;
+
+				parseTargets[i] = targetFor(parameter, Utils.getComponentType(parameter.type()));
+			}
+
+			ArgumentParseResult result = bindArguments(parseArguments, parseTargets);
+			switch (result.type()) {
+				case LIST_ERROR -> {
+					return null;
+				}
+				case OK -> {
+					//noinspection unchecked
+					FunctionReference<R> reference =
+						new FunctionReference<>(namespace, name, (Signature<R>) signature, result.parsed());
+					if (!reference.validate()) {
+						continue;
+					}
+					references.add(reference);
+				}
+				default -> {
+					// continue
+				}
+			}
+		}
+
+		return references;
+	}
+
+	/**
+	 * Allocates {@code slots} passed arguments across {@code parameters}, from left to right,
+	 * letting each list parameter take as many consecutive arguments as it can while still leaving
+	 * enough for the parameters after it.
+	 * <p>
+	 * For example, {@code f(a: number, b: numbers)} given three arguments allocates one to
+	 * {@code a} and two to {@code b}.
+	 * </p>
+	 *
+	 * @param parameters The parameters to allocate to.
+	 * @param slots      The number of passed arguments.
+	 * @return How many arguments each parameter takes, or null if they cannot be allocated.
+	 */
+	static int @Nullable [] allocate(Parameter<?>[] parameters, int slots) {
+		// the number of leading parameters which must be given at least one argument;
+		// a parameter may only be omitted if it and every parameter after it is optional
+		int required = 0;
+		for (int i = parameters.length - 1; i >= 0; i--) {
+			if (!parameters[i].hasModifier(Modifier.OPTIONAL)) {
+				required = i + 1;
+				break;
+			}
+		}
+
+		int[] allocation = new int[parameters.length];
+		int next = 0;
+		for (int i = 0; i < parameters.length; i++) {
+			// arguments which must be left over for the parameters after this one
+			int reserved = Math.max(0, required - (i + 1));
+			int available = slots - next - reserved;
+			int minimum = i < required ? 1 : 0;
+
+			if (available < minimum) {
+				return null;
+			}
+
+			int take = parameters[i].isSingle() ? Math.min(1, available) : available;
+			allocation[i] = take;
+			next += take;
+		}
+
+		// a trailing single parameter may leave arguments unallocated
+		return next == slots ? allocation : null;
+	}
+
+	/**
 	 * Builds the target type and fallback expression used to bind an argument to {@code parameter}.
 	 *
 	 * @param parameter  The parameter being bound to.
@@ -578,6 +753,52 @@ public final class FunctionBinder<T> {
 		 * @return An expression describing the argument, or null if it cannot be described.
 		 */
 		@Nullable Expression<?> describe(Argument<T> argument);
+
+	}
+
+	/**
+	 * Binds arguments which have already been parsed into expressions, as is the case when a
+	 * function is called through a reference obtained at runtime rather than through a call
+	 * written in a script.
+	 * <p>
+	 * Each argument is passed through as it is; converting it to the parameter's type and
+	 * checking that it is acceptable is left to {@link FunctionReference#validate()}, exactly as
+	 * it is for a call written in a script.
+	 * </p>
+	 */
+	private static final class ExpressionArgumentBinder implements ArgumentBinder<Expression<?>> {
+
+		@Override
+		public @Nullable Expression<?> bind(Argument<Expression<?>> argument, ArgumentParseTarget target) {
+			if (argument.value() == null) {
+				return target.fallback();
+			}
+			return argument.value();
+		}
+
+		@Override
+		public Argument<Expression<?>> joinForList(Argument<Expression<?>>[] arguments, String parameterName) {
+			if (arguments.length == 0) {
+				return new Argument<>(ArgumentType.NAMED, parameterName, null);
+			}
+
+			Expression<?>[] values = Arrays.stream(arguments)
+				.map(Argument::value)
+				.toArray(Expression[]::new);
+
+			return new Argument<>(ArgumentType.NAMED, parameterName,
+				new ExpressionList<>(values, Object.class, true));
+		}
+
+		@Override
+		public @Nullable Expression<?> rawValue(Argument<Expression<?>> argument) {
+			return argument.value();
+		}
+
+		@Override
+		public @Nullable Expression<?> describe(Argument<Expression<?>> argument) {
+			return argument.value();
+		}
 
 	}
 

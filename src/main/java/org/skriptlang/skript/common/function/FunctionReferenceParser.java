@@ -100,7 +100,7 @@ public record FunctionReferenceParser(ParseContext context, int flags) {
 			namespace = null;
 		}
 
-		FunctionBinder<String> binder = new FunctionBinder<>(new StringArgumentBinder());
+		FunctionBinder<String> binder = new FunctionBinder<>(new StringArgumentBinder(), FunctionBinder.Mode.STRICT);
 
 		FunctionReference<T> reference = binder.resolve(namespace, name, arguments);
 		if (reference == null) { // the binder has already reported why
