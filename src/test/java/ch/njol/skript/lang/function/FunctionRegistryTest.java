@@ -579,7 +579,7 @@ public class FunctionRegistryTest {
 			// binding a reference obtained at runtime resolves it, which validates the underlying
 			// FunctionReference; that must not register it for revalidation, or a reload would
 			// warn about a binding which has already been discarded
-			DynamicFunctionReference<Boolean> reference = new DynamicFunctionReference<>(name);
+			DynamicFunctionReference reference = new DynamicFunctionReference(name);
 			assertTrue(reference.valid());
 			assertNull(reference.bind().rejection());
 
@@ -597,6 +597,34 @@ public class FunctionRegistryTest {
 			assertTrue(signature.calls().contains(tracked));
 		} finally {
 			registry.remove(signature);
+		}
+	}
+
+	@Test
+	public void testResultArrayHasTheFunctionsReturnType() {
+		String name = "testFunctionRegistryReturnType";
+
+		Function<Boolean> function = new SimpleJavaFunction<>(name, new Parameter[0],
+			DefaultClasses.BOOLEAN, true) {
+			@Override
+			public Boolean @Nullable [] executeSimple(Object[][] params) {
+				return new Boolean[]{true};
+			}
+		};
+
+		registry.register(null, function);
+
+		try {
+			DynamicFunctionReference reference = new DynamicFunctionReference(name);
+
+			Object[] result = reference.execute(new FunctionEvent<>(function));
+
+			// the result is built with the function's return type as its component type, matching
+			// what a function returning several values gives back
+			assertNotNull(result);
+			assertEquals(Boolean[].class, result.getClass());
+		} finally {
+			registry.remove(function.getSignature());
 		}
 	}
 

@@ -4,8 +4,8 @@ import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.parser.ParserInstance;
 import ch.njol.skript.lang.ExpressionList;
+import ch.njol.skript.lang.parser.ParserInstance;
 import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.skript.lang.util.common.AnyNamed;
 import ch.njol.skript.log.LogEntry;
@@ -27,15 +27,10 @@ import org.skriptlang.skript.lang.script.Script;
 import org.skriptlang.skript.util.Executable;
 import org.skriptlang.skript.util.Validated;
 
-import java.util.ArrayList;
-import java.util.logging.Level;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.lang.reflect.Array;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.Set;
+import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -48,10 +43,9 @@ import java.util.regex.Pattern;
  * supplied, unless the parameter types were given when the reference was obtained.
  * </p>
  *
- * @param <Result> The return type of this function, if known.
  */
-public class DynamicFunctionReference<Result>
-	implements Contract, Executable<Event, Result[]>, Validated, AnyNamed {
+public class DynamicFunctionReference
+	implements Contract, Executable<Event, Object[]>, Validated, AnyNamed {
 
 	/**
 	 * Splits a stringified function reference into its name and, if one was written, the list of
@@ -92,7 +86,7 @@ public class DynamicFunctionReference<Result>
 	 * A reusable {@link BoundExecutable} per set of argument expressions, so that binding does not allocate
 	 * on every execution.
 	 */
-	private final Map<Input, BoundExecutable<Event, Result[]>> boundExecutables = new ConcurrentHashMap<>();
+	private final Map<Input, BoundExecutable<Event, Object[]>> boundExecutables = new ConcurrentHashMap<>();
 
 	/**
 	 * The registry generation the cached bindings were resolved against. A script being reloaded
@@ -101,8 +95,8 @@ public class DynamicFunctionReference<Result>
 	 */
 	private volatile long generation = -1;
 
-	public DynamicFunctionReference(Function<? extends Result> function) {
-		Signature<? extends Result> signature = function.getSignature();
+	public DynamicFunctionReference(Function<?> function) {
+		Signature<?> signature = function.getSignature();
 
 		this.name = function.getName();
 		this.namespace = signature.namespace();
@@ -266,12 +260,15 @@ public class DynamicFunctionReference<Result>
 	 * @param input The argument expressions, as collected when the caller was parsed.
 	 * @return The returned values, or null if the arguments are not acceptable or execution failed.
 	 */
-	public Result @Nullable [] execute(Event event, Input input) {
+	public Object @Nullable [] execute(Event event, Input input) {
 		return execute(event, input, binding(input));
 	}
 
-	private Result @Nullable [] execute(Event event, Input input, Binding binding) {
-		if (!this.valid()) {
+	private Object @Nullable [] execute(Event event, Input input, Binding binding) {
+		// deliberately not valid(): a binding is already discarded when the registered functions
+		// change, so scanning the registry again here would only turn a function which no longer
+		// exists into a silent failure, where binding it reports why
+		if (!validator.valid()) {
 			return null;
 		}
 
@@ -290,7 +287,7 @@ public class DynamicFunctionReference<Result>
 		}
 
 		try {
-			return normalise(reference.execute(event));
+			return normalise(reference, reference.execute(event));
 		} finally {
 			reset(reference);
 		}
@@ -311,19 +308,28 @@ public class DynamicFunctionReference<Result>
 	}
 
 	/**
-	 * @param result The value a function returned.
+	 * @param reference The reference which was executed.
+	 * @param result    The value the function returned.
 	 * @return That value as an array, since a function may return either a single value or
 	 * 	several, or an empty array if it returned nothing. Never null, so that a null result from
 	 * 	{@link #execute(Event, Input)} only ever means the function did not run.
 	 */
-	private Result[] normalise(@Nullable Object result) {
-		//noinspection unchecked
-		if (result == null) { // a function with no return type, or one which returned nothing
-			return (Result[]) new Object[0];
+	private Object[] normalise(FunctionReference<?> reference, @Nullable Object result) {
+		// a function returning several values already hands back an array of its own return type
+		if (result instanceof Object[] array) {
+			return array;
 		}
 
-		//noinspection unchecked
-		return result instanceof Object[] array ? (Result[]) array : (Result[]) new Object[]{result};
+		// the array is built with the function's return type as its component type, matching what
+		// a function returning several values gives back, rather than always being an Object[]
+		Class<?> returnType = reference.signature().returnType();
+		Class<?> component = returnType != null ? Utils.getComponentType(returnType) : Object.class;
+
+		Object[] array = (Object[]) Array.newInstance(component, result != null ? 1 : 0);
+		if (result != null) {
+			array[0] = result;
+		}
+		return array;
 	}
 
 	/**
@@ -470,14 +476,14 @@ public class DynamicFunctionReference<Result>
 	}
 
 	@Override
-	public @Nullable Executable.BoundExecutable<Event, Result[]> bind(Expression<?>... arguments) {
+	public @Nullable Executable.BoundExecutable<Event, Object[]> bind(Expression<?>... arguments) {
 		// a function always decides for itself which parameter each argument belongs to, and
 		// whether they are acceptable may depend on their values, so that is left to execution
 		return boundExecutables.computeIfAbsent(new Input(arguments), Bound::new);
 	}
 
 	@Override
-	public Result @Nullable [] execute(Event event, Object... arguments) {
+	public Object @Nullable [] execute(Event event, Object... arguments) {
 		//noinspection unchecked
 		Argument<Expression<?>>[] bound = (Argument<Expression<?>>[]) new Argument[arguments.length];
 		for (int i = 0; i < arguments.length; i++) {
@@ -497,7 +503,7 @@ public class DynamicFunctionReference<Result>
 		}
 
 		try {
-			return normalise(reference.execute(event));
+			return normalise(reference, reference.execute(event));
 		} finally {
 			reset(reference);
 		}
@@ -585,7 +591,7 @@ public class DynamicFunctionReference<Result>
 	 * @param name The function name, possibly including its script name
 	 * @return A reference, if one is available
 	 */
-	public static @Nullable DynamicFunctionReference<?> parseFunction(String name) {
+	public static @Nullable DynamicFunctionReference parseFunction(String name) {
 		// Function reference string-ifying appends a () and potentially its source,
 		// e.g. `myFunction() from MyScript.sk` and we should turn that into a valid function.
 		if (name.contains(") from ")) {
@@ -603,7 +609,7 @@ public class DynamicFunctionReference<Result>
 	 * @param script Potentially, the script it is from, if one is known
 	 * @return A function reference, if one is available.
 	 */
-	public static @Nullable DynamicFunctionReference<?> resolveFunction(String name, @Nullable Script script) {
+	public static @Nullable DynamicFunctionReference resolveFunction(String name, @Nullable Script script) {
 		Class<?>[] parameterTypes = null;
 
 		Matcher matcher = SIGNATURE_PATTERN.matcher(name);
@@ -621,7 +627,7 @@ public class DynamicFunctionReference<Result>
 			}
 		}
 
-		DynamicFunctionReference<Object> reference = new DynamicFunctionReference<>(name, script, parameterTypes);
+		DynamicFunctionReference reference = new DynamicFunctionReference(name, script, parameterTypes);
 		if (!reference.valid())
 			return null;
 		return reference;
@@ -630,7 +636,7 @@ public class DynamicFunctionReference<Result>
 	/**
 	 * This function bound to a particular set of argument expressions.
 	 */
-	private final class Bound implements BoundExecutable<Event, Result[]> {
+	private final class Bound implements BoundExecutable<Event, Object[]> {
 
 		private final Input input;
 
@@ -639,7 +645,7 @@ public class DynamicFunctionReference<Result>
 		}
 
 		@Override
-		public Result @Nullable [] execute(Event event) {
+		public Object @Nullable [] execute(Event event) {
 			return DynamicFunctionReference.this.execute(event, input);
 		}
 

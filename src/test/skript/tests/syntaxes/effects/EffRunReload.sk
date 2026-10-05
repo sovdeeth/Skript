@@ -5,6 +5,7 @@ options:
 	# test folder, so the path has to climb back out
 
 using script reflection
+using error catching
 
 test "a reference survives its script being reloaded":
 	set {_path} to {@misc} + "reloadable function.sk"
@@ -26,8 +27,14 @@ test "a reference stops working when its script is unloaded":
 
 	unload the script within {_script}
 
-	# the function it resolved to is gone, so the reference must not fall back to anything else
-	assert (result of {_function}) doesn't exist with "the reference still ran after its script was unloaded"
+	# the function it resolved to is gone, so the reference must not fall back to anything else,
+	# and it should say so rather than failing silently
+	catch runtime errors:
+		set {_result} to result of {_function}
+
+	assert {_result} is not set with "the reference still ran after its script was unloaded"
+	set {_errors::*} to last caught runtime errors
+	assert {_errors::1} contains "dfrReloadable" with "the failure did not name the function"
 
 	# put it back, so the order tests run in cannot matter
 	load the script within (script named {_path})
