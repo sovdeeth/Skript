@@ -4,9 +4,11 @@ import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.parser.ParserInstance;
 import ch.njol.skript.lang.ExpressionList;
 import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.skript.lang.util.common.AnyNamed;
+import ch.njol.skript.log.LogEntry;
 import ch.njol.skript.log.RetainingLogHandler;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.registrations.Classes;
@@ -26,11 +28,12 @@ import org.skriptlang.skript.util.Executable;
 import org.skriptlang.skript.util.Validated;
 
 import java.util.ArrayList;
+import java.util.logging.Level;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -70,25 +73,19 @@ public class DynamicFunctionReference<Result>
 	 */
 	private final Class<?> @Nullable [] parameterTypes;
 
-	/**
-	 * The namespace of the signature this resolves to, which is where the function was declared
-	 * rather than where it was looked up from.
-	 */
-	private final @Nullable String declaredIn;
-
 	private final Validated validator = Validated.validator();
 
 	/**
 	 * How a particular set of argument expressions binds to this function. Binding depends only
 	 * on the expressions, not on the values they produce, so it is worked out once per input.
 	 */
-	private final Map<Input, Binding> bindings = new HashMap<>();
+	private final Map<Input, Binding> bindings = new ConcurrentHashMap<>();
 
 	/**
 	 * A reusable {@link BoundExecutable} per set of argument expressions, so that binding does not allocate
 	 * on every execution.
 	 */
-	private final Map<Input, BoundExecutable<Event, Result[]>> boundExecutables = new HashMap<>();
+	private final Map<Input, BoundExecutable<Event, Result[]>> boundExecutables = new ConcurrentHashMap<>();
 
 	public DynamicFunctionReference(Function<? extends Result> function) {
 		Signature<? extends Result> signature = function.getSignature();
@@ -97,7 +94,6 @@ public class DynamicFunctionReference<Result>
 		this.namespace = signature.namespace();
 		// a reference to a known function refers to exactly that overload
 		this.parameterTypes = FunctionBinder.declaredTypes(signature);
-		this.declaredIn = signature.namespace();
 	}
 
 	public DynamicFunctionReference(@NotNull String name) {
@@ -118,7 +114,6 @@ public class DynamicFunctionReference<Result>
 		this.name = name;
 		this.namespace = source != null ? source.getConfig().getFileName() : null;
 		this.parameterTypes = parameterTypes;
-		this.declaredIn = declaringNamespace(candidates());
 	}
 
 	/**
@@ -173,7 +168,7 @@ public class DynamicFunctionReference<Result>
 		for (int i = 0; i < split.length; i++) {
 			String type = split[i].trim();
 			if (type.isEmpty()) {
-				Skript.error("Missing a parameter type in '" + types + "'");
+				reportBadType("Missing a parameter type in '" + types + "'");
 				return null;
 			}
 
@@ -184,7 +179,7 @@ public class DynamicFunctionReference<Result>
 			}
 
 			if (classInfo == null) {
-				Skript.error("Cannot recognise the type '" + type + "'");
+				reportBadType("Cannot recognise the type '" + type + "'");
 				return null;
 			}
 
@@ -194,8 +189,25 @@ public class DynamicFunctionReference<Result>
 		return parsed;
 	}
 
+	/**
+	 * Reports a parameter type list which could not be understood.
+	 * <p>
+	 * A reference can be resolved either while a script is being parsed, where this belongs in the
+	 * parse log, or at runtime, where there is no telling which log is listening. Only the former
+	 * is reported; resolving a name that does not exist has always been silent at runtime.
+	 * </p>
+	 *
+	 * @param message The message.
+	 */
+	private static void reportBadType(String message) {
+		if (ParserInstance.get().isActive()) {
+			Skript.error(message);
+		}
+	}
+
 	public @Nullable Script source() {
-		return ScriptLoader.getLoadedScriptFromName(declaredIn);
+		// only wanted for display, so this is worked out on demand rather than kept up to date
+		return ScriptLoader.getLoadedScriptFromName(declaringNamespace(candidates()));
 	}
 
 	@Override
@@ -234,15 +246,18 @@ public class DynamicFunctionReference<Result>
 	 * @return The returned values, or null if the arguments are not acceptable or execution failed.
 	 */
 	public Result @Nullable [] execute(Event event, Input input) {
+		return execute(event, input, binding(input));
+	}
+
+	private Result @Nullable [] execute(Event event, Input input, Binding binding) {
 		if (!this.valid()) {
 			return null;
 		}
 
-		Binding binding = binding(input);
 		FunctionReference<?> reference = binding.reference();
 
 		if (reference == null) {
-			if (binding.spread() < 0) {
+			if (binding.spread() < 0) { // the reason is available from BoundExecutable#rejection
 				return null;
 			}
 			// the arguments only fit once the values of one of them are spread across several
@@ -309,7 +324,13 @@ public class DynamicFunctionReference<Result>
 
 		//noinspection unchecked
 		Argument<Expression<?>>[] array = arguments.toArray(new Argument[0]);
-		return FunctionBinder.forExpressions(Mode.GREEDY).resolve(namespace, name, array, parameterTypes);
+
+		try (RetainingLogHandler log = SkriptLogger.startRetainingLog()) {
+			FunctionReference<?> reference =
+				FunctionBinder.forExpressions(Mode.GREEDY).resolve(namespace, name, array, parameterTypes);
+			discard(log);
+			return reference;
+		}
 	}
 
 	/**
@@ -360,8 +381,15 @@ public class DynamicFunctionReference<Result>
 				return new Binding(null, spread);
 			}
 
-			log.printErrors();
-			return Binding.NONE;
+			LogEntry first = null;
+			for (LogEntry entry : log.getLog()) { // marks the log as handled
+				if (entry.getLevel().intValue() >= Level.SEVERE.intValue()) {
+					first = entry;
+					break;
+				}
+			}
+
+			return new Binding(null, -1, first != null ? first.getMessage() : null);
 		}
 	}
 
@@ -404,7 +432,7 @@ public class DynamicFunctionReference<Result>
 	public @Nullable Executable.BoundExecutable<Event, Result[]> bind(Expression<?>... arguments) {
 		// a function always decides for itself which parameter each argument belongs to, and
 		// whether they are acceptable may depend on their values, so that is left to execution
-		return boundExecutables.computeIfAbsent(new Input(arguments), input -> event -> execute(event, input));
+		return boundExecutables.computeIfAbsent(new Input(arguments), Bound::new);
 	}
 
 	@Override
@@ -414,7 +442,10 @@ public class DynamicFunctionReference<Result>
 			expressions[i] = new SimpleLiteral<>(arguments[i], true);
 		}
 
-		return execute(event, new Input(expressions));
+		// the literals are built afresh on every call, so this input will never be seen again
+		// and must not be added to the binding cache
+		Input input = new Input(expressions);
+		return execute(event, input, computeBinding(input));
 	}
 
 	@Override
@@ -424,7 +455,22 @@ public class DynamicFunctionReference<Result>
 
 	@Override
 	public boolean valid() {
-		return validator.valid() && !candidates().isEmpty();
+		if (!validator.valid()) {
+			return false;
+		}
+
+		// checked on every execution, so this avoids collecting the candidates
+		Set<Signature<?>> signatures = FunctionRegistry.getRegistry().getSignatures(namespace, name);
+		if (parameterTypes == null) {
+			return !signatures.isEmpty();
+		}
+
+		for (Signature<?> signature : signatures) {
+			if (Arrays.equals(FunctionBinder.declaredTypes(signature), parameterTypes)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@Override
@@ -512,19 +558,49 @@ public class DynamicFunctionReference<Result>
 	}
 
 	/**
+	 * This function bound to a particular set of argument expressions.
+	 */
+	private final class Bound implements BoundExecutable<Event, Result[]> {
+
+		private final Input input;
+
+		private Bound(Input input) {
+			this.input = input;
+		}
+
+		@Override
+		public Result @Nullable [] execute(Event event) {
+			return DynamicFunctionReference.this.execute(event, input);
+		}
+
+		@Override
+		public @Nullable String rejection() {
+			Binding binding = binding(input);
+			// a binding which needs a spread cannot be judged until its values are known
+			return binding.bindable() ? null : binding.error();
+		}
+
+	}
+
+	/**
 	 * How a set of argument expressions binds to a function.
 	 *
 	 * @param reference The reference the arguments were bound to, or null if they could not be
 	 *                  bound without knowing their values.
 	 * @param spread    The index of the argument whose values must be spread across several
 	 *                  parameters for the arguments to fit, or -1 if there is none.
+	 * @param error     Why the arguments could not be bound, if they could not be.
 	 */
-	private record Binding(@Nullable FunctionReference<?> reference, int spread) {
+	private record Binding(@Nullable FunctionReference<?> reference, int spread, @Nullable String error) {
+
+		private Binding(@Nullable FunctionReference<?> reference, int spread) {
+			this(reference, spread, null);
+		}
 
 		/**
 		 * The arguments do not fit this function at all.
 		 */
-		private static final Binding NONE = new Binding(null, -1);
+		private static final Binding NONE = new Binding(null, -1, null);
 
 		/**
 		 * @return Whether the arguments fit, possibly only once their values are known.

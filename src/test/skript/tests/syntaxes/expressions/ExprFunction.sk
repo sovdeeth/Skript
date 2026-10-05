@@ -66,3 +66,15 @@ test "local function reference round trip":
 	set {_parsed} to "%{_function}%" parsed as function
 	assert {_parsed} exists with "stringified local function reference didn't parse back"
 	assert name of {_parsed} is "testExprFunction3" with "parsed local function reference has the wrong name"
+
+test "cross-script function reference round trip":
+	# the stringified form has to name the script the function was declared in, not the one it
+	# was looked up from
+	set {_script} to the script named {@misc} + "dummy.sk"
+	set {_function} to function "testDummy" from {_script}
+	assert {_function} exists with "the function from another script wasn't found"
+	set {_parsed} to "%{_function}%" parsed as function
+	assert {_parsed} exists with "a reference to another script's function didn't parse back"
+	assert name of {_parsed} is "testDummy" with "parsed cross-script reference has the wrong name"
+	set {_result} to result of {_parsed}
+	assert {_result} is true with "parsed cross-script reference didn't run the right function"

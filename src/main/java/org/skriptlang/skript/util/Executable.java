@@ -62,6 +62,21 @@ public interface Executable<Caller, Result> {
 		 */
 		@Nullable Result execute(Caller caller);
 
+		/**
+		 * Why {@link #execute(Object)} will not run, so that the caller can report it along with
+		 * where the call was written.
+		 * <p>
+		 * This is returned rather than logged because an executable has no way of knowing which
+		 * log, if any, is listening when it runs.
+		 * </p>
+		 *
+		 * @return The reason the bound arguments are not acceptable, or null if they are, or if
+		 * 	that cannot be known until they have been evaluated.
+		 */
+		default @Nullable String rejection() {
+			return null;
+		}
+
 	}
 
 }

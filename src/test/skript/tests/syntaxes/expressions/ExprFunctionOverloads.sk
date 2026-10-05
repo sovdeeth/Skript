@@ -98,3 +98,14 @@ test "empty parentheses select no particular overload":
 	# 'myFunction()' has always meant the function of that name, whatever its parameters
 	assert (function "dfrOverload()") exists with "empty parentheses didn't resolve by name"
 	assert (function "dfrOverload") exists with "a bare name didn't resolve"
+
+test "a selected overload is not part of the stringified reference":
+	# the stringified form names the function but not the overload, so a round trip goes back to
+	# whichever overload the arguments select
+	set {_function} to function "dfrOverload(text)"
+	assert {_function} exists with "the (text) overload wasn't found"
+	assert "%{_function}%" contains "dfrOverload()" with "the stringified reference should not name the overload"
+
+	set {_parsed} to "%{_function}%" parsed as function
+	assert {_parsed} exists with "the stringified reference didn't parse back"
+	assert (result of {_parsed} with arguments 1) is "number" with "the round tripped reference should no longer be pinned"

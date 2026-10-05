@@ -4,12 +4,16 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.doc.*;
 import ch.njol.skript.expressions.base.PropertyExpression;
+import ch.njol.skript.config.Node;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionList;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.LiteralUtils;
+import ch.njol.skript.registrations.Classes;
 import ch.njol.util.Kleenean;
+import org.skriptlang.skript.log.runtime.SyntaxRuntimeErrorProducer;
+
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 import ch.njol.skript.registrations.experiments.ReflectionExperimentSyntax;
@@ -26,7 +30,7 @@ import org.skriptlang.skript.util.Executable;
 @Example("set {_result} to the result of {_function} with arguments 13 and true")
 @Since("2.10")
 @Keywords({"run", "result", "execute", "function", "reflection"})
-public class ExprResult extends PropertyExpression<Executable<Event, Object>, Object> implements ReflectionExperimentSyntax {
+public class ExprResult extends PropertyExpression<Executable<Event, Object>, Object> implements ReflectionExperimentSyntax, SyntaxRuntimeErrorProducer {
 
 	static {
 		Skript.registerExpression(ExprResult.class, Object.class, ExpressionType.COMBINED,
@@ -36,9 +40,11 @@ public class ExprResult extends PropertyExpression<Executable<Event, Object>, Ob
 	private Expression<?> arguments;
 	private boolean hasArguments, isPlural;
 	private Expression<?>[] argumentExpressions;
+	private Node node;
 
 	@Override
 	public boolean init(Expression<?>[] expressions, int matchedPattern, Kleenean isDelayed, ParseResult result) {
+		this.node = getParser().getNode();
 		//noinspection unchecked
 		this.setExpr((Expression<? extends Executable<Event, Object>>) expressions[0]);
 		this.hasArguments = result.hasTag("arguments");
@@ -66,7 +72,7 @@ public class ExprResult extends PropertyExpression<Executable<Event, Object>, Ob
 			// parameters, is handed the argument expressions rather than a flat list of their values
 			Executable.BoundExecutable<Event, Object> boundExecutable = task.bind(argumentExpressions);
 			if (boundExecutable != null) {
-				Object result = boundExecutable.execute(event);
+				Object result = run(task, boundExecutable, event);
 				if (result == null)
 					return new Object[0];
 				if (result instanceof Object[] results)
@@ -103,6 +109,38 @@ public class ExprResult extends PropertyExpression<Executable<Event, Object>, Ob
 		return !isPlural;
 	}
 
+	/**
+	 * Executes {@code boundExecutable}, reporting as a runtime error why it would not run, since
+	 * it knows why its arguments were not acceptable but not where the call to it was written.
+	 *
+	 * @param executable      The executable that was bound.
+	 * @param boundExecutable The bound executable.
+	 * @param event           The event to execute with.
+	 * @return The result, or null if it did not execute.
+	 */
+	private <T> @Nullable T run(
+		Executable<Event, ?> executable, Executable.BoundExecutable<Event, T> boundExecutable, Event event
+	) {
+		T result = boundExecutable.execute(event);
+		if (result != null) {
+			return result;
+		}
+
+		// the executable knows why it would not accept its arguments, but only the call site knows
+		// where the call was written
+		String rejection = boundExecutable.rejection();
+		error(rejection != null
+			? rejection
+			: "Cannot run " + Classes.toString(executable) + " with the given arguments.");
+
+		return null;
+	}
+
+	@Override
+	public Node getNode() {
+		return node;
+	}
+
 	@Override
 	public String toString(@Nullable Event event, final boolean debug) {
 		String text = "the result" + (isPlural ? "s" : "") + " of " + getExpr().toString(event, debug);
@@ -110,7 +148,6 @@ public class ExprResult extends PropertyExpression<Executable<Event, Object>, Ob
 			text += " with arguments " + arguments.toString(event, debug);
 		return text;
 	}
-
 
 
 }
