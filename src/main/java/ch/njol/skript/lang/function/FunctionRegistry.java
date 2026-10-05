@@ -16,6 +16,7 @@ import org.skriptlang.skript.util.Registry;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -55,6 +56,26 @@ public final class FunctionRegistry implements Registry<Function<?>> {
 	 */
 	private final Map<NamespaceIdentifier, Namespace> namespaces = new ConcurrentHashMap<>();
 
+	/**
+	 * Incremented whenever a function or signature is registered or removed.
+	 */
+	private final AtomicLong generation = new AtomicLong();
+
+	/**
+	 * A number which changes whenever the registered functions change, so that anything caching a
+	 * resolution can tell that it may no longer be correct.
+	 * <p>
+	 * A script being reloaded unregisters and re-registers its functions, which replaces their
+	 * {@link Function} objects, so a cached resolution from before a reload would otherwise keep
+	 * calling the unloaded one.
+	 * </p>
+	 *
+	 * @return The current generation.
+	 */
+	public long generation() {
+		return generation.get();
+	}
+
 	@Override
 	public @Unmodifiable @NotNull Collection<Function<?>> elements() {
 		Set<Function<?>> functions = new HashSet<>();
@@ -84,6 +105,7 @@ public final class FunctionRegistry implements Registry<Function<?>> {
 	 *                                  if the signature is local and namespace is null.
 	 */
 	public void register(@Nullable String namespace, @NotNull Signature<?> signature) {
+		generation.incrementAndGet();
 		Preconditions.checkNotNull(signature, "signature cannot be null");
 		if (signature.isLocal() && namespace == null) {
 			throw new IllegalArgumentException("Cannot register a local signature in the global namespace");
@@ -141,6 +163,7 @@ public final class FunctionRegistry implements Registry<Function<?>> {
 	 *                                  if the function is local and namespace is null.
 	 */
 	public void register(@Nullable String namespace, @NotNull Function<?> function) {
+		generation.incrementAndGet();
 		Preconditions.checkNotNull(function, "function cannot be null");
 		if (function.getSignature().isLocal() && namespace == null) {
 			throw new IllegalArgumentException("Cannot register a local function in the global namespace");
@@ -686,6 +709,7 @@ public final class FunctionRegistry implements Registry<Function<?>> {
 	 * @param signature The signature to remove.
 	 */
 	public void remove(@NotNull Signature<?> signature) {
+		generation.incrementAndGet();
 		Preconditions.checkNotNull(signature, "signature cannot be null");
 
 		String name = signature.getName();

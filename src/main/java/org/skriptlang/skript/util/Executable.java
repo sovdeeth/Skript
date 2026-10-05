@@ -57,8 +57,10 @@ public interface Executable<Caller, Result> {
 
 		/**
 		 * @param caller The source to execute with.
-		 * @return The result, or null if the bound arguments turned out not to be acceptable or
-		 * 	execution failed.
+		 * @return The result, or null if this did not run, because the bound arguments turned out
+		 * 	not to be acceptable or execution failed. An executable which ran but has no result
+		 * 	returns an empty array or an equivalent empty value rather than null, so that callers
+		 * 	can tell the two apart.
 		 */
 		@Nullable Result execute(Caller caller);
 

@@ -87,6 +87,13 @@ public class DynamicFunctionReference<Result>
 	 */
 	private final Map<Input, BoundExecutable<Event, Result[]>> boundExecutables = new ConcurrentHashMap<>();
 
+	/**
+	 * The registry generation the cached bindings were resolved against. A script being reloaded
+	 * replaces the {@link Function} objects of its functions, so a binding from before that must
+	 * not be reused.
+	 */
+	private volatile long generation = -1;
+
 	public DynamicFunctionReference(Function<? extends Result> function) {
 		Signature<? extends Result> signature = function.getSignature();
 
@@ -282,11 +289,14 @@ public class DynamicFunctionReference<Result>
 
 	/**
 	 * @param result The value a function returned.
-	 * @return That value as an array, since a function may return either a single value or several.
+	 * @return That value as an array, since a function may return either a single value or
+	 * 	several, or an empty array if it returned nothing. Never null, so that a null result from
+	 * 	{@link #execute(Event, Input)} only ever means the function did not run.
 	 */
-	private Result @Nullable [] normalise(@Nullable Object result) {
-		if (result == null) {
-			return null;
+	private Result[] normalise(@Nullable Object result) {
+		//noinspection unchecked
+		if (result == null) { // a function with no return type, or one which returned nothing
+			return (Result[]) new Object[0];
 		}
 
 		//noinspection unchecked
@@ -338,6 +348,14 @@ public class DynamicFunctionReference<Result>
 	 * @return How those arguments bind to this function, working it out if it is not yet known.
 	 */
 	private Binding binding(Input input) {
+		// a reload replaces the functions this may have bound to, and may equally have added the
+		// overload a previously failed binding was looking for, so both outcomes are discarded
+		long current = FunctionRegistry.getRegistry().generation();
+		if (generation != current) {
+			bindings.clear();
+			generation = current;
+		}
+
 		Binding binding = bindings.get(input);
 		if (binding != null) {
 			return binding;

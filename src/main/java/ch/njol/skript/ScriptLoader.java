@@ -1368,9 +1368,16 @@ public class ScriptLoader {
 	 */
 	@Nullable
 	public static File getScriptFileFromName(String script, File directory) {
-		script = normaliseScriptName(script);
-		if (script == null)
-			return null;
+		// unlike a script name, this also resolves folders, which keep their name as it is
+		if (script.endsWith("/") || script.endsWith("\\")) {
+			script = script.replace("/", File.separator).replace("\\", File.separator);
+			if (script.startsWith(DISABLED_SCRIPT_PREFIX))
+				script = script.substring(DISABLED_SCRIPT_PREFIX_LENGTH);
+		} else {
+			script = normaliseScriptName(script);
+			if (script == null)
+				return null;
+		}
 
 		File scriptFile = new File(directory, script);
 		if (!scriptFile.exists()) {
@@ -1433,7 +1440,8 @@ public class ScriptLoader {
 	 * which is the script's path relative to the scripts folder.
 	 *
 	 * @param name The name to normalise.
-	 * @return The normalised name, or null if the provided name cannot denote a script.
+	 * @return The normalised name, or null if the provided name cannot denote a script, as a
+	 * 	folder name cannot.
 	 */
 	private static @Nullable String normaliseScriptName(@Nullable String name) {
 		if (name == null || name.isEmpty())
@@ -1444,6 +1452,10 @@ public class ScriptLoader {
 
 		if (name.startsWith(DISABLED_SCRIPT_PREFIX))
 			name = name.substring(DISABLED_SCRIPT_PREFIX_LENGTH);
+
+		// a trailing separator names a folder, which is never a script
+		if (name.endsWith(File.separator))
+			return null;
 
 		if (!StringUtils.endsWithIgnoreCase(name, ".sk")) {
 			// A different extension means this cannot be a script
