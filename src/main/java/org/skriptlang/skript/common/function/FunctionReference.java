@@ -34,6 +34,13 @@ public final class FunctionReference<T> implements Debuggable {
 
 	private Signature<T> cachedSignature;
 	private boolean validSignature = true;
+
+	/**
+	 * Whether this reference is revalidated when the functions it may resolve to change.
+	 *
+	 * @see #track()
+	 */
+	private volatile boolean tracked;
 	private boolean printedInvalidSignatureWarning;
 	private Function<T> cachedFunction;
 	private LinkedHashMap<String, ArgInfo> cachedArguments;
@@ -115,9 +122,29 @@ public final class FunctionReference<T> implements Debuggable {
 			}
 		}
 
-		cachedSignature.addCall(this);
+		if (tracked) {
+			// re-register against the signature, which the block above may just have replaced
+			cachedSignature.addCall(this);
+		}
 
 		return true;
+	}
+
+	/**
+	 * Registers this reference to be revalidated whenever the functions it may resolve to change,
+	 * and keeps it registered across a reload.
+	 * <p>
+	 * This is for a reference belonging to a parsed script, which lives as long as the script does
+	 * and so has to be told when the function it calls is replaced. A reference obtained at
+	 * runtime must not be tracked: it is owned by whatever obtained it, which is responsible for
+	 * discarding it, and tracking it would have it revalidated, and warned about, after it has
+	 * already been thrown away.
+	 * </p>
+	 */
+	@ApiStatus.Internal
+	public void track() {
+		tracked = true;
+		cachedSignature.addCall(this);
 	}
 
 	private boolean validateArgument(Parameter<?> target, Expression<?> original, Expression<?> converted) {

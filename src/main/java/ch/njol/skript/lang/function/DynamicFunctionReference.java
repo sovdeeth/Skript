@@ -30,6 +30,7 @@ import org.skriptlang.skript.util.Validated;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -37,7 +38,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * A partial reference to a Skript function.
@@ -80,11 +80,6 @@ public class DynamicFunctionReference<Result>
 	 */
 	private final @Nullable String declaredIn;
 
-	/**
-	 * Whether anything of this name existed when this was created.
-	 */
-	private final boolean resolvable;
-
 	private final Validated validator = Validated.validator();
 
 	/**
@@ -114,7 +109,6 @@ public class DynamicFunctionReference<Result>
 		// a reference to a known function refers to exactly that overload
 		this.parameterTypes = FunctionBinder.declaredTypes(signature);
 		this.declaredIn = signature.namespace();
-		this.resolvable = true;
 	}
 
 	public DynamicFunctionReference(@NotNull String name) {
@@ -136,23 +130,26 @@ public class DynamicFunctionReference<Result>
 		this.namespace = source != null ? source.getConfig().getFileName() : null;
 		this.parameterTypes = parameterTypes;
 
-		Set<Signature<?>> candidates = candidates();
-		this.resolvable = !candidates.isEmpty();
-		this.declaredIn = declaringNamespace(candidates);
+		this.declaredIn = declaringNamespace(FunctionRegistry.getRegistry().getSignatures(namespace, name));
 	}
 
 	/**
-	 * @return The signatures this may resolve to.
+	 * Whether this reference may use {@code signature}.
+	 * <p>
+	 * This is the only rule for which overloads a reference may resolve to: the function must be
+	 * the one it originally resolved to, since another script may later declare a global function
+	 * of the same name, and it must be the pinned overload if one was given.
+	 * </p>
+	 *
+	 * @param signature The signature.
+	 * @return Whether this may resolve to {@code signature}.
 	 */
-	private Set<Signature<?>> candidates() {
-		Set<Signature<?>> candidates = FunctionRegistry.getRegistry().getSignatures(namespace, name);
-		if (parameterTypes == null) {
-			return candidates;
+	private boolean accepts(Signature<?> signature) {
+		if (!Objects.equals(signature.namespace(), declaredIn)) {
+			return false;
 		}
-
-		return candidates.stream()
-			.filter(this::matchesPin)
-			.collect(Collectors.toUnmodifiableSet());
+		return parameterTypes == null
+			|| Arrays.equals(FunctionBinder.declaredTypes(signature), parameterTypes);
 	}
 
 	/**
@@ -163,7 +160,7 @@ public class DynamicFunctionReference<Result>
 	 * @param candidates The candidate signatures.
 	 * @return The namespace the function was declared in, or null if that is not known.
 	 */
-	private @Nullable String declaringNamespace(Set<Signature<?>> candidates) {
+	private @Nullable String declaringNamespace(Collection<Signature<?>> candidates) {
 		String fallback = null;
 		for (Signature<?> candidate : candidates) {
 			if (Objects.equals(candidate.namespace(), namespace)) {
@@ -363,7 +360,7 @@ public class DynamicFunctionReference<Result>
 
 		try (RetainingLogHandler log = SkriptLogger.startRetainingLog()) {
 			FunctionReference<?> reference =
-				FunctionBinder.forExpressions(Mode.GREEDY).resolve(namespace, name, array, parameterTypes);
+				FunctionBinder.forExpressions(Mode.GREEDY).resolve(namespace, name, array, this::accepts);
 			discard(log);
 			return reference;
 		}
@@ -413,7 +410,7 @@ public class DynamicFunctionReference<Result>
 
 		try (RetainingLogHandler log = SkriptLogger.startRetainingLog()) {
 			FunctionReference<?> reference =
-				FunctionBinder.forExpressions(Mode.GREEDY).resolve(namespace, name, arguments, parameterTypes);
+				FunctionBinder.forExpressions(Mode.GREEDY).resolve(namespace, name, arguments, this::accepts);
 
 			if (reference != null) {
 				discard(log);
@@ -491,7 +488,7 @@ public class DynamicFunctionReference<Result>
 		FunctionReference<?> reference;
 		try (RetainingLogHandler log = SkriptLogger.startRetainingLog()) {
 			reference = FunctionBinder.forExpressions(Mode.GREEDY)
-				.resolve(namespace, name, bound, parameterTypes);
+				.resolve(namespace, name, bound, this::accepts);
 			discard(log);
 		}
 
@@ -533,29 +530,18 @@ public class DynamicFunctionReference<Result>
 
 	@Override
 	public boolean valid() {
-		if (!validator.valid() || !resolvable) {
+		if (!validator.valid()) {
 			return false;
 		}
 
-		// checked on every execution, so this avoids collecting the candidates
 		for (Signature<?> signature : FunctionRegistry.getRegistry().getSignatures(namespace, name)) {
-			// the function must still be the one this resolved to: a name alone is not enough, as
-			// another script may declare a global function of the same name
-			if (Objects.equals(signature.namespace(), declaredIn) && matchesPin(signature)) {
+			if (accepts(signature)) {
 				return true;
 			}
 		}
 		return false;
 	}
 
-	/**
-	 * @param signature The signature.
-	 * @return Whether {@code signature} is the overload this was pinned to, or true if it was not
-	 * 	pinned to one.
-	 */
-	private boolean matchesPin(Signature<?> signature) {
-		return parameterTypes == null || Arrays.equals(FunctionBinder.declaredTypes(signature), parameterTypes);
-	}
 
 	@Override
 	public String toString() {

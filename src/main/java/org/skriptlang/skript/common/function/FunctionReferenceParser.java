@@ -107,6 +107,12 @@ public record FunctionReferenceParser(ParseContext context, int flags) {
 			log.printError();
 			return null;
 		}
+
+		// this call belongs to a script, so it has to be revalidated when the function it calls
+		// is replaced. Only the reference which is actually used is registered: the binder builds
+		// one per candidate overload and discards the ones which do not match.
+		reference.track();
+
 		return reference;
 	}
 

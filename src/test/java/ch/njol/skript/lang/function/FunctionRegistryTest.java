@@ -6,6 +6,7 @@ import ch.njol.skript.lang.function.FunctionRegistry.RetrievalResult;
 import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.skript.registrations.DefaultClasses;
 import ch.njol.skript.util.Contract;
+import org.skriptlang.skript.common.function.FunctionReference;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
@@ -555,6 +556,48 @@ public class FunctionRegistryTest {
 		}
 
 		assertTrue(registry.getDeclaredFunctions(DECLARED_SCRIPT).isEmpty());
+	}
+
+	@Test
+	public void testDynamicReferencesAreNotTracked() {
+		String name = "testFunctionRegistryUntracked";
+
+		Function<Boolean> function = new SimpleJavaFunction<>(name, new Parameter[0],
+			DefaultClasses.BOOLEAN, true) {
+			@Override
+			public Boolean @Nullable [] executeSimple(Object[][] params) {
+				return new Boolean[]{true};
+			}
+		};
+
+		registry.register(null, function);
+		Signature<Boolean> signature = function.getSignature();
+
+		try {
+			assertTrue(signature.calls().isEmpty());
+
+			// binding a reference obtained at runtime resolves it, which validates the underlying
+			// FunctionReference; that must not register it for revalidation, or a reload would
+			// warn about a binding which has already been discarded
+			DynamicFunctionReference<Boolean> reference = new DynamicFunctionReference<>(name);
+			assertTrue(reference.valid());
+			assertNull(reference.bind().rejection());
+
+			assertTrue("a reference obtained at runtime must not be tracked",
+				signature.calls().isEmpty());
+
+			// a call written in a script opts in, and stays registered so that it is revalidated
+			// again after a reload re-resolves it
+			org.skriptlang.skript.common.function.FunctionReference<Boolean> tracked =
+				new org.skriptlang.skript.common.function.FunctionReference<>(
+					null, name, signature, new FunctionReference.Argument[0]);
+			tracked.track();
+
+			assertEquals(1, signature.calls().size());
+			assertTrue(signature.calls().contains(tracked));
+		} finally {
+			registry.remove(signature);
+		}
 	}
 
 }

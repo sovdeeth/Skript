@@ -1,0 +1,34 @@
+options:
+	misc: "../../../../../../src/test/skript/tests/misc/"
+
+	# paths are relativised to the /scripts/ directory, but these scripts are loaded from the
+	# test folder, so the path has to climb back out
+
+using script reflection
+
+test "a reference survives its script being reloaded":
+	set {_path} to {@misc} + "reloadable function.sk"
+	set {_function} to function "dfrReloadable" from (script named {_path})
+	assert {_function} exists with "the function wasn't found"
+	assert (result of {_function}) is "reloadable" with "the function didn't run"
+
+	reload (script named {_path})
+
+	# the cached binding points at the function object the reload replaced, so it has to be
+	# resolved again rather than reused
+	assert (result of {_function}) is "reloadable" with "the reference stopped working after a reload"
+
+test "a reference stops working when its script is unloaded":
+	set {_path} to {@misc} + "reloadable function.sk"
+	set {_script} to script named {_path}
+	set {_function} to function "dfrReloadable" from {_script}
+	assert {_function} exists with "the function wasn't found"
+
+	unload the script within {_script}
+
+	# the function it resolved to is gone, so the reference must not fall back to anything else
+	assert (result of {_function}) doesn't exist with "the reference still ran after its script was unloaded"
+
+	# put it back, so the order tests run in cannot matter
+	load the script within (script named {_path})
+	assert (result of (function "dfrReloadable" from (script named {_path}))) is "reloadable" with "the script didn't load back"

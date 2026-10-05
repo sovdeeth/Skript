@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.SequencedMap;
 import java.util.Set;
 import java.util.StringJoiner;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -108,20 +109,19 @@ public final class FunctionBinder<T> {
 
 	/**
 	 * Attempts to resolve a function call to a single {@link FunctionReference}, considering only
-	 * the overload declaring exactly {@code onlyParameterTypes}.
+	 * the overloads {@code only} accepts.
 	 *
-	 * @param namespace          The namespace to resolve local functions in, or null for global
-	 *                           functions only.
-	 * @param name               The function name.
-	 * @param arguments          The passed arguments.
-	 * @param onlyParameterTypes The declared parameter types of the only overload to consider, or
-	 *                           null to consider every overload.
-	 * @param <R>                The return type of the function.
+	 * @param namespace The namespace to resolve local functions in, or null for global functions
+	 *                  only.
+	 * @param name      The function name.
+	 * @param arguments The passed arguments.
+	 * @param only      Which overloads may be used, or null for any of them.
+	 * @param <R>       The return type of the function.
 	 * @return The matched reference, or null if none could be matched.
 	 */
 	public <R> @Nullable FunctionReference<R> resolve(
 		@Nullable String namespace, @NotNull String name, @NotNull Argument<T>[] arguments,
-		Class<?> @Nullable [] onlyParameterTypes
+		@Nullable Predicate<Signature<?>> only
 	) {
 		// avoid assigning values to a parameter multiple times
 		Set<String> named = new HashSet<>();
@@ -142,9 +142,9 @@ public final class FunctionBinder<T> {
 		// try to find a matching signature to get which types to parse args with
 		Set<Signature<?>> options = FunctionRegistry.getRegistry().getSignatures(namespace, name);
 
-		if (onlyParameterTypes != null) {
+		if (only != null) {
 			options = options.stream()
-				.filter(option -> Arrays.equals(declaredTypes(option), onlyParameterTypes))
+				.filter(only)
 				.collect(Collectors.toUnmodifiableSet());
 		}
 
