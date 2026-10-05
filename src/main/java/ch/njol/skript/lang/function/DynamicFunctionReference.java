@@ -73,6 +73,18 @@ public class DynamicFunctionReference<Result>
 	 */
 	private final Class<?> @Nullable [] parameterTypes;
 
+	/**
+	 * The namespace of the signature this resolved to, which is where the function was declared
+	 * rather than where it was looked up from. Kept so that this keeps referring to the function
+	 * it resolved to, rather than to whatever later takes the same name.
+	 */
+	private final @Nullable String declaredIn;
+
+	/**
+	 * Whether anything of this name existed when this was created.
+	 */
+	private final boolean resolvable;
+
 	private final Validated validator = Validated.validator();
 
 	/**
@@ -101,6 +113,8 @@ public class DynamicFunctionReference<Result>
 		this.namespace = signature.namespace();
 		// a reference to a known function refers to exactly that overload
 		this.parameterTypes = FunctionBinder.declaredTypes(signature);
+		this.declaredIn = signature.namespace();
+		this.resolvable = true;
 	}
 
 	public DynamicFunctionReference(@NotNull String name) {
@@ -121,6 +135,10 @@ public class DynamicFunctionReference<Result>
 		this.name = name;
 		this.namespace = source != null ? source.getConfig().getFileName() : null;
 		this.parameterTypes = parameterTypes;
+
+		Set<Signature<?>> candidates = candidates();
+		this.resolvable = !candidates.isEmpty();
+		this.declaredIn = declaringNamespace(candidates);
 	}
 
 	/**
@@ -133,7 +151,7 @@ public class DynamicFunctionReference<Result>
 		}
 
 		return candidates.stream()
-			.filter(candidate -> Arrays.equals(FunctionBinder.declaredTypes(candidate), parameterTypes))
+			.filter(this::matchesPin)
 			.collect(Collectors.toUnmodifiableSet());
 	}
 
@@ -213,8 +231,7 @@ public class DynamicFunctionReference<Result>
 	}
 
 	public @Nullable Script source() {
-		// only wanted for display, so this is worked out on demand rather than kept up to date
-		return ScriptLoader.getLoadedScriptFromName(declaringNamespace(candidates()));
+		return ScriptLoader.getLoadedScriptFromName(declaredIn);
 	}
 
 	@Override
@@ -278,12 +295,21 @@ public class DynamicFunctionReference<Result>
 		try {
 			return normalise(reference.execute(event));
 		} finally {
-			// FunctionReference#execute does not do this itself, and a script function asserts
-			// that its return value was reset before it is set again
-			org.skriptlang.skript.common.function.Function<?> function = reference.function();
-			if (function != null) {
-				function.resetReturnValue();
-			}
+			reset(reference);
+		}
+	}
+
+	/**
+	 * Resets the return value of the function {@code reference} refers to.
+	 * {@link FunctionReference#execute(Event)} does not do this itself, and a script function
+	 * asserts that its return value was reset before it is set again.
+	 *
+	 * @param reference The reference which was executed.
+	 */
+	private static void reset(FunctionReference<?> reference) {
+		org.skriptlang.skript.common.function.Function<?> function = reference.function();
+		if (function != null) {
+			function.resetReturnValue();
 		}
 	}
 
@@ -370,7 +396,7 @@ public class DynamicFunctionReference<Result>
 	 * Works out how the arguments of {@code input} bind to this function.
 	 *
 	 * @param input The argument expressions.
-	 * @return The binding, which may be {@link Binding#NONE}.
+	 * @return The binding, which may be one that does not fit.
 	 */
 	private Binding computeBinding(Input input) {
 		Expression<?>[] expressions = input.expressions();
@@ -455,15 +481,49 @@ public class DynamicFunctionReference<Result>
 
 	@Override
 	public Result @Nullable [] execute(Event event, Object... arguments) {
-		Expression<?>[] expressions = new Expression[arguments.length];
+		//noinspection unchecked
+		Argument<Expression<?>>[] bound = (Argument<Expression<?>>[]) new Argument[arguments.length];
 		for (int i = 0; i < arguments.length; i++) {
-			expressions[i] = new SimpleLiteral<>(arguments[i], true);
+			bound[i] = argument(literal(arguments[i]));
 		}
 
-		// the literals are built afresh on every call, so this input will never be seen again
-		// and must not be added to the binding cache
-		Input input = new Input(expressions);
-		return execute(event, input, computeBinding(input));
+		// the values are new on every call, so there is nothing worth caching here
+		FunctionReference<?> reference;
+		try (RetainingLogHandler log = SkriptLogger.startRetainingLog()) {
+			reference = FunctionBinder.forExpressions(Mode.GREEDY)
+				.resolve(namespace, name, bound, parameterTypes);
+			discard(log);
+		}
+
+		if (reference == null) {
+			return null;
+		}
+
+		try {
+			return normalise(reference.execute(event));
+		} finally {
+			reset(reference);
+		}
+	}
+
+	/**
+	 * Represents an argument value passed to the positional form of
+	 * {@link #execute(Event, Object...)} as an expression.
+	 *
+	 * @param value The value, which may be an array of values for a list parameter, or null to
+	 *              leave the parameter to its default.
+	 * @return The expression, or null if the parameter should use its default.
+	 */
+	private static @Nullable Expression<?> literal(@Nullable Object value) {
+		if (value == null) { // the parameter was omitted
+			return null;
+		}
+
+		if (value instanceof Object[] values) { // several values, for a list parameter
+			return new SimpleLiteral<>(values, Object.class, true);
+		}
+
+		return new SimpleLiteral<>(value, true);
 	}
 
 	@Override
@@ -473,22 +533,28 @@ public class DynamicFunctionReference<Result>
 
 	@Override
 	public boolean valid() {
-		if (!validator.valid()) {
+		if (!validator.valid() || !resolvable) {
 			return false;
 		}
 
 		// checked on every execution, so this avoids collecting the candidates
-		Set<Signature<?>> signatures = FunctionRegistry.getRegistry().getSignatures(namespace, name);
-		if (parameterTypes == null) {
-			return !signatures.isEmpty();
-		}
-
-		for (Signature<?> signature : signatures) {
-			if (Arrays.equals(FunctionBinder.declaredTypes(signature), parameterTypes)) {
+		for (Signature<?> signature : FunctionRegistry.getRegistry().getSignatures(namespace, name)) {
+			// the function must still be the one this resolved to: a name alone is not enough, as
+			// another script may declare a global function of the same name
+			if (Objects.equals(signature.namespace(), declaredIn) && matchesPin(signature)) {
 				return true;
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * @param signature The signature.
+	 * @return Whether {@code signature} is the overload this was pinned to, or true if it was not
+	 * 	pinned to one.
+	 */
+	private boolean matchesPin(Signature<?> signature) {
+		return parameterTypes == null || Arrays.equals(FunctionBinder.declaredTypes(signature), parameterTypes);
 	}
 
 	@Override
@@ -614,11 +680,6 @@ public class DynamicFunctionReference<Result>
 		private Binding(@Nullable FunctionReference<?> reference, int spread) {
 			this(reference, spread, null);
 		}
-
-		/**
-		 * The arguments do not fit this function at all.
-		 */
-		private static final Binding NONE = new Binding(null, -1, null);
 
 		/**
 		 * @return Whether the arguments fit, possibly only once their values are known.

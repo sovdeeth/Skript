@@ -504,12 +504,11 @@ public class FunctionRegistryTest {
 	}
 
 	@Test
-	public void testGetDeclaredSignaturesAndFunctions() {
+	public void testGetDeclaredFunctions() {
 		String localName = "testFunctionRegistryDeclaredLocal";
 		String globalName = "testFunctionRegistryDeclaredGlobal";
 		String elsewhereName = "testFunctionRegistryDeclaredElsewhere";
 
-		assertTrue(registry.getDeclaredSignatures(DECLARED_SCRIPT).isEmpty());
 		assertTrue(registry.getDeclaredFunctions(DECLARED_SCRIPT).isEmpty());
 
 		// a local function, which lives in the namespace of the script declaring it
@@ -540,12 +539,6 @@ public class FunctionRegistryTest {
 		registry.register(null, elsewhere);
 
 		try {
-			Set<Signature<?>> signatures = registry.getDeclaredSignatures(DECLARED_SCRIPT);
-			assertEquals(2, signatures.size());
-			assertTrue(signatures.contains(local.getSignature()));
-			assertTrue(signatures.contains(globalSignature));
-			assertFalse(signatures.contains(elsewhere.getSignature()));
-
 			Set<Function<?>> functions = registry.getDeclaredFunctions(DECLARED_SCRIPT);
 			assertEquals(2, functions.size());
 			assertTrue(functions.contains(local));
@@ -553,8 +546,6 @@ public class FunctionRegistryTest {
 			assertFalse(functions.contains(elsewhere));
 
 			// a null namespace means the functions which have no declaring script
-			assertTrue(registry.getDeclaredSignatures(null).contains(elsewhere.getSignature()));
-			assertFalse(registry.getDeclaredSignatures(null).contains(globalSignature));
 			assertTrue(registry.getDeclaredFunctions(null).contains(elsewhere));
 			assertFalse(registry.getDeclaredFunctions(null).contains(global));
 		} finally {
@@ -563,7 +554,6 @@ public class FunctionRegistryTest {
 			registry.remove(elsewhere.getSignature());
 		}
 
-		assertTrue(registry.getDeclaredSignatures(DECLARED_SCRIPT).isEmpty());
 		assertTrue(registry.getDeclaredFunctions(DECLARED_SCRIPT).isEmpty());
 	}
 

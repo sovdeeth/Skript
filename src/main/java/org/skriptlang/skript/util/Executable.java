@@ -3,6 +3,8 @@ package org.skriptlang.skript.util;
 import ch.njol.skript.lang.Expression;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Consumer;
+
 /**
  * A process that can be executed, which may return its result.
  * This is an abstraction for general triggers (runnables, tasks, functions, etc.)
@@ -43,6 +45,39 @@ public interface Executable<Caller, Result> {
 	 * {@link BoundExecutable} rather than here, since whether they are may depend on their values.
 	 */
 	default @Nullable Executable.BoundExecutable<Caller, Result> bind(Expression<?>... arguments) {
+		return null;
+	}
+
+	/**
+	 * Executes {@code bound}, reporting why it would not run if it did not.
+	 * <p>
+	 * An executable knows why it would not accept the arguments it was bound to, but not where
+	 * the call to it was written, so the reason is reported through {@code onRejection} rather
+	 * than logged.
+	 * </p>
+	 *
+	 * @param executable  The executable that was bound.
+	 * @param bound       The bound executable.
+	 * @param caller      The source to execute with.
+	 * @param onRejection Called with the reason if it did not run.
+	 * @param <Caller>    The source type of the executable.
+	 * @param <Result>    The return type of the executable.
+	 * @return The result, or null if it did not run.
+	 */
+	static <Caller, Result> @Nullable Result run(
+		Executable<Caller, Result> executable, BoundExecutable<Caller, Result> bound,
+		Caller caller, Consumer<String> onRejection
+	) {
+		Result result = bound.execute(caller);
+		if (result != null) {
+			return result;
+		}
+
+		String rejection = bound.rejection();
+		onRejection.accept(rejection != null
+			? rejection
+			: "Cannot run " + executable + " with the given arguments.");
+
 		return null;
 	}
 

@@ -10,7 +10,6 @@ import ch.njol.skript.lang.ExpressionList;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.LiteralUtils;
-import ch.njol.skript.registrations.Classes;
 import ch.njol.util.Kleenean;
 import org.skriptlang.skript.log.runtime.SyntaxRuntimeErrorProducer;
 
@@ -72,7 +71,7 @@ public class ExprResult extends PropertyExpression<Executable<Event, Object>, Ob
 			// parameters, is handed the argument expressions rather than a flat list of their values
 			Executable.BoundExecutable<Event, Object> boundExecutable = task.bind(argumentExpressions);
 			if (boundExecutable != null) {
-				Object result = run(task, boundExecutable, event);
+				Object result = Executable.run(task, boundExecutable, event, this::error);
 				if (result == null)
 					return new Object[0];
 				if (result instanceof Object[] results)
@@ -107,33 +106,6 @@ public class ExprResult extends PropertyExpression<Executable<Event, Object>, Ob
 	@Override
 	public boolean isSingle() {
 		return !isPlural;
-	}
-
-	/**
-	 * Executes {@code boundExecutable}, reporting as a runtime error why it would not run, since
-	 * it knows why its arguments were not acceptable but not where the call to it was written.
-	 *
-	 * @param executable      The executable that was bound.
-	 * @param boundExecutable The bound executable.
-	 * @param event           The event to execute with.
-	 * @return The result, or null if it did not execute.
-	 */
-	private <T> @Nullable T run(
-		Executable<Event, ?> executable, Executable.BoundExecutable<Event, T> boundExecutable, Event event
-	) {
-		T result = boundExecutable.execute(event);
-		if (result != null) {
-			return result;
-		}
-
-		// the executable knows why it would not accept its arguments, but only the call site knows
-		// where the call was written
-		String rejection = boundExecutable.rejection();
-		error(rejection != null
-			? rejection
-			: "Cannot run " + Classes.toString(executable) + " with the given arguments.");
-
-		return null;
 	}
 
 	@Override

@@ -453,82 +453,16 @@ public final class FunctionRegistry implements Registry<Function<?>> {
 		return Set.copyOf(total.values());
 	}
 
-	/**
-	 * Gets the function implementing {@code signature}.
-	 * <p>
-	 * Unlike {@link #getFunction(String, String, Class[])} this considers no conversion between
-	 * argument types, so it returns the implementation of exactly that overload rather than the
-	 * one which best matches a call.
-	 * </p>
-	 *
-	 * @param signature The signature to get the function of.
-	 * @return The function, or null if no function with that signature has been loaded.
-	 */
-	public @Nullable Function<?> getFunction(@NotNull Signature<?> signature) {
-		Preconditions.checkNotNull(signature, "signature cannot be null");
-
-		Namespace namespace;
-		if (signature.isLocal()) {
-			namespace = namespaces.get(new NamespaceIdentifier(signature.namespace()));
-		} else {
-			namespace = namespaces.get(GLOBAL_NAMESPACE);
-		}
-
-		if (namespace == null) {
-			return null;
-		}
-
-		return namespace.functions.get(FunctionIdentifier.of(signature));
-	}
-	/**
-	 * Gets every signature declared in {@code namespace}.
-	 * <p>
-	 * Unlike {@link #getSignatures(String, String)} this is not about what is visible from a
-	 * namespace, but about where a function was declared: the result contains the local functions
-	 * of {@code namespace} and the global functions declared in it, but not global functions
-	 * declared elsewhere. If {@code namespace} is null, returns the signatures which have no
-	 * declaring script, such as those of Java functions.
-	 * </p>
-	 *
-	 * @param namespace The namespace functions were declared in.
-	 *                  Usually represents the path of the script in question.
-	 * @return All signatures declared in {@code namespace}.
-	 */
-	public @Unmodifiable @NotNull Set<Signature<?>> getDeclaredSignatures(@Nullable String namespace) {
-		Set<Signature<?>> declared = new HashSet<>();
-
-		if (namespace != null) {
-			Namespace local = namespaces.get(new NamespaceIdentifier(namespace));
-			if (local != null) {
-				declared.addAll(local.signatures.values());
-			}
-		}
-
-		// global functions are registered in the global namespace no matter which script declared
-		// them, so they have to be filtered by the script their signature records
-		Namespace global = namespaces.get(GLOBAL_NAMESPACE);
-		if (global != null) {
-			for (Signature<?> signature : global.signatures.values()) {
-				if (Objects.equals(signature.namespace(), namespace)) {
-					declared.add(signature);
-				}
-			}
-		}
-
-		return Set.copyOf(declared);
-	}
 
 	/**
 	 * Gets every function declared in {@code namespace}.
 	 * <p>
-	 * Only functions whose body has been loaded are returned; use
-	 * {@link #getDeclaredSignatures(String)} for everything that has been declared.
+	 * Only functions whose body has been loaded are returned.
 	 * </p>
 	 *
 	 * @param namespace The namespace functions were declared in.
 	 *                  Usually represents the path of the script in question.
 	 * @return All functions declared in {@code namespace}.
-	 * @see #getDeclaredSignatures(String)
 	 */
 	public @Unmodifiable @NotNull Set<Function<?>> getDeclaredFunctions(@Nullable String namespace) {
 		Set<Function<?>> declared = new HashSet<>();

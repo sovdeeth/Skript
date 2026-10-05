@@ -1419,7 +1419,8 @@ public class ScriptLoader {
 	/**
 	 * Searches the loaded scripts for the one with the provided name.
 	 * <p>
-	 * Unlike {@link #getScriptFileFromName(String)} this never touches the filesystem, but it can
+	 * Unlike {@link #getScriptFileFromName(String)} this avoids the filesystem for a name which
+	 * matches the one a script was loaded under, but it can
 	 * only find scripts that are currently loaded. Prefer this method when a {@link Script} is
 	 * what you need, as the file-based lookup requires several filesystem operations.
 	 * </p>
@@ -1429,10 +1430,19 @@ public class ScriptLoader {
 	 * @return The loaded script with the provided name, or null if no such script is loaded.
 	 */
 	public static @Nullable Script getLoadedScriptFromName(@Nullable String name) {
-		name = normaliseScriptName(name);
-		if (name == null)
+		String normalised = normaliseScriptName(name);
+		if (normalised == null)
 			return null;
-		return scriptsByName.get(name);
+
+		Script script = scriptsByName.get(normalised);
+		if (script != null)
+			return script;
+
+		// A name can identify a loaded script without matching the name it was loaded under: the
+		// file system may be case insensitive, or the path may lead through a symlink. Resolving
+		// the file sorts both out, so fall back to that rather than reporting it as not loaded.
+		File file = getScriptFileFromName(name);
+		return file != null && file.isFile() ? getScript(file) : null;
 	}
 
 	/**
