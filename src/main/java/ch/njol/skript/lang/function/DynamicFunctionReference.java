@@ -84,6 +84,12 @@ public class DynamicFunctionReference<Result>
 	 */
 	private final Map<Input, Binding> bindings = new HashMap<>();
 
+	/**
+	 * A reusable {@link BoundExecutable} per set of argument expressions, so that binding does not allocate
+	 * on every execution.
+	 */
+	private final Map<Input, BoundExecutable<Event, Result[]>> boundExecutables = new HashMap<>();
+
 	public DynamicFunctionReference(Function<? extends Result> function) {
 		Signature<? extends Result> signature = function.getSignature();
 
@@ -287,7 +293,7 @@ public class DynamicFunctionReference<Result>
 	 * @return The bound reference, or null if the values do not fit any overload either.
 	 */
 	private @Nullable FunctionReference<?> spread(Event event, Input input, int index) {
-		Expression<?>[] expressions = input.parameters();
+		Expression<?>[] expressions = input.expressions();
 
 		List<Argument<Expression<?>>> arguments = new ArrayList<>(expressions.length);
 		for (int i = 0; i < expressions.length; i++) {
@@ -316,7 +322,7 @@ public class DynamicFunctionReference<Result>
 			return binding;
 		}
 
-		binding = bind(input);
+		binding = computeBinding(input);
 		bindings.put(input, binding);
 		return binding;
 	}
@@ -327,8 +333,8 @@ public class DynamicFunctionReference<Result>
 	 * @param input The argument expressions.
 	 * @return The binding, which may be {@link Binding#NONE}.
 	 */
-	private Binding bind(Input input) {
-		Expression<?>[] expressions = input.parameters();
+	private Binding computeBinding(Input input) {
+		Expression<?>[] expressions = input.expressions();
 
 		//noinspection unchecked
 		Argument<Expression<?>>[] arguments = (Argument<Expression<?>>[]) new Argument[expressions.length];
@@ -395,6 +401,13 @@ public class DynamicFunctionReference<Result>
 	}
 
 	@Override
+	public @Nullable Executable.BoundExecutable<Event, Result[]> bind(Expression<?>... arguments) {
+		// a function always decides for itself which parameter each argument belongs to, and
+		// whether they are acceptable may depend on their values, so that is left to execution
+		return boundExecutables.computeIfAbsent(new Input(arguments), input -> event -> execute(event, input));
+	}
+
+	@Override
 	public Result @Nullable [] execute(Event event, Object... arguments) {
 		Expression<?>[] expressions = new Expression[arguments.length];
 		for (int i = 0; i < arguments.length; i++) {
@@ -447,7 +460,7 @@ public class DynamicFunctionReference<Result>
 
 		// the arguments are acceptable, but which parameter each of them belongs to is only known
 		// to the binding, so handing them back as one expression loses that
-		return new ExpressionList<>(input.parameters(), Object.class, true);
+		return new ExpressionList<>(input.expressions(), Object.class, true);
 	}
 
 	/**
@@ -523,25 +536,26 @@ public class DynamicFunctionReference<Result>
 	}
 
 	/**
-	 * An index-linking key for a particular set of input expressions.
-	 * Binding only needs to be done once for a set of parameter types,
-	 * so this is used to prevent re-binding.
+	 * An index-linking key for a particular set of argument expressions.
+	 * Binding only needs to be done once for a set of argument types, so this is used to avoid
+	 * re-binding on every execution.
 	 */
 	public static class Input {
-		private final Class<?>[] types;
-		private transient final Expression<?>[] parameters;
 
-		public Input(Expression<?>... types) {
-			Class<?>[] classes = new Class<?>[types.length];
-			for (int i = 0; i < types.length; i++) {
-				classes[i] = types[i].getReturnType();
+		private final Class<?>[] types;
+		private transient final Expression<?>[] expressions;
+
+		public Input(Expression<?>... expressions) {
+			Class<?>[] types = new Class<?>[expressions.length];
+			for (int i = 0; i < expressions.length; i++) {
+				types[i] = expressions[i].getReturnType();
 			}
-			this.parameters = types;
-			this.types = classes;
+			this.expressions = expressions;
+			this.types = types;
 		}
 
-		private Expression<?>[] parameters() {
-			return parameters;
+		private Expression<?>[] expressions() {
+			return expressions;
 		}
 
 		@Override
@@ -550,12 +564,12 @@ public class DynamicFunctionReference<Result>
 				return true;
 			if (!(object instanceof Input input))
 				return false;
-			return Arrays.equals(parameters, input.parameters) && Objects.deepEquals(types, input.types);
+			return Arrays.equals(expressions, input.expressions) && Objects.deepEquals(types, input.types);
 		}
 
 		@Override
 		public int hashCode() {
-			return Arrays.hashCode(types) ^ Arrays.hashCode(parameters);
+			return Arrays.hashCode(types) ^ Arrays.hashCode(expressions);
 		}
 
 	}

@@ -1,5 +1,8 @@
 package org.skriptlang.skript.util;
 
+import ch.njol.skript.lang.Expression;
+import org.jetbrains.annotations.Nullable;
+
 /**
  * A process that can be executed, which may return its result.
  * This is an abstraction for general triggers (runnables, tasks, functions, etc.)
@@ -10,6 +13,55 @@ package org.skriptlang.skript.util;
  */
 public interface Executable<Caller, Result> {
 
+	/**
+	 * Executes this with the given argument values.
+	 * <p>
+	 * The values are positional and carry no structure, so anything which cares about which of
+	 * its inputs an argument belongs to should implement {@link #bind(Expression[])} instead and
+	 * be called through that.
+	 * </p>
+	 *
+	 * @param caller    The source to execute with.
+	 * @param arguments The argument values.
+	 * @return The result.
+	 */
 	Result execute(Caller caller, Object... arguments);
+
+	/**
+	 * Binds a set of argument expressions to this, so that it can be executed with them
+	 * repeatedly.
+	 * <p>
+	 * This is how something which has its own idea of what its arguments mean, such as a function
+	 * with parameters, decides for itself how the arguments it was given are used. An executable
+	 * with no such need does not implement this, and is called through
+	 * {@link #execute(Object, Object...)} with the evaluated values instead.
+	 * </p>
+	 *
+	 * @param arguments The argument expressions, as collected when the caller was parsed.
+	 * @return Something which executes this with those arguments, or null if this does not bind
+	 * arguments itself. Note that the arguments being unacceptable is reported by the returned
+	 * {@link BoundExecutable} rather than here, since whether they are may depend on their values.
+	 */
+	default @Nullable Executable.BoundExecutable<Caller, Result> bind(Expression<?>... arguments) {
+		return null;
+	}
+
+	/**
+	 * An executable which has had a set of arguments bound to it.
+	 *
+	 * @param <Caller> The source type of the executable.
+	 * @param <Result> The return type of the executable.
+	 */
+	@FunctionalInterface
+	interface BoundExecutable<Caller, Result> {
+
+		/**
+		 * @param caller The source to execute with.
+		 * @return The result, or null if the bound arguments turned out not to be acceptable or
+		 * 	execution failed.
+		 */
+		@Nullable Result execute(Caller caller);
+
+	}
 
 }

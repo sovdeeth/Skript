@@ -6,7 +6,6 @@ import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionList;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.lang.function.DynamicFunctionReference;
 import ch.njol.skript.util.LiteralUtils;
 import ch.njol.util.Kleenean;
 import org.bukkit.event.Event;
@@ -36,7 +35,7 @@ public class EffRun extends Effect implements ReflectionExperimentSyntax {
 	// from the expression, and it makes casting more difficult to no benefit.
 	private Expression<Executable> executable;
 	private Expression<?> arguments;
-	private DynamicFunctionReference.Input input;
+	private Expression<?>[] argumentExpressions;
 	private boolean hasArguments;
 
 	@Override
@@ -51,10 +50,10 @@ public class EffRun extends Effect implements ReflectionExperimentSyntax {
 			} else {
 				arguments = new Expression[]{this.arguments};
 			}
-			this.input = new DynamicFunctionReference.Input(arguments);
+			this.argumentExpressions = arguments;
 			return LiteralUtils.canInitSafely(this.arguments);
 		} else {
-			this.input = new DynamicFunctionReference.Input();
+			this.argumentExpressions = new Expression[0];
 		}
 		return true;
 	}
@@ -64,10 +63,11 @@ public class EffRun extends Effect implements ReflectionExperimentSyntax {
 		Executable task = executable.getSingle(event);
 		if (task == null)
 			return;
-		if (task instanceof DynamicFunctionReference<?> reference) {
-			// a function binds each argument to the parameter it belongs to, so it is handed the
-			// argument expressions rather than a flat list of all of their values
-			reference.execute(event, input);
+		// something which decides for itself what its arguments mean, such as a function with
+		// parameters, is handed the argument expressions rather than a flat list of their values
+		Executable.BoundExecutable<Event, ?> boundExecutable = task.bind(argumentExpressions);
+		if (boundExecutable != null) {
+			boundExecutable.execute(event);
 			return;
 		}
 
