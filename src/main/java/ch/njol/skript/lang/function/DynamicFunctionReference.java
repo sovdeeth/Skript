@@ -8,9 +8,6 @@ import ch.njol.skript.lang.ExpressionList;
 import ch.njol.skript.lang.parser.ParserInstance;
 import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.skript.lang.util.common.AnyNamed;
-import ch.njol.skript.log.LogEntry;
-import ch.njol.skript.log.RetainingLogHandler;
-import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Contract;
 import ch.njol.skript.util.Utils;
@@ -25,12 +22,12 @@ import org.skriptlang.skript.common.function.FunctionReference.Argument;
 import org.skriptlang.skript.common.function.FunctionReference.ArgumentType;
 import org.skriptlang.skript.lang.script.Script;
 import org.skriptlang.skript.util.Executable;
+import org.skriptlang.skript.util.Result;
 import org.skriptlang.skript.util.Validated;
 
 import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -286,24 +283,26 @@ public class DynamicFunctionReference
 			}
 		}
 
-		try {
-			return normalise(reference, reference.execute(event));
-		} finally {
-			reset(reference);
-		}
+		return run(event, reference);
 	}
 
 	/**
-	 * Resets the return value of the function {@code reference} refers to.
-	 * {@link FunctionReference#execute(Event)} does not do this itself, and a script function
-	 * asserts that its return value was reset before it is set again.
+	 * Executes a bound reference.
 	 *
-	 * @param reference The reference which was executed.
+	 * @param event     The event to execute with.
+	 * @param reference The reference to execute.
+	 * @return The returned values, never null.
 	 */
-	private static void reset(FunctionReference<?> reference) {
-		org.skriptlang.skript.common.function.Function<?> function = reference.function();
-		if (function != null) {
-			function.resetReturnValue();
+	private Object[] run(Event event, FunctionReference<?> reference) {
+		try {
+			return normalise(reference, reference.execute(event));
+		} finally {
+			// FunctionReference#execute does not reset the return value itself, and a script
+			// function asserts that its return value was reset before it is set again
+			org.skriptlang.skript.common.function.Function<?> function = reference.function();
+			if (function != null) {
+				function.resetReturnValue();
+			}
 		}
 	}
 
@@ -362,14 +361,39 @@ public class DynamicFunctionReference
 		}
 
 		//noinspection unchecked
-		Argument<Expression<?>>[] array = arguments.toArray(new Argument[0]);
+		return resolve(arguments.toArray(new Argument[0])).reference();
+	}
 
-		try (RetainingLogHandler log = SkriptLogger.startRetainingLog()) {
-			FunctionReference<?> reference =
-				FunctionBinder.forExpressions(Mode.GREEDY).resolve(namespace, name, array, this::accepts);
-			discard(log);
-			return reference;
+	/**
+	 * Resolves which overload {@code arguments} bind to.
+	 *
+	 * @param arguments The arguments to bind.
+	 * @return The binding, which carries either the bound reference or why there is none.
+	 */
+	private Binding resolve(Argument<Expression<?>>[] arguments) {
+		Result<? extends FunctionReference<?>> resolution =
+			FunctionBinder.forExpressions(Mode.GREEDY)
+				.resolve(namespace, name, arguments, this::accepts);
+
+		return switch (resolution) {
+			case Result.Success<? extends FunctionReference<?>>(var reference, var ignored) ->
+				new Binding(reference, -1);
+			case Result.Failure<? extends FunctionReference<?>>(var error) ->
+				new Binding(null, -1, error);
+		};
+	}
+
+	/**
+	 * @param expressions The argument expressions.
+	 * @return Those expressions as unnamed arguments, in the order they were given.
+	 */
+	private static Argument<Expression<?>>[] asArguments(Expression<?>... expressions) {
+		//noinspection unchecked
+		Argument<Expression<?>>[] arguments = (Argument<Expression<?>>[]) new Argument[expressions.length];
+		for (int i = 0; i < expressions.length; i++) {
+			arguments[i] = argument(expressions[i]);
 		}
+		return arguments;
 	}
 
 	/**
@@ -404,53 +428,17 @@ public class DynamicFunctionReference
 	private Binding computeBinding(Input input) {
 		Expression<?>[] expressions = input.expressions();
 
-		//noinspection unchecked
-		Argument<Expression<?>>[] arguments = (Argument<Expression<?>>[]) new Argument[expressions.length];
-		for (int i = 0; i < expressions.length; i++) {
-			arguments[i] = argument(expressions[i]);
+		Binding binding = resolve(asArguments(expressions));
+		if (binding.reference() != null) {
+			return binding;
 		}
 
 		// an argument which is not single may have to be spread across several parameters, which
-		// can only be decided once its values are known, so a failure here is not yet final
+		// can only be decided once its values are known, so this failure is not yet final
 		int spread = spreadable(expressions);
-
-		try (RetainingLogHandler log = SkriptLogger.startRetainingLog()) {
-			FunctionReference<?> reference =
-				FunctionBinder.forExpressions(Mode.GREEDY).resolve(namespace, name, arguments, this::accepts);
-
-			if (reference != null) {
-				discard(log);
-				return new Binding(reference, -1);
-			}
-
-			if (spread >= 0) { // the spread may still bind, so do not report this failure
-				discard(log);
-				return new Binding(null, spread);
-			}
-
-			LogEntry first = null;
-			for (LogEntry entry : log.getLog()) { // marks the log as handled
-				if (entry.getLevel().intValue() >= Level.SEVERE.intValue()) {
-					first = entry;
-					break;
-				}
-			}
-
-			return new Binding(null, -1, first != null ? first.getMessage() : null);
-		}
+		return spread >= 0 ? new Binding(null, spread) : binding;
 	}
 
-	/**
-	 * Throws away everything a speculative binding logged.
-	 *
-	 * @param log The log to discard.
-	 */
-	private static void discard(RetainingLogHandler log) {
-		log.clear();
-		// clearing alone does not count as having handled the log, and the handler complains when
-		// it is stopped without having been told what to do with it
-		log.printLog();
-	}
 
 	/**
 	 * @param expressions The argument expressions.
@@ -484,29 +472,14 @@ public class DynamicFunctionReference
 
 	@Override
 	public Object @Nullable [] execute(Event event, Object... arguments) {
-		//noinspection unchecked
-		Argument<Expression<?>>[] bound = (Argument<Expression<?>>[]) new Argument[arguments.length];
+		Expression<?>[] expressions = new Expression[arguments.length];
 		for (int i = 0; i < arguments.length; i++) {
-			bound[i] = argument(literal(arguments[i]));
+			expressions[i] = literal(arguments[i]);
 		}
 
 		// the values are new on every call, so there is nothing worth caching here
-		FunctionReference<?> reference;
-		try (RetainingLogHandler log = SkriptLogger.startRetainingLog()) {
-			reference = FunctionBinder.forExpressions(Mode.GREEDY)
-				.resolve(namespace, name, bound, this::accepts);
-			discard(log);
-		}
-
-		if (reference == null) {
-			return null;
-		}
-
-		try {
-			return normalise(reference, reference.execute(event));
-		} finally {
-			reset(reference);
-		}
+		FunctionReference<?> reference = resolve(asArguments(expressions)).reference();
+		return reference != null ? run(event, reference) : null;
 	}
 
 	/**

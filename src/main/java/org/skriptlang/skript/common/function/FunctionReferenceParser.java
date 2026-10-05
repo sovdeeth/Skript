@@ -100,9 +100,12 @@ public record FunctionReferenceParser(ParseContext context, int flags) {
 			namespace = null;
 		}
 
-		FunctionBinder<String> binder = new FunctionBinder<>(new StringArgumentBinder(), FunctionBinder.Mode.STRICT);
+		// a call written in a script keeps its failures in the parse log, so that the best of the
+		// errors from the overloads which did not match is the one shown
+		FunctionBinder<String> binder =
+			new FunctionBinder<>(new StringArgumentBinder(), FunctionBinder.Mode.STRICT, true);
 
-		FunctionReference<T> reference = binder.resolve(namespace, name, arguments);
+		FunctionReference<T> reference = binder.<T>resolve(namespace, name, arguments).value();
 		if (reference == null) { // the binder has already reported why
 			log.printError();
 			return null;

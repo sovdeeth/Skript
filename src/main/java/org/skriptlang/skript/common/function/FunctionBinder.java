@@ -8,6 +8,9 @@ import ch.njol.skript.lang.function.FunctionRegistry;
 import ch.njol.skript.lang.function.Signature;
 import ch.njol.skript.localization.ArgsMessage;
 import ch.njol.skript.localization.Language;
+import ch.njol.skript.log.LogEntry;
+import ch.njol.skript.log.RetainingLogHandler;
+import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.LiteralUtils;
 import ch.njol.skript.util.Utils;
@@ -16,6 +19,7 @@ import ch.njol.util.coll.CollectionUtils;
 import com.google.common.collect.Sets;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.skriptlang.skript.util.Result;
 import org.skriptlang.skript.common.function.FunctionReference.Argument;
 import org.skriptlang.skript.common.function.FunctionReference.ArgumentType;
 import org.skriptlang.skript.common.function.FunctionReferenceParser.EmptyExpression;
@@ -52,10 +56,30 @@ public final class FunctionBinder<T> {
 
 	private final ArgumentBinder<T> binder;
 	private final Mode mode;
+	/**
+	 * Stands in for the reason a binder which reports to the log fails with, since that binder's
+	 * caller reads the reason out of its own log rather than off the result. Never shown.
+	 */
+	private static final String REPORTED_IN_LOG = "The reason was left in the log.";
 
-	FunctionBinder(@NotNull ArgumentBinder<T> binder, @NotNull Mode mode) {
+	/**
+	 * The reason given when a binder which returns its reasons somehow has none, which the paths
+	 * out of {@link #match(String, String, Argument[], Predicate)} should make unreachable.
+	 */
+	private static final String NO_REASON_GIVEN = "No matching function was found.";
+
+	private final boolean report;
+
+	/**
+	 * @param binder The strategy for the arguments being bound.
+	 * @param mode   How arguments are bound to parameters.
+	 * @param report Whether a failure is left in the log for the caller to print, rather than
+	 *               returned. Only a caller which is parsing a script has a log to print.
+	 */
+	FunctionBinder(@NotNull ArgumentBinder<T> binder, @NotNull Mode mode, boolean report) {
 		this.binder = binder;
 		this.mode = mode;
+		this.report = report;
 	}
 
 	/**
@@ -65,7 +89,8 @@ public final class FunctionBinder<T> {
 	 * @return The binder.
 	 */
 	public static FunctionBinder<Expression<?>> forExpressions(@NotNull Mode mode) {
-		return new FunctionBinder<>(new ExpressionArgumentBinder(), mode);
+		// a caller resolving at runtime has no log to print, so it is given the reason instead
+		return new FunctionBinder<>(new ExpressionArgumentBinder(), mode, false);
 	}
 
 	/**
@@ -90,18 +115,15 @@ public final class FunctionBinder<T> {
 
 	/**
 	 * Attempts to resolve a function call to a single {@link FunctionReference}.
-	 * <p>
-	 * Any failure is reported through {@link Skript#error(String)} before this returns, so callers
-	 * holding a log handler should print it whenever this returns null.
-	 * </p>
 	 *
-	 * @param namespace The namespace to resolve local functions in, or null for global functions only.
+	 * @param namespace The namespace to resolve local functions in, or null for global functions
+	 *                  only.
 	 * @param name      The function name.
 	 * @param arguments The passed arguments.
 	 * @param <R>       The return type of the function.
-	 * @return The matched reference, or null if none could be matched.
+	 * @return Either the matched reference, or why there is none.
 	 */
-	public <R> @Nullable FunctionReference<R> resolve(
+	public <R> @NotNull Result<FunctionReference<R>> resolve(
 		@Nullable String namespace, @NotNull String name, @NotNull Argument<T>[] arguments
 	) {
 		return resolve(namespace, name, arguments, null);
@@ -117,9 +139,56 @@ public final class FunctionBinder<T> {
 	 * @param arguments The passed arguments.
 	 * @param only      Which overloads may be used, or null for any of them.
 	 * @param <R>       The return type of the function.
+	 * @return Either the matched reference, or why there is none. The reason is only meaningful
+	 * 	for a binder which returns it; one which reports to the log fails without a usable reason,
+	 * 	since its caller reads that out of the log instead.
+	 */
+	public <R> @NotNull Result<FunctionReference<R>> resolve(
+		@Nullable String namespace, @NotNull String name, @NotNull Argument<T>[] arguments,
+		@Nullable Predicate<Signature<?>> only
+	) {
+		if (report) {
+			// the caller prints its own log, which is what lets the best of the errors from the
+			// candidates which did not match win
+			FunctionReference<R> reference = match(namespace, name, arguments, only);
+			return reference != null
+				? Result.success(reference)
+				: Result.failure(REPORTED_IN_LOG);
+		}
+
+		try (RetainingLogHandler log = SkriptLogger.startRetainingLog()) {
+			FunctionReference<R> reference = match(namespace, name, arguments, only);
+
+			String rejection = null;
+			if (reference == null) {
+				for (LogEntry error : log.getErrors()) {
+					rejection = error.getMessage();
+					break;
+				}
+			}
+
+			log.clear();
+			log.printLog(); // clearing alone does not count as having handled the log
+
+			return reference != null
+				? Result.success(reference)
+				: Result.failure(rejection != null ? rejection : NO_REASON_GIVEN);
+		}
+	}
+
+	/**
+	 * Matches a function call against the overloads {@code only} accepts, reporting any failure
+	 * through {@link Skript#error(String)}.
+	 *
+	 * @param namespace The namespace to resolve local functions in, or null for global functions
+	 *                  only.
+	 * @param name      The function name.
+	 * @param arguments The passed arguments.
+	 * @param only      Which overloads may be used, or null for any of them.
+	 * @param <R>       The return type of the function.
 	 * @return The matched reference, or null if none could be matched.
 	 */
-	public <R> @Nullable FunctionReference<R> resolve(
+	private <R> @Nullable FunctionReference<R> match(
 		@Nullable String namespace, @NotNull String name, @NotNull Argument<T>[] arguments,
 		@Nullable Predicate<Signature<?>> only
 	) {
