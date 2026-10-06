@@ -74,23 +74,17 @@ public class DynamicFunctionReference
 	private final Validated validator = Validated.validator();
 
 	/**
-	 * How a particular set of argument expressions binds to this function. Binding depends only
-	 * on the expressions, not on the values they produce, so it is worked out once per input.
+	 * This function bound to each set of argument expressions it has been called with, so that
+	 * each {@link CallSite} is reused rather than allocated per execution.
+	 * <p>
+	 * What a {@link CallSite} caches is which overload the expressions themselves select, which
+	 * cannot change: an expression's return type and whether it is single are fixed when it is
+	 * parsed. It deliberately does not cache an overload picked by spreading one argument's values
+	 * across several parameters, since how many values there are decides which overload fits and
+	 * that is only known per execution. See {@link #computeBinding(Input)}.
+	 * </p>
 	 */
-	private final Map<Input, Binding> bindings = new ConcurrentHashMap<>();
-
-	/**
-	 * A reusable {@link BoundExecutable} per set of argument expressions, so that binding does not allocate
-	 * on every execution.
-	 */
-	private final Map<Input, BoundExecutable<Event, Object[]>> boundExecutables = new ConcurrentHashMap<>();
-
-	/**
-	 * The registry generation the cached bindings were resolved against. A script being reloaded
-	 * replaces the {@link Function} objects of its functions, so a binding from before that must
-	 * not be reused.
-	 */
-	private volatile long generation = -1;
+	private final Map<Input, CallSite> callSites = new ConcurrentHashMap<>();
 
 	public DynamicFunctionReference(Function<?> function) {
 		Signature<?> signature = function.getSignature();
@@ -401,22 +395,16 @@ public class DynamicFunctionReference
 	 * @return How those arguments bind to this function, working it out if it is not yet known.
 	 */
 	private Binding binding(Input input) {
-		// a reload replaces the functions this may have bound to, and may equally have added the
-		// overload a previously failed binding was looking for, so both outcomes are discarded
-		long current = FunctionRegistry.getRegistry().generation();
-		if (generation != current) {
-			bindings.clear();
-			generation = current;
-		}
+		return callSite(input).binding();
+	}
 
-		Binding binding = bindings.get(input);
-		if (binding != null) {
-			return binding;
-		}
-
-		binding = computeBinding(input);
-		bindings.put(input, binding);
-		return binding;
+	/**
+	 * @param input The argument expressions.
+	 * @return This function bound to those arguments, which is the same object every time so that
+	 * the binding it works out is shared by everything asking about the same arguments.
+	 */
+	private CallSite callSite(Input input) {
+		return callSites.computeIfAbsent(input, CallSite::new);
 	}
 
 	/**
@@ -469,7 +457,7 @@ public class DynamicFunctionReference
 	public @Nullable Executable.BoundExecutable<Event, Object[]> bind(Expression<?>... arguments) {
 		// a function always decides for itself which parameter each argument belongs to, and
 		// whether they are acceptable may depend on their values, so that is left to execution
-		return boundExecutables.computeIfAbsent(new Input(arguments), Bound::new);
+		return callSite(new Input(arguments));
 	}
 
 	@Override
@@ -609,19 +597,46 @@ public class DynamicFunctionReference
 	}
 
 	/**
-	 * This function bound to a particular set of argument expressions.
+	 * This function together with one particular set of argument expressions, holding which
+	 * overload they resolved to and resolving them again when the registered functions change.
 	 */
-	private final class Bound implements BoundExecutable<Event, Object[]> {
+	private final class CallSite implements BoundExecutable<Event, Object[]> {
 
 		private final Input input;
 
-		private Bound(Input input) {
+		/**
+		 * The binding together with the registry generation it was resolved against, replaced as
+		 * one object so that a reader never sees a binding beside the wrong generation.
+		 */
+		private volatile @Nullable Resolution resolution;
+
+		private CallSite(Input input) {
 			this.input = input;
+		}
+
+		/**
+		 * @return How the arguments bind to this function, working it out again if the registered
+		 * functions have changed since it was last worked out.
+		 */
+		private Binding binding() {
+			// a reload replaces the functions this may have bound to, and may equally have added
+			// the overload a previously failed binding was looking for, so both outcomes are
+			// discarded
+			long current = FunctionRegistry.getRegistry().generation();
+
+			Resolution resolution = this.resolution;
+			if (resolution != null && resolution.generation() == current) {
+				return resolution.binding();
+			}
+
+			Binding binding = computeBinding(input);
+			this.resolution = new Resolution(binding, current);
+			return binding;
 		}
 
 		@Override
 		public Object @Nullable [] execute(Event event) {
-			return DynamicFunctionReference.this.execute(event, input);
+			return DynamicFunctionReference.this.execute(event, input, binding());
 		}
 
 		@Override
@@ -632,13 +647,23 @@ public class DynamicFunctionReference
 
 			// for a binding which needed a spread this is why the arguments did not fit one per
 			// parameter, which is what made the spread necessary in the first place
-			String error = binding(input).error();
+			String error = binding().error();
 			if (error != null) {
 				return error;
 			}
 
 			return "Cannot run " + DynamicFunctionReference.this + " with the given arguments.";
 		}
+
+	}
+
+	/**
+	 * A binding and the state of the function registry it was resolved against.
+	 *
+	 * @param binding    How the arguments bound to this function.
+	 * @param generation The {@link FunctionRegistry#generation()} the binding was resolved against.
+	 */
+	private record Resolution(Binding binding, long generation) {
 
 	}
 

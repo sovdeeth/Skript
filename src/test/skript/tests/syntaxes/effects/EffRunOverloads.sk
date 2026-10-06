@@ -82,3 +82,16 @@ test "spreading respects an explicitly selected overload":
 
 	set {_values::*} to 1, 2 and 3
 	assert (result of (function "dfrCountOv(number, number)") with arguments {_values::*}) doesn't exist with "the pin was ignored in favour of another overload"
+
+test "one call site rebinds as the number of values changes":
+	# the test above uses a separate call site per size, so each one gets its own binding. This
+	# reuses a single call site with a single stored reference, so the cached binding is the same
+	# object every iteration and the spread still has to be worked out from the current values.
+	set {_function} to function "dfrCountOv"
+	set {_expected::1} to "one"
+	set {_expected::2} to "two"
+	set {_expected::3} to "three"
+
+	loop 3 times:
+		add loop-number to {_values::*}
+		assert (result of {_function} with arguments {_values::*}) is {_expected::%loop-number%} with "a cached binding was reused for a different number of values"
