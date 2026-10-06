@@ -17,7 +17,10 @@ test "running with arguments which do not fit reports why":
 	catch runtime errors:
 		run {_function} with arguments {_list::*}
 
-	assert last caught runtime errors is set with "running with unacceptable arguments reported nothing"
+	set {_errors::*} to last caught runtime errors
+	assert {_errors::1} is set with "running with unacceptable arguments reported nothing"
+	# the binder's own reason, not a generic "cannot run it with the given arguments"
+	assert {_errors::1} contains "Expected type number for argument 'n'" with "the failure did not report which argument does not fit"
 
 test "the result of a call with arguments which do not fit reports why":
 	set {_function} to function "dfrErrOne"
@@ -26,8 +29,10 @@ test "the result of a call with arguments which do not fit reports why":
 	catch runtime errors:
 		set {_result} to result of {_function} with arguments {_list::*}
 
+	set {_errors::*} to last caught runtime errors
 	assert {_result} is not set with "the call should not have produced a result"
-	assert last caught runtime errors is set with "asking for the result of an unacceptable call reported nothing"
+	assert {_errors::1} is set with "asking for the result of an unacceptable call reported nothing"
+	assert {_errors::1} contains "Expected type number for argument 'n'" with "the failure did not report which argument does not fit"
 
 test "an ambiguous call reports which overloads matched":
 	set {_function} to function "dfrErrAmbiguous"

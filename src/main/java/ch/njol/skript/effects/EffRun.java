@@ -3,17 +3,14 @@ package ch.njol.skript.effects;
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.*;
 import ch.njol.skript.lang.Effect;
-import ch.njol.skript.config.Node;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionList;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.registrations.experiments.ReflectionExperimentSyntax;
 import ch.njol.skript.util.LiteralUtils;
 import ch.njol.util.Kleenean;
-import org.skriptlang.skript.log.runtime.SyntaxRuntimeErrorProducer;
-
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
-import ch.njol.skript.registrations.experiments.ReflectionExperimentSyntax;
 import org.skriptlang.skript.util.Executable;
 
 @Name("Run")
@@ -26,7 +23,7 @@ import org.skriptlang.skript.util.Executable;
 @Since("2.10")
 @Keywords({"run", "execute", "reflection", "function"})
 @SuppressWarnings({"rawtypes", "unchecked"})
-public class EffRun extends Effect implements ReflectionExperimentSyntax, SyntaxRuntimeErrorProducer {
+public class EffRun extends Effect implements ReflectionExperimentSyntax {
 
 	static {
 		Skript.registerEffect(EffRun.class,
@@ -39,19 +36,17 @@ public class EffRun extends Effect implements ReflectionExperimentSyntax, Syntax
 	private Expression<Executable> executable;
 	private Expression<?> arguments;
 	private Expression<?>[] argumentExpressions;
-	private Node node;
 	private boolean hasArguments;
 
 	@Override
 	public boolean init(Expression<?>[] expressions, int pattern, Kleenean isDelayed, ParseResult result) {
-		this.node = getParser().getNode();
 		this.executable = ((Expression<Executable>) expressions[0]);
 		this.hasArguments = result.hasTag("arguments");
 		if (hasArguments) {
 			this.arguments = LiteralUtils.defendExpression(expressions[1]);
 			Expression<?>[] arguments;
-			if (this.arguments instanceof ExpressionList<?>) {
-				arguments = ((ExpressionList<?>) this.arguments).getExpressions();
+			if (this.arguments instanceof ExpressionList<?> expressionList) {
+				arguments = expressionList.getExpressions();
 			} else {
 				arguments = new Expression[]{this.arguments};
 			}
@@ -72,7 +67,7 @@ public class EffRun extends Effect implements ReflectionExperimentSyntax, Syntax
 		// parameters, is handed the argument expressions rather than a flat list of their values
 		Executable.BoundExecutable<Event, ?> boundExecutable = task.bind(argumentExpressions);
 		if (boundExecutable != null) {
-			Executable.run(task, boundExecutable, event, this::error);
+			Executable.run(boundExecutable, event, this::error);
 			return;
 		}
 
@@ -83,11 +78,6 @@ public class EffRun extends Effect implements ReflectionExperimentSyntax, Syntax
 			arguments = new Object[0];
 		}
 		task.execute(event, arguments);
-	}
-
-	@Override
-	public Node getNode() {
-		return node;
 	}
 
 	@Override

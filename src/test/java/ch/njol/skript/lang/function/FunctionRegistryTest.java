@@ -581,7 +581,11 @@ public class FunctionRegistryTest {
 			// warn about a binding which has already been discarded
 			DynamicFunctionReference reference = new DynamicFunctionReference(name);
 			assertTrue(reference.valid());
-			assertNull(reference.bind().rejection());
+
+			// resolution is what validates the underlying FunctionReference, so the binding has
+			// to actually succeed for the assertion below to mean anything
+			assertNotNull("binding a reference to an existing function must resolve it",
+				reference.bind().execute(null));
 
 			assertTrue("a reference obtained at runtime must not be tracked",
 				signature.calls().isEmpty());

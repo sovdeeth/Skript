@@ -35,6 +35,7 @@ test "a reference stops working when its script is unloaded":
 	assert {_result} is not set with "the reference still ran after its script was unloaded"
 	set {_errors::*} to last caught runtime errors
 	assert {_errors::1} contains "dfrReloadable" with "the failure did not name the function"
+	assert {_errors::1} contains "does not exist" with "the failure did not say the function is gone"
 
 	# put it back, so the order tests run in cannot matter
 	load the script within (script named {_path})

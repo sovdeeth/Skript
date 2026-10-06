@@ -434,9 +434,11 @@ public class DynamicFunctionReference
 		}
 
 		// an argument which is not single may have to be spread across several parameters, which
-		// can only be decided once its values are known, so this failure is not yet final
+		// can only be decided once its values are known, so this failure is not yet final. The
+		// reason is kept even so: if the spread does not fit either, it is the best explanation
+		// available, since working out why the values did not fit would mean evaluating them again
 		int spread = spreadable(expressions);
-		return spread >= 0 ? new Binding(null, spread) : binding;
+		return spread >= 0 ? new Binding(null, spread, binding.error()) : binding;
 	}
 
 
@@ -623,10 +625,19 @@ public class DynamicFunctionReference
 		}
 
 		@Override
-		public @Nullable String rejection() {
-			Binding binding = binding(input);
-			// a binding which needs a spread cannot be judged until its values are known
-			return binding.bindable() ? null : binding.error();
+		public @NotNull String rejection() {
+			if (!validator.valid()) {
+				return "The function " + DynamicFunctionReference.this + " is no longer available.";
+			}
+
+			// for a binding which needed a spread this is why the arguments did not fit one per
+			// parameter, which is what made the spread necessary in the first place
+			String error = binding(input).error();
+			if (error != null) {
+				return error;
+			}
+
+			return "Cannot run " + DynamicFunctionReference.this + " with the given arguments.";
 		}
 
 	}

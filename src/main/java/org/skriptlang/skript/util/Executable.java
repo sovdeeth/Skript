@@ -1,6 +1,7 @@
 package org.skriptlang.skript.util;
 
 import ch.njol.skript.lang.Expression;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
@@ -51,12 +52,11 @@ public interface Executable<Caller, Result> {
 	/**
 	 * Executes {@code bound}, reporting why it would not run if it did not.
 	 * <p>
-	 * An executable knows why it would not accept the arguments it was bound to, but not where
-	 * the call to it was written, so the reason is reported through {@code onRejection} rather
-	 * than logged.
+	 * A bound executable knows why it would not accept the arguments it was bound to, but not
+	 * where the call to it was written, so the reason is reported through {@code onRejection}
+	 * rather than logged.
 	 * </p>
 	 *
-	 * @param executable  The executable that was bound.
 	 * @param bound       The bound executable.
 	 * @param caller      The source to execute with.
 	 * @param onRejection Called with the reason if it did not run.
@@ -65,19 +65,14 @@ public interface Executable<Caller, Result> {
 	 * @return The result, or null if it did not run.
 	 */
 	static <Caller, Result> @Nullable Result run(
-		Executable<Caller, Result> executable, BoundExecutable<Caller, Result> bound,
-		Caller caller, Consumer<String> onRejection
+		BoundExecutable<Caller, Result> bound, Caller caller, Consumer<String> onRejection
 	) {
 		Result result = bound.execute(caller);
 		if (result != null) {
 			return result;
 		}
 
-		String rejection = bound.rejection();
-		onRejection.accept(rejection != null
-			? rejection
-			: "Cannot run " + executable + " with the given arguments.");
-
+		onRejection.accept(bound.rejection());
 		return null;
 	}
 
@@ -100,18 +95,21 @@ public interface Executable<Caller, Result> {
 		@Nullable Result execute(Caller caller);
 
 		/**
-		 * Why {@link #execute(Object)} will not run, so that the caller can report it along with
+		 * Why {@link #execute(Object)} did not run, so that the caller can report it along with
 		 * where the call was written.
 		 * <p>
-		 * This is returned rather than logged because an executable has no way of knowing which
-		 * log, if any, is listening when it runs.
+		 * This is only asked once {@link #execute(Object)} has returned null, so an implementation
+		 * which cannot tell whether the arguments fit until they have been evaluated may answer
+		 * with what it learnt while executing. It is returned rather than logged because an
+		 * executable has no way of knowing which log, if any, is listening when it runs.
 		 * </p>
 		 *
-		 * @return The reason the bound arguments are not acceptable, or null if they are, or if
-		 * 	that cannot be known until they have been evaluated.
+		 * @return The reason this did not run. Never null, since it is only asked when there is
+		 * 	one, and an implementation which names itself here is what keeps the reported message
+		 * 	specific.
 		 */
-		default @Nullable String rejection() {
-			return null;
+		default @NotNull String rejection() {
+			return "The given arguments are not acceptable.";
 		}
 
 	}
