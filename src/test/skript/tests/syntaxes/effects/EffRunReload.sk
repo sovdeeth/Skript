@@ -40,3 +40,21 @@ test "a reference stops working when its script is unloaded":
 	# put it back, so the order tests run in cannot matter
 	load the script within (script named {_path})
 	assert (result of (function "dfrReloadable" from (script named {_path}))) is "reloadable" with "the script didn't load back"
+
+test "a resolved name is not reused once the function is gone":
+	set {_path} to {@misc} + "reloadable function.sk"
+	set {_script} to script named {_path}
+
+	# one call site evaluated on both passes, so the second pass would reuse what the first
+	# resolved if resolution were not discarded when the registered functions change
+	loop 2 times:
+		set {_reference} to function "dfrReloadable" from {_script}
+		if loop-number is 1:
+			assert {_reference} exists with "the function wasn't found"
+			unload the script within {_script}
+		else:
+			assert {_reference} is not set with "a resolved name was reused after its script was unloaded"
+
+	# put it back, so the order tests run in cannot matter
+	load the script within (script named {_path})
+	assert (result of (function "dfrReloadable" from (script named {_path}))) is "reloadable" with "the script didn't load back"

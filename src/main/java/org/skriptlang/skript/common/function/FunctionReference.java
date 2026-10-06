@@ -292,6 +292,28 @@ public final class FunctionReference<T> implements Debuggable {
 	}
 
 	/**
+	 * Supplies the function this reference resolves to, so that it is not looked up in the
+	 * registry again.
+	 * <p>
+	 * This is for a caller which has already resolved the same signature to a function and knows
+	 * that resolution still holds, such as a call site re-binding to a signature it remembered.
+	 * {@code function} is ignored unless it belongs to the signature this reference is bound to,
+	 * so supplying the wrong one costs the lookup rather than calling the wrong function.
+	 * </p>
+	 *
+	 * @param function The function this reference resolves to.
+	 */
+	@ApiStatus.Internal
+	public void cacheFunction(@NotNull Function<?> function) {
+		Preconditions.checkNotNull(function, "function cannot be null");
+
+		if (cachedSignature.equals(function.signature())) {
+			//noinspection unchecked
+			cachedFunction = (Function<T>) function;
+		}
+	}
+
+	/**
 	 * @return The signature belonging to this reference.
 	 */
 	public Signature<T> signature() {

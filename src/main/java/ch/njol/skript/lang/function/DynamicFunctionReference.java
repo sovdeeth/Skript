@@ -86,6 +86,11 @@ public class DynamicFunctionReference
 	 */
 	private final Map<Input, CallSite> callSites = new ConcurrentHashMap<>();
 
+	/**
+	 * How many shapes of spread values one call site remembers the signature for.
+	 */
+	private static final int MAX_REMEMBERED_SPREADS = 16;
+
 	public DynamicFunctionReference(Function<?> function) {
 		Signature<?> signature = function.getSignature();
 
@@ -252,10 +257,23 @@ public class DynamicFunctionReference
 	 * @return The returned values, or null if the arguments are not acceptable or execution failed.
 	 */
 	public Object @Nullable [] execute(Event event, Input input) {
-		return execute(event, input, binding(input));
+		CallSite site = callSite(input);
+		return call(event, site, site.binding());
 	}
 
-	private Object @Nullable [] execute(Event event, Input input, Binding binding) {
+	/**
+	 * Executes this with the arguments of {@code site}.
+	 * <p>
+	 * Deliberately not called {@code execute}: {@link #execute(Event, Object...)} is varargs, so an
+	 * overload of that name would silently take any call it did not match exactly.
+	 * </p>
+	 *
+	 * @param event   The event to execute with.
+	 * @param site    The call site whose arguments to use.
+	 * @param binding How those arguments bind to this function.
+	 * @return The returned values, or null if the arguments are not acceptable or execution failed.
+	 */
+	private Object @Nullable [] call(Event event, CallSite site, Binding binding) {
 		// deliberately not valid(): a binding is already discarded when the registered functions
 		// change, so scanning the registry again here would only turn a function which no longer
 		// exists into a silent failure, where binding it reports why
@@ -271,7 +289,7 @@ public class DynamicFunctionReference
 			}
 			// the arguments only fit once the values of one of them are spread across several
 			// parameters, which cannot be known before they have been evaluated
-			reference = spread(event, input, binding.spread());
+			reference = spread(event, site, binding.spread());
 			if (reference == null) {
 				return null;
 			}
@@ -339,23 +357,73 @@ public class DynamicFunctionReference
 	 * @param index The index of the argument whose values are spread.
 	 * @return The bound reference, or null if the values do not fit any overload either.
 	 */
-	private @Nullable FunctionReference<?> spread(Event event, Input input, int index) {
-		Expression<?>[] expressions = input.expressions();
+	private @Nullable FunctionReference<?> spread(Event event, CallSite site, int index) {
+		Expression<?>[] expressions = site.input().expressions();
 
-		List<Argument<Expression<?>>> arguments = new ArrayList<>(expressions.length);
+		// evaluated first so that both arrays below can be allocated at the size they need, since
+		// this runs on every execution of the call site
+		Object[] values = expressions[index].getArray(event);
+
+		//noinspection unchecked
+		Argument<Expression<?>>[] array =
+			(Argument<Expression<?>>[]) new Argument[expressions.length - 1 + values.length];
+		Class<?>[] types = new Class<?>[values.length];
+
+		int next = 0;
 		for (int i = 0; i < expressions.length; i++) {
 			if (i != index) {
-				arguments.add(argument(expressions[i]));
+				array[next++] = argument(expressions[i]);
 				continue;
 			}
 
-			for (Object value : expressions[i].getArray(event)) {
-				arguments.add(argument(new SimpleLiteral<>(value, true)));
+			for (int value = 0; value < values.length; value++) {
+				array[next++] = argument(new SimpleLiteral<>(values[value], true));
+				types[value] = values[value].getClass();
 			}
 		}
 
-		//noinspection unchecked
-		return resolve(arguments.toArray(new Argument[0])).reference();
+		// a view rather than a copy: the key is only needed for the lookup, and a list compares
+		// and hashes by its contents whatever backs it
+		List<Class<?>> shape = Arrays.asList(types);
+
+		// which overload a spread fits is decided by how many values there are and what types they
+		// are, and by nothing else, so a call site reaching the same shape again binds straight to
+		// the signature it bound to last time instead of searching the overloads once more
+		Spread remembered = site.spread(shape);
+		if (remembered != null) {
+			FunctionBinder.Division division = FunctionBinder.forExpressions(Mode.GREEDY)
+				.bindTo(namespace, name, remembered.signature(), remembered.allocation(), array);
+
+			if (division != null) {
+				FunctionReference<?> bound = division.reference();
+
+				// binding to a remembered signature builds a new reference every execution, which
+				// would look the function up in the registry again. Which function a signature
+				// resolves to cannot change while the registry generation does not, and a change
+				// discards this memo, so the call site hands the reference what it already knows
+				if (remembered.function() != null) {
+					bound.cacheFunction(remembered.function());
+				}
+
+				// which division of the arguments fits is only learnt by binding to the remembered
+				// signature, so it is stored the first time that happens; from then on the call
+				// site binds straight to it
+				if (remembered.allocation() == null && division.allocation() != null) {
+					site.rememberSpread(shape, remembered.signature(), division.allocation(),
+						bound.function());
+				}
+				return bound;
+			}
+		}
+
+		FunctionReference<?> reference = resolve(array).reference();
+		// every signature the registry holds is a ch.njol Signature, which is the type the binder
+		// takes; narrowing rather than casting leaves a shape unremembered instead of failing if
+		// that ever stops holding
+		if (reference != null && reference.signature() instanceof Signature<?> registered) {
+			site.rememberSpread(shape, registered, null, reference.function());
+		}
+		return reference;
 	}
 
 	/**
@@ -610,8 +678,45 @@ public class DynamicFunctionReference
 		 */
 		private volatile @Nullable Resolution resolution;
 
+		/**
+		 * What a spread of values of particular types bound to, so that executing this call site
+		 * again with the same shape of values searches neither the overloads nor the divisions.
+		 */
+		private final Map<List<Class<?>>, Spread> spreads = new ConcurrentHashMap<>();
+
 		private CallSite(Input input) {
 			this.input = input;
+		}
+
+		private Input input() {
+			return input;
+		}
+
+		/**
+		 * @param shape The types of the values being spread, in order.
+		 * @return The signature that shape bound to before, or null if it has not been seen.
+		 */
+		private @Nullable Spread spread(List<Class<?>> shape) {
+			return spreads.get(shape);
+		}
+
+		/**
+		 * @param shape      The types of the values which were spread, in order.
+		 * @param signature  The signature they bound to.
+		 * @param allocation How many of them each parameter took, or null if that is not known yet.
+		 * @param function   The function {@code signature} resolves to, or null if it could not be
+		 *                   resolved.
+		 */
+		private void rememberSpread(
+			List<Class<?>> shape, Signature<?> signature, int @Nullable [] allocation,
+			@Nullable org.skriptlang.skript.common.function.Function<?> function
+		) {
+			// the values of one call site rarely change shape, so a site which somehow reaches
+			// many of them is not worth remembering any of them for
+			if (spreads.size() > MAX_REMEMBERED_SPREADS) {
+				spreads.clear();
+			}
+			spreads.put(List.copyOf(shape), new Spread(signature, allocation, function));
 		}
 
 		/**
@@ -629,6 +734,9 @@ public class DynamicFunctionReference
 				return resolution.binding();
 			}
 
+			// the overloads may have changed, so what a shape bound to before means nothing now
+			spreads.clear();
+
 			Binding binding = computeBinding(input);
 			this.resolution = new Resolution(binding, current);
 			return binding;
@@ -636,7 +744,7 @@ public class DynamicFunctionReference
 
 		@Override
 		public Object @Nullable [] execute(Event event) {
-			return DynamicFunctionReference.this.execute(event, input, binding());
+			return DynamicFunctionReference.this.call(event, this, binding());
 		}
 
 		@Override
@@ -668,6 +776,24 @@ public class DynamicFunctionReference
 	}
 
 	/**
+	 * What one shape of spread values bound to.
+	 *
+	 * @param signature  The signature the values bound to.
+	 * @param allocation How many of the values each parameter took, or null until binding to
+	 *                   {@code signature} has worked that out once.
+	 * @param function   The function {@code signature} resolves to, kept so that re-binding to it
+	 *                   does not look it up in the registry again. Null if it could not be
+	 *                   resolved. Only valid while the registry generation which bound it holds,
+	 *                   which is what {@link CallSite#binding()} discarding the memo guarantees.
+	 */
+	private record Spread(
+		Signature<?> signature, int @Nullable [] allocation,
+		@Nullable org.skriptlang.skript.common.function.Function<?> function
+	) {
+
+	}
+
+	/**
 	 * How a set of argument expressions binds to a function.
 	 *
 	 * @param reference The reference the arguments were bound to, or null if they could not be
@@ -692,22 +818,22 @@ public class DynamicFunctionReference
 	}
 
 	/**
-	 * An index-linking key for a particular set of argument expressions.
-	 * Binding only needs to be done once for a set of argument types, so this is used to avoid
-	 * re-binding on every execution.
+	 * A key for a particular set of argument expressions, so that they are only bound once rather
+	 * than on every execution.
+	 * <p>
+	 * Two inputs are the same when they hold the same expression objects. No
+	 * {@link Expression} implementation overrides {@link Object#equals(Object)}, so this compares
+	 * them by identity, which is what makes an input stand for the place the call was written.
+	 * The types the expressions return are deliberately not part of the key: they are derived from
+	 * those same objects and are fixed once parsed, so they could only ever agree.
+	 * </p>
 	 */
 	public static class Input {
 
-		private final Class<?>[] types;
-		private transient final Expression<?>[] expressions;
+		private final Expression<?>[] expressions;
 
 		public Input(Expression<?>... expressions) {
-			Class<?>[] types = new Class<?>[expressions.length];
-			for (int i = 0; i < expressions.length; i++) {
-				types[i] = expressions[i].getReturnType();
-			}
 			this.expressions = expressions;
-			this.types = types;
 		}
 
 		private Expression<?>[] expressions() {
@@ -720,12 +846,12 @@ public class DynamicFunctionReference
 				return true;
 			if (!(object instanceof Input input))
 				return false;
-			return Arrays.equals(expressions, input.expressions) && Objects.deepEquals(types, input.types);
+			return Arrays.equals(expressions, input.expressions);
 		}
 
 		@Override
 		public int hashCode() {
-			return Arrays.hashCode(types) ^ Arrays.hashCode(expressions);
+			return Arrays.hashCode(expressions);
 		}
 
 	}

@@ -177,6 +177,88 @@ public final class FunctionBinder<T> {
 	}
 
 	/**
+	 * Binds a function call to one signature which is already known to be the right one, without
+	 * searching the overloads of {@code name} again.
+	 * <p>
+	 * This is for a caller which has resolved the same call before and remembered what it resolved
+	 * to. It returns null when {@code signature} does not fit the arguments after all, which the
+	 * caller answers by resolving properly; it never reports anything, since not fitting is not an
+	 * error here.
+	 * </p>
+	 *
+	 * @param namespace The namespace to resolve local functions in, or null for global functions
+	 *                  only.
+	 * @param name      The function name.
+	 * @param signature  The signature to bind to.
+	 * @param allocation A division of the arguments which fit this signature before, tried first so
+	 *                   that the divisions are not searched again, or null if none is known.
+	 * @param arguments  The passed arguments.
+	 * @return The bound reference and the division which fit, or null if the arguments do not fit
+	 * 	{@code signature}.
+	 */
+	public @Nullable Division bindTo(
+		@Nullable String namespace, @NotNull String name, @NotNull Signature<?> signature,
+		int @Nullable [] allocation, @NotNull Argument<T>[] arguments
+	) {
+		Parameter<?>[] parameters = signature.parameters().all();
+		boolean list = parameters.length == 1 && !parameters[0].isSingle();
+		Set<Signature<?>> only = Set.of(signature);
+
+		try (RetainingLogHandler log = SkriptLogger.startRetainingLog()) {
+			try {
+				// a division which fit before is tried on its own first, so that a call site which
+				// has already bound does not search the divisions again on every execution
+				if (allocation != null) {
+					Attempt<Object> attempt =
+						this.bindDivision(namespace, name, signature, parameters, allocation, arguments);
+					if (attempt.reference() != null) {
+						return new Division(attempt.reference(), allocation);
+					}
+				}
+
+				Set<FunctionReference<Object>> references = list
+					? this.getListReferences(namespace, name, only, arguments)
+					: this.getExactReferences(namespace, name, only, arguments);
+
+				if (references != null && references.size() == 1) {
+					// bound one argument per parameter, so there is no division to remember
+					return new Division(references.iterator().next(), null);
+				}
+
+				if (!list && mode == Mode.GREEDY) {
+					for (int[] division : allocations(parameters, arguments.length)) {
+						Attempt<Object> attempt =
+							this.bindDivision(namespace, name, signature, parameters, division, arguments);
+
+						if (attempt.listError()) {
+							return null;
+						}
+						if (attempt.reference() != null) {
+							return new Division(attempt.reference(), division);
+						}
+					}
+				}
+
+				return null;
+			} finally {
+				log.clear();
+				log.printLog(); // clearing alone does not count as having handled the log
+			}
+		}
+	}
+
+	/**
+	 * A reference bound to a known signature, and how the arguments were divided to do it.
+	 *
+	 * @param reference  The bound reference.
+	 * @param allocation How many arguments each parameter took, or null if each parameter took one
+	 *                   and there is therefore no division worth remembering.
+	 */
+	public record Division(@NotNull FunctionReference<?> reference, int @Nullable [] allocation) {
+
+	}
+
+	/**
 	 * Matches a function call against the overloads {@code only} accepts, reporting any failure
 	 * through {@link Skript#error(String)}.
 	 *
@@ -212,9 +294,15 @@ public final class FunctionBinder<T> {
 		Set<Signature<?>> options = FunctionRegistry.getRegistry().getSignatures(namespace, name);
 
 		if (only != null) {
-			options = options.stream()
-				.filter(only)
-				.collect(Collectors.toUnmodifiableSet());
+			// a plain loop rather than a stream: this runs on every resolution, and the dynamic
+			// path always passes a predicate
+			Set<Signature<?>> accepted = new HashSet<>(options.size());
+			for (Signature<?> option : options) {
+				if (only.test(option)) {
+					accepted.add(option);
+				}
+			}
+			options = accepted;
 		}
 
 		if (options.isEmpty()) {
@@ -528,6 +616,78 @@ public final class FunctionBinder<T> {
 	}
 
 	/**
+	 * The outcome of binding the arguments to one signature under one division of them.
+	 *
+	 * @param reference The reference, or null if the arguments do not fit that division.
+	 * @param listError Whether a list was passed where a single value is required, which is a
+	 *                  mistake in the call rather than the wrong division, so no other division
+	 *                  of the arguments is worth trying.
+	 * @param <R>       The return type of the function.
+	 */
+	private record Attempt<R>(@Nullable FunctionReference<R> reference, boolean listError) {
+
+	}
+
+	/**
+	 * Binds the arguments to {@code signature} with {@code allocation} deciding how many of them
+	 * each parameter takes.
+	 *
+	 * @param namespace  The current namespace.
+	 * @param name       The name of the function.
+	 * @param signature  The signature to bind to.
+	 * @param parameters The parameters of {@code signature}.
+	 * @param allocation How many arguments each parameter takes.
+	 * @param arguments  The passed arguments.
+	 * @param <R>        The return type of the reference.
+	 * @return The outcome of the attempt.
+	 */
+	private <R> @NotNull Attempt<R> bindDivision(
+		String namespace, String name, Signature<?> signature, Parameter<?>[] parameters,
+		int[] allocation, Argument<T>[] arguments
+	) {
+		//noinspection unchecked
+		Argument<T>[] parseArguments = (Argument<T>[]) new Argument[parameters.length];
+		ArgumentParseTarget[] parseTargets = new ArgumentParseTarget[parameters.length];
+
+		int next = 0;
+		for (int i = 0; i < parameters.length; i++) {
+			Parameter<?> parameter = parameters[i];
+			int take = allocation[i];
+
+			if (take == 0) { // nothing was allocated, so fall back to the default value
+				parseArguments[i] = new Argument<>(ArgumentType.UNNAMED, parameter.name(), null);
+			} else if (take == 1) {
+				// a single argument is passed through as it is, so that an argument which is
+				// itself a list stays one argument rather than being spread
+				parseArguments[i] = new Argument<>(ArgumentType.UNNAMED, parameter.name(), arguments[next].value());
+			} else {
+				Argument<T>[] allocated = Arrays.copyOfRange(arguments, next, next + take);
+				parseArguments[i] = binder.joinForList(allocated, parameter.name());
+			}
+			next += take;
+
+			parseTargets[i] = targetFor(parameter, Utils.getComponentType(parameter.type()));
+		}
+
+		ArgumentParseResult result = bindArguments(parseArguments, parseTargets);
+		if (result.type() == ArgumentParseResultType.LIST_ERROR) {
+			return new Attempt<>(null, true);
+		}
+		if (result.type() != ArgumentParseResultType.OK) {
+			return new Attempt<>(null, false);
+		}
+
+		//noinspection unchecked
+		FunctionReference<R> reference =
+			new FunctionReference<>(namespace, name, (Signature<R>) signature, result.parsed());
+		if (!reference.validate()) {
+			return new Attempt<>(null, false);
+		}
+
+		return new Attempt<>(reference, false);
+	}
+
+	/**
 	 * Returns all possible {@link FunctionReference FunctionReferences} which can be bound by
 	 * letting a list parameter take several of the passed arguments.
 	 * <p>
@@ -562,51 +722,21 @@ public final class FunctionBinder<T> {
 				continue;
 			}
 
-			int[] allocation = allocate(parameters, arguments.length);
-			if (allocation == null) {
-				continue;
-			}
+			// a division is by count alone, so the first one may put an argument in a parameter
+			// whose type it does not fit. The rest are tried in turn rather than giving up, which
+			// is what lets f(a: texts, b: numbers, c: texts) given "1", "2", -1, "3", "4" divide
+			// them 2/1/2 instead of failing on 3/1/1
+			for (int[] allocation : allocations(parameters, arguments.length)) {
+				Attempt<R> attempt =
+					this.bindDivision(namespace, name, signature, parameters, allocation, arguments);
 
-			//noinspection unchecked
-			Argument<T>[] parseArguments = (Argument<T>[]) new Argument[parameters.length];
-			ArgumentParseTarget[] parseTargets = new ArgumentParseTarget[parameters.length];
-
-			int next = 0;
-			for (int i = 0; i < parameters.length; i++) {
-				Parameter<?> parameter = parameters[i];
-				int take = allocation[i];
-
-				if (take == 0) { // nothing was allocated, so fall back to the default value
-					parseArguments[i] = new Argument<>(ArgumentType.UNNAMED, parameter.name(), null);
-				} else if (take == 1) {
-					// a single argument is passed through as it is, so that an argument which is
-					// itself a list stays one argument rather than being spread
-					parseArguments[i] = new Argument<>(ArgumentType.UNNAMED, parameter.name(), arguments[next].value());
-				} else {
-					Argument<T>[] allocated = Arrays.copyOfRange(arguments, next, next + take);
-					parseArguments[i] = binder.joinForList(allocated, parameter.name());
-				}
-				next += take;
-
-				parseTargets[i] = targetFor(parameter, Utils.getComponentType(parameter.type()));
-			}
-
-			ArgumentParseResult result = bindArguments(parseArguments, parseTargets);
-			switch (result.type()) {
-				case LIST_ERROR -> {
+				if (attempt.listError()) {
 					return null;
 				}
-				case OK -> {
-					//noinspection unchecked
-					FunctionReference<R> reference =
-						new FunctionReference<>(namespace, name, (Signature<R>) signature, result.parsed());
-					if (!reference.validate()) {
-						continue;
-					}
-					references.add(reference);
-				}
-				default -> {
-					// continue
+				if (attempt.reference() != null) {
+					// the arguments fit this signature, so no further division is considered
+					references.add(attempt.reference());
+					break;
 				}
 			}
 		}
@@ -625,6 +755,83 @@ public final class FunctionBinder<T> {
 	}
 
 	/**
+	 * How many allocations {@link #allocations(Parameter[], int)} will consider for one signature
+	 * before giving up. A signature with several list parameters and many arguments has a great
+	 * many ways to divide them, and the useful ones come first.
+	 */
+	private static final int MAX_ALLOCATIONS = 64;
+
+	/**
+	 * Every way {@code slots} passed arguments can be divided across {@code parameters}, greediest
+	 * on the left first, so that {@link #allocate(Parameter[], int)}'s division comes first.
+	 * <p>
+	 * A division is by count alone, so the first one may put an argument in a parameter whose type
+	 * it does not fit. The caller tries them in turn and keeps the first which binds, which is what
+	 * lets {@code f(a: texts, b: numbers, c: texts)} given {@code "1", "2", -1, "3", "4"} divide
+	 * them 2/1/2 rather than failing on 3/1/1.
+	 * </p>
+	 *
+	 * @param parameters The parameters to allocate to.
+	 * @param slots      The number of passed arguments.
+	 * @return The divisions, in the order they should be tried. Empty if there are none.
+	 */
+	static @NotNull List<int[]> allocations(Parameter<?>[] parameters, int slots) {
+		List<int[]> divisions = new ArrayList<>();
+		divide(parameters, slots, required(parameters), 0, 0, new int[parameters.length], divisions);
+		return divisions;
+	}
+
+	private static void divide(
+		Parameter<?>[] parameters, int slots, int required, int index, int used,
+		int[] current, List<int[]> divisions
+	) {
+		if (divisions.size() >= MAX_ALLOCATIONS) {
+			return;
+		}
+
+		if (index == parameters.length) {
+			if (used == slots) {
+				divisions.add(current.clone());
+			}
+			return;
+		}
+
+		// arguments which must be left over for the parameters after this one
+		int reserved = Math.max(0, required - (index + 1));
+		int available = slots - used - reserved;
+		int minimum = index < required ? 1 : 0;
+
+		if (available < minimum) {
+			return;
+		}
+
+		int most = parameters[index].isSingle() ? Math.min(1, available) : available;
+		for (int take = most; take >= minimum; take--) {
+			current[index] = take;
+			divide(parameters, slots, required, index + 1, used + take, current, divisions);
+
+			if (divisions.size() >= MAX_ALLOCATIONS) {
+				return;
+			}
+		}
+		current[index] = 0;
+	}
+
+	/**
+	 * @param parameters The parameters.
+	 * @return How many leading parameters must be given at least one argument. A parameter may only
+	 * 	be omitted if it and every parameter after it is optional.
+	 */
+	private static int required(Parameter<?>[] parameters) {
+		for (int i = parameters.length - 1; i >= 0; i--) {
+			if (!parameters[i].hasModifier(Modifier.OPTIONAL)) {
+				return i + 1;
+			}
+		}
+		return 0;
+	}
+
+	/**
 	 * Allocates {@code slots} passed arguments across {@code parameters}, from left to right,
 	 * letting each list parameter take as many consecutive arguments as it can while still leaving
 	 * enough for the parameters after it.
@@ -638,15 +845,7 @@ public final class FunctionBinder<T> {
 	 * @return How many arguments each parameter takes, or null if they cannot be allocated.
 	 */
 	static int @Nullable [] allocate(Parameter<?>[] parameters, int slots) {
-		// the number of leading parameters which must be given at least one argument;
-		// a parameter may only be omitted if it and every parameter after it is optional
-		int required = 0;
-		for (int i = parameters.length - 1; i >= 0; i--) {
-			if (!parameters[i].hasModifier(Modifier.OPTIONAL)) {
-				required = i + 1;
-				break;
-			}
-		}
+		int required = required(parameters);
 
 		int[] allocation = new int[parameters.length];
 		int next = 0;
@@ -887,9 +1086,13 @@ public final class FunctionBinder<T> {
 				return new Argument<>(ArgumentType.NAMED, parameterName, null);
 			}
 
-			Expression<?>[] values = Arrays.stream(arguments)
-				.map(Argument::value)
-				.toArray(Expression[]::new);
+			// a plain loop rather than a stream: this runs on every execution of a call site
+			// which spreads values across a list parameter, where building the pipeline costs
+			// more than the array it produces
+			Expression<?>[] values = new Expression[arguments.length];
+			for (int i = 0; i < arguments.length; i++) {
+				values[i] = arguments[i].value();
+			}
 
 			return new Argument<>(ArgumentType.NAMED, parameterName,
 				new ExpressionList<>(values, Object.class, true));

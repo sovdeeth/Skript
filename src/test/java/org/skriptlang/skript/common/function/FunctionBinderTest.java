@@ -3,13 +3,18 @@ package org.skriptlang.skript.common.function;
 import org.junit.Test;
 import org.skriptlang.skript.common.function.Parameter.Modifier;
 
+import java.util.List;
+
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Tests the allocation of passed arguments across a signature's parameters.
  *
  * @see FunctionBinder#allocate(Parameter[], int)
+ * @see FunctionBinder#allocations(Parameter[], int)
  */
 public class FunctionBinderTest {
 
@@ -113,6 +118,60 @@ public class FunctionBinderTest {
 
 		// no list parameter, so a surplus cannot be absorbed
 		assertNull(FunctionBinder.allocate(parameters, 4));
+	}
+
+
+	@Test
+	public void testAllocationsBeginWithTheGreediestDivision() {
+		// the binder tries the divisions in order, so the first has to be the one allocate gives:
+		// that is what keeps a call which already bound binding the same way
+		Parameter<?>[] parameters = parameters(list("a"), list("b"), list("c"));
+
+		for (int slots = 3; slots <= 7; slots++) {
+			List<int[]> divisions = FunctionBinder.allocations(parameters, slots);
+			assertTrue("no division for " + slots + " arguments", !divisions.isEmpty());
+			assertArrayEquals("first division for " + slots + " arguments",
+				FunctionBinder.allocate(parameters, slots), divisions.getFirst());
+		}
+	}
+
+	@Test
+	public void testAllocationsOfferEveryDivision() {
+		// three list parameters and five arguments: the greediest division is 3/1/1, and 2/1/2 has
+		// to be offered too, since that is the one f(texts, numbers, texts) needs for
+		// "1", "2", -1, "3", "4"
+		List<int[]> divisions =
+			FunctionBinder.allocations(parameters(list("a"), list("b"), list("c")), 5);
+
+		assertArrayEquals(new int[]{3, 1, 1}, divisions.getFirst());
+		assertTrue("2/1/2 was not offered",
+			divisions.stream().anyMatch(division -> java.util.Arrays.equals(division, new int[]{2, 1, 2})));
+
+		// every division must use all of the arguments
+		for (int[] division : divisions) {
+			assertEquals("a division did not use every argument", 5,
+				java.util.Arrays.stream(division).sum());
+		}
+	}
+
+	@Test
+	public void testAllocationsAreEmptyWhenNothingFits() {
+		// two single parameters cannot take three arguments however they are divided
+		assertTrue(FunctionBinder.allocations(parameters(single("a"), single("b")), 3).isEmpty());
+		assertTrue(FunctionBinder.allocations(parameters(), 1).isEmpty());
+	}
+
+	@Test
+	public void testAllocationsRespectSingleParameters() {
+		// a single parameter never takes more than one argument in any division
+		List<int[]> divisions =
+			FunctionBinder.allocations(parameters(single("a"), list("b"), single("c")), 5);
+
+		assertTrue("no division was offered", !divisions.isEmpty());
+		for (int[] division : divisions) {
+			assertEquals("a single parameter took more than one argument", 1, division[0]);
+			assertEquals("a single parameter took more than one argument", 1, division[2]);
+		}
 	}
 
 }

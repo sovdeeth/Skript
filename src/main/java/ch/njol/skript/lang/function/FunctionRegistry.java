@@ -435,19 +435,23 @@ public final class FunctionRegistry implements Registry<Function<?>> {
 
 		Map<FunctionIdentifier, Signature<?>> total = new HashMap<>();
 
-		// obtain all local functions of "name"
+		// obtain all local functions of "name". The namespace is looked up rather than defaulted,
+		// since a default would be built on every call even when there is one to find
 		if (namespace != null) {
-			Namespace local = namespaces.getOrDefault(new NamespaceIdentifier(namespace), new Namespace());
-
-			for (FunctionIdentifier identifier : local.identifiers.getOrDefault(name, Collections.emptySet())) {
-				total.putIfAbsent(identifier, local.signatures.get(identifier));
+			Namespace local = namespaces.get(new NamespaceIdentifier(namespace));
+			if (local != null) {
+				for (FunctionIdentifier identifier : local.identifiers.getOrDefault(name, Collections.emptySet())) {
+					total.putIfAbsent(identifier, local.signatures.get(identifier));
+				}
 			}
 		}
 
 		// obtain all global functions of "name"
-		Namespace global = namespaces.getOrDefault(GLOBAL_NAMESPACE, new Namespace());
-		for (FunctionIdentifier identifier : global.identifiers.getOrDefault(name, Collections.emptySet())) {
-			total.putIfAbsent(identifier, global.signatures.get(identifier));
+		Namespace global = namespaces.get(GLOBAL_NAMESPACE);
+		if (global != null) {
+			for (FunctionIdentifier identifier : global.identifiers.getOrDefault(name, Collections.emptySet())) {
+				total.putIfAbsent(identifier, global.signatures.get(identifier));
+			}
 		}
 
 		return Set.copyOf(total.values());
