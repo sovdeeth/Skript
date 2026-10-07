@@ -58,6 +58,15 @@ public final class FunctionRegistry implements Registry<Function<?>> {
 
 	/**
 	 * Incremented whenever a function or signature is registered or removed.
+	 * <p>
+	 * Always incremented <em>after</em> the registry has changed, and in a {@code finally} so that
+	 * a change which only partly happened still moves it. This is what makes a cached resolution
+	 * safe: a reader reads the generation before it resolves and stores its result against that
+	 * value, so a change landing while it resolves leaves the stored generation behind the current
+	 * one and the result is discarded. Incrementing before the change instead lets a reader observe
+	 * the new generation, resolve against the old registry and store that stale result under the
+	 * new generation, where nothing would ever discard it.
+	 * </p>
 	 */
 	private final AtomicLong generation = new AtomicLong();
 
@@ -105,7 +114,6 @@ public final class FunctionRegistry implements Registry<Function<?>> {
 	 *                                  if the signature is local and namespace is null.
 	 */
 	public void register(@Nullable String namespace, @NotNull Signature<?> signature) {
-		generation.incrementAndGet();
 		Preconditions.checkNotNull(signature, "signature cannot be null");
 		if (signature.isLocal() && namespace == null) {
 			throw new IllegalArgumentException("Cannot register a local signature in the global namespace");
@@ -124,23 +132,28 @@ public final class FunctionRegistry implements Registry<Function<?>> {
 			namespaceId = GLOBAL_NAMESPACE;
 		}
 
-		Namespace ns = namespaces.computeIfAbsent(namespaceId, n -> new Namespace());
 		FunctionIdentifier identifier = FunctionIdentifier.of(signature);
 
-		// register
-		// since we are getting a set and then updating it,
-		// avoid race conditions by ensuring only one thread can access this namespace for this operation
-		synchronized (ns) {
-			Set<FunctionIdentifier> identifiersWithName = ns.identifiers.computeIfAbsent(identifier.name, s -> new HashSet<>());
-			boolean exists = identifiersWithName.add(identifier);
-			if (!exists) {
+		try {
+			Namespace ns = namespaces.computeIfAbsent(namespaceId, n -> new Namespace());
+
+			// register
+			// since we are getting a set and then updating it,
+			// avoid race conditions by ensuring only one thread can access this namespace for this operation
+			synchronized (ns) {
+				Set<FunctionIdentifier> identifiersWithName = ns.identifiers.computeIfAbsent(identifier.name, s -> new HashSet<>());
+				boolean exists = identifiersWithName.add(identifier);
+				if (!exists) {
+					alreadyRegisteredError(signature.getName(), identifier, namespaceId);
+				}
+			}
+
+			Signature<?> existing = ns.signatures.putIfAbsent(identifier, signature);
+			if (existing != null) {
 				alreadyRegisteredError(signature.getName(), identifier, namespaceId);
 			}
-		}
-
-		Signature<?> existing = ns.signatures.putIfAbsent(identifier, signature);
-		if (existing != null) {
-			alreadyRegisteredError(signature.getName(), identifier, namespaceId);
+		} finally {
+			generation.incrementAndGet();
 		}
 	}
 
@@ -163,7 +176,6 @@ public final class FunctionRegistry implements Registry<Function<?>> {
 	 *                                  if the function is local and namespace is null.
 	 */
 	public void register(@Nullable String namespace, @NotNull Function<?> function) {
-		generation.incrementAndGet();
 		Preconditions.checkNotNull(function, "function cannot be null");
 		if (function.getSignature().isLocal() && namespace == null) {
 			throw new IllegalArgumentException("Cannot register a local function in the global namespace");
@@ -187,15 +199,23 @@ public final class FunctionRegistry implements Registry<Function<?>> {
 		}
 
 		FunctionIdentifier identifier = FunctionIdentifier.of(function.getSignature());
-		if (!signatureExists(namespaceId, identifier)) {
-			register(namespace, function.getSignature());
-		}
 
-		Namespace ns = namespaces.computeIfAbsent(namespaceId, n -> new Namespace());
+		try {
+			// registering the signature moves the generation itself; this one moves it again once
+			// the function is in place, so a reader which saw only the signature is not left
+			// holding a resolution it stored under the final generation
+			if (!signatureExists(namespaceId, identifier)) {
+				register(namespace, function.getSignature());
+			}
 
-		Function<?> existing = ns.functions.putIfAbsent(identifier, function);
-		if (existing != null) {
-			alreadyRegisteredError(name, identifier, namespaceId);
+			Namespace ns = namespaces.computeIfAbsent(namespaceId, n -> new Namespace());
+
+			Function<?> existing = ns.functions.putIfAbsent(identifier, function);
+			if (existing != null) {
+				alreadyRegisteredError(name, identifier, namespaceId);
+			}
+		} finally {
+			generation.incrementAndGet();
 		}
 	}
 
@@ -647,7 +667,6 @@ public final class FunctionRegistry implements Registry<Function<?>> {
 	 * @param signature The signature to remove.
 	 */
 	public void remove(@NotNull Signature<?> signature) {
-		generation.incrementAndGet();
 		Preconditions.checkNotNull(signature, "signature cannot be null");
 
 		String name = signature.getName();
@@ -669,7 +688,13 @@ public final class FunctionRegistry implements Registry<Function<?>> {
 				continue;
 			}
 
-			removeUpdateMaps(namespace, other, name);
+			// only once something was actually removed, so that removing a signature which is not
+			// registered does not discard every cached resolution for nothing
+			try {
+				removeUpdateMaps(namespace, other, name);
+			} finally {
+				generation.incrementAndGet();
+			}
 			return;
 		}
 	}
