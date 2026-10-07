@@ -65,9 +65,18 @@ public class DynamicFunctionReference
 	private final Class<?> @Nullable [] parameterTypes;
 
 	/**
+	 * Whether this resolved to a function local to {@link #namespace}, in which case it only ever
+	 * refers to that script's own declaration. A reference which resolved to a global function is
+	 * not tied to the script which happened to declare it: a global name identifies one function,
+	 * whose overloads several scripts may declare between them.
+	 */
+	private final boolean local;
+
+	/**
 	 * The namespace of the signature this resolved to, which is where the function was declared
-	 * rather than where it was looked up from. Kept so that this keeps referring to the function
-	 * it resolved to, rather than to whatever later takes the same name.
+	 * rather than where it was looked up from. Only used to report where the function came from,
+	 * through {@link #source()} and {@link #toString()}; which overloads this may use is decided
+	 * by {@link #local} and {@link #accepts(Signature)}.
 	 */
 	private final @Nullable String declaredIn;
 
@@ -98,6 +107,7 @@ public class DynamicFunctionReference
 		this.namespace = signature.namespace();
 		// a reference to a known function refers to exactly that overload
 		this.parameterTypes = FunctionBinder.declaredTypes(signature);
+		this.local = signature.isLocal();
 		this.declaredIn = signature.namespace();
 	}
 
@@ -120,7 +130,9 @@ public class DynamicFunctionReference
 		this.namespace = source != null ? source.getConfig().getFileName() : null;
 		this.parameterTypes = parameterTypes;
 
-		this.declaredIn = declaringNamespace(FunctionRegistry.getRegistry().getSignatures(namespace, name));
+		Collection<Signature<?>> candidates = FunctionRegistry.getRegistry().getSignatures(namespace, name);
+		this.local = resolvesLocally(candidates);
+		this.declaredIn = local ? namespace : declaringNamespace(candidates);
 	}
 
 	/**
@@ -135,7 +147,14 @@ public class DynamicFunctionReference
 	 * @return Whether this may resolve to {@code signature}.
 	 */
 	private boolean accepts(Signature<?> signature) {
-		if (!Objects.equals(signature.namespace(), declaredIn)) {
+		if (local) {
+			// a local function is the one declared in the script this was looked up from, and
+			// nothing else; a global function of the same name does not stand in for it
+			if (!signature.isLocal() || !Objects.equals(signature.namespace(), namespace)) {
+				return false;
+			}
+		} else if (signature.isLocal()) {
+			// and conversely, a global reference never reaches into a script's local functions
 			return false;
 		}
 		return parameterTypes == null
@@ -143,24 +162,71 @@ public class DynamicFunctionReference
 	}
 
 	/**
-	 * Picks the namespace to report as the source of this reference. A local lookup may fall back
-	 * to a global function declared elsewhere, so this prefers a candidate declared in the
-	 * namespace that was looked up.
+	 * Whether this resolved to a function local to the namespace it was looked up in. A local
+	 * declaration shadows a global function of the same name, which is why this is asked before
+	 * anything else.
 	 *
 	 * @param candidates The candidate signatures.
-	 * @return The namespace the function was declared in, or null if that is not known.
+	 * @return Whether one of them is a local function of {@link #namespace}.
+	 */
+	private boolean resolvesLocally(Collection<Signature<?>> candidates) {
+		if (namespace == null) { // only global functions were looked for
+			return false;
+		}
+		for (Signature<?> candidate : candidates) {
+			if (candidate.isLocal() && Objects.equals(candidate.namespace(), namespace)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Picks the namespace to report as the source of a global reference. Several scripts may
+	 * declare overloads of one global name, so this prefers the one that was looked up and
+	 * otherwise picks by namespace order rather than by iteration order, which
+	 * {@link FunctionRegistry#getSignatures(String, String)} returns in a set whose order is
+	 * randomised per JVM start.
+	 *
+	 * @param candidates The candidate signatures.
+	 * @return The namespace to report, or null if that is not known.
 	 */
 	private @Nullable String declaringNamespace(Collection<Signature<?>> candidates) {
 		String fallback = null;
+		boolean first = true;
 		for (Signature<?> candidate : candidates) {
 			if (Objects.equals(candidate.namespace(), namespace)) {
 				return namespace;
 			}
-			if (fallback == null) {
-				fallback = candidate.namespace();
+			String candidateNamespace = candidate.namespace();
+			if (first || compareNamespaces(candidateNamespace, fallback) < 0) {
+				fallback = candidateNamespace;
+				first = false;
 			}
 		}
 		return fallback;
+	}
+
+	/**
+	 * Orders two namespaces so that picking one of them is reproducible. A Java default function
+	 * has no namespace at all, which sorts first.
+	 *
+	 * @param first  The first namespace, which may be null.
+	 * @param second The second namespace, which may be null.
+	 * @return A negative number if {@code first} sorts before {@code second}, zero if they are the
+	 * 	same, a positive number otherwise.
+	 */
+	private static int compareNamespaces(@Nullable String first, @Nullable String second) {
+		if (Objects.equals(first, second)) {
+			return 0;
+		}
+		if (first == null) {
+			return -1;
+		}
+		if (second == null) {
+			return 1;
+		}
+		return first.compareTo(second);
 	}
 
 	/**

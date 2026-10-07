@@ -109,3 +109,18 @@ test "a selected overload is not part of the stringified reference":
 	set {_parsed} to "%{_function}%" parsed as function
 	assert {_parsed} exists with "the stringified reference didn't parse back"
 	assert (result of {_parsed} with arguments 1) is "number" with "the round tripped reference should no longer be pinned"
+
+test "a global name uses overloads declared in different scripts":
+	# the two overloads of dfrCrossOv are declared in two other scripts, so neither is declared
+	# where this reference is looked up from. A reference used to pin itself to one declaring
+	# script, picked from a set whose iteration order is randomised per JVM start, so which of the
+	# two overloads it could reach varied between server starts
+	set {_function} to function "dfrCrossOv"
+	assert {_function} exists with "the global function wasn't found"
+	assert (result of {_function} with arguments 1) is "number" with "the overload from the first script wasn't usable"
+	assert (result of {_function} with arguments "x") is "text" with "the overload from the second script wasn't usable"
+
+test "a global reference does not reach another script's local function":
+	# testDummy is local to misc/dummy.sk, so a global lookup must not find it even though
+	# treating all global declarations as one namespace widens what a reference may use
+	assert (function "testDummy") doesn't exist with "a global lookup found another script's local function"
