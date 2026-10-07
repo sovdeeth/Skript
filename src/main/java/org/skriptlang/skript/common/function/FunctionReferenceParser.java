@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 /**
  * A class containing the methods to parse an expression to a {@link FunctionReference}.
  * <p>
- * This turns the text of a function call into arguments. Selecting between overloads and binding
+ * This turns the raw text of a function call into arguments. Selecting between overloads and binding
  * those arguments to a signature is done by {@link FunctionBinder}.
  * </p>
  *
@@ -100,28 +100,23 @@ public record FunctionReferenceParser(ParseContext context, int flags) {
 			namespace = null;
 		}
 
-		// a call written in a script keeps its failures in the parse log, so that the best of the
-		// errors from the overloads which did not match is the one shown
 		FunctionBinder<String> binder =
 			new FunctionBinder<>(new StringArgumentBinder(), FunctionBinder.Mode.STRICT, true);
 
 		FunctionReference<T> reference = binder.<T>resolve(namespace, name, arguments).value();
-		if (reference == null) { // the binder has already reported why
+		if (reference == null) {
 			log.printError();
 			return null;
 		}
 
 		// this call belongs to a script, so it has to be revalidated when the function it calls
-		// is replaced. Only the reference which is actually used is registered: the binder builds
-		// one per candidate overload and discards the ones which do not match.
+		// is replaced.
 		reference.track();
-
 		return reference;
 	}
 
 	/**
-	 * Binds the arguments of a function call written in a script, where an argument's value is the
-	 * text the user wrote for it.
+	 * Binds the arguments of a function call, taking in the raw string values and parsing them into expressions.
 	 */
 	private final class StringArgumentBinder implements FunctionBinder.ArgumentBinder<String> {
 
