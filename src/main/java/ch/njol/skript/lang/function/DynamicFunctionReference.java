@@ -129,8 +129,18 @@ public class DynamicFunctionReference
 	/**
 	 * Names already resolved, so that resolving one again neither allocates a reference nor scans
 	 * the registry. Shared by every caller, since what a name resolves to does not depend on who
-	 * asked; a reference has no mutable state of its own, so handing the same one to several
-	 * callers is safe.
+	 * asked.
+	 * <p>
+	 * Keyed on the namespace rather than on the {@link Script} itself, which is all a reference
+	 * keeps anyway. A reloaded script is a new {@code Script} object with the same file name, so
+	 * keying on the object would both pin every unloaded version in memory and fill the cache with
+	 * keys nothing will ask for again.
+	 * </p>
+	 * <p>
+	 * The references handed out are shared, so {@link #invalidate()} on one disables it for every
+	 * holder. Nothing in Skript calls it -- a reference is discarded by the generation moving
+	 * instead -- but an addon which does would affect more than its own copy.
+	 * </p>
 	 */
 	private static final GenerationCache<Key, DynamicFunctionReference> RESOLVED =
 		GenerationCache.bounded(MAX_CACHED_NAMES);
@@ -161,8 +171,19 @@ public class DynamicFunctionReference
 	 *                       to use whichever overload the supplied arguments select.
 	 */
 	public DynamicFunctionReference(@NotNull String name, @Nullable Script source, Class<?> @Nullable [] parameterTypes) {
+		this(name, namespaceOf(source), parameterTypes);
+	}
+
+	/**
+	 * @param name           The function name.
+	 * @param namespace      The namespace to resolve a local function in, or null to resolve only
+	 *                       global functions.
+	 * @param parameterTypes The declared types of the parameters of the overload to use, or null
+	 *                       to use whichever overload the supplied arguments select.
+	 */
+	private DynamicFunctionReference(@NotNull String name, @Nullable String namespace, Class<?> @Nullable [] parameterTypes) {
 		this.name = name;
-		this.namespace = source != null ? source.getConfig().getFileName() : null;
+		this.namespace = namespace;
 		this.parameterTypes = parameterTypes;
 
 		Collection<Signature<?>> candidates = FunctionRegistry.getRegistry().getSignatures(namespace, name);
@@ -396,9 +417,18 @@ public class DynamicFunctionReference
 	 *
 	 * @param event     The event to execute with.
 	 * @param reference The reference to execute.
-	 * @return The returned values, never null.
+	 * @return The returned values, or null if the function could not be obtained and so never ran.
+	 * 	A function which ran and returned nothing gives an empty array.
 	 */
-	private Object[] run(Event event, FunctionReference<?> reference) {
+	private Object @Nullable [] run(Event event, FunctionReference<?> reference) {
+		// a reference whose function cannot be obtained did not run, and an empty array would make
+		// that indistinguishable from a function which ran and returned nothing, so the caller
+		// would report success for a call which never happened. Only the clearest case is caught
+		// here: execute() also returns null when validation fails, which is not told apart
+		if (reference.function() == null) {
+			return null;
+		}
+
 		try {
 			return normalise(reference, reference.execute(event));
 		} finally {
@@ -812,16 +842,26 @@ public class DynamicFunctionReference
 	public static @Nullable DynamicFunctionReference resolveFunction(String name, @Nullable Script script) {
 		// a name which resolves to nothing is not kept: calling a function which does not exist is
 		// not a case worth making fast, and the cache has nowhere to put an absence
-		return RESOLVED.get(new Key(name, script), key -> resolveUncached(key.name(), key.script()));
+		return RESOLVED.get(new Key(name, namespaceOf(script)),
+			key -> resolveUncached(key.name(), key.namespace()));
 	}
 
 	/**
-	 * A function name resolved against a particular script.
-	 *
-	 * @param name   The function name as it was written, which may name a particular overload.
-	 * @param script The script a local function was looked for in, or null for a global one.
+	 * @param script The script, or null.
+	 * @return The namespace local functions of {@code script} are registered in, or null to resolve
+	 * 	only global functions.
 	 */
-	private record Key(String name, @Nullable Script script) {
+	private static @Nullable String namespaceOf(@Nullable Script script) {
+		return script != null ? script.getConfig().getFileName() : null;
+	}
+
+	/**
+	 * A function name resolved against a particular namespace.
+	 *
+	 * @param name      The function name as it was written, which may name a particular overload.
+	 * @param namespace The namespace a local function was looked for in, or null for a global one.
+	 */
+	private record Key(String name, @Nullable String namespace) {
 
 	}
 
@@ -829,10 +869,10 @@ public class DynamicFunctionReference
 	 * Resolves a function from its name, without consulting {@link #RESOLVED}.
 	 *
 	 * @param name The function name.
-	 * @param script Potentially, the script it is from, if one is known.
+	 * @param namespace The namespace to resolve a local function in, or null for a global one.
 	 * @return A function reference, if one is available.
 	 */
-	private static @Nullable DynamicFunctionReference resolveUncached(String name, @Nullable Script script) {
+	private static @Nullable DynamicFunctionReference resolveUncached(String name, @Nullable String namespace) {
 		Class<?>[] parameterTypes = null;
 
 		Matcher matcher = SIGNATURE_PATTERN.matcher(name);
@@ -850,7 +890,7 @@ public class DynamicFunctionReference
 			}
 		}
 
-		DynamicFunctionReference reference = new DynamicFunctionReference(name, script, parameterTypes);
+		DynamicFunctionReference reference = new DynamicFunctionReference(name, namespace, parameterTypes);
 		if (!reference.valid())
 			return null;
 		return reference;

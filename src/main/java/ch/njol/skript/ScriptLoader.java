@@ -1468,9 +1468,13 @@ public class ScriptLoader {
 			return null;
 
 		if (!StringUtils.endsWithIgnoreCase(name, ".sk")) {
-			// A different extension means this cannot be a script
+			// A different extension means this cannot be a script. Only a dot in the file name
+			// itself is an extension, so a folder may contain one, as in 'my.scripts/script'. With
+			// no folder the separator is at -1, which is the plain 'dot > 0' this replaced: a name
+			// beginning with a dot is a hidden file rather than a bare extension
+			int separator = name.lastIndexOf(File.separatorChar);
 			int dot = name.lastIndexOf('.');
-			if (dot > 0 && !name.substring(dot + 1).isEmpty())
+			if (dot > separator + 1 && !name.substring(dot + 1).isEmpty())
 				return null;
 			name = name + ".sk";
 		}

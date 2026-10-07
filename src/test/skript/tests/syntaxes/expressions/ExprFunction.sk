@@ -78,3 +78,13 @@ test "cross-script function reference round trip":
 	assert name of {_parsed} is "testDummy" with "parsed cross-script reference has the wrong name"
 	set {_result} to result of {_parsed}
 	assert {_result} is true with "parsed cross-script reference didn't run the right function"
+
+test "a script in a folder whose name contains a dot can be named":
+	# the dot is part of the folder, not an extension, so this is still a script name
+	set {_script} to the script named {@misc} + "dotted.folder/dotted script.sk"
+	assert {_script} exists with "a script in a dotted folder wasn't found"
+	assert (result of (function "dfrDottedFolder" from {_script})) is "dotted" with "the function in a dotted folder didn't run"
+
+	# and without the extension, which is the path that did the rejecting
+	set {_script} to the script named {@misc} + "dotted.folder/dotted script"
+	assert {_script} exists with "a script in a dotted folder wasn't found without its extension"
