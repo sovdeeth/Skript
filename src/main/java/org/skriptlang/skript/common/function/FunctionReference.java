@@ -196,7 +196,7 @@ public final class FunctionReference<T> implements Debuggable {
 		SequencedMap<String, Object> args = new LinkedHashMap<>();
 		cachedArguments.forEach((k, v) -> {
 			if (v.modifiers().contains(Modifier.KEYED)) {
-				args.put(k, Classes.clone(evaluateKeyed(v.expression(), event)));
+				args.put(k, evaluateKeyed(v.expression(), event)); // evalKeyed clones, so no need to clone here
 				return;
 			}
 
