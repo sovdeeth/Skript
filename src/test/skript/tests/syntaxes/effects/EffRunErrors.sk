@@ -79,3 +79,19 @@ test "a function returning no value reports nothing":
 
 	assert {_result} is not set with "the function should not have produced a value"
 	assert last caught runtime errors is not set with "returning no value reported an error"
+
+test "a call fitting no overload reports the call, not one overload's reason":
+	# two values against two single-parameter overloads, so each overload logs its own reason
+	# while matching and neither of them is the whole story. Which one came first depended on the
+	# iteration order of a hash set, so the summary naming the call is reported instead
+	set {_function} to function "dfrErrAmbiguous"
+	set {_list::*} to 1 and 2
+
+	catch runtime errors:
+		set {_result} to result of {_function} with arguments {_list::*}
+
+	assert {_result} is not set with "a call fitting no overload should not have produced a result"
+	set {_errors::*} to last caught runtime errors
+	assert {_errors::1} is set with "a call fitting no overload reported nothing"
+	assert {_errors::1} contains "dfrErrAmbiguous" with "the failure did not name the function"
+	assert {_errors::1} contains "does not exist" with "the failure reported one overload's reason instead of the call"

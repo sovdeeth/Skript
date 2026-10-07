@@ -1,11 +1,10 @@
 package ch.njol.skript.lang.function;
 
 import ch.njol.skript.ScriptLoader;
-import ch.njol.skript.Skript;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionList;
-import ch.njol.skript.lang.parser.ParserInstance;
+import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.skript.lang.util.common.AnyNamed;
 import ch.njol.skript.registrations.Classes;
@@ -257,6 +256,14 @@ public class DynamicFunctionReference
 	 * Parses the parameter type list of a stringified function reference, e.g. the
 	 * 'integer, objects' of 'myFunction(integer, objects)', into the declared parameter types it
 	 * names. This is the inverse of how a signature is written out in an error message.
+	 * <p>
+	 * Deliberately silent. This runs for any unparsed literal shaped like {@code word(...)},
+	 * because {@link Classes#parseSimple(String, Class, ParseContext)} offers every string to every
+	 * {@link ClassInfo} parser in turn, so a line calling a function which does not exist reaches
+	 * this. Reporting from here put "Cannot recognise the type 'x'" in the parse log, which
+	 * replaced the real unknown-function error whenever the function {@code ClassInfo} happened to
+	 * be the last one tried. Resolving a name which does not exist has always been silent.
+	 * </p>
 	 *
 	 * @param types The type list. Must not be blank.
 	 * @return The declared types, or null if any of them could not be recognised.
@@ -270,7 +277,6 @@ public class DynamicFunctionReference
 		for (int i = 0; i < split.length; i++) {
 			String type = split[i].trim();
 			if (type.isEmpty()) {
-				reportBadType("Missing a parameter type in '" + types + "'");
 				return null;
 			}
 
@@ -281,7 +287,6 @@ public class DynamicFunctionReference
 			}
 
 			if (classInfo == null) {
-				reportBadType("Cannot recognise the type '" + type + "'");
 				return null;
 			}
 
@@ -289,22 +294,6 @@ public class DynamicFunctionReference
 		}
 
 		return parsed;
-	}
-
-	/**
-	 * Reports a parameter type list which could not be understood.
-	 * <p>
-	 * A reference can be resolved either while a script is being parsed, where this belongs in the
-	 * parse log, or at runtime, where there is no telling which log is listening. Only the former
-	 * is reported; resolving a name that does not exist has always been silent at runtime.
-	 * </p>
-	 *
-	 * @param message The message.
-	 */
-	private static void reportBadType(String message) {
-		if (ParserInstance.get().isActive()) {
-			Skript.error(message);
-		}
 	}
 
 	public @Nullable Script source() {

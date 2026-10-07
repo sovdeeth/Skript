@@ -27,6 +27,7 @@ import org.skriptlang.skript.common.function.Parameter.Modifier;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -161,10 +162,7 @@ public final class FunctionBinder<T> {
 
 			String rejection = null;
 			if (reference == null) {
-				for (LogEntry error : log.getErrors()) {
-					rejection = error.getMessage();
-					break;
-				}
+				rejection = reject(log.getErrors(), overloadCount(namespace, name, only));
 			}
 
 			log.clear();
@@ -174,6 +172,62 @@ public final class FunctionBinder<T> {
 				? Result.success(reference)
 				: Result.failure(rejection != null ? rejection : NO_REASON_GIVEN);
 		}
+	}
+
+	/**
+	 * Picks which of the errors logged while matching to show the user.
+	 * <p>
+	 * With a single overload the first error is that overload's own reason -- which argument did
+	 * not fit and why -- and the summary logged after it only says that the call matched nothing,
+	 * so the first is the more useful of the two. With several overloads each one logged its own
+	 * reason and picking one of those would be arbitrary, since they are visited in the iteration
+	 * order of a {@link HashSet}; the summary, which names the call and suggests the closest
+	 * signature, is the only answer that does not depend on that order.
+	 * </p>
+	 *
+	 * @param errors    The errors logged while matching, in the order they were logged.
+	 * @param overloads How many overloads the call could have matched.
+	 * @return The message to report, or null if nothing was logged.
+	 */
+	private static @Nullable String reject(@NotNull Collection<LogEntry> errors, int overloads) {
+		String first = null;
+		String last = null;
+
+		for (LogEntry error : errors) {
+			if (first == null) {
+				first = error.getMessage();
+			}
+			last = error.getMessage();
+		}
+
+		return overloads > 1 ? last : first;
+	}
+
+	/**
+	 * Counts the overloads a call could have matched, which is only needed to choose a rejection
+	 * message and so is worked out on the failing path rather than kept from the matching itself.
+	 *
+	 * @param namespace The namespace to resolve local functions in, or null for global functions
+	 *                  only.
+	 * @param name      The function name.
+	 * @param only      Which overloads may be used, or null for any of them.
+	 * @return How many overloads of {@code name} were available to the call.
+	 */
+	private int overloadCount(
+		@Nullable String namespace, @NotNull String name, @Nullable Predicate<Signature<?>> only
+	) {
+		Set<Signature<?>> options = FunctionRegistry.getRegistry().getSignatures(namespace, name);
+		if (only == null) {
+			return options.size();
+		}
+
+		int count = 0;
+		for (Signature<?> option : options) {
+			if (only.test(option)) {
+				count++;
+			}
+		}
+		return count;
 	}
 
 	/**
