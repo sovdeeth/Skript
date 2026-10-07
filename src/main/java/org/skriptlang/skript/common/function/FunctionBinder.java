@@ -108,7 +108,7 @@ public final class FunctionBinder<T> {
 		/**
 		 * As {@link #STRICT}, but if no signature can be bound that way, a signature containing a
 		 * list parameter may have it take several of the passed arguments. See
-		 * {@link #allocate(Parameter[], int)}.
+		 * {@link #allocations(Parameter[], int)}.
 		 */
 		GREEDY
 
@@ -817,7 +817,8 @@ public final class FunctionBinder<T> {
 
 	/**
 	 * Every way {@code slots} passed arguments can be divided across {@code parameters}, greediest
-	 * on the left first, so that {@link #allocate(Parameter[], int)}'s division comes first.
+	 * on the left first: the leftmost list parameter takes everything the parameters after it do
+	 * not require, so the division a call bound to before is the first one tried again.
 	 * <p>
 	 * A division is by count alone, so the first one may put an argument in a parameter whose type
 	 * it does not fit. The caller tries them in turn and keeps the first which binds, which is what
@@ -883,43 +884,6 @@ public final class FunctionBinder<T> {
 			}
 		}
 		return 0;
-	}
-
-	/**
-	 * Allocates {@code slots} passed arguments across {@code parameters}, from left to right,
-	 * letting each list parameter take as many consecutive arguments as it can while still leaving
-	 * enough for the parameters after it.
-	 * <p>
-	 * For example, {@code f(a: number, b: numbers)} given three arguments allocates one to
-	 * {@code a} and two to {@code b}.
-	 * </p>
-	 *
-	 * @param parameters The parameters to allocate to.
-	 * @param slots      The number of passed arguments.
-	 * @return How many arguments each parameter takes, or null if they cannot be allocated.
-	 */
-	static int @Nullable [] allocate(Parameter<?>[] parameters, int slots) {
-		int required = required(parameters);
-
-		int[] allocation = new int[parameters.length];
-		int next = 0;
-		for (int i = 0; i < parameters.length; i++) {
-			// arguments which must be left over for the parameters after this one
-			int reserved = Math.max(0, required - (i + 1));
-			int available = slots - next - reserved;
-			int minimum = i < required ? 1 : 0;
-
-			if (available < minimum) {
-				return null;
-			}
-
-			int take = parameters[i].isSingle() ? Math.min(1, available) : available;
-			allocation[i] = take;
-			next += take;
-		}
-
-		// a trailing single parameter may leave arguments unallocated
-		return next == slots ? allocation : null;
 	}
 
 	/**
@@ -1144,8 +1108,23 @@ public final class FunctionBinder<T> {
 			// which spreads values across a list parameter, where building the pipeline costs
 			// more than the array it produces
 			Expression<?>[] values = new Expression[arguments.length];
-			for (int i = 0; i < arguments.length; i++) {
-				values[i] = arguments[i].value();
+			int size = 0;
+			for (Argument<Expression<?>> argument : arguments) {
+				// an argument with no value is one the caller omitted, as the positional form of
+				// DynamicFunctionReference#execute produces for a null. It contributes nothing to
+				// the list; copying it in would put a null in the ExpressionList, which throws as
+				// soon as anything reads it
+				if (argument.value() != null) {
+					values[size++] = argument.value();
+				}
+			}
+
+			if (size == 0) { // every argument was omitted, so the parameter takes its default
+				return new Argument<>(ArgumentType.NAMED, parameterName, null);
+			}
+
+			if (size != values.length) {
+				values = Arrays.copyOf(values, size);
 			}
 
 			return new Argument<>(ArgumentType.NAMED, parameterName,

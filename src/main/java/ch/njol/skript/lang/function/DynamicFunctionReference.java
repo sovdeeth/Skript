@@ -96,12 +96,24 @@ public class DynamicFunctionReference
 	 * Held in a {@link GenerationCache} so that reloading a script does not leave the call sites of
 	 * the version before it behind. Each one holds that site's parsed expressions, and through them
 	 * the script they were parsed from, so a reference kept in a global variable and called from a
-	 * script reloaded repeatedly would otherwise accumulate one entry per reload forever. The keys
-	 * are parsed expressions rather than runtime values, so there is no need to bound it beyond
-	 * that.
+	 * script reloaded repeatedly would otherwise accumulate one entry per reload forever.
+	 * </p>
+	 * <p>
+	 * The cache only empties when a function is registered or removed, which a reload of a script
+	 * declaring no functions does not do, so the capacity is what bounds that case rather than the
+	 * generation. It is set well above the number of places one reference is realistically called
+	 * from; a reference which somehow passes it keeps working, at the cost of building a call site
+	 * per execution. Evicting the call sites of a script as it is unloaded would bound it properly,
+	 * which needs a hook this does not have.
 	 * </p>
 	 */
-	private final GenerationCache<Input, CallSite> callSites = GenerationCache.unbounded();
+	private final GenerationCache<Input, CallSite> callSites =
+		GenerationCache.bounded(MAX_CALL_SITES);
+
+	/**
+	 * How many call sites one reference holds. See {@link #callSites}.
+	 */
+	private static final int MAX_CALL_SITES = 256;
 
 	/**
 	 * How many shapes of spread values one call site remembers the signature for.
@@ -462,7 +474,9 @@ public class DynamicFunctionReference
 			}
 
 			for (int value = 0; value < values.length; value++) {
-				array[next++] = argument(new SimpleLiteral<>(values[value], true));
+				// false: the second argument is isDefault, not the and/or of a list, and these
+				// are values the caller passed rather than a parameter's default
+				array[next++] = argument(new SimpleLiteral<>(values[value], false));
 				types[value] = values[value].getClass();
 			}
 		}
@@ -644,7 +658,7 @@ public class DynamicFunctionReference
 			return new SimpleLiteral<>(values, Object.class, true);
 		}
 
-		return new SimpleLiteral<>(value, true);
+		return new SimpleLiteral<>(value, false); // isDefault, not and/or; see spread()
 	}
 
 	@Override
@@ -669,10 +683,54 @@ public class DynamicFunctionReference
 
 	@Override
 	public String toString() {
+		String signature = name + "(" + pinnedTypes() + ")";
+
 		Script source = source();
 		if (source != null)
-			return name + "() from " + Classes.toString(source);
-		return name + "()";
+			return signature + " from " + Classes.toString(source);
+		return signature;
+	}
+
+	/**
+	 * The parameter types this is pinned to, written the way they would be read back, so that
+	 * stringifying a reference and parsing it again keeps the overload it was pinned to.
+	 * <p>
+	 * Empty when no overload is pinned, since {@code myFunction()} has always meant the function of
+	 * that name whatever its parameters. This is the inverse of
+	 * {@link #parseParameterTypes(String)}.
+	 * </p>
+	 *
+	 * @return The type list, or an empty string if whichever overload the arguments select may be
+	 * 	used.
+	 */
+	private String pinnedTypes() {
+		if (parameterTypes == null) {
+			return "";
+		}
+
+		StringJoiner joiner = new StringJoiner(", ");
+		for (Class<?> type : parameterTypes) {
+			joiner.add(typeName(type));
+		}
+		return joiner.toString();
+	}
+
+	/**
+	 * @param type A declared parameter type.
+	 * @return The name that type is written with, plural for an array, which is the form
+	 * 	{@link #parseParameterTypes(String)} reads back into it.
+	 */
+	private static String typeName(Class<?> type) {
+		Class<?> component = Utils.getComponentType(type);
+
+		// the exact type where one is registered, so that the name read back names the same class;
+		// a parameter of an unregistered type still has to be written as something
+		ClassInfo<?> classInfo = Classes.getExactClassInfo(component);
+		if (classInfo == null) {
+			classInfo = Classes.getSuperClassInfo(component);
+		}
+
+		return type.isArray() ? classInfo.getName().getPlural() : classInfo.getName().getSingular();
 	}
 
 	/**

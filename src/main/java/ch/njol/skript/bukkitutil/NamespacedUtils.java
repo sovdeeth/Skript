@@ -122,7 +122,7 @@ public class NamespacedUtils {
 	 * @return {@code True} if valid, otherwise {@code false}.
 	 */
 	public static boolean isValid(String string) {
-		return checkValidation(string).valid();
+		return validate(string) instanceof Result.Success<NamespacedKey>;
 	}
 
 }

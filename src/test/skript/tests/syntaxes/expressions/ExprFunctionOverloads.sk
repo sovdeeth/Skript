@@ -99,16 +99,38 @@ test "empty parentheses select no particular overload":
 	assert (function "dfrOverload()") exists with "empty parentheses didn't resolve by name"
 	assert (function "dfrOverload") exists with "a bare name didn't resolve"
 
-test "a selected overload is not part of the stringified reference":
-	# the stringified form names the function but not the overload, so a round trip goes back to
-	# whichever overload the arguments select
+test "a selected overload is part of the stringified reference":
+	# the stringified form names whatever the reference was pinned to, so a round trip comes back
+	# pinned to the same overload instead of taking whichever one the arguments select
 	set {_function} to function "dfrOverload(text)"
 	assert {_function} exists with "the (text) overload wasn't found"
-	assert "%{_function}%" contains "dfrOverload()" with "the stringified reference should not name the overload"
+	assert "%{_function}%" contains "dfrOverload(text)" with "the stringified reference should name the overload"
 
 	set {_parsed} to "%{_function}%" parsed as function
 	assert {_parsed} exists with "the stringified reference didn't parse back"
-	assert (result of {_parsed} with arguments 1) is "number" with "the round tripped reference should no longer be pinned"
+	assert (result of {_parsed} with arguments "a") is "text" with "the round tripped reference lost its overload"
+
+test "a reference naming no overload stringifies without one":
+	# nothing was specified, so nothing is written: 'dfrOverload()' has always meant the function
+	# of that name whatever its parameters
+	set {_function} to function "dfrOverload"
+	assert {_function} exists with "the function wasn't found"
+	assert "%{_function}%" contains "dfrOverload()" with "an unpinned reference should not name an overload"
+
+	set {_parsed} to "%{_function}%" parsed as function
+	assert {_parsed} exists with "the stringified reference didn't parse back"
+	assert (result of {_parsed} with arguments 1) is "number" with "the round tripped reference should not be pinned"
+	assert (result of {_parsed} with arguments "a") is "text" with "the round tripped reference should not be pinned"
+
+test "a list overload is named in the stringified reference with a plural type":
+	# the plural form is what parseParameterTypes reads back into an array type
+	set {_function} to function "dfrOverload(numbers)"
+	assert {_function} exists with "the (numbers) overload wasn't found"
+	assert "%{_function}%" contains "dfrOverload(numbers)" with "the stringified reference should name the list overload"
+
+	set {_parsed} to "%{_function}%" parsed as function
+	assert {_parsed} exists with "the stringified reference didn't parse back"
+	assert (result of {_parsed} with arguments 1) is "numbers" with "the round tripped reference lost its list overload"
 
 test "a global name uses overloads declared in different scripts":
 	# the two overloads of dfrCrossOv are declared in two other scripts, so neither is declared

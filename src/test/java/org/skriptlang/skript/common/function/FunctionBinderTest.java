@@ -7,13 +7,12 @@ import java.util.List;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /**
  * Tests the allocation of passed arguments across a signature's parameters.
  *
- * @see FunctionBinder#allocate(Parameter[], int)
  * @see FunctionBinder#allocations(Parameter[], int)
  */
 public class FunctionBinderTest {
@@ -38,62 +37,80 @@ public class FunctionBinderTest {
 		return parameters;
 	}
 
+	/**
+	 * Asserts that the first division offered for {@code slots} arguments is {@code expected}. The
+	 * binder tries the divisions in order and keeps the first which binds, so the first one is the
+	 * division that decides how a call binds when every division would fit.
+	 */
+	private static void assertGreediest(int[] expected, Parameter<?>[] parameters, int slots) {
+		List<int[]> divisions = FunctionBinder.allocations(parameters, slots);
+		assertFalse("no division for " + slots + " arguments", divisions.isEmpty());
+		assertArrayEquals("first division for " + slots + " arguments", expected, divisions.getFirst());
+	}
+
+	/**
+	 * Asserts that {@code slots} arguments cannot be divided across {@code parameters} at all.
+	 */
+	private static void assertNoDivision(Parameter<?>[] parameters, int slots) {
+		assertTrue("a division was offered for " + slots + " arguments",
+			FunctionBinder.allocations(parameters, slots).isEmpty());
+	}
+
 	@Test
 	public void testNoParameters() {
-		assertArrayEquals(new int[0], FunctionBinder.allocate(parameters(), 0));
-		assertNull(FunctionBinder.allocate(parameters(), 1));
+		assertGreediest(new int[0], parameters(), 0);
+		assertNoDivision(parameters(), 1);
 	}
 
 	@Test
 	public void testOnlySingleParameters() {
 		Parameter<?>[] parameters = parameters(single("a"), single("b"));
 
-		assertArrayEquals(new int[]{1, 1}, FunctionBinder.allocate(parameters, 2));
+		assertGreediest(new int[]{1, 1}, parameters, 2);
 
 		// without a list parameter there is nothing to absorb a surplus, and nothing may be omitted
-		assertNull(FunctionBinder.allocate(parameters, 3));
-		assertNull(FunctionBinder.allocate(parameters, 1));
-		assertNull(FunctionBinder.allocate(parameters, 0));
+		assertNoDivision(parameters, 3);
+		assertNoDivision(parameters, 1);
+		assertNoDivision(parameters, 0);
 	}
 
 	@Test
 	public void testListParameterAbsorbsSurplus() {
 		// f(a: number, b: numbers) given 1, 2, 3 binds a=1 and b=(2, 3)
-		assertArrayEquals(new int[]{1, 2}, FunctionBinder.allocate(parameters(single("a"), list("b")), 3));
-		assertArrayEquals(new int[]{1, 1}, FunctionBinder.allocate(parameters(single("a"), list("b")), 2));
+		assertGreediest(new int[]{1, 2}, parameters(single("a"), list("b")), 3);
+		assertGreediest(new int[]{1, 1}, parameters(single("a"), list("b")), 2);
 
 		// a required list parameter must still be given something
-		assertNull(FunctionBinder.allocate(parameters(single("a"), list("b")), 1));
+		assertNoDivision(parameters(single("a"), list("b")), 1);
 	}
 
 	@Test
 	public void testAllocatesLeftToRight() {
 		// the leftmost list parameter takes as much as it can while leaving enough for the rest
-		assertArrayEquals(new int[]{2, 1}, FunctionBinder.allocate(parameters(list("a"), single("b")), 3));
-		assertArrayEquals(new int[]{2, 1}, FunctionBinder.allocate(parameters(list("a"), list("b")), 3));
-		assertArrayEquals(new int[]{1, 2, 1},
-			FunctionBinder.allocate(parameters(single("a"), list("b"), single("c")), 4));
+		assertGreediest(new int[]{2, 1}, parameters(list("a"), single("b")), 3);
+		assertGreediest(new int[]{2, 1}, parameters(list("a"), list("b")), 3);
+		assertGreediest(new int[]{1, 2, 1}, parameters(single("a"), list("b"), single("c")), 4);
 	}
 
 	@Test
 	public void testSingleListParameter() {
-		assertArrayEquals(new int[]{3}, FunctionBinder.allocate(parameters(list("a")), 3));
-		assertArrayEquals(new int[]{1}, FunctionBinder.allocate(parameters(list("a")), 1));
+		assertGreediest(new int[]{3}, parameters(list("a")), 3);
+		assertGreediest(new int[]{1}, parameters(list("a")), 1);
 
 		// a required list parameter cannot be given nothing
-		assertNull(FunctionBinder.allocate(parameters(list("a")), 0));
-		assertArrayEquals(new int[]{0}, FunctionBinder.allocate(parameters(optionalList("a")), 0));
+		assertNoDivision(parameters(list("a")), 0);
+		assertGreediest(new int[]{0}, parameters(optionalList("a")), 0);
 	}
 
 	@Test
 	public void testOptionalParametersMayBeOmitted() {
 		Parameter<?>[] parameters = parameters(single("a"), optionalList("b"));
 
-		assertArrayEquals(new int[]{1, 0}, FunctionBinder.allocate(parameters, 1));
-		assertArrayEquals(new int[]{1, 1}, FunctionBinder.allocate(parameters, 2));
-		assertArrayEquals(new int[]{1, 2}, FunctionBinder.allocate(parameters, 3));
+		assertGreediest(new int[]{1, 0}, parameters, 1);
+		assertGreediest(new int[]{1, 1}, parameters, 2);
+		assertGreediest(new int[]{1, 2}, parameters, 3);
 
-		assertNull(FunctionBinder.allocate(parameters, 0));
+		assertNoDivision(parameters, 0);
 	}
 
 	@Test
@@ -102,36 +119,35 @@ public class FunctionBinderTest {
 		// parameter after it is optional
 		Parameter<?>[] parameters = parameters(optionalSingle("a"), list("b"));
 
-		assertArrayEquals(new int[]{1, 1}, FunctionBinder.allocate(parameters, 2));
-		assertArrayEquals(new int[]{1, 2}, FunctionBinder.allocate(parameters, 3));
+		assertGreediest(new int[]{1, 1}, parameters, 2);
+		assertGreediest(new int[]{1, 2}, parameters, 3);
 
-		assertNull(FunctionBinder.allocate(parameters, 1));
+		assertNoDivision(parameters, 1);
 	}
 
 	@Test
 	public void testTrailingOptionalSingleParameters() {
 		Parameter<?>[] parameters = parameters(single("a"), optionalSingle("b"), optionalSingle("c"));
 
-		assertArrayEquals(new int[]{1, 0, 0}, FunctionBinder.allocate(parameters, 1));
-		assertArrayEquals(new int[]{1, 1, 0}, FunctionBinder.allocate(parameters, 2));
-		assertArrayEquals(new int[]{1, 1, 1}, FunctionBinder.allocate(parameters, 3));
+		assertGreediest(new int[]{1, 0, 0}, parameters, 1);
+		assertGreediest(new int[]{1, 1, 0}, parameters, 2);
+		assertGreediest(new int[]{1, 1, 1}, parameters, 3);
 
 		// no list parameter, so a surplus cannot be absorbed
-		assertNull(FunctionBinder.allocate(parameters, 4));
+		assertNoDivision(parameters, 4);
 	}
 
 
 	@Test
 	public void testAllocationsBeginWithTheGreediestDivision() {
-		// the binder tries the divisions in order, so the first has to be the one allocate gives:
-		// that is what keeps a call which already bound binding the same way
+		// the binder tries the divisions in order and keeps the first which binds, so the first has
+		// to be the greediest on the left: the leftmost list parameter takes everything the ones
+		// after it do not require. That is what keeps a call which already bound binding the same
+		// way
 		Parameter<?>[] parameters = parameters(list("a"), list("b"), list("c"));
 
 		for (int slots = 3; slots <= 7; slots++) {
-			List<int[]> divisions = FunctionBinder.allocations(parameters, slots);
-			assertTrue("no division for " + slots + " arguments", !divisions.isEmpty());
-			assertArrayEquals("first division for " + slots + " arguments",
-				FunctionBinder.allocate(parameters, slots), divisions.getFirst());
+			assertGreediest(new int[]{slots - 2, 1, 1}, parameters, slots);
 		}
 	}
 
