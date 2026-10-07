@@ -683,7 +683,7 @@ public class DynamicFunctionReference
 	 * @deprecated Use {@link #execute(Event, Input)}, which binds each argument to the parameter
 	 * 	it belongs to instead of collapsing them all into one expression.
 	 */
-	@Deprecated(forRemoval = true, since = "2.18")
+	@Deprecated(forRemoval = true, since = "INSERT VERSION")
 	public @Nullable Expression<?> validate(Expression<?>[] parameters) {
 		return this.validate(new Input(parameters));
 	}
@@ -692,15 +692,34 @@ public class DynamicFunctionReference
 	 * @deprecated Use {@link #execute(Event, Input)}, which binds each argument to the parameter
 	 * 	it belongs to instead of collapsing them all into one expression.
 	 */
-	@Deprecated(forRemoval = true, since = "2.18")
+	@Deprecated(forRemoval = true, since = "INSERT VERSION")
 	public @Nullable Expression<?> validate(Input input) {
-		if (!binding(input).bindable()) {
+		Binding binding = binding(input);
+		if (!binding.bindable()) {
+			return null;
+		}
+
+		FunctionReference<?> reference = binding.reference();
+		if (reference == null) {
+			// the arguments only fit once the values of one of them are spread across several
+			// parameters, which is not known until they have been evaluated and there is no event
+			// here to evaluate them with. The expressions as they were passed are all there is
+			return new ExpressionList<>(input.expressions(), Object.class, true);
+		}
+
+		// each argument converted to the type of the parameter it bound to, which is what this
+		// returned before the rewrite. Handing back the expressions as they were passed would give
+		// an addon still calling this a value of the wrong type, with no compile error to warn it.
+		// Two differences from the original remain: these are in parameter order rather than the
+		// order they were passed, and a parameter left to its default is not among them
+		Expression<?>[] converted = reference.convertedArguments();
+		if (converted == null) {
 			return null;
 		}
 
 		// the arguments are acceptable, but which parameter each of them belongs to is only known
 		// to the binding, so handing them back as one expression loses that
-		return new ExpressionList<>(input.expressions(), Object.class, true);
+		return new ExpressionList<>(converted, Object.class, true);
 	}
 
 	/**

@@ -39,7 +39,7 @@ public class NamespacedUtils {
 	 * @return {@link ValidationResult}.
 	 * @deprecated Use {@link #validate(String)} instead.
 	 */
-	@Deprecated(since = "2.17", forRemoval = true)
+	@Deprecated(since = "INSERT VERSION", forRemoval = true)
 	@SuppressWarnings("removal")
 	public static ValidationResult<NamespacedKey> checkValidation(String string) {
 		return ValidationResult.of(validate(string));

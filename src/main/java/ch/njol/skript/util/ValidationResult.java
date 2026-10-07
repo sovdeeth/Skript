@@ -20,7 +20,7 @@ import org.skriptlang.skript.util.Result;
  * @deprecated Use {@link Result} instead, which makes a failure carrying no data a property of the
  * type rather than an invariant a caller has to uphold.
  */
-@Deprecated(since = "2.17", forRemoval = true)
+@Deprecated(since = "INSERT VERSION", forRemoval = true)
 public record ValidationResult<T>(
 	boolean valid,
 	@Nullable String message,

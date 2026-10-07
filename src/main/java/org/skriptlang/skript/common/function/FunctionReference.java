@@ -342,6 +342,33 @@ public final class FunctionReference<T> implements Debuggable {
 	}
 
 	/**
+	 * The argument expressions converted to the types of the parameters they bound to, in parameter
+	 * order, leaving out any parameter which was not passed and therefore takes its default.
+	 * <p>
+	 * Unlike {@link #arguments()}, which hands back the expressions exactly as they were bound,
+	 * these are the converted ones this actually evaluates. Only for the deprecated
+	 * {@code DynamicFunctionReference#validate}, which returned converted expressions before it was
+	 * rewritten and has to keep doing so.
+	 * </p>
+	 *
+	 * @return The converted argument expressions, or null if an argument does not fit the parameter
+	 * 	it bound to, which also reports why.
+	 */
+	@ApiStatus.Internal
+	public Expression<?> @Nullable [] convertedArguments() {
+		if (!validate()) {
+			return null;
+		}
+
+		Expression<?>[] converted = new Expression[cachedArguments.size()];
+		int index = 0;
+		for (ArgInfo info : cachedArguments.values()) {
+			converted[index++] = info.expression();
+		}
+		return converted;
+	}
+
+	/**
 	 * @return Whether this reference returns a single or multiple values.
 	 */
 	public boolean isSingle() {
