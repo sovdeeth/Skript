@@ -20,6 +20,7 @@ import org.skriptlang.skript.common.function.FunctionBinder.Mode;
 import org.skriptlang.skript.common.function.FunctionReference;
 import org.skriptlang.skript.common.function.FunctionReference.Argument;
 import org.skriptlang.skript.common.function.FunctionReference.ArgumentType;
+import org.skriptlang.skript.common.function.GenerationCache;
 import org.skriptlang.skript.lang.script.Script;
 import org.skriptlang.skript.util.Executable;
 import org.skriptlang.skript.util.Result;
@@ -92,13 +93,36 @@ public class DynamicFunctionReference
 	 * across several parameters, since how many values there are decides which overload fits and
 	 * that is only known per execution. See {@link #computeBinding(Input)}.
 	 * </p>
+	 * <p>
+	 * Held in a {@link GenerationCache} so that reloading a script does not leave the call sites of
+	 * the version before it behind. Each one holds that site's parsed expressions, and through them
+	 * the script they were parsed from, so a reference kept in a global variable and called from a
+	 * script reloaded repeatedly would otherwise accumulate one entry per reload forever. The keys
+	 * are parsed expressions rather than runtime values, so there is no need to bound it beyond
+	 * that.
+	 * </p>
 	 */
-	private final Map<Input, CallSite> callSites = new ConcurrentHashMap<>();
+	private final GenerationCache<Input, CallSite> callSites = GenerationCache.unbounded();
 
 	/**
 	 * How many shapes of spread values one call site remembers the signature for.
 	 */
 	private static final int MAX_REMEMBERED_SPREADS = 16;
+
+	/**
+	 * How many resolved names are kept. Shared by every caller rather than held per expression, so
+	 * this is more generous than a per-expression cache needed to be.
+	 */
+	private static final int MAX_CACHED_NAMES = 256;
+
+	/**
+	 * Names already resolved, so that resolving one again neither allocates a reference nor scans
+	 * the registry. Shared by every caller, since what a name resolves to does not depend on who
+	 * asked; a reference has no mutable state of its own, so handing the same one to several
+	 * callers is safe.
+	 */
+	private static final GenerationCache<Key, DynamicFunctionReference> RESOLVED =
+		GenerationCache.bounded(MAX_CACHED_NAMES);
 
 	public DynamicFunctionReference(Function<?> function) {
 		Signature<?> signature = function.getSignature();
@@ -324,7 +348,7 @@ public class DynamicFunctionReference
 	 */
 	public Object @Nullable [] execute(Event event, Input input) {
 		CallSite site = callSite(input);
-		return call(event, site, site.binding());
+		return call(event, site, site.resolution());
 	}
 
 	/**
@@ -334,12 +358,13 @@ public class DynamicFunctionReference
 	 * overload of that name would silently take any call it did not match exactly.
 	 * </p>
 	 *
-	 * @param event   The event to execute with.
-	 * @param site    The call site whose arguments to use.
-	 * @param binding How those arguments bind to this function.
+	 * @param event      The event to execute with.
+	 * @param site       The call site whose arguments to use.
+	 * @param resolution How those arguments bind to this function, together with the spread memo
+	 *                   which belongs to that binding.
 	 * @return The returned values, or null if the arguments are not acceptable or execution failed.
 	 */
-	private Object @Nullable [] call(Event event, CallSite site, Binding binding) {
+	private Object @Nullable [] call(Event event, CallSite site, Resolution resolution) {
 		// deliberately not valid(): a binding is already discarded when the registered functions
 		// change, so scanning the registry again here would only turn a function which no longer
 		// exists into a silent failure, where binding it reports why
@@ -347,6 +372,7 @@ public class DynamicFunctionReference
 			return null;
 		}
 
+		Binding binding = resolution.binding();
 		FunctionReference<?> reference = binding.reference();
 
 		if (reference == null) {
@@ -355,7 +381,7 @@ public class DynamicFunctionReference
 			}
 			// the arguments only fit once the values of one of them are spread across several
 			// parameters, which cannot be known before they have been evaluated
-			reference = spread(event, site, binding.spread());
+			reference = spread(event, site, resolution, binding.spread());
 			if (reference == null) {
 				return null;
 			}
@@ -418,12 +444,16 @@ public class DynamicFunctionReference
 	 * evaluated, so unlike every other binding this one is worked out for each execution.
 	 * </p>
 	 *
-	 * @param event The event to evaluate with.
-	 * @param input The argument expressions.
-	 * @param index The index of the argument whose values are spread.
+	 * @param event      The event to evaluate with.
+	 * @param site       The call site whose arguments to spread.
+	 * @param resolution The resolution whose spread memo to use, which is the one belonging to the
+	 *                   binding that asked for a spread.
+	 * @param index      The index of the argument whose values are spread.
 	 * @return The bound reference, or null if the values do not fit any overload either.
 	 */
-	private @Nullable FunctionReference<?> spread(Event event, CallSite site, int index) {
+	private @Nullable FunctionReference<?> spread(
+		Event event, CallSite site, Resolution resolution, int index
+	) {
 		Expression<?>[] expressions = site.input().expressions();
 
 		// evaluated first so that both arrays below can be allocated at the size they need, since
@@ -455,7 +485,7 @@ public class DynamicFunctionReference
 		// which overload a spread fits is decided by how many values there are and what types they
 		// are, and by nothing else, so a call site reaching the same shape again binds straight to
 		// the signature it bound to last time instead of searching the overloads once more
-		Spread remembered = site.spread(shape);
+		Spread remembered = resolution.spread(shape);
 		if (remembered != null) {
 			FunctionBinder.Division division = FunctionBinder.forExpressions(Mode.GREEDY)
 				.bindTo(namespace, name, remembered.signature(), remembered.allocation(), array);
@@ -475,8 +505,8 @@ public class DynamicFunctionReference
 				// signature, so it is stored the first time that happens; from then on the call
 				// site binds straight to it
 				if (remembered.allocation() == null && division.allocation() != null) {
-					site.rememberSpread(shape, remembered.signature(), division.allocation(),
-						bound.function());
+					resolution.rememberSpread(shape, remembered.signature(),
+						division.allocation(), bound.function());
 				}
 				return bound;
 			}
@@ -487,7 +517,7 @@ public class DynamicFunctionReference
 		// takes; narrowing rather than casting leaves a shape unremembered instead of failing if
 		// that ever stops holding
 		if (reference != null && reference.signature() instanceof Signature<?> registered) {
-			site.rememberSpread(shape, registered, null, reference.function());
+			resolution.rememberSpread(shape, registered, null, reference.function());
 		}
 		return reference;
 	}
@@ -538,7 +568,9 @@ public class DynamicFunctionReference
 	 * the binding it works out is shared by everything asking about the same arguments.
 	 */
 	private CallSite callSite(Input input) {
-		return callSites.computeIfAbsent(input, CallSite::new);
+		// the cache only hands back null when the value could not be worked out, and a call site
+		// always can
+		return Objects.requireNonNull(callSites.get(input, CallSite::new));
 	}
 
 	/**
@@ -702,11 +734,39 @@ public class DynamicFunctionReference
 
 	/**
 	 * Used to resolve a function from its name.
+	 * <p>
+	 * A name resolved before is handed back the same reference rather than resolved again, since
+	 * this is evaluated once per execution wherever a function is looked up by name at runtime.
+	 * </p>
+	 *
 	 * @param name The function name
 	 * @param script Potentially, the script it is from, if one is known
 	 * @return A function reference, if one is available.
 	 */
 	public static @Nullable DynamicFunctionReference resolveFunction(String name, @Nullable Script script) {
+		// a name which resolves to nothing is not kept: calling a function which does not exist is
+		// not a case worth making fast, and the cache has nowhere to put an absence
+		return RESOLVED.get(new Key(name, script), key -> resolveUncached(key.name(), key.script()));
+	}
+
+	/**
+	 * A function name resolved against a particular script.
+	 *
+	 * @param name   The function name as it was written, which may name a particular overload.
+	 * @param script The script a local function was looked for in, or null for a global one.
+	 */
+	private record Key(String name, @Nullable Script script) {
+
+	}
+
+	/**
+	 * Resolves a function from its name, without consulting {@link #RESOLVED}.
+	 *
+	 * @param name The function name.
+	 * @param script Potentially, the script it is from, if one is known.
+	 * @return A function reference, if one is available.
+	 */
+	private static @Nullable DynamicFunctionReference resolveUncached(String name, @Nullable Script script) {
 		Class<?>[] parameterTypes = null;
 
 		Matcher matcher = SIGNATURE_PATTERN.matcher(name);
@@ -739,16 +799,11 @@ public class DynamicFunctionReference
 		private final Input input;
 
 		/**
-		 * The binding together with the registry generation it was resolved against, replaced as
-		 * one object so that a reader never sees a binding beside the wrong generation.
+		 * The binding, the spread memo belonging to it and the registry generation both were
+		 * resolved against, replaced as one object so that a reader never sees any of the three
+		 * beside the wrong generation.
 		 */
 		private volatile @Nullable Resolution resolution;
-
-		/**
-		 * What a spread of values of particular types bound to, so that executing this call site
-		 * again with the same shape of values searches neither the overloads nor the divisions.
-		 */
-		private final Map<List<Class<?>>, Spread> spreads = new ConcurrentHashMap<>();
 
 		private CallSite(Input input) {
 			this.input = input;
@@ -759,37 +814,11 @@ public class DynamicFunctionReference
 		}
 
 		/**
-		 * @param shape The types of the values being spread, in order.
-		 * @return The signature that shape bound to before, or null if it has not been seen.
-		 */
-		private @Nullable Spread spread(List<Class<?>> shape) {
-			return spreads.get(shape);
-		}
-
-		/**
-		 * @param shape      The types of the values which were spread, in order.
-		 * @param signature  The signature they bound to.
-		 * @param allocation How many of them each parameter took, or null if that is not known yet.
-		 * @param function   The function {@code signature} resolves to, or null if it could not be
-		 *                   resolved.
-		 */
-		private void rememberSpread(
-			List<Class<?>> shape, Signature<?> signature, int @Nullable [] allocation,
-			@Nullable org.skriptlang.skript.common.function.Function<?> function
-		) {
-			// the values of one call site rarely change shape, so a site which somehow reaches
-			// many of them is not worth remembering any of them for
-			if (spreads.size() > MAX_REMEMBERED_SPREADS) {
-				spreads.clear();
-			}
-			spreads.put(List.copyOf(shape), new Spread(signature, allocation, function));
-		}
-
-		/**
 		 * @return How the arguments bind to this function, working it out again if the registered
-		 * functions have changed since it was last worked out.
+		 * functions have changed since it was last worked out. The spread memo comes with it, so a
+		 * caller cannot read one beside a binding worked out against different overloads.
 		 */
-		private Binding binding() {
+		private Resolution resolution() {
 			// a reload replaces the functions this may have bound to, and may equally have added
 			// the overload a previously failed binding was looking for, so both outcomes are
 			// discarded
@@ -797,20 +826,27 @@ public class DynamicFunctionReference
 
 			Resolution resolution = this.resolution;
 			if (resolution != null && resolution.generation() == current) {
-				return resolution.binding();
+				return resolution;
 			}
 
-			// the overloads may have changed, so what a shape bound to before means nothing now
-			spreads.clear();
-
-			Binding binding = computeBinding(input);
-			this.resolution = new Resolution(binding, current);
-			return binding;
+			// a new resolution brings an empty spread memo with it, so whatever the shapes bound
+			// to under the previous overloads goes with it rather than having to be cleared
+			resolution = new Resolution(computeBinding(input), current);
+			this.resolution = resolution;
+			return resolution;
 		}
 
 		@Override
 		public Object @Nullable [] execute(Event event) {
-			return DynamicFunctionReference.this.call(event, this, binding());
+			return DynamicFunctionReference.this.call(event, this, resolution());
+		}
+
+		/**
+		 * @return How the arguments bind to this function, for a caller which does not need the
+		 * 	spread memo that goes with it.
+		 */
+		private Binding binding() {
+			return resolution().binding();
 		}
 
 		@Override
@@ -836,8 +872,48 @@ public class DynamicFunctionReference
 	 *
 	 * @param binding    How the arguments bound to this function.
 	 * @param generation The {@link FunctionRegistry#generation()} the binding was resolved against.
+	 * @param spreads    What a spread of values of particular types bound to, so that executing the
+	 *                   call site again with the same shape of values searches neither the overloads
+	 *                   nor the divisions. Part of the resolution rather than kept beside it: a
+	 *                   remembered shape is only meaningful for the overloads the binding was
+	 *                   worked out against, so the two are replaced together.
 	 */
-	private record Resolution(Binding binding, long generation) {
+	private record Resolution(
+		Binding binding, long generation, Map<List<Class<?>>, Spread> spreads
+	) {
+
+		private Resolution(Binding binding, long generation) {
+			this(binding, generation, new ConcurrentHashMap<>());
+		}
+
+		/**
+		 * @param shape The types of the values being spread, in order.
+		 * @return What that shape bound to before, or null if it has not been seen.
+		 */
+		private @Nullable Spread spread(List<Class<?>> shape) {
+			return spreads.get(shape);
+		}
+
+		/**
+		 * @param shape      The types of the values which were spread, in order.
+		 * @param signature  The signature they bound to.
+		 * @param allocation How many of them each parameter took, or null if that is not known yet.
+		 * @param function   The function {@code signature} resolves to, or null if it could not be
+		 *                   resolved.
+		 */
+		private void rememberSpread(
+			List<Class<?>> shape, Signature<?> signature, int @Nullable [] allocation,
+			@Nullable org.skriptlang.skript.common.function.Function<?> function
+		) {
+			// a call site which reaches more shapes than this keeps the ones it already holds,
+			// which are the ones it has seen most, rather than discarding all of them: a memo
+			// cleared whenever it fills up would stop paying off for a site that overfills it once.
+			// An update to a shape already remembered is always let through
+			if (spreads.size() >= MAX_REMEMBERED_SPREADS && !spreads.containsKey(shape)) {
+				return;
+			}
+			spreads.put(List.copyOf(shape), new Spread(signature, allocation, function));
+		}
 
 	}
 
@@ -850,7 +926,8 @@ public class DynamicFunctionReference
 	 * @param function   The function {@code signature} resolves to, kept so that re-binding to it
 	 *                   does not look it up in the registry again. Null if it could not be
 	 *                   resolved. Only valid while the registry generation which bound it holds,
-	 *                   which is what {@link CallSite#binding()} discarding the memo guarantees.
+	 *                   which is what {@link CallSite#resolution()} replacing the whole resolution
+	 *                   guarantees.
 	 */
 	private record Spread(
 		Signature<?> signature, int @Nullable [] allocation,
