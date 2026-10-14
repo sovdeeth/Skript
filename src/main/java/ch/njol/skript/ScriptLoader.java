@@ -953,9 +953,9 @@ public class ScriptLoader {
 			script.invalidate();
 			loadedScripts.remove(script); // We just unloaded it, so...
 			String name = normalizeScriptName(script.getConfig().getFileName());
-			if (name != null)
-				// Only remove our own entry; a reload may have already registered the new script
-				scriptsByName.remove(name, script);
+			assert name != null;
+			// only remove our own entry; a reload may have already registered the new script
+			scriptsByName.remove(name, script);
 			File scriptFile = script.getConfig().getFile();
 			assert scriptFile != null;
 			disabledScripts.add(new File(scriptFile.getParentFile(), DISABLED_SCRIPT_PREFIX + scriptFile.getName()));
