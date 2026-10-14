@@ -747,10 +747,11 @@ public class ScriptLoader {
 			disabledScripts.remove(disabledFile);
 
 			// Add to loaded files to use for future reloads
-			loadedScripts.add(script);
 			String name = normalizeScriptName(script.getConfig().getFileName());
-			if (name != null)
-				scriptsByName.put(name, script);
+			if (name == null)
+				throw new IllegalStateException("Script " + script + " has an illegal or null name!");
+			loadedScripts.add(script);
+			scriptsByName.put(name, script);
 
 			ScriptLoader.eventRegistry().events(ScriptInitEvent.class)
 					.forEach(event -> event.onInit(script));
