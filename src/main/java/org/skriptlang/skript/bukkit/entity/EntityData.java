@@ -10,6 +10,7 @@ import ch.njol.skript.lang.SyntaxElement;
 import ch.njol.skript.localization.Noun;
 import ch.njol.skript.variables.Variables;
 import ch.njol.util.Kleenean;
+import ch.njol.util.coll.CollectionUtils;
 import ch.njol.yggdrasil.FieldHandler;
 import ch.njol.yggdrasil.Fields;
 import ch.njol.yggdrasil.Fields.FieldContext;
@@ -25,6 +26,7 @@ import org.bukkit.World;
 import org.bukkit.entity.Ageable;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Player;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -211,6 +213,15 @@ public abstract class EntityData<E extends Entity>
 	@SuppressWarnings({"null", "unchecked"})
 	public static <E extends Entity> E[] getAll(EntityData<?>[] types, Class<E> type, World @Nullable [] worlds) {
 		assert types.length > 0;
+		if (type == Player.class) {
+			if (worlds == null)
+				return (E[]) Bukkit.getOnlinePlayers().toArray(new Player[0]);
+			List<Player> list = new ArrayList<>();
+			for (World world : worlds) {
+				list.addAll(world.getPlayers());
+			}
+			return (E[]) list.toArray(new Player[list.size()]);
+		}
 		List<E> list = new ArrayList<>();
 		if (worlds == null)
 			worlds = Bukkit.getWorlds().toArray(new World[0]);
@@ -238,6 +249,14 @@ public abstract class EntityData<E extends Entity>
 	@SuppressWarnings("unchecked")
 	public static <E extends Entity> E[] getAll(EntityData<?>[] types, Class<E> type, Chunk[] chunks) {
 		assert types.length > 0;
+		if (type == Player.class) {
+			List<Player> list = new ArrayList<>();
+			for (Player player : Bukkit.getOnlinePlayers()) {
+				if (CollectionUtils.contains(chunks, player.getChunk()))
+					list.add(player);
+			}
+			return (E[]) list.toArray(new Player[list.size()]);
+		}
 		List<E> list = new ArrayList<>();
 		for (Chunk chunk : chunks) {
 			for (Entity entity : chunk.getEntities()) {
@@ -710,6 +729,15 @@ public abstract class EntityData<E extends Entity>
 	public E[] getAll(World... worlds) {
 		assert worlds != null && worlds.length > 0 : Arrays.toString(worlds);
 		List<E> list = new ArrayList<>();
+		if (getType() == Player.class) {
+			for (World world : worlds) {
+				for (Player player : world.getPlayers()) {
+					if (match((E) player))
+						list.add((E) player);
+				}
+			}
+			return (E[]) list.toArray(new Player[list.size()]);
+		}
 		for (World world : worlds) {
 			for (E entity : world.getEntitiesByClass(getType())) {
 				if (match(entity))
