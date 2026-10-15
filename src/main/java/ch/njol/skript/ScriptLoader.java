@@ -1353,7 +1353,7 @@ public class ScriptLoader {
 	 * @return The script file, if one is found
 	 * @deprecated Use {@link #getScriptFileFromName(String)} instead.
 	 */
-	@Deprecated(since = "INSERT VERSION", forRemoval = true)
+	@Deprecated(since = "2.17.0", forRemoval = true)
 	public static @Nullable File getScriptFromName(String script) {
 		return getScriptFileFromName(script);
 	}
@@ -1404,7 +1404,7 @@ public class ScriptLoader {
 	 * @return The script file, if one is found
 	 * @deprecated Use {@link #getScriptFileFromName(String, File)} instead.
 	 */
-	@Deprecated(since = "INSERT VERSION", forRemoval = true)
+	@Deprecated(since = "2.17.0", forRemoval = true)
 	public static @Nullable File getScriptFromName(String script, File directory) {
 		return getScriptFileFromName(script, directory);
 	}
