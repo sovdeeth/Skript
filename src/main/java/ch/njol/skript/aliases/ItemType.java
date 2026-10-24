@@ -50,6 +50,9 @@ import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static ch.njol.skript.localization.Language.F_DEFINITE_ARTICLE;
+import static ch.njol.skript.localization.Language.F_INDEFINITE_ARTICLE;
+
 @ContainerType(ItemStack.class)
 public class ItemType implements Unit, Iterable<ItemData>, Container<ItemStack>, YggdrasilExtendedSerializable,
 	AnyNamed, AnyAmount {
@@ -1174,63 +1177,27 @@ public class ItemType implements Unit, Iterable<ItemData>, Container<ItemStack>,
 
 	private String toString(final boolean debug, final int flags, final @Nullable Adjective a) {
 		final StringBuilder b = new StringBuilder();
-//		if (types.size() == 1 && !types.get(0).hasDataRange()) {
-//			if (getAmount() != 1)
-//				b.append(amount + " ");
-//			if (isAll())
-//				b.append(getAmount() == 1 ? "every " : "of every ");
-//		} else {
-//			if (getAmount() != 1)
-//				b.append(amount + " of ");
-//			b.append(isAll() ? "every " : "any ");
-//		}
 		final boolean plural = amount != 1 && amount != -1 || (flags & Language.F_PLURAL) != 0;
+		final boolean article = (amount == 1 || amount == -1) && (flags & (F_DEFINITE_ARTICLE | F_INDEFINITE_ARTICLE)) != 0;
+		// the gender needs an alias lookup and is only used by articles and adjectives
+		final int gender = article || a != null ? types.getFirst().getGender() : 0;
 		if (amount != -1 && amount != 1) {
-			b.append(amount + " ");
-		} else {
-			b.append(Noun.getArticleWithSpace(types.get(0).getGender(), flags));
+			b.append(amount).append(' ');
+		} else if (article || a != null) {
+			b.append(Noun.getArticleWithSpace(gender, flags));
 		}
 		if (a != null)
-			b.append(a.toString(types.get(0).getGender(), flags));
+			b.append(a.toString(gender, flags));
 		for (int i = 0; i < types.size(); i++) {
 			if (i != 0) {// this belongs here as size-1 can be 0
 				if (i == types.size() - 1)
-					b.append(" " + (isAll() ? GeneralWords.and : GeneralWords.or) + " ");
+					b.append(" ").append(isAll() ? GeneralWords.and : GeneralWords.or).append(" ");
 				else
 					b.append(", ");
 			}
 			b.append(types.get(i).toString(debug, plural));
 		}
-//		final Map<Enchantment, Integer> enchs = enchantments;
-//		if (enchs == null)
-//			return "" + b.toString();
-//		b.append(Language.getSpaced("enchantments.of"));
-//		int i = 0;
-//		for (final Entry<Enchantment, Integer> e : enchs.entrySet()) {
-//			if (i != 0) {
-//				if (i != enchs.size() - 1)
-//					b.append(", ");
-//				else
-//					b.append(" " + GeneralWords.and + " ");
-//			}
-//			final Enchantment ench = e.getKey();
-//			if (ench == null)
-//				continue;
-//			b.append(EnchantmentType.toString(ench));
-//			b.append(" ");
-//			b.append(e.getValue());
-//			i++;
-//		}
-//		if (meta != null) {
-//			final ItemMeta m = (ItemMeta) meta;
-//			if (m.hasDisplayName()) {
-//				b.append(" " + m_named.toString() + " ");
-//				b.append("\"" + m.getDisplayName() + "\"");
-//			}
-//			if (debug)
-//				b.append(" meta=[").append(meta).append("]");
-//		}
-		return "" + b.toString();
+		return b.toString();
 	}
 
 	public static String toString(final ItemStack i) {
