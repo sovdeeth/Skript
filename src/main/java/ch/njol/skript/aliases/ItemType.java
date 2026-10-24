@@ -23,6 +23,8 @@ import ch.njol.yggdrasil.Fields;
 import ch.njol.yggdrasil.Fields.FieldContext;
 import ch.njol.yggdrasil.YggdrasilSerializable.YggdrasilExtendedSerializable;
 import com.google.common.collect.Iterators;
+import io.papermc.paper.datacomponent.DataComponentTypes;
+import io.papermc.paper.datacomponent.item.ItemEnchantments;
 import net.kyori.adventure.text.Component;
 import org.bukkit.*;
 import org.bukkit.block.Block;
@@ -1265,18 +1267,17 @@ public class ItemType implements Unit, Iterable<ItemData>, Container<ItemStack>,
 	/**
 	 * Gets all enchantments of this item.
 	 * @return Enchantments.
-	 * @deprecated Use {@link ItemType#getEnchantmentTypes()} instead.
 	 */
-	@Deprecated(since = "2.3.0", forRemoval = true)
-	@Nullable
-	public Map<Enchantment,Integer> getEnchantments() {
-		if (globalMeta == null)
-			return null;
-		assert globalMeta != null;
-		Map<Enchantment,Integer> enchants = globalMeta.getEnchants();
-		if (enchants.isEmpty())
-			return null;
-		return enchants;
+	private Map<Enchantment, Integer> getEnchantments() {
+		if (globalMeta != null)
+			return globalMeta.getEnchants();
+		ItemStack stack = types.getFirst().stack;
+		if (stack == null)
+			return Map.of();
+		ItemEnchantments enchants = stack.getData(DataComponentTypes.ENCHANTMENTS);
+		if (enchants == null)
+			return Map.of();
+		return enchants.enchantments();
 	}
 
 	/**
@@ -1300,7 +1301,7 @@ public class ItemType implements Unit, Iterable<ItemData>, Container<ItemStack>,
 	 */
 	@Nullable
 	public EnchantmentType[] getEnchantmentTypes() {
-		Set<Entry<Enchantment, Integer>> enchants = getItemMeta().getEnchants().entrySet();
+		Set<Entry<Enchantment, Integer>> enchants = getEnchantments().entrySet();
 
 		return enchants.stream()
 			.map(enchant -> new EnchantmentType(enchant.getKey(), enchant.getValue()))
