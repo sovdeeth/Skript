@@ -643,8 +643,8 @@ public abstract class Classes {
 	 * found, it will return null.
 	 */
 	public static ClassInfo<?> getToStringClassInfo(Object obj) {
-		if (obj instanceof Class)
-			return getToStringClassInfo(obj);
+		if (obj instanceof Class<?> clazz)
+			return getToStringClassInfo(clazz);
 		return getToStringClassInfo(obj.getClass());
 	}
 
