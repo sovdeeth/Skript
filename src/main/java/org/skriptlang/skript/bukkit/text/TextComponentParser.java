@@ -30,13 +30,8 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -53,14 +48,14 @@ import java.util.regex.Pattern;
  */
 public final class TextComponentParser {
 
-	private record SkriptTag(Tag tag, @Nullable String parent, boolean reset) { }
+	private record SkriptTag(Tag tag, @Nullable String parent, boolean reset, Tag resetTag) {
+	}
 
 	private record SkriptTagResolver(TagResolver resolver, @Nullable String parent) {
 
 		@Override
-		@SuppressWarnings("EqualsDoesntCheckParameterClass") // resolver impl will do this
 		public boolean equals(Object obj) {
-			return resolver.equals(obj);
+			return obj instanceof SkriptTagResolver other && resolver.equals(other.resolver);
 		}
 
 		@Override
@@ -226,6 +221,7 @@ public final class TextComponentParser {
 
 	private LinkParseMode linkParseMode = LinkParseMode.DISABLED;
 	private boolean colorsCauseReset = false;
+	private final Map<String, Tag> resetColorTags = new ConcurrentHashMap<>();
 
 	private TagResolver createSkriptTagResolver(boolean isSafeMode) {
 		return new TagResolver() {
@@ -234,14 +230,14 @@ public final class TextComponentParser {
 				SkriptTag simple = simplePlaceholders.get(name);
 				if (simple != null && isSafe(name, simple.parent)) {
 					if (colorsCauseReset && simple.reset) {
-						return disableUnsetStyling(simple.tag);
+						return simple.resetTag;
 					}
 					return simple.tag;
 				}
 
 				// attempt our custom resolvers
 				for (SkriptTagResolver skriptResolver : resolvers) {
-					if (!isSafe(name, skriptResolver.parent) || !skriptResolver.resolver.has(name)) {
+					if (!skriptResolver.resolver.has(name) || !isSafe(name, skriptResolver.parent)) {
 						continue;
 					}
 					return skriptResolver.resolver.resolve(name, arguments, ctx);
@@ -249,9 +245,19 @@ public final class TextComponentParser {
 
 				// only process resets for standard color tags
 				if (colorsCauseReset && StandardTags.color().has(name)) {
+					// if it's a fixed <#rrggbb> or <red> tag we can cache the combined reset tag instead of recomputing
+					boolean cacheable = !arguments.hasNext();
+					if (cacheable) {
+						Tag cached = resetColorTags.get(name);
+						if (cached != null)
+							return cached;
+					}
 					Tag colorTag = StandardTags.color().resolve(name, arguments, ctx);
 					if (colorTag != null) {
-						return disableUnsetStyling(colorTag);
+						colorTag = disableUnsetStyling(colorTag);
+						if (cacheable && resetColorTags.size() < 512)
+							resetColorTags.put(name, colorTag);
+						return colorTag;
 					}
 				}
 
@@ -268,7 +274,7 @@ public final class TextComponentParser {
 
 				// check our custom resolvers
 				for (SkriptTagResolver skriptResolver : resolvers) {
-					if (isSafe(name, skriptResolver.parent) && skriptResolver.resolver.has(name)) {
+					if (skriptResolver.resolver.has(name) && isSafe(name, skriptResolver.parent)) {
 						return true;
 					}
 				}
@@ -307,9 +313,19 @@ public final class TextComponentParser {
 				return null;
 			}
 
+			private final Map<String, Boolean> known = new ConcurrentHashMap<>();
+
 			@Override
 			public boolean has(@NotNull String name) {
-				return resolvers.stream().anyMatch(resolver -> resolver.has(name)) || CollectionUtils.contains(safeTags, name);
+				Boolean cached = known.get(name);
+				if (cached != null)
+					return cached;
+				boolean result = CollectionUtils.contains(safeTags, name);
+				for (int i = 0; !result && i < resolvers.size(); i++)
+					result = resolvers.get(i).has(name);
+				if (known.size() < 512)
+					known.put(name, result);
+				return result;
 			}
 		};
 	}
@@ -359,7 +375,7 @@ public final class TextComponentParser {
 	}
 
 	private void registerPlaceholder(String name, Tag result, @Nullable String parent, boolean reset) {
-		simplePlaceholders.put(name, new SkriptTag(result, parent, reset));
+		simplePlaceholders.put(name, new SkriptTag(result, parent, reset, reset ? disableUnsetStyling(result) : result));
 	}
 
 	/**
@@ -481,28 +497,30 @@ public final class TextComponentParser {
 	 */
 	public String reformatText(String text) {
 		// TODO improve...
-		// replace spaces with underscores for simple tags
-		text = MULTI_WORD_COLOR_PATTERN.matcher(text).replaceAll(result -> {
-			if (result.group(1).length() % 2 == 1) { // tag is escaped
+		if (text.indexOf('<') != -1) {
+			// replace spaces with underscores for simple tags
+			text = MULTI_WORD_COLOR_PATTERN.matcher(text).replaceAll(result -> {
+				if (result.group(1).length() % 2 == 1) { // tag is escaped
+					return Matcher.quoteReplacement(result.group());
+				}
+				String mappedTag = result.group(2).replace(" ", "_");
+				if (simplePlaceholders.containsKey(mappedTag) || StandardTags.color().has(mappedTag)) { // only replace if it makes a valid tag
+					return Matcher.quoteReplacement(result.group(1) + "<" + mappedTag + ">");
+				}
 				return Matcher.quoteReplacement(result.group());
-			}
-			String mappedTag = result.group(2).replace(" ", "_");
-			if (simplePlaceholders.containsKey(mappedTag) || StandardTags.color().has(mappedTag)) { // only replace if it makes a valid tag
-				return Matcher.quoteReplacement(result.group(1) + "<" + mappedTag + ">");
-			}
-			return Matcher.quoteReplacement(result.group());
-		});
+			});
 
-		text = LEGACY_DOUBLE_HASHTAG_PATTERN.matcher(text).replaceAll(result -> {
-			if (result.group(1).length() % 2 == 1) { // tag is escaped
+			text = LEGACY_DOUBLE_HASHTAG_PATTERN.matcher(text).replaceAll(result -> {
+				if (result.group(1).length() % 2 == 1) { // tag is escaped
+					return Matcher.quoteReplacement(result.group());
+				}
+				String mappedTag = result.group(2).substring(1);
+				if (StandardTags.color().has(mappedTag)) {
+					return Matcher.quoteReplacement("<" + mappedTag + ">");
+				}
 				return Matcher.quoteReplacement(result.group());
-			}
-			String mappedTag = result.group(2).substring(1);
-			if (StandardTags.color().has(mappedTag)) {
-				return Matcher.quoteReplacement("<" + mappedTag + ">");
-			}
-			return Matcher.quoteReplacement(result.group());
-		});
+			});
+		}
 
 		// legacy compatibility, transform color codes into tags
 		text = TextComponentUtils.replaceLegacyFormattingCodes(text);

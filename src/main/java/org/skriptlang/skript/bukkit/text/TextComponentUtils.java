@@ -52,11 +52,13 @@ public final class TextComponentUtils {
 	 */
 	public static Component joinByNewLine(Component... components) {
 		// we want formatting from the first to apply to the next, so append this way
-		Component combined = components[0];
+		List<Component> children = new ArrayList<>(components[0].children());
 		for (int i = 1; i < components.length; i++) {
-			combined = combined.appendNewline().append(components[i]);
+			// we collect children in our own list since append() has to copy the children list every time
+			children.add(Component.newline());
+			children.add(components[i]);
 		}
-		return combined.compact();
+		return components[0].children(children).compact();
 	}
 
 	public static Component appendToEnd(Component base, Component appendee) {
