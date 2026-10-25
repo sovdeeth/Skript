@@ -128,23 +128,27 @@ public final class TextComponentParser {
 	private static final TextComponentParser INSTANCE;
 
 	/**
-	 * A pattern for matching multi-word color tags.
-	 * It also matches all preceding backslashes to determine whether the supposed tag is escaped.
-	 * For example, {@code <dark red>}.
+	 * A pattern for matching the tags {@link #reformatText(String)} handles:
+	 * Double hashtag hex color tags ({@code <##123456>}) and multi-word color tags ({@code <dark red>}).
+	 * This does double-up with {@link #LEGACY_DOUBLE_HASHTAG_PATTERN} but it's included so that there's only one replace
+	 * pass over the string during reformatting, rather than 2.
+	 * The tag's contents are in group 1.
+	 * This should be used with {@link TextComponentUtils#replaceEscapeAware} to determine whether the match is escaped.
 	 */
-	private static final Pattern MULTI_WORD_COLOR_PATTERN = Pattern.compile("(\\\\*)<([a-zA-Z]+ [a-zA-Z]+)>");
+	private static final Pattern REWRITTEN_TAG_PATTERN = Pattern.compile("<(##[a-fA-F0-9]{6}|[a-zA-Z]+ [a-zA-Z]+)>");
 
 	/**
 	 * A pattern for matching double hashtag hex color tags ({@code <##123456>}).
-	 * It also matches all preceding backslashes to determine whether the supposed tag is escaped.
+	 * The tag's contents are in group 1.
+	 * This should be used with {@link TextComponentUtils#replaceEscapeAware} to determine whether the match is escaped.
 	 */
-	private static final Pattern LEGACY_DOUBLE_HASHTAG_PATTERN = Pattern.compile("(\\\\*)<(##[a-fA-F0-9]{6})>");
+	private static final Pattern LEGACY_DOUBLE_HASHTAG_PATTERN = Pattern.compile("<(##[a-fA-F0-9]{6})>");
 
 	/**
-	 * A pattern for matching legacy hex codes ({@code &x&1&2&3&4&5&6}).
-	 * It also matches all preceding backslashes to determine whether the supposed tag is escaped.
+	 * A pattern for matching standard legacy codes ({@code &1}).
+	 * This should be used with {@link TextComponentUtils#replaceEscapeAware} to determine whether the match is escaped.
 	 */
-	static final Pattern LEGACY_CODE_PATTERN = Pattern.compile("(\\\\*)([&§][a-fA-F0-9kKlLoOmMnNrR])");
+	static final Pattern LEGACY_CODE_PATTERN = Pattern.compile("[&§][a-fA-F0-9kKlLoOmMnNrR]");
 
 	static {
 		INSTANCE = new TextComponentParser();
@@ -498,27 +502,26 @@ public final class TextComponentParser {
 	public String reformatText(String text) {
 		// TODO improve...
 		if (text.indexOf('<') != -1) {
-			// replace spaces with underscores for simple tags
-			text = MULTI_WORD_COLOR_PATTERN.matcher(text).replaceAll(result -> {
-				if (result.group(1).length() % 2 == 1) { // tag is escaped
-					return Matcher.quoteReplacement(result.group());
+			text = TextComponentUtils.replaceEscapeAware(text, REWRITTEN_TAG_PATTERN, (result, backslashes) -> {
+				String unchanged = "\\".repeat(backslashes) + result.group();
+				if (backslashes % 2 == 1) { // tag is escaped
+					return unchanged;
 				}
-				String mappedTag = result.group(2).replace(" ", "_");
+				String tag = result.group(1);
+				if (tag.startsWith("##")) {
+					// strip the extra hashtag
+					String mappedTag = tag.substring(1);
+					if (StandardTags.color().has(mappedTag)) {
+						return "<" + mappedTag + ">";
+					}
+					return unchanged;
+				}
+				// replace spaces with underscores for simple tags
+				String mappedTag = tag.replace(' ', '_');
 				if (simplePlaceholders.containsKey(mappedTag) || StandardTags.color().has(mappedTag)) { // only replace if it makes a valid tag
-					return Matcher.quoteReplacement(result.group(1) + "<" + mappedTag + ">");
+					return "\\".repeat(backslashes) + "<" + mappedTag + ">";
 				}
-				return Matcher.quoteReplacement(result.group());
-			});
-
-			text = LEGACY_DOUBLE_HASHTAG_PATTERN.matcher(text).replaceAll(result -> {
-				if (result.group(1).length() % 2 == 1) { // tag is escaped
-					return Matcher.quoteReplacement(result.group());
-				}
-				String mappedTag = result.group(2).substring(1);
-				if (StandardTags.color().has(mappedTag)) {
-					return Matcher.quoteReplacement("<" + mappedTag + ">");
-				}
-				return Matcher.quoteReplacement(result.group());
+				return unchanged;
 			});
 		}
 
@@ -537,24 +540,25 @@ public final class TextComponentParser {
 	public String escape(String string) {
 		// legacy compatibility, escape color codes
 		if (string.contains("&") || string.contains("§")) {
-			string = LEGACY_CODE_PATTERN.matcher(string).replaceAll(result -> {
+			string = TextComponentUtils.replaceEscapeAware(string, LEGACY_CODE_PATTERN, (result, backslashes) -> {
 				// Even if escaped, MiniMessage will throw an exception for legacy section codes
-				String group = result.group().replace('§', '&');
-				if (result.group(1).length() % 2 == 1) { // tag is already escaped
-					return Matcher.quoteReplacement(group);
+				String code = "\\".repeat(backslashes) + result.group().replace('§', '&');
+				if (backslashes % 2 == 1) { // tag is already escaped
+					return code;
 				}
-				return Matcher.quoteReplacement('\\' + group);
+				return '\\' + code;
 			});
 		}
-		string = LEGACY_DOUBLE_HASHTAG_PATTERN.matcher(string).replaceAll(result -> {
-			if (result.group(1).length() % 2 == 1) { // tag is escaped
-				return Matcher.quoteReplacement(result.group());
+		string = TextComponentUtils.replaceEscapeAware(string, LEGACY_DOUBLE_HASHTAG_PATTERN, (result, backslashes) -> {
+			String unchanged = "\\".repeat(backslashes) + result.group();
+			if (backslashes % 2 == 1) { // tag is escaped
+				return unchanged;
 			}
-			String mappedTag = result.group(2).substring(1);
+			String mappedTag = result.group(1).substring(1);
 			if (StandardTags.color().has(mappedTag)) {
-				return Matcher.quoteReplacement("\\<#" + mappedTag) + ">";
+				return "\\<#" + mappedTag + ">";
 			}
-			return Matcher.quoteReplacement(result.group());
+			return unchanged;
 		});
 		return parser.escapeTags(string);
 	}
