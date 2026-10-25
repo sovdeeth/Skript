@@ -24,6 +24,7 @@ import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -32,6 +33,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -221,6 +223,8 @@ public final class TextComponentParser {
 	private TagResolver safeTagResolver = TagResolver.empty();
 
 	private final Map<String, SkriptTag> simplePlaceholders = new HashMap<>();
+	// resolvers with fixed tag names can be cached by name to avoid looping (last registered wins tho)
+	private final Map<String, SkriptTagResolver> namedResolvers = new HashMap<>();
 	private final Set<SkriptTagResolver> resolvers = new HashSet<>();
 
 	private LinkParseMode linkParseMode = LinkParseMode.DISABLED;
@@ -237,6 +241,12 @@ public final class TextComponentParser {
 						return simple.resetTag;
 					}
 					return simple.tag;
+				}
+
+				// check for cached custom resolvers
+				SkriptTagResolver named = namedResolvers.get(name);
+				if (named != null && isSafe(name, named.parent)) {
+					return named.resolver.resolve(name, arguments, ctx);
 				}
 
 				// attempt our custom resolvers
@@ -274,6 +284,12 @@ public final class TextComponentParser {
 				SkriptTag simple = simplePlaceholders.get(name);
 				if (simple != null) {
 					return isSafe(name, simple.parent);
+				}
+
+				// check for cached custom resolvers
+				SkriptTagResolver named = namedResolvers.get(name);
+				if (named != null && isSafe(name, named.parent)) {
+					return true;
 				}
 
 				// check our custom resolvers
@@ -392,6 +408,9 @@ public final class TextComponentParser {
 
 	/**
 	 * Registers a TagResolver with Skript's unsafe message parser.
+	 * <br>
+	 * If this resolver conflicts in tag names with an existing resolver, the winning resolver is undefined and based on
+	 * hashset ordering.
 	 * @param resolver The TagResolver to register.
 	 */
 	public void registerResolver(TagResolver resolver) {
@@ -400,6 +419,9 @@ public final class TextComponentParser {
 
 	/**
 	 * Registers a TagResolver with Skript's safe and unsafe message parsers.
+	 * <br>
+	 * If this resolver conflicts in tag names with an existing resolver, the winning resolver is undefined and based on
+	 * hashset ordering.
 	 * @param resolver The TagResolver to register.
 	 * @param parent If this tag acts as an alias or subset of another tag, the name of that tag.
 	 *  This is used for associating tags permitted for the safe parser.
@@ -409,12 +431,55 @@ public final class TextComponentParser {
 	}
 
 	/**
+	 * Registers a resolver for a fixed set of tag names with Skript's unsafe message parser.
+	 * Prefer this over {@link #registerResolver(TagResolver)} when the names are known up front,
+	 * as tags are looked up by name rather than by querying every registered resolver.
+	 * <br>
+	 * If a name conflicts with an existing resolver, this will override that association, so whoever registers
+	 * last wins. This is not encouraged behavior, but it does allow a user to change the behavior of an existing tag.
+	 *
+	 * @param names   The names of the tags to resolve.
+	 * @param handler Creates the tag from its arguments. See {@link TagResolver#resolver(Set, BiFunction)}.
+	 * @return The created resolver, which can be passed to {@link #unregisterResolver(TagResolver)}.
+	 */
+	@SuppressWarnings("UnusedReturnValue")
+	public @NonNull TagResolver registerResolver(Set<String> names, BiFunction<ArgumentQueue, Context, Tag> handler) {
+		return registerResolver(names, handler, null);
+	}
+
+	/**
+	 * Registers a resolver for a fixed set of tag names with Skript's safe and unsafe message parsers.
+	 * Prefer this over {@link #registerResolver(TagResolver, String)} when the names are known up front,
+	 * as tags are looked up by name rather than by querying every registered resolver.
+	 * <br>
+	 * If a name conflicts with an existing resolver, this will override that association, so whoever registers
+	 * last wins. This is not encouraged behavior, but it does allow a user to change the behavior of an existing tag.
+	 *
+	 * @param names   The names of the tags to resolve.
+	 * @param handler Creates the tag from its arguments. See {@link TagResolver#resolver(Set, BiFunction)}.
+	 * @param parent  If this tag acts as an alias or subset of another tag, the name of that tag.
+	 *                This is used for associating tags permitted for the safe parser.
+	 * @return The created resolver, which can be passed to {@link #unregisterResolver(TagResolver)}.
+	 */
+	public @NonNull TagResolver registerResolver(Set<String> names, BiFunction<ArgumentQueue, Context, Tag> handler, @Nullable String parent) {
+		// copy so that the resolver's names cannot change after it is indexed
+		names = Set.copyOf(names);
+		TagResolver resolver = TagResolver.resolver(names, handler);
+		SkriptTagResolver skriptResolver = new SkriptTagResolver(resolver, parent);
+		for (String name : names) {
+			namedResolvers.put(name, skriptResolver);
+		}
+		return resolver;
+	}
+
+	/**
 	 * Unregisters a TagResolver from Skript's message parsers.
 	 * @param resolver The TagResolver to unregister.
 	 */
 	public void unregisterResolver(TagResolver resolver) {
 		// safe parameter is irrelevant as only resolver is considered in equality
 		resolvers.remove(new SkriptTagResolver(resolver, null));
+		namedResolvers.values().removeIf(named -> named.resolver.equals(resolver));
 	}
 
 	/**
@@ -670,22 +735,22 @@ public final class TextComponentParser {
 
 		registerPlaceholder("r", ParserDirective.RESET, "reset");
 
-		registerResolver(TagResolver.resolver(Set.of("open_url", "link", "url"), (argumentQueue, context) -> {
+		registerResolver(Set.of("open_url", "link", "url"), (argumentQueue, context) -> {
 			String url = argumentQueue.popOr("A link tag must have an argument of the url").value();
 			return Tag.styling(ClickEvent.openUrl(url));
-		}), "click");
+		}, "click");
 
-		registerResolver(TagResolver.resolver(Set.of("run_command", "command", "cmd"), (argumentQueue, context) -> {
+		registerResolver(Set.of("run_command", "command", "cmd"), (argumentQueue, context) -> {
 			String command = argumentQueue.popOr("A run command tag must have an argument of the command to execute").value();
 			return Tag.styling(ClickEvent.runCommand(command));
-		}), "click");
+		}, "click");
 
-		registerResolver(TagResolver.resolver(Set.of("suggest_command", "sgt"), (argumentQueue, context) -> {
+		registerResolver(Set.of("suggest_command", "sgt"), (argumentQueue, context) -> {
 			String command = argumentQueue.popOr("A suggest command tag must have an argument of the command to suggest").value();
 			return Tag.styling(ClickEvent.suggestCommand(command));
-		}), "click");
+		}, "click");
 
-		registerResolver(TagResolver.resolver(Set.of("change_page"), (argumentQueue, context) -> {
+		registerResolver(Set.of("change_page"), (argumentQueue, context) -> {
 			String rawPage = argumentQueue.popOr("A change page tag must have an argument of the page number").value();
 			int page;
 			try {
@@ -694,40 +759,40 @@ public final class TextComponentParser {
 				throw context.newException(e.getMessage(), argumentQueue);
 			}
 			return Tag.styling(ClickEvent.changePage(page));
-		}), "click");
+		}, "click");
 
-		registerResolver(TagResolver.resolver(Set.of("copy_to_clipboard", "copy", "clipboard"), (argumentQueue, context) -> {
+		registerResolver(Set.of("copy_to_clipboard", "copy", "clipboard"), (argumentQueue, context) -> {
 			String string = argumentQueue.popOr("A copy to clipboard tag must have an argument of the string to copy").value();
 			return Tag.styling(ClickEvent.copyToClipboard(string));
-		}), "click");
+		}, "click");
 
-		registerResolver(TagResolver.resolver(Set.of("show_text", "tooltip", "ttp"), (argumentQueue, context) -> {
+		registerResolver(Set.of("show_text", "tooltip", "ttp"), (argumentQueue, context) -> {
 			String tooltip = argumentQueue.popOr("A tooltip tag must have an argument of the message to show").value();
 			return Tag.styling(HoverEvent.showText(context.deserialize(tooltip)));
-		}), "hover");
+		}, "hover");
 
-		registerResolver(TagResolver.resolver(Set.of("f"),
-			(argumentQueue, context) -> StandardTags.font().resolve("font", argumentQueue, context)),
+		registerResolver(Set.of("f"),
+			(argumentQueue, context) -> StandardTags.font().resolve("font", argumentQueue, context),
 			"font");
 
-		registerResolver(TagResolver.resolver(Set.of("insertion", "ins"),
-			(argumentQueue, context) -> StandardTags.insertion().resolve("insert", argumentQueue, context)),
+		registerResolver(Set.of("insertion", "ins"),
+			(argumentQueue, context) -> StandardTags.insertion().resolve("insert", argumentQueue, context),
 			"insert");
 
-		registerResolver(TagResolver.resolver(Set.of("keybind"),
-			(argumentQueue, context) -> StandardTags.keybind().resolve("key", argumentQueue, context)),
+		registerResolver(Set.of("keybind"),
+			(argumentQueue, context) -> StandardTags.keybind().resolve("key", argumentQueue, context),
 			"key");
 
 		final Pattern unicodePattern = Pattern.compile("[0-9a-f]{4,}");
 		// note: "u" is already reserved by MiniMessage for underline, we override it
-		registerResolver(TagResolver.resolver(Set.of("unicode", "u"), (argumentQueue, context) -> {
+		registerResolver(Set.of("unicode", "u"), (argumentQueue, context) -> {
 			String argument = argumentQueue.popOr("A unicode tag must have an argument of the unicode").value();
 			Matcher matcher = unicodePattern.matcher(argument.toLowerCase(Locale.ENGLISH));
 			if (!matcher.matches())
 				throw context.newException("Invalid unicode tag");
 			String unicode = Character.toString(Integer.parseInt(matcher.group(), 16));
 			return Tag.selfClosingInserting(Component.text(unicode));
-		}));
+		});
 	}
 
 }
