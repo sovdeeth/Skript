@@ -650,7 +650,7 @@ public final class TextComponentParser {
 
 	private String stripFormatting(String string, boolean onlySafe) {
 		// TODO this is expensive...
-		while (true) {
+		while (mayContainFormatting(string)) {
 			String stripped = (onlySafe ? safeParser : parser).stripTags(reformatText(string));
 			if (string.equals(stripped)) { // nothing more to strip
 				break;
@@ -658,6 +658,16 @@ public final class TextComponentParser {
 			string = stripped;
 		}
 		return string;
+	}
+
+	/**
+	 * helper for {@link #stripFormatting(String, boolean)}
+	 *
+	 * @param string string to check
+	 * @return whether there are any chars that could be formatting present
+	 */
+	private static boolean mayContainFormatting(String string) {
+		return string.indexOf('<') != -1 || string.indexOf('&') != -1 || string.indexOf('§') != -1;
 	}
 
 	/**
