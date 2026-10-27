@@ -24,6 +24,12 @@ public class ScriptFunction<T> extends Function<T> implements ReturnHandler<T> {
 		boolean set;
 		T @Nullable [] values;
 		String @Nullable [] keys;
+
+		void reset() {
+			set = false;
+			values = null;
+			keys = null;
+		}
 	}
 
 	private final ThreadLocal<ReturnState<T>> returnState = ThreadLocal.withInitial(ReturnState::new);
@@ -141,10 +147,7 @@ public class ScriptFunction<T> extends Function<T> implements ReturnHandler<T> {
 
 	@Override
 	public boolean resetReturnValue() {
-		ReturnState<T> state = returnState.get();
-		state.set = false;
-		state.values = null;
-		state.keys = null;
+		returnState.get().reset();
 		return true;
 	}
 
