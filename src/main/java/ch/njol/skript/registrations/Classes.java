@@ -642,24 +642,9 @@ public abstract class Classes {
 	 * @return The {@link ClassInfo} that will be used. It will have a valid {@link Parser}. If no suitable info is
 	 * found, it will return null.
 	 */
-	public static ClassInfo<?> getToStringClassInfo(Object obj) {
-		if (obj instanceof Class<?> clazz)
-			return getToStringClassInfo(clazz);
-		return getToStringClassInfo(obj.getClass());
-	}
-
-	/**
-	 * Gets the classinfo that will be used to stringify this class.
-	 * Array types are not supported and will return null.
-	 * <br>
-	 * Do not call this method during registration.
-	 *
-	 * @param type The class of the obj that will be stringified.
-	 * @return The {@link ClassInfo} that will be used. It will have a valid {@link Parser}. If no suitable info is
-	 * found, it will return null.
-	 */
-	public static @Nullable ClassInfo<?> getToStringClassInfo(Class<?> type) {
+	public static @Nullable ClassInfo<?> getToStringClassInfo(Object obj) {
 		checkAllowClassInfoInteraction();
+		Class<?> type = obj.getClass();
 		if (type.isArray())
 			return null;
 		// double check classInfos is ready, to avoid caching bad data
