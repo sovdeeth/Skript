@@ -223,7 +223,7 @@ public final class TextComponentParser {
 	private TagResolver safeTagResolver = TagResolver.empty();
 
 	private final Map<String, SkriptTag> simplePlaceholders = new HashMap<>();
-	// resolvers with fixed tag names can be cached by name to avoid looping (last registered wins tho)
+	// resolvers with fixed tag names can be cached by name to avoid looping (last registered wins though)
 	private final Map<String, SkriptTagResolver> namedResolvers = new HashMap<>();
 	private final Set<SkriptTagResolver> resolvers = new HashSet<>();
 
@@ -661,7 +661,7 @@ public final class TextComponentParser {
 	}
 
 	/**
-	 * helper for {@link #stripFormatting(String, boolean)}
+	 * Helper for {@link #stripFormatting(String, boolean)}
 	 *
 	 * @param string string to check
 	 * @return whether there are any chars that could be formatting present
