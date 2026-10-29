@@ -24,7 +24,6 @@ import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jspecify.annotations.NonNull;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -50,7 +49,7 @@ import java.util.regex.Pattern;
  */
 public final class TextComponentParser {
 
-	private record SkriptTag(Tag tag, @Nullable String parent, boolean reset, Tag resetTag) {
+	private record SkriptTag(Tag tag, @Nullable String parent, @Nullable Tag resetTag) {
 	}
 
 	private record SkriptTagResolver(TagResolver resolver, @Nullable String parent) {
@@ -65,6 +64,9 @@ public final class TextComponentParser {
 			return resolver.hashCode();
 		}
 
+	}
+
+	private record NamedRegistration(Set<String> names, SkriptTagResolver resolver) {
 	}
 
 	/**
@@ -223,8 +225,10 @@ public final class TextComponentParser {
 	private TagResolver safeTagResolver = TagResolver.empty();
 
 	private final Map<String, SkriptTag> simplePlaceholders = new HashMap<>();
-	// resolvers with fixed tag names can be cached by name to avoid looping (last registered wins tho)
+	// resolvers with fixed tag names can be cached by name to avoid looping (last registered wins though)
 	private final Map<String, SkriptTagResolver> namedResolvers = new HashMap<>();
+	// every named registration in order, so an overridden name can fall back when the override is unregistered
+	private final List<NamedRegistration> namedRegistrations = new ArrayList<>();
 	private final Set<SkriptTagResolver> resolvers = new HashSet<>();
 
 	private LinkParseMode linkParseMode = LinkParseMode.DISABLED;
@@ -237,7 +241,7 @@ public final class TextComponentParser {
 			public @Nullable Tag resolve(@NotNull String name, @NotNull ArgumentQueue arguments, @NotNull Context ctx) throws ParsingException {
 				SkriptTag simple = simplePlaceholders.get(name);
 				if (simple != null && isSafe(name, simple.parent)) {
-					if (colorsCauseReset && simple.reset) {
+					if (colorsCauseReset && simple.resetTag != null) {
 						return simple.resetTag;
 					}
 					return simple.tag;
@@ -258,7 +262,7 @@ public final class TextComponentParser {
 				}
 
 				// only process resets for standard color tags
-				if (colorsCauseReset && StandardTags.color().has(name)) {
+				if (colorsCauseReset && StandardTags.color().has(name) && isSafe(name, null)) {
 					// if it's a fixed <#rrggbb> or <red> tag we can cache the combined reset tag instead of recomputing
 					boolean cacheable = !arguments.hasNext();
 					if (cacheable) {
@@ -269,8 +273,12 @@ public final class TextComponentParser {
 					Tag colorTag = StandardTags.color().resolve(name, arguments, ctx);
 					if (colorTag != null) {
 						colorTag = disableUnsetStyling(colorTag);
-						if (cacheable && resetColorTags.size() < 512)
+						if (cacheable) {
+							// keys come from user input, so clear rather than stop caching once full
+							if (resetColorTags.size() >= 512)
+								resetColorTags.clear();
 							resetColorTags.put(name, colorTag);
+						}
 						return colorTag;
 					}
 				}
@@ -300,7 +308,7 @@ public final class TextComponentParser {
 				}
 
 				// otherwise, only process standard colors here if config applies
-				return colorsCauseReset && StandardTags.color().has(name);
+				return colorsCauseReset && StandardTags.color().has(name) && isSafe(name, null);
 			}
 
 			private boolean isSafe(String tag, @Nullable String parent) {
@@ -343,8 +351,10 @@ public final class TextComponentParser {
 				boolean result = CollectionUtils.contains(safeTags, name);
 				for (int i = 0; !result && i < resolvers.size(); i++)
 					result = resolvers.get(i).has(name);
-				if (known.size() < 512)
-					known.put(name, result);
+				// keys come from user input, so clear rather than stop caching once full
+				if (known.size() >= 512)
+					known.clear();
+				known.put(name, result);
 				return result;
 			}
 		};
@@ -395,7 +405,7 @@ public final class TextComponentParser {
 	}
 
 	private void registerPlaceholder(String name, Tag result, @Nullable String parent, boolean reset) {
-		simplePlaceholders.put(name, new SkriptTag(result, parent, reset, reset ? disableUnsetStyling(result) : result));
+		simplePlaceholders.put(name, new SkriptTag(result, parent, reset ? disableUnsetStyling(result) : null));
 	}
 
 	/**
@@ -443,7 +453,7 @@ public final class TextComponentParser {
 	 * @return The created resolver, which can be passed to {@link #unregisterResolver(TagResolver)}.
 	 */
 	@SuppressWarnings("UnusedReturnValue")
-	public @NonNull TagResolver registerResolver(Set<String> names, BiFunction<ArgumentQueue, Context, Tag> handler) {
+	public @NotNull TagResolver registerResolver(Set<String> names, BiFunction<ArgumentQueue, Context, Tag> handler) {
 		return registerResolver(names, handler, null);
 	}
 
@@ -461,11 +471,12 @@ public final class TextComponentParser {
 	 *                This is used for associating tags permitted for the safe parser.
 	 * @return The created resolver, which can be passed to {@link #unregisterResolver(TagResolver)}.
 	 */
-	public @NonNull TagResolver registerResolver(Set<String> names, BiFunction<ArgumentQueue, Context, Tag> handler, @Nullable String parent) {
+	public @NotNull TagResolver registerResolver(Set<String> names, BiFunction<ArgumentQueue, Context, Tag> handler, @Nullable String parent) {
 		// copy so that the resolver's names cannot change after it is indexed
 		names = Set.copyOf(names);
 		TagResolver resolver = TagResolver.resolver(names, handler);
 		SkriptTagResolver skriptResolver = new SkriptTagResolver(resolver, parent);
+		namedRegistrations.add(new NamedRegistration(names, skriptResolver));
 		for (String name : names) {
 			namedResolvers.put(name, skriptResolver);
 		}
@@ -479,7 +490,15 @@ public final class TextComponentParser {
 	public void unregisterResolver(TagResolver resolver) {
 		// safe parameter is irrelevant as only resolver is considered in equality
 		resolvers.remove(new SkriptTagResolver(resolver, null));
-		namedResolvers.values().removeIf(named -> named.resolver.equals(resolver));
+		if (namedRegistrations.removeIf(named -> named.resolver.resolver.equals(resolver))) {
+			// rebuild so that any name the resolver overrode goes back to the latest remaining registration
+			namedResolvers.clear();
+			for (NamedRegistration named : namedRegistrations) {
+				for (String name : named.names) {
+					namedResolvers.put(name, named.resolver);
+				}
+			}
+		}
 	}
 
 	/**
@@ -577,7 +596,7 @@ public final class TextComponentParser {
 					// strip the extra hashtag
 					String mappedTag = tag.substring(1);
 					if (StandardTags.color().has(mappedTag)) {
-						return "<" + mappedTag + ">";
+						return "\\".repeat(backslashes) + "<" + mappedTag + ">";
 					}
 					return unchanged;
 				}
@@ -621,7 +640,7 @@ public final class TextComponentParser {
 			}
 			String mappedTag = result.group(1).substring(1);
 			if (StandardTags.color().has(mappedTag)) {
-				return "\\<#" + mappedTag + ">";
+				return "\\".repeat(backslashes) + "\\<#" + mappedTag + ">";
 			}
 			return unchanged;
 		});
@@ -661,7 +680,7 @@ public final class TextComponentParser {
 	}
 
 	/**
-	 * helper for {@link #stripFormatting(String, boolean)}
+	 * Helper for {@link #stripFormatting(String, boolean)}
 	 *
 	 * @param string string to check
 	 * @return whether there are any chars that could be formatting present
