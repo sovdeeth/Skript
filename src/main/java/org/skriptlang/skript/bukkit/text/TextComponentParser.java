@@ -273,8 +273,12 @@ public final class TextComponentParser {
 					Tag colorTag = StandardTags.color().resolve(name, arguments, ctx);
 					if (colorTag != null) {
 						colorTag = disableUnsetStyling(colorTag);
-						if (cacheable && resetColorTags.size() < 512)
+						if (cacheable) {
+							// keys come from user input, so clear rather than stop caching once full
+							if (resetColorTags.size() >= 512)
+								resetColorTags.clear();
 							resetColorTags.put(name, colorTag);
+						}
 						return colorTag;
 					}
 				}
@@ -347,8 +351,10 @@ public final class TextComponentParser {
 				boolean result = CollectionUtils.contains(safeTags, name);
 				for (int i = 0; !result && i < resolvers.size(); i++)
 					result = resolvers.get(i).has(name);
-				if (known.size() < 512)
-					known.put(name, result);
+				// keys come from user input, so clear rather than stop caching once full
+				if (known.size() >= 512)
+					known.clear();
+				known.put(name, result);
 				return result;
 			}
 		};
