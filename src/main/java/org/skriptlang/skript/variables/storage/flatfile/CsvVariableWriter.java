@@ -156,6 +156,7 @@ final class CsvVariableWriter {
 	private @Nullable FileChannel channel; // the file channel for the variable file, opened on the writer thread
 	private @Nullable PrintWriter out; // the print writer for the variable file, opened on the writer thread
 	private long lastSync = System.nanoTime(); // last time the file was synced to disk, in nanoseconds
+	private boolean unsynced; // whether rows have been flushed to the file but not yet synced to disk
 
 	/**
 	 * Creates a new writer for the given variable file.
@@ -284,6 +285,9 @@ final class CsvVariableWriter {
 					drain();
 					backlog = !queue.isEmpty();
 				}
+				// sync rows left over from a throttled sync, once the interval has passed
+				if (unsynced)
+					flushOut(false);
 
 				// check if we need to do a backup
 				if (System.nanoTime() - backupRetryAt >= 0 && backups.due()) {
@@ -357,12 +361,14 @@ final class CsvVariableWriter {
 	/**
 	 * Parks the writer for a while, waiting on a submit/flush/stop.
 	 * If nothing occurs before {@link #IDLE_CHECK_NANOS}, the writer will wake up to check if it needs to do backups.
+	 * If there are unsynced rows, it wakes up in time to sync them once {@link #FSYNC_INTERVAL_NANOS} has passed.
 	 */
 	private void idle() {
+		long wait = unsynced ? lastSync + FSYNC_INTERVAL_NANOS - System.nanoTime() : IDLE_CHECK_NANOS;
 		sleeping.set(true);
 		// Re-check after publishing the flag, so a submit that missed the flag is not lost.
-		if (queue.isEmpty() && !stopping && !skipDelays)
-			LockSupport.parkNanos(IDLE_CHECK_NANOS);
+		if (queue.isEmpty() && !stopping && !skipDelays && wait > 0)
+			LockSupport.parkNanos(wait);
 		sleeping.set(false);
 	}
 
@@ -484,6 +490,9 @@ final class CsvVariableWriter {
 		if (sync || now - lastSync >= FSYNC_INTERVAL_NANOS) {
 			channel.force(false);
 			lastSync = now;
+			unsynced = false;
+		} else {
+			unsynced = true;
 		}
 	}
 
@@ -554,6 +563,7 @@ final class CsvVariableWriter {
 		FileChannel channel = this.channel;
 		this.out = null;
 		this.channel = null;
+		unsynced = false; // synced below, and flushOut must not run on a closed file
 		if (out == null || channel == null)
 			return;
 		out.flush();
