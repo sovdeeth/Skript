@@ -66,6 +66,9 @@ public final class TextComponentParser {
 
 	}
 
+	private record NamedRegistration(Set<String> names, SkriptTagResolver resolver) {
+	}
+
 	/**
 	 * Describes how this parser should handle potential links (outside of formatting tags).
 	 */
@@ -224,6 +227,8 @@ public final class TextComponentParser {
 	private final Map<String, SkriptTag> simplePlaceholders = new HashMap<>();
 	// resolvers with fixed tag names can be cached by name to avoid looping (last registered wins though)
 	private final Map<String, SkriptTagResolver> namedResolvers = new HashMap<>();
+	// every named registration in order, so an overridden name can fall back when the override is unregistered
+	private final List<NamedRegistration> namedRegistrations = new ArrayList<>();
 	private final Set<SkriptTagResolver> resolvers = new HashSet<>();
 
 	private LinkParseMode linkParseMode = LinkParseMode.DISABLED;
@@ -257,7 +262,7 @@ public final class TextComponentParser {
 				}
 
 				// only process resets for standard color tags
-				if (colorsCauseReset && StandardTags.color().has(name)) {
+				if (colorsCauseReset && StandardTags.color().has(name) && isSafe(name, null)) {
 					// if it's a fixed <#rrggbb> or <red> tag we can cache the combined reset tag instead of recomputing
 					boolean cacheable = !arguments.hasNext();
 					if (cacheable) {
@@ -299,7 +304,7 @@ public final class TextComponentParser {
 				}
 
 				// otherwise, only process standard colors here if config applies
-				return colorsCauseReset && StandardTags.color().has(name);
+				return colorsCauseReset && StandardTags.color().has(name) && isSafe(name, null);
 			}
 
 			private boolean isSafe(String tag, @Nullable String parent) {
@@ -465,6 +470,7 @@ public final class TextComponentParser {
 		names = Set.copyOf(names);
 		TagResolver resolver = TagResolver.resolver(names, handler);
 		SkriptTagResolver skriptResolver = new SkriptTagResolver(resolver, parent);
+		namedRegistrations.add(new NamedRegistration(names, skriptResolver));
 		for (String name : names) {
 			namedResolvers.put(name, skriptResolver);
 		}
@@ -478,7 +484,15 @@ public final class TextComponentParser {
 	public void unregisterResolver(TagResolver resolver) {
 		// safe parameter is irrelevant as only resolver is considered in equality
 		resolvers.remove(new SkriptTagResolver(resolver, null));
-		namedResolvers.values().removeIf(named -> named.resolver.equals(resolver));
+		if (namedRegistrations.removeIf(named -> named.resolver.resolver.equals(resolver))) {
+			// rebuild so that any name the resolver overrode goes back to the latest remaining registration
+			namedResolvers.clear();
+			for (NamedRegistration named : namedRegistrations) {
+				for (String name : named.names) {
+					namedResolvers.put(name, named.resolver);
+				}
+			}
+		}
 	}
 
 	/**
@@ -576,7 +590,7 @@ public final class TextComponentParser {
 					// strip the extra hashtag
 					String mappedTag = tag.substring(1);
 					if (StandardTags.color().has(mappedTag)) {
-						return "<" + mappedTag + ">";
+						return "\\".repeat(backslashes) + "<" + mappedTag + ">";
 					}
 					return unchanged;
 				}
@@ -620,7 +634,7 @@ public final class TextComponentParser {
 			}
 			String mappedTag = result.group(1).substring(1);
 			if (StandardTags.color().has(mappedTag)) {
-				return "\\<#" + mappedTag + ">";
+				return "\\".repeat(backslashes) + "\\<#" + mappedTag + ">";
 			}
 			return unchanged;
 		});
