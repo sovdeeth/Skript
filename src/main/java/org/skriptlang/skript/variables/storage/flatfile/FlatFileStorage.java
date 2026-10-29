@@ -153,10 +153,20 @@ public class FlatFileStorage extends VariableStorage {
 
 		// parse the file
 		try (BufferedReader reader = Files.newBufferedReader(file.toPath(), CsvFormat.CHARSET)) {
+			// Every row is written with a trailing newline, so an unterminated last row was torn by a crash mid-append.
+			// It is treated as never written, since a torn value can still parse and would replace the previous value.
+			boolean tornTail = !endsWithNewline(file.toPath());
 			String line;
+			String next = reader.readLine(); // read one line ahead to know which line is last
 			int lineNum = 0;
-			while ((line = reader.readLine()) != null) {
+			while ((line = next) != null) {
+				next = reader.readLine();
 				lineNum++;
+				if (next == null && tornTail) {
+					report.add("incomplete last rows (discarded)", "line " + lineNum);
+					rewriteRequired = true; // never append onto a torn last line
+					break;
+				}
 				line = line.trim();
 				// version check
 				if (line.startsWith(CsvFormat.VERSION_HEADER)) {
@@ -178,7 +188,6 @@ public class FlatFileStorage extends VariableStorage {
 				// parse row
 				String[] split = CsvFormat.splitCSV(line);
 				if (split == null || split.length != 3) {
-					// Also covers a row torn by a crash during an append.
 					report.add("invalid rows", "line " + lineNum);
 					continue;
 				}
@@ -213,9 +222,6 @@ public class FlatFileStorage extends VariableStorage {
 					report.add("unreadable values", name + " (line " + lineNum + ")");
 				}
 			}
-			// check if the last line is in a good state
-			if (!endsWithNewline(file.toPath()))
-				rewriteRequired = true; // never append onto a torn last line
 		} catch (IOException exception) {
 			Skript.exception(exception, "Cannot read the variable file " + file.getName());
 			return false;

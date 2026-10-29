@@ -261,7 +261,7 @@ public class FlatFilePersistenceTest {
 		// The last row has no newline, as if the process died mid-append.
 		Files.writeString(file, "entry, string, " + hex("kept") + "\npartial, str");
 		Logged<FlatFileStorage> load = logged(() -> open(file));
-		load.assertContains("invalid rows");
+		load.assertContains("incomplete last rows");
 		try (FlatFileStorage storage = load.result()) {
 			assertEquals("kept", storage.getVariable("entry"));
 			assertNull(storage.getVariable("partial"));
@@ -275,6 +275,34 @@ public class FlatFilePersistenceTest {
 			assertEquals("appended", reopened.getVariable("next"));
 		}
 		assertEquals("a recovery backup is made before rewriting", 1, countFiles(file.resolveSibling("backups")));
+	}
+
+	@Test
+	public void tornLastRowWithParsableValueDoesNotReplacePreviousValue() throws Exception {
+		Path file = file("torn-value.csv");
+		String replacement = hex("replacement");
+		// Torn inside the value at an even length, so the hex still decodes.
+		Files.writeString(file, "entry, string, " + hex("kept") + "\nentry, string, " + replacement.substring(0, 8));
+		Logged<FlatFileStorage> load = logged(() -> open(file));
+		load.assertContains("incomplete last rows");
+		try (FlatFileStorage storage = load.result()) {
+			assertEquals("kept", storage.getVariable("entry"));
+		}
+		try (FlatFileStorage reopened = open(file)) {
+			assertEquals("the rewrite keeps the previous value", "kept", reopened.getVariable("entry"));
+		}
+	}
+
+	@Test
+	public void tornLastRowWithEmptyValueDoesNotReplacePreviousValue() throws Exception {
+		Path file = file("torn-empty.csv");
+		// Torn right after the last separator, so the value is empty and decodes to no bytes.
+		Files.writeString(file, "entry, string, " + hex("kept") + "\nentry, string, ");
+		Logged<FlatFileStorage> load = logged(() -> open(file));
+		load.assertContains("incomplete last rows");
+		try (FlatFileStorage storage = load.result()) {
+			assertEquals("kept", storage.getVariable("entry"));
+		}
 	}
 
 	// ======================================== File format ========================================
