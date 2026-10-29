@@ -24,7 +24,6 @@ import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jspecify.annotations.NonNull;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -50,7 +49,7 @@ import java.util.regex.Pattern;
  */
 public final class TextComponentParser {
 
-	private record SkriptTag(Tag tag, @Nullable String parent, boolean reset, Tag resetTag) {
+	private record SkriptTag(Tag tag, @Nullable String parent, @Nullable Tag resetTag) {
 	}
 
 	private record SkriptTagResolver(TagResolver resolver, @Nullable String parent) {
@@ -237,7 +236,7 @@ public final class TextComponentParser {
 			public @Nullable Tag resolve(@NotNull String name, @NotNull ArgumentQueue arguments, @NotNull Context ctx) throws ParsingException {
 				SkriptTag simple = simplePlaceholders.get(name);
 				if (simple != null && isSafe(name, simple.parent)) {
-					if (colorsCauseReset && simple.reset) {
+					if (colorsCauseReset && simple.resetTag != null) {
 						return simple.resetTag;
 					}
 					return simple.tag;
@@ -395,7 +394,7 @@ public final class TextComponentParser {
 	}
 
 	private void registerPlaceholder(String name, Tag result, @Nullable String parent, boolean reset) {
-		simplePlaceholders.put(name, new SkriptTag(result, parent, reset, reset ? disableUnsetStyling(result) : result));
+		simplePlaceholders.put(name, new SkriptTag(result, parent, reset ? disableUnsetStyling(result) : null));
 	}
 
 	/**
@@ -443,7 +442,7 @@ public final class TextComponentParser {
 	 * @return The created resolver, which can be passed to {@link #unregisterResolver(TagResolver)}.
 	 */
 	@SuppressWarnings("UnusedReturnValue")
-	public @NonNull TagResolver registerResolver(Set<String> names, BiFunction<ArgumentQueue, Context, Tag> handler) {
+	public @NotNull TagResolver registerResolver(Set<String> names, BiFunction<ArgumentQueue, Context, Tag> handler) {
 		return registerResolver(names, handler, null);
 	}
 
@@ -461,7 +460,7 @@ public final class TextComponentParser {
 	 *                This is used for associating tags permitted for the safe parser.
 	 * @return The created resolver, which can be passed to {@link #unregisterResolver(TagResolver)}.
 	 */
-	public @NonNull TagResolver registerResolver(Set<String> names, BiFunction<ArgumentQueue, Context, Tag> handler, @Nullable String parent) {
+	public @NotNull TagResolver registerResolver(Set<String> names, BiFunction<ArgumentQueue, Context, Tag> handler, @Nullable String parent) {
 		// copy so that the resolver's names cannot change after it is indexed
 		names = Set.copyOf(names);
 		TagResolver resolver = TagResolver.resolver(names, handler);
