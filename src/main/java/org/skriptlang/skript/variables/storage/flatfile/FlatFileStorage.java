@@ -355,11 +355,15 @@ public class FlatFileStorage extends VariableStorage {
 		}
 
 		CsvVariableWriter writer = this.writer;
-		if (writer == null || writer.stop(CLOSE_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+		if (writer == null) {
 			releaseFile();
-		} else {
+			return;
+		}
+		switch (writer.stop(CLOSE_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+			// on FAILED, the writer has already reported what was lost
+			case SAVED, FAILED -> releaseFile();
 			// Keep the file registered, the writer may still be using it.
-			Skript.error("Timed out after " + CLOSE_TIMEOUT_SECONDS + " seconds waiting for database '"
+			case TIMED_OUT -> Skript.error("Timed out after " + CLOSE_TIMEOUT_SECONDS + " seconds waiting for database '"
 				+ getUserConfigurationName() + "' to finish writing. Recent changes may be lost.");
 		}
 	}

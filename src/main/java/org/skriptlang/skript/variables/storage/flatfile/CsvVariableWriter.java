@@ -80,6 +80,24 @@ final class CsvVariableWriter {
 	private record Barrier(CompletableFuture<Boolean> done) implements Operation {
 	}
 
+	/**
+	 * The outcome of {@link #stop}.
+	 */
+	enum StopResult {
+		/**
+		 * The writer exited after writing and syncing every change.
+		 */
+		SAVED,
+		/**
+		 * The writer exited, but gave up before every change was saved.
+		 */
+		FAILED,
+		/**
+		 * The writer did not exit in time and may still be using the file.
+		 */
+		TIMED_OUT
+	}
+
 	// ---- Constants ----
 
 	/**
@@ -135,6 +153,7 @@ final class CsvVariableWriter {
 	private final AtomicBoolean sleeping = new AtomicBoolean(); // whether the writer thread is currently sleeping
 	private volatile boolean skipDelays; // used to skip the usual linger duration. For flushes.
 	private volatile boolean stopping; // set by stop() to tell the writer thread to exit
+	private volatile boolean saved; // set by the writer thread once its final save succeeded
 
 	// ---- Configuration ----
 
@@ -244,10 +263,10 @@ final class CsvVariableWriter {
 	 *
 	 * @param timeout maximum time to wait
 	 * @param unit    unit of {@code timeout}
-	 * @return whether the writer finished; if not, it may still be using the file
+	 * @return whether the writer saved everything, gave up, or is still running
 	 */
 	@Blocking
-	boolean stop(long timeout, @NonNull TimeUnit unit) {
+	StopResult stop(long timeout, @NonNull TimeUnit unit) {
 		stopping = true;
 		LockSupport.unpark(thread);
 		boolean interrupted = false;
@@ -258,7 +277,9 @@ final class CsvVariableWriter {
 		}
 		if (interrupted)
 			Thread.currentThread().interrupt();
-		return !thread.isAlive();
+		if (thread.isAlive())
+			return StopResult.TIMED_OUT;
+		return saved ? StopResult.SAVED : StopResult.FAILED;
 	}
 
 	// ---- Writer thread methods ----
@@ -306,15 +327,18 @@ final class CsvVariableWriter {
 				if (stop && queue.isEmpty()) {
 					if (rowsInFile != persisted.size())
 						rewrite();
+					saved = true;
 					break;
 				}
 			} catch (IOException | RuntimeException exception) {
 				// `persisted` holds every applied change, so a rewrite repairs any partial append.
 				rewriteRequired = true;
 				backlog = false;
-				reportWriteFailure(exception);
-				if (stop && ++failuresWhileStopping >= MAX_FAILURES_WHILE_STOPPING)
+				if (stop && ++failuresWhileStopping >= MAX_FAILURES_WHILE_STOPPING) {
+					reportGivingUp(exception);
 					break;
+				}
+				reportWriteFailure(exception);
 				LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(stop ? 1 : 5));
 				continue;
 			}
@@ -333,6 +357,20 @@ final class CsvVariableWriter {
 	 */
 	private void reportWriteFailure(Exception exception) {
 		String message = "Failed writing variables for database '" + databaseName + "'; retrying";
+		if (exception instanceof IOException ioException)
+			Skript.error(message + ": " + ExceptionUtils.toString(ioException));
+		else
+			Skript.exception(exception, message);
+	}
+
+	/**
+	 * Reports that the writer is stopping without saving everything.
+	 * The file failed to update, so it may be missing changes that were already applied, on top of any still queued.
+	 */
+	private void reportGivingUp(Exception exception) {
+		long queued = queue.stream().filter(Change.class::isInstance).count();
+		String message = "Giving up saving database '" + databaseName + "' after " + MAX_FAILURES_WHILE_STOPPING
+			+ " attempts. " + queued + " queued changes were not saved, and the variable file may be missing recent changes";
 		if (exception instanceof IOException ioException)
 			Skript.error(message + ": " + ExceptionUtils.toString(ioException));
 		else
