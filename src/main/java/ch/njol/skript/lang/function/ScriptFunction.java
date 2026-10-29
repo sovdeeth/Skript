@@ -20,9 +20,19 @@ public class ScriptFunction<T> extends Function<T> implements ReturnHandler<T> {
 
 	private final Trigger trigger;
 
-	private final ThreadLocal<Boolean> returnValueSet = ThreadLocal.withInitial(() -> false);
-	private final ThreadLocal<T @Nullable []> returnValues = new ThreadLocal<>();
-	private final ThreadLocal<String @Nullable []> returnKeys = new ThreadLocal<>();
+	private static final class ReturnState<T> {
+		boolean set;
+		T @Nullable [] values;
+		String @Nullable [] keys;
+
+		void reset() {
+			set = false;
+			values = null;
+			keys = null;
+		}
+	}
+
+	private final ThreadLocal<ReturnState<T>> returnState = ThreadLocal.withInitial(ReturnState::new);
 
 	public ScriptFunction(Signature<T> sign, SectionNode node) {
 		super(sign);
@@ -63,26 +73,52 @@ public class ScriptFunction<T> extends Function<T> implements ReturnHandler<T> {
 				continue;
 			}
 
-			boolean keyed = Arrays.stream(val).allMatch(it -> it instanceof KeyedValue<?>);
-			if (keyed) {
-				for (Object value : val) {
-					KeyedValue<?> keyedValue = (KeyedValue<?>) value;
-					Variables.setVariable(parameter.name() + Variable.SEPARATOR + keyedValue.key(), keyedValue.value(), event, true);
-				}
-			} else {
-				int count = 0;
-				for (Object value : val) {
-					// backup for if the passed argument is not a keyed value.
-					// an example of this is passing `xs: integers = (1, 2)` as a parameter.
-					Variables.setVariable(parameter.name() + Variable.SEPARATOR + count, value, event, true);
-					count++;
-				}
+			if (val.length == 0) {
+				i++;
+				continue;
 			}
+
+			boolean keyed = Arrays.stream(val).allMatch(it -> it instanceof KeyedValue<?>);
+			setListParameter(parameter.name(), val, keyed, event);
 			i++;
 		}
 
 		trigger.execute(event);
-		return type() != null ? returnValues.get() : null;
+		return type() != null ? returnState.get().values : null;
+	}
+
+	/**
+	 * Sets a list parameter's local variable to the given values in one go.
+	 * Null values are skipped.
+	 *
+	 * @param keyed whether every value is a {@link KeyedValue}. If not, values are numbered from 0.
+	 */
+	private static void setListParameter(String name, Object[] values, boolean keyed, Event event) {
+		String[] keys = new String[values.length];
+		Object[] listValues = new Object[values.length];
+		int count = 0;
+		for (int i = 0; i < values.length; i++) {
+			String key;
+			Object value;
+			if (keyed) {
+				KeyedValue<?> keyedValue = (KeyedValue<?>) values[i];
+				key = keyedValue.key();
+				value = keyedValue.value();
+			} else {
+				key = String.valueOf(i);
+				value = values[i];
+			}
+			if (value == null)
+				continue;
+			keys[count] = key;
+			listValues[count] = value;
+			count++;
+		}
+		if (count < values.length) {
+			keys = Arrays.copyOf(keys, count);
+			listValues = Arrays.copyOf(listValues, count);
+		}
+		Variables.setList(name, keys, listValues, event, true);
 	}
 
 	@Override
@@ -101,23 +137,15 @@ public class ScriptFunction<T> extends Function<T> implements ReturnHandler<T> {
 			if (parameter.isSingle()) {
 				Variables.setVariable(name, value, newEvent, true);
 			} else {
-				if (value instanceof KeyedValue<?>[] keyedValues) {
-					for (KeyedValue<?> keyedValue : keyedValues) {
-						Variables.setVariable(name + "::" + keyedValue.key(), keyedValue.value(), newEvent, true);
-					}
-				} else {
-					int i = 0;
-					for (Object o : (Object[]) value) {
-						Variables.setVariable(name + "::" + i, o, newEvent, true);
-						i++;
-					}
-				}
+				Object[] values = (Object[]) value;
+				if (values.length > 0)
+					setListParameter(name, values, value instanceof KeyedValue<?>[], newEvent);
 			}
 		}
 
 		trigger.execute(newEvent);
 
-		T[] vs = returnValues.get();
+		T[] vs = returnState.get().values;
 		if (type() == null || vs == null || vs.length == 0) {
 			return null;
 		}
@@ -132,24 +160,28 @@ public class ScriptFunction<T> extends Function<T> implements ReturnHandler<T> {
 
 	@Override
 	public @NotNull String @Nullable [] returnedKeys() {
-		return type() != null ? returnKeys.get() : null;
+		return type() != null ? returnState.get().keys : null;
 	}
 
 	@Override
 	public boolean resetReturnValue() {
-		returnValueSet.remove();
-		returnValues.remove();
-		returnKeys.remove();
+		returnState.get().reset();
 		return true;
 	}
 
 	@Override
 	public final void returnValues(Event event, Expression<? extends T> value) {
-		assert !returnValueSet.get();
-		returnValueSet.set(true);
-		this.returnValues.set(value.getArray(event));
-		if (KeyProviderExpression.canReturnKeys(value))
-			this.returnKeys.set(((KeyProviderExpression<?>) value).getArrayKeys(event));
+		// evaluate before touching state: the expression may call this same function recursively
+		T[] values = value.getArray(event);
+		String[] keys = KeyProviderExpression.canReturnKeys(value)
+				? ((KeyProviderExpression<?>) value).getArrayKeys(event)
+				: null;
+
+		ReturnState<T> state = returnState.get();
+		assert !state.set;
+		state.set = true;
+		state.values = values;
+		state.keys = keys;
 	}
 
 	@Override
